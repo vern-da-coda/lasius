@@ -1,0 +1,412 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" 
+     width="297.0mm" height="210.0mm" 
+     viewBox="0 0 297.0 210.0">
+  <defs>
+    <!-- Arrowhead markers for dimension lines -->
+    <marker id="arrow-start" viewBox="0 0 10 10" refX="0" refY="5" markerWidth="4" markerHeight="4" orient="auto">
+      <path d="M 10 2 L 0 5 L 10 8 z" fill="#000000"/>
+    </marker>
+    <marker id="arrow-end" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="4" markerHeight="4" orient="auto">
+      <path d="M 0 2 L 10 5 L 0 8 z" fill="#000000"/>
+    </marker>
+    <style>
+      .border-outer { fill: none; stroke: #000; stroke-width: 0.5; }
+      .border-inner { fill: none; stroke: #000; stroke-width: 0.35; }
+      .grid-text { font-family: 'Liberation Sans', Arial, sans-serif; font-size: 2.2px; fill: #444; text-anchor: middle; }
+      .title { font-family: 'Liberation Sans', Arial, sans-serif; font-weight: bold; fill: #111; }
+      .subtitle { font-family: 'Liberation Sans', Arial, sans-serif; fill: #333; }
+      .part-solid { fill: #ffffff; stroke: #000000; stroke-width: 0.45; stroke-linejoin: round; stroke-linecap: round; }
+      .part-hidden { fill: none; stroke: #718096; stroke-width: 0.25; stroke-dasharray: 1.2,0.8; }
+      .centerline { stroke: #e53e3e; stroke-width: 0.2; stroke-dasharray: 4,0.8,0.8,0.8; }
+      .crosshair { stroke: #e53e3e; stroke-width: 0.22; }
+      .hole { fill: #ffffff; stroke: #000000; stroke-width: 0.35; }
+      .dim-line { stroke: #000000; stroke-width: 0.22; }
+      .dim-ext { stroke: #000000; stroke-width: 0.18; }
+      .dim-text { font-family: 'Liberation Sans', Arial, sans-serif; font-size: 2.1px; fill: #000000; text-anchor: middle; }
+      .dim-text-sm { font-family: 'Liberation Sans', Arial, sans-serif; font-size: 1.8px; fill: #000000; text-anchor: middle; }
+      .table-text { font-family: 'Liberation Sans', Arial, sans-serif; font-size: 2.0px; fill: #222; }
+      .table-text-bold { font-family: 'Liberation Sans', Arial, sans-serif; font-size: 2.0px; font-weight: bold; fill: #000; }
+    </style>
+  </defs>
+
+  <!-- Background -->
+  <rect x="0" y="0" width="297.0" height="210.0" fill="#ffffff"/>
+
+  <!-- Standard Drawing Border: 20 mm left (binding margin), 7 mm top, right, bottom -->
+  <rect x="20" y="7" width="270" height="196" class="border-outer"/>
+  <rect x="20" y="7" width="270" height="196" class="border-inner"/>
+
+  <!-- Grid References: Letters A-D vertically, Numbers 1-6 horizontally -->
+  <text x="42.5" y="5.2" class="grid-text">1</text>
+  <text x="42.5" y="206.0" class="grid-text">1</text>
+  <text x="87.5" y="5.2" class="grid-text">2</text>
+  <text x="87.5" y="206.0" class="grid-text">2</text>
+  <text x="132.5" y="5.2" class="grid-text">3</text>
+  <text x="132.5" y="206.0" class="grid-text">3</text>
+  <text x="177.5" y="5.2" class="grid-text">4</text>
+  <text x="177.5" y="206.0" class="grid-text">4</text>
+  <text x="222.5" y="5.2" class="grid-text">5</text>
+  <text x="222.5" y="206.0" class="grid-text">5</text>
+  <text x="267.5" y="5.2" class="grid-text">6</text>
+  <text x="267.5" y="206.0" class="grid-text">6</text>
+  <text x="17.5" y="32.3" class="grid-text">A</text>
+  <text x="292.5" y="32.3" class="grid-text">A</text>
+  <text x="17.5" y="81.3" class="grid-text">B</text>
+  <text x="292.5" y="81.3" class="grid-text">B</text>
+  <text x="17.5" y="130.3" class="grid-text">C</text>
+  <text x="292.5" y="130.3" class="grid-text">C</text>
+  <text x="17.5" y="179.3" class="grid-text">D</text>
+  <text x="292.5" y="179.3" class="grid-text">D</text>
+
+  <!-- VIEW 1: DRAUFSICHT (M 1:1) -->
+  <g transform="translate(38.0, 34.0)">
+    <text x="0" y="-15" class="title" font-size="3.2">DRAUFSICHT (M 1:1)</text>
+
+    <!-- Outer Part Contour with U-Fork cutout -->
+    <path d="M 0,0 L 115,0 L 115,30.5 L 107.3,30.5 L 107.3,5.0 L 66.0,5.0 L 66.0,30.5 L 0,30.5 Z" class="part-solid"/>
+
+    <!-- Servo Recess (X=0..57.4, Y=5.0..25.5) -->
+    <rect x="0" y="5.0" width="57.4" height="20.5" class="part-hidden"/>
+
+    <!-- Servo Window Cutout (X=8.0..48.5, Y=5.0..25.5) -->
+    <rect x="8.0" y="5.0" width="40.5" height="20.5" class="part-solid"/>
+
+    <!-- Centerlines -->
+    <line x1="-3" y1="15.25" x2="60" y2="15.25" class="centerline"/>
+    <line x1="74.7" y1="-3" x2="74.7" y2="33.5" class="centerline"/>
+    <line x1="18.2" y1="-3" x2="18.2" y2="33.5" class="centerline"/>
+
+    <!-- Tab Bearing Hole Ø3.5 (coaxial with Servo 1 shaft) -->
+    <circle cx="18.2" cy="15.25" r="1.75" class="hole"/>
+    <line x1="15.0" y1="15.25" x2="21.4" y2="15.25" class="crosshair"/>
+    <line x1="18.2" y1="12.0" x2="18.2" y2="18.5" class="crosshair"/>
+
+    <!-- 4x Servo 1 Mounting Holes (Ø2.2) -->
+    <circle cx="4.65" cy="10.25" r="1.1" class="hole"/>
+    <line x1="2.8500000000000005" y1="10.25" x2="6.45" y2="10.25" class="crosshair"/>
+    <line x1="4.65" y1="8.45" x2="4.65" y2="12.05" class="crosshair"/>
+    <circle cx="4.65" cy="20.25" r="1.1" class="hole"/>
+    <line x1="2.8500000000000005" y1="20.25" x2="6.45" y2="20.25" class="crosshair"/>
+    <line x1="4.65" y1="18.45" x2="4.65" y2="22.05" class="crosshair"/>
+    <circle cx="53.15" cy="10.25" r="1.1" class="hole"/>
+    <line x1="51.35" y1="10.25" x2="54.949999999999996" y2="10.25" class="crosshair"/>
+    <line x1="53.15" y1="8.45" x2="53.15" y2="12.05" class="crosshair"/>
+    <circle cx="53.15" cy="20.25" r="1.1" class="hole"/>
+    <line x1="51.35" y1="20.25" x2="54.949999999999996" y2="20.25" class="crosshair"/>
+    <line x1="53.15" y1="18.45" x2="53.15" y2="22.05" class="crosshair"/>
+
+    <!-- View 1 Dimension Lines -->
+    <line x1="0" y1="-13.0" x2="0" y2="2" class="dim-ext"/>
+    <line x1="115" y1="-13.0" x2="115" y2="2" class="dim-ext"/>
+    <line x1="0" y1="-11.5" x2="115" y2="-11.5" class="dim-line" marker-start="url(#arrow-start)" marker-end="url(#arrow-end)"/>
+    <text x="57.5" y="-12.4" class="dim-text">115,0 ±0.2</text>
+    <line x1="8.0" y1="-8.0" x2="8.0" y2="6.0" class="dim-ext"/>
+    <line x1="48.5" y1="-8.0" x2="48.5" y2="6.0" class="dim-ext"/>
+    <line x1="8.0" y1="-6.8" x2="48.5" y2="-6.8" class="dim-line" marker-start="url(#arrow-start)" marker-end="url(#arrow-end)"/>
+    <text x="28.25" y="-7.7" class="dim-text">40,5 (Servofenster)</text>
+    <line x1="4.65" y1="-3.5" x2="4.65" y2="11" class="dim-ext"/>
+    <line x1="53.15" y1="-3.5" x2="53.15" y2="11" class="dim-ext"/>
+    <line x1="4.65" y1="-2.2" x2="53.15" y2="-2.2" class="dim-line" marker-start="url(#arrow-start)" marker-end="url(#arrow-end)"/>
+    <text x="28.9" y="-3.1" class="dim-text">48,50 ±0.1 (Torcster Lochabstand)</text>
+    <line x1="66.0" y1="-8.0" x2="66.0" y2="6.0" class="dim-ext"/>
+    <line x1="107.3" y1="-8.0" x2="107.3" y2="6.0" class="dim-ext"/>
+    <line x1="66.0" y1="-6.8" x2="107.3" y2="-6.8" class="dim-line" marker-start="url(#arrow-start)" marker-end="url(#arrow-end)"/>
+    <text x="86.65" y="-7.7" class="dim-text">41,3 (U-Gabel Öffnung)</text>
+    <line x1="0" y1="0" x2="-10.0" y2="0" class="dim-ext"/>
+    <line x1="0" y1="30.5" x2="-10.0" y2="30.5" class="dim-ext"/>
+    <line x1="-8.5" y1="0" x2="-8.5" y2="30.5" class="dim-line" marker-start="url(#arrow-start)" marker-end="url(#arrow-end)"/>
+    <text x="-9.7" y="16.05" class="dim-text" text-anchor="end">30,5</text>
+    <line x1="4.0" y1="5.0" x2="-4.5" y2="5.0" class="dim-ext"/>
+    <line x1="4.0" y1="25.5" x2="-4.5" y2="25.5" class="dim-ext"/>
+    <line x1="-3.0" y1="5.0" x2="-3.0" y2="25.5" class="dim-line" marker-start="url(#arrow-start)" marker-end="url(#arrow-end)"/>
+    <text x="-4.2" y="16.05" class="dim-text" text-anchor="end">20,5</text>
+    <line x1="52.0" y1="10.25" x2="57.0" y2="10.25" class="dim-ext"/>
+    <line x1="52.0" y1="20.25" x2="57.0" y2="20.25" class="dim-ext"/>
+    <line x1="55.5" y1="10.25" x2="55.5" y2="20.25" class="dim-line" marker-start="url(#arrow-start)" marker-end="url(#arrow-end)"/>
+    <text x="56.7" y="16.05" class="dim-text" text-anchor="start">10,0 ±0.1</text>
+    <line x1="0" y1="28" x2="0" y2="36.0" class="dim-ext"/>
+    <line x1="74.7" y1="28" x2="74.7" y2="36.0" class="dim-ext"/>
+    <line x1="0" y1="34.5" x2="74.7" y2="34.5" class="dim-line" marker-start="url(#arrow-start)" marker-end="url(#arrow-end)"/>
+    <text x="37.35" y="36.9" class="dim-text">74,70 (Lage Drehachse)</text>
+    <line x1="114" y1="0" x2="120" y2="0" class="dim-ext"/>
+    <line x1="114" y1="5.0" x2="120" y2="5.0" class="dim-ext"/>
+    <line x1="118.5" y1="0" x2="118.5" y2="5.0" class="dim-line" marker-start="url(#arrow-start)" marker-end="url(#arrow-end)"/>
+    <text x="119.7" y="3.3" class="dim-text" text-anchor="start">5,0 (Steg)</text>
+
+    <!-- Wall thicknesses annotations -->
+    <text x="61.7" y="3.5" class="dim-text-sm">8,6</text>
+    <text x="111.15" y="3.5" class="dim-text-sm">7,7</text>
+    <text x="18.2" y="8.0" class="dim-text-sm">Ø3,5 (Gegenlager)</text>
+    <text x="4.65" y="27.5" class="dim-text-sm">4x Ø2,2 (M2/M2.2)</text>
+  </g>
+
+  <!-- VIEW 2: VORDERANSICHT (M 1:1) -->
+  <g transform="translate(38.0, 96.0)">
+    <text x="0" y="-7" class="title" font-size="3.2">VORDERANSICHT (M 1:1)</text>
+
+    <!-- Contour with lower tab -->
+    <path d="M 0,0 L 115,0 L 115,19.0 L 25.7,19.0 L 25.7,34.0 L 7.2,34.0 L 7.2,19.0 L 0,19.0 Z" class="part-solid"/>
+
+    <!-- Tab solid bottom base (Z=31..34, thickness 3.0) -->
+    <rect x="7.2" y="31.0" width="18.5" height="3.0" fill="#edf2f7" stroke="#000000" stroke-width="0.35"/>
+
+    <!-- Open Cable Outlet on left of tab -->
+    <line x1="7.2" y1="19.0" x2="7.2" y2="31.0" stroke="#e53e3e" stroke-width="0.5" stroke-dasharray="1.5,1"/>
+    <text x="5.5" y="25.5" class="dim-text-sm" text-anchor="end" fill="#e53e3e">Kabelauslass (offen)</text>
+
+    <!-- Centerlines -->
+    <line x1="60" y1="9.5" x2="90" y2="9.5" class="centerline"/>
+    <line x1="74.7" y1="3" x2="74.7" y2="16" class="centerline"/>
+
+    <!-- Coxa Pivot Hole Ø4.2 continuous through-hole at X=74.7, Z=9.5 -->
+    <circle cx="74.7" cy="9.5" r="2.1" class="hole"/>
+    <line x1="71.2" y1="9.5" x2="78.2" y2="9.5" class="crosshair"/>
+    <line x1="74.7" y1="6.0" x2="74.7" y2="13.0" class="crosshair"/>
+
+    <!-- Tab Counter-bearing hole axis (X=18.2) -->
+    <line x1="18.2" y1="28.0" x2="18.2" y2="36.0" class="centerline"/>
+
+    <!-- Dimensions in View 2 -->
+
+    <!-- View 2 Dimension Lines -->
+    <line x1="0" y1="0" x2="-6.0" y2="0" class="dim-ext"/>
+    <line x1="0" y1="19.0" x2="-6.0" y2="19.0" class="dim-ext"/>
+    <line x1="-4.5" y1="0" x2="-4.5" y2="19.0" class="dim-line" marker-start="url(#arrow-start)" marker-end="url(#arrow-end)"/>
+    <text x="-5.7" y="10.3" class="dim-text" text-anchor="end">19,0</text>
+    <line x1="7.2" y1="19.0" x2="-6.0" y2="19.0" class="dim-ext"/>
+    <line x1="7.2" y1="34.0" x2="-6.0" y2="34.0" class="dim-ext"/>
+    <line x1="-4.5" y1="19.0" x2="-4.5" y2="34.0" class="dim-line" marker-start="url(#arrow-start)" marker-end="url(#arrow-end)"/>
+    <text x="-5.7" y="27.3" class="dim-text" text-anchor="end">15,0</text>
+    <line x1="0" y1="0" x2="-11.0" y2="0" class="dim-ext"/>
+    <line x1="0" y1="34.0" x2="-11.0" y2="34.0" class="dim-ext"/>
+    <line x1="-9.5" y1="0" x2="-9.5" y2="34.0" class="dim-line" marker-start="url(#arrow-start)" marker-end="url(#arrow-end)"/>
+    <text x="-10.7" y="17.8" class="dim-text" text-anchor="end">34,0 ±0.2</text>
+    <line x1="7.2" y1="33.0" x2="7.2" y2="39.5" class="dim-ext"/>
+    <line x1="25.7" y1="33.0" x2="25.7" y2="39.5" class="dim-ext"/>
+    <line x1="7.2" y1="37.5" x2="25.7" y2="37.5" class="dim-line" marker-start="url(#arrow-start)" marker-end="url(#arrow-end)"/>
+    <text x="16.45" y="36.6" class="dim-text">18,5 (Lasche)</text>
+    <line x1="25.7" y1="31.0" x2="30.5" y2="31.0" class="dim-ext"/>
+    <line x1="25.7" y1="34.0" x2="30.5" y2="34.0" class="dim-ext"/>
+    <line x1="28.5" y1="31.0" x2="28.5" y2="34.0" class="dim-line" marker-start="url(#arrow-start)" marker-end="url(#arrow-end)"/>
+    <text x="29.7" y="33.3" class="dim-text" text-anchor="start">3,0</text>
+    <line x1="114" y1="0" x2="120" y2="0" class="dim-ext"/>
+    <line x1="114" y1="9.5" x2="120" y2="9.5" class="dim-ext"/>
+    <line x1="118.5" y1="0" x2="118.5" y2="9.5" class="dim-line" marker-start="url(#arrow-start)" marker-end="url(#arrow-end)"/>
+    <text x="119.7" y="5.55" class="dim-text" text-anchor="start">9,5</text>
+
+    <!-- Leader Line to Pivot Hole -->
+    <text x="74.7" y="-2.0" class="dim-text">Ø4,2 Durchgangsbohrung (Pivot)</text>
+    <line x1="74.7" y1="-1.0" x2="74.7" y2="6.8" stroke="#000" stroke-width="0.2"/>
+
+    <text x="18.2" y="42.5" class="dim-text-sm">Ø3,5 Gegenlagerbohrung</text>
+  </g>
+
+  <!-- VIEW 3: RÜCKANSICHT (M 1:1) — SERVO 2 MONTAGE -->
+  <g transform="translate(166.0, 32.0)">
+    <text x="0" y="-12" class="title" font-size="3.2">RÜCKANSICHT (M 1:1) — SERVO 2 (COXA)</text>
+    <text x="0" y="-8.5" class="subtitle" font-size="2.1">Blick auf Rückseite (Y=30.5). Exakt kalibriert für Torcster NR-645 MG BB (48.5 x 10.0 mm Raster).</text>
+
+    <!-- Solid Back Face with U-fork opening cutout -->
+    <path d="M 0,0 L 66.0,0 L 66.0,19.0 L 25.7,19.0 L 25.7,34.0 L 7.2,34.0 L 7.2,19.0 L 0,19.0 Z" class="part-solid"/>
+    <rect x="66.0" y="0" width="41.3" height="19.0" fill="#f8fafc" stroke="#718096" stroke-width="0.3"/>
+    <rect x="107.3" y="0" width="7.7" height="19.0" class="part-solid"/>
+
+    <!-- Coxa Pivot Hole visible in background (X=74.7, Z=9.5) -->
+    <circle cx="74.7" cy="9.5" r="2.1" fill="none" stroke="#718096" stroke-width="0.3" stroke-dasharray="1.2,0.8"/>
+    <line x1="71.0" y1="9.5" x2="78.4" y2="9.5" class="centerline"/>
+    <line x1="74.7" y1="6.0" x2="74.7" y2="13.0" class="centerline"/>
+
+    <!-- 4x Servo 2 Mounting Holes (X=60.55, 109.05; Z=4.5, 14.5; dia=2.8) -->
+    <circle cx="60.55" cy="4.5" r="1.4" class="hole"/>
+    <line x1="58.55" y1="4.5" x2="62.55" y2="4.5" class="crosshair"/>
+    <line x1="60.55" y1="2.5" x2="60.55" y2="6.5" class="crosshair"/>
+    <circle cx="60.55" cy="14.5" r="1.4" class="hole"/>
+    <line x1="58.55" y1="14.5" x2="62.55" y2="14.5" class="crosshair"/>
+    <line x1="60.55" y1="12.5" x2="60.55" y2="16.5" class="crosshair"/>
+    <circle cx="109.05" cy="4.5" r="1.4" class="hole"/>
+    <line x1="107.05" y1="4.5" x2="111.05" y2="4.5" class="crosshair"/>
+    <line x1="109.05" y1="2.5" x2="109.05" y2="6.5" class="crosshair"/>
+    <circle cx="109.05" cy="14.5" r="1.4" class="hole"/>
+    <line x1="107.05" y1="14.5" x2="111.05" y2="14.5" class="crosshair"/>
+    <line x1="109.05" y1="12.5" x2="109.05" y2="16.5" class="crosshair"/>
+
+    <!-- View 3 Dimensions -->
+    <line x1="60.55" y1="-5.0" x2="60.55" y2="5.0" class="dim-ext"/>
+    <line x1="109.05" y1="-5.0" x2="109.05" y2="5.0" class="dim-ext"/>
+    <line x1="60.55" y1="-3.5" x2="109.05" y2="-3.5" class="dim-line" marker-start="url(#arrow-start)" marker-end="url(#arrow-end)"/>
+    <text x="84.8" y="-4.4" class="dim-text">48,50 ±0.1 (Lochabstand)</text>
+    <line x1="60.55" y1="15.5" x2="60.55" y2="23.5" class="dim-ext"/>
+    <line x1="74.7" y1="15.5" x2="74.7" y2="23.5" class="dim-ext"/>
+    <line x1="60.55" y1="22.0" x2="74.7" y2="22.0" class="dim-line" marker-start="url(#arrow-start)" marker-end="url(#arrow-end)"/>
+    <text x="67.625" y="24.4" class="dim-text">14,15 (Abtriebsversatz)</text>
+    <line x1="108" y1="4.5" x2="120" y2="4.5" class="dim-ext"/>
+    <line x1="108" y1="14.5" x2="120" y2="14.5" class="dim-ext"/>
+    <line x1="118.5" y1="4.5" x2="118.5" y2="14.5" class="dim-line" marker-start="url(#arrow-start)" marker-end="url(#arrow-end)"/>
+    <text x="119.7" y="10.3" class="dim-text" text-anchor="start">10,0 ±0.1</text>
+
+    <text x="60.55" y="2.5" class="dim-text-sm">X=60.55</text>
+    <text x="109.05" y="2.5" class="dim-text-sm">X=109.05</text>
+    <text x="84.8" y="16.5" class="dim-text-sm" fill="#b7791f">Koaxiale Ausrichtung:</text>
+    <text x="84.8" y="19.0" class="dim-text-sm" fill="#b7791f">60.55 + 14.15 = 74.70 mm (Pivot-Achse)</text>
+    <text x="109.05" y="28.0" class="dim-text-sm">4x Ø2,8 (M3-Kernloch)</text>
+  </g>
+
+  <!-- VIEW 4: 3D ISOMETRIE (M 0.75:1) -->
+  <g transform="translate(166.0, 78.0)">
+    <text x="0" y="-2" class="title" font-size="3.2">3D-ISOMETRIE (M 0.75:1)</text>
+
+    <g transform="translate(18, 10) scale(0.72)">
+      <!-- Base Main Outline -->
+      <polygon points="10,25 90,-15 110,-5 30,35" fill="#f8fafc" stroke="#000" stroke-width="0.5"/>
+      <polygon points="10,25 30,35 30,55 10,45" fill="#e2e8f0" stroke="#000" stroke-width="0.5"/>
+      <polygon points="30,35 110,-5 110,15 30,55" fill="#edf2f7" stroke="#000" stroke-width="0.5"/>
+      <!-- Lower Tab downwards -->
+      <polygon points="16,28 32,20 32,45 16,53" fill="#cbd5e0" stroke="#000" stroke-width="0.5"/>
+      <polygon points="16,53 32,45 38,48 22,56" fill="#e2e8f0" stroke="#000" stroke-width="0.5"/>
+      <!-- Servo 1 Cutout -->
+      <polygon points="18,22 52,5 57,7.5 23,24.5" fill="#ffffff" stroke="#000" stroke-width="0.4"/>
+      <!-- U-Fork Cutout -->
+      <polygon points="68,-3 98,-18 103,-15.5 73,-0.5" fill="#ffffff" stroke="#000" stroke-width="0.4"/>
+      <!-- Pivot Hole on front rail -->
+      <ellipse cx="78" cy="22" rx="2.5" ry="3.5" fill="#ffffff" stroke="#000" stroke-width="0.4"/>
+    </g>
+
+    <!-- Key Design Highlights Box -->
+    <rect x="0" y="38" width="117" height="15" fill="#f0fff4" stroke="#9ae6b4" stroke-width="0.3" rx="1"/>
+    <text x="3" y="42" class="table-text-bold" fill="#22543d">Konstruktive Besonderheiten (Rev 3):</text>
+    <text x="3" y="45.5" class="table-text" fill="#276749">• Keine Risskerben: Durchgehend 5,0 mm massiver Steg &amp; geschlossener Laschenboden</text>
+    <text x="3" y="48.5" class="table-text" fill="#276749">• Servo 1 Kabelauslass nach links offen (ungehinderte Kabelführung)</text>
+    <text x="3" y="51.5" class="table-text" fill="#276749">• Perfekte Flucht: Coxa-Servowelle &amp; Pivot-Achse liegen exakt bei X = 74,70 mm</text>
+  </g>
+
+  <!-- CALIPER CHECK TABLE (MESSSCHIEBER-KONTROLLLISTE) -->
+  <g transform="translate(28, 142)">
+    <rect x="0" y="0" width="128" height="58" fill="#f8fafc" stroke="#cbd5e0" stroke-width="0.4" rx="1"/>
+    
+    <!-- Table Header -->
+    <rect x="0" y="0" width="128" height="6.5" fill="#2d3748" rx="1"/>
+    <text x="4" y="4.5" class="table-text-bold" fill="#ffffff" font-size="2.4">PRÜFMAßE FÜR DEN MESSSCHIEBER-ABGLEICH (SOLLWERTE)</text>
+
+    <!-- Sub-headers -->
+    <rect x="0" y="6.5" width="128" height="5.0" fill="#edf2f7"/>
+    <text x="4" y="10.0" class="table-text-bold">Nr.</text>
+    <text x="12" y="10.0" class="table-text-bold">Messpunkt / Merkmal</text>
+    <text x="75" y="10.0" class="table-text-bold">Sollmaß</text>
+    <text x="96" y="10.0" class="table-text-bold">Toleranz</text>
+    <line x1="0" y1="11.5" x2="128" y2="11.5" stroke="#cbd5e0" stroke-width="0.3"/>
+    <rect x="0.5" y="12.0" width="127" height="3.5" fill="#ffffff"/>
+    <text x="4" y="14.5" class="table-text">1</text>
+    <text x="12" y="14.5" class="table-text">Gesamtlänge Bauteil (X)</text>
+    <text x="75" y="14.5" class="table-text-bold">115,00 mm</text>
+    <text x="96" y="14.5" class="table-text" fill="#4a5568">±0,20 mm</text>
+    <rect x="0.5" y="15.5" width="127" height="3.5" fill="#f7fafc"/>
+    <text x="4" y="18.0" class="table-text">2</text>
+    <text x="12" y="18.0" class="table-text">Gesamtbreite Hauptkörper (Y)</text>
+    <text x="75" y="18.0" class="table-text-bold">30,50 mm</text>
+    <text x="96" y="18.0" class="table-text" fill="#4a5568">±0,20 mm</text>
+    <rect x="0.5" y="19.0" width="127" height="3.5" fill="#ffffff"/>
+    <text x="4" y="21.5" class="table-text">3</text>
+    <text x="12" y="21.5" class="table-text">Grundkörperhöhe (Z)</text>
+    <text x="75" y="21.5" class="table-text-bold">19,00 mm</text>
+    <text x="96" y="21.5" class="table-text" fill="#4a5568">±0,15 mm</text>
+    <rect x="0.5" y="22.5" width="127" height="3.5" fill="#f7fafc"/>
+    <text x="4" y="25.0" class="table-text">4</text>
+    <text x="12" y="25.0" class="table-text">Gesamthöhe mit Lasche (Z)</text>
+    <text x="75" y="25.0" class="table-text-bold">34,00 mm</text>
+    <text x="96" y="25.0" class="table-text" fill="#4a5568">±0,20 mm</text>
+    <rect x="0.5" y="26.0" width="127" height="3.5" fill="#ffffff"/>
+    <text x="4" y="28.5" class="table-text">5</text>
+    <text x="12" y="28.5" class="table-text">Servo 1 Schachtöffnung (X × Y)</text>
+    <text x="75" y="28.5" class="table-text-bold">40,5 × 20,5 mm</text>
+    <text x="96" y="28.5" class="table-text" fill="#4a5568">±0,20 mm</text>
+    <rect x="0.5" y="29.5" width="127" height="3.5" fill="#f7fafc"/>
+    <text x="4" y="32.0" class="table-text">6</text>
+    <text x="12" y="32.0" class="table-text">Servo 1 Lochabstand (X × Y)</text>
+    <text x="75" y="32.0" class="table-text-bold">48,50 × 10,00 mm</text>
+    <text x="96" y="32.0" class="table-text" fill="#4a5568">±0,10 mm</text>
+    <rect x="0.5" y="33.0" width="127" height="3.5" fill="#ffffff"/>
+    <text x="4" y="35.5" class="table-text">7</text>
+    <text x="12" y="35.5" class="table-text">Servo 2 Lochabstand (X × Z)</text>
+    <text x="75" y="35.5" class="table-text-bold">48,50 × 10,00 mm</text>
+    <text x="96" y="35.5" class="table-text" fill="#4a5568">±0,10 mm</text>
+    <rect x="0.5" y="36.5" width="127" height="3.5" fill="#f7fafc"/>
+    <text x="4" y="39.0" class="table-text">8</text>
+    <text x="12" y="39.0" class="table-text">U-Gabel lichte Weite (X)</text>
+    <text x="75" y="39.0" class="table-text-bold">41,30 mm</text>
+    <text x="96" y="39.0" class="table-text" fill="#4a5568">±0,20 mm</text>
+    <rect x="0.5" y="40.0" width="127" height="3.5" fill="#ffffff"/>
+    <text x="4" y="42.5" class="table-text">9</text>
+    <text x="12" y="42.5" class="table-text">U-Gabel Stegstärke (Y)</text>
+    <text x="75" y="42.5" class="table-text-bold">5,00 mm</text>
+    <text x="96" y="42.5" class="table-text" fill="#4a5568">±0,15 mm</text>
+    <rect x="0.5" y="43.5" width="127" height="3.5" fill="#f7fafc"/>
+    <text x="4" y="46.0" class="table-text">10</text>
+    <text x="12" y="46.0" class="table-text">Drehachse Pivot (Lage ab Außenkante)</text>
+    <text x="75" y="46.0" class="table-text-bold">74,70 mm</text>
+    <text x="96" y="46.0" class="table-text" fill="#4a5568">±0,15 mm</text>
+    <rect x="0.5" y="47.0" width="127" height="3.5" fill="#ffffff"/>
+    <text x="4" y="49.5" class="table-text">11</text>
+    <text x="12" y="49.5" class="table-text">Drehachsenbohrung Ø</text>
+    <text x="75" y="49.5" class="table-text-bold">4,20 mm</text>
+    <text x="96" y="49.5" class="table-text" fill="#4a5568">+0,15 mm</text>
+    <rect x="0.5" y="50.5" width="127" height="3.5" fill="#f7fafc"/>
+    <text x="4" y="53.0" class="table-text">12</text>
+    <text x="12" y="53.0" class="table-text">Laschen-Gegenlagerbohrung Ø</text>
+    <text x="75" y="53.0" class="table-text-bold">3,50 mm</text>
+    <text x="96" y="53.0" class="table-text" fill="#4a5568">+0,15 mm</text>
+  </g>
+
+  <!-- TITLE BLOCK (DIN EN ISO 7200 SCHRIFTFELD) -->
+  <g transform="translate(162, 142)">
+    <rect x="0" y="0" width="126" height="58" fill="#ffffff" stroke="#000000" stroke-width="0.5"/>
+
+    <!-- Horizontal Dividers -->
+    <line x1="0" y1="12" x2="126" y2="12" stroke="#000" stroke-width="0.35"/>
+    <line x1="0" y1="24" x2="126" y2="24" stroke="#000" stroke-width="0.35"/>
+    <line x1="0" y1="38" x2="126" y2="38" stroke="#000" stroke-width="0.35"/>
+    <line x1="0" y1="48" x2="126" y2="48" stroke="#000" stroke-width="0.35"/>
+
+    <!-- Vertical Dividers -->
+    <line x1="63" y1="0" x2="63" y2="24" stroke="#000" stroke-width="0.35"/>
+    <line x1="86" y1="24" x2="86" y2="48" stroke="#000" stroke-width="0.35"/>
+    <line x1="42" y1="48" x2="42" y2="58" stroke="#000" stroke-width="0.35"/>
+    <line x1="84" y1="48" x2="84" y2="58" stroke="#000" stroke-width="0.35"/>
+
+    <!-- Field Contents -->
+    <text x="4" y="4.5" class="dim-text-sm" text-anchor="start" fill="#718096">Projekt / Baugruppe:</text>
+    <text x="4" y="9.5" class="title" font-size="3.2">LASIUS HEXAPOD</text>
+
+    <text x="67" y="4.5" class="dim-text-sm" text-anchor="start" fill="#718096">Zeichnungs-Nr. / Revision:</text>
+    <text x="67" y="9.5" class="title" font-size="3.2">LH-COX-001-REV3</text>
+
+    <text x="4" y="16.5" class="dim-text-sm" text-anchor="start" fill="#718096">Benennung des Bauteils:</text>
+    <text x="4" y="21.5" class="title" font-size="3.8">COXA BRACKET</text>
+
+    <text x="67" y="16.5" class="dim-text-sm" text-anchor="start" fill="#718096">Passend für Servotyp:</text>
+    <text x="67" y="21.5" class="title" font-size="2.6" fill="#2b6cb0">Torcster NR-645 MG BB (59g)</text>
+
+    <text x="4" y="28.5" class="dim-text-sm" text-anchor="start" fill="#718096">Werkstoff / Fertigung:</text>
+    <text x="4" y="33.5" class="subtitle" font-weight="bold" font-size="2.6">3D-Druck (PETG / PLA / ABS)</text>
+    <text x="4" y="36.5" class="dim-text-sm" text-anchor="start" fill="#4a5568">Infill ≥ 40%, Wandlinien ≥ 4</text>
+
+    <text x="89" y="28.5" class="dim-text-sm" text-anchor="start" fill="#718096">Maßstab:</text>
+    <text x="89" y="34.5" class="title" font-size="4.0">1:1</text>
+    <text x="89" y="37.0" class="dim-text-sm" text-anchor="start" fill="#718096">(Isometrie 0.75:1)</text>
+
+    <text x="4" y="42.5" class="dim-text-sm" text-anchor="start" fill="#718096">Allgemeintoleranz:</text>
+    <text x="4" y="46.5" class="subtitle" font-weight="bold" font-size="2.4">DIN ISO 2768-m (±0,2 mm)</text>
+
+    <text x="89" y="42.5" class="dim-text-sm" text-anchor="start" fill="#718096">Blattgröße:</text>
+    <text x="89" y="46.5" class="subtitle" font-weight="bold" font-size="2.6">DIN A4 Quer</text>
+
+    <text x="4" y="52.0" class="dim-text-sm" text-anchor="start" fill="#718096">Erstellt:</text>
+    <text x="4" y="56.0" class="subtitle" font-size="2.2">2026-11-05 / Antigravity</text>
+
+    <text x="46" y="52.0" class="dim-text-sm" text-anchor="start" fill="#718096">CAD-Quelle:</text>
+    <text x="46" y="56.0" class="subtitle" font-size="2.2">coxa_bracket.scad</text>
+
+    <text x="88" y="52.0" class="dim-text-sm" text-anchor="start" fill="#718096">Status:</text>
+    <text x="88" y="56.0" class="subtitle" font-weight="bold" font-size="2.2" fill="#22543d">FREIGEGEBEN</text>
+  </g>
+</svg>

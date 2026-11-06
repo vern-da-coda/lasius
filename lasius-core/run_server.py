@@ -77,11 +77,13 @@ def main():
             sys.exit(1)
         try:
             bus = smbus2.SMBus(args.i2c_bus)
-            drivers = {
-                0x40: RealPCA9685Driver(address=0x40, bus_instance=bus, visualizer_server=server),
-                0x42: RealPCA9685Driver(address=0x42, bus_instance=bus, visualizer_server=server),
-            }
-            print(f"[Hardware] Dual PCA9685 drivers connected at 0x40 & 0x42 (Bus {args.i2c_bus}).")
+            for addr in (0x40, 0x42):
+                try:
+                    drivers[addr] = RealPCA9685Driver(address=addr, bus_instance=bus, visualizer_server=server)
+                    print(f"[Hardware] PCA9685 driver connected at 0x{addr:02X} (Bus {args.i2c_bus}).")
+                except Exception as ex:
+                    print(f"[WARNING] Hardware PCA9685 at 0x{addr:02X} not reachable ({ex}). Falling back to MockPWMDriver.")
+                    drivers[addr] = MockPWMDriver(visualizer_server=server)
         except Exception as e:
             print(f"[ERROR] Failed to initialize hardware I2C: {e}")
             sys.exit(1)

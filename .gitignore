@@ -137,3 +137,11 @@ GEMINI.md
 gemini.md
 HARDWARE_DECISIONS.md
 GAMEPAD_STADIA.md
+mechanics/scans/*
+*.FCBak
+
+
+!/mechanics/export/step/leg_assembly.step
+!/mechanics/export/stl/body_assembly.stl
+
+!/mechanics/export/stl/leg_assembly.stl

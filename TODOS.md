@@ -42,7 +42,7 @@ flowchart TD
     A --> F["5. STEMMA QT Sensorik & Autonomie"]
 
     B --> B1["Zentrale Scripts & Banner: dev_sim, deploy_pi, run_tests, backup, status"]
-    C --> C1["3D-Scans in cad/scans/, 4 Perimeter, 40% Gyroid, PETG, Radien R 2-3mm"]
+    C --> C1["3D-Scans in mechanics/scans/, 4 Perimeter, 40% Gyroid, PETG, Radien R 2-3mm"]
     D --> D1["Google Stadia Controller in lasius-pilot [ERLEDIGT]"]
     D --> D2["HTML5 Browser Gamepad API (navigator.getGamepads)"]
     D --> D3["Kalibrierungs-Profil-Manager & 3D Free-Roam Odometrie"]
@@ -56,9 +56,9 @@ flowchart TD
 * **Ziel:** Einheitliche Skripte für den schnellen Entwickler-Alltag (Simulation, Deployment, Backup, Health-Check) inkl. zentralem ASCII-Banner [`scripts/banner.txt`](scripts/banner.txt).
 * **Dateien:** Ordner [`scripts/`](scripts/) mit ausführbaren Bash-Skripten (Dokumentation & Workflows siehe [`README.md`](README.md)).
 
-### Todo 2: Mechanische Optimierung & CAD-Reconstruction der Beinteile (`cad/scans/`)
+### Todo 2: Mechanische Optimierung & CAD-Reconstruction der Beinteile (`mechanics/scans/`)
 * **3D-Scan & Reverse Engineering:**
-  * Gebrochene Originalteile (Coxa 60 mm, Femur 100 mm, Tibia 130 mm) mit revoscan einscannen und als `.stl` / `.obj` in [`cad/scans/`](cad/scans/) ablegen.
+  * Gebrochene Originalteile (Coxa 60 mm, Femur 100 mm, Tibia 130 mm) mit revoscan einscannen und als `.stl` / `.obj` in [`mechanics/scans/`](mechanics/scans/) ablegen.
   * Parametrisches Nachmodellieren als saubere Volumenkörper (Solids) mit exakten Gelenkabständen (**60 mm / 100 mm / 130 mm**).
 * **Konstruktive Maßnahmen & Slicer-Vorgaben vor Neudruck:**
   * **Material:** **PETG** (zäh-elastisch, bricht nicht spröde unter Schocklast).
@@ -99,3 +99,10 @@ flowchart TD
 * **ToF-Hinderniserkennung & Fußkontakt-Sensorik:**
   * **3x Adafruit VL53L4CD ToF-Distanzsensoren (`0x29` über PCA9548 Kanäle 0, 1, 2)** für den Nahbereich (1–1300 mm, Front Links/Mitte/Rechts).
   * **6x Subminiatur-Mikroschalter** an den Tibia-Spitzen über **Adafruit MCP23017 I2C GPIO-Expander (`0x20`)** für reaktive Bodenkontakterkennung auf unebenem Gelände.
+
+### Todo 6: Analoges Servo-Potentiometer Feedback (Closed-Loop Telemetrie) [✔ Prototyp-Kalibrierung ERLEDIGT]
+* **Potentiometer-Feedback:** Anzapfung der internen Schleiferleitung (Wiper) der Reely NR-645 MG BB Servos für direktes Winkel-Feedback, Blockadeerkennung und Drehmoment-Schätzung.
+* **Kalibrier-Tooling:** Interaktiver CLI-Wizard [`scripts/pot_calibration_wizard.py`](scripts/pot_calibration_wizard.py) mit sanfter Kosinus-Interpolation und linearer Regressionsanalyse.
+* **Kalibrier-Ergebnisse ([`calibration_data/`](calibration_data/)):** Erfolgreiche Vermessung an Kanal 15 ($R^2 = 0{,}9996$, Empfindlichkeit $7{,}59\,\text{mV}/^\circ$, Nullpunkt $1{,}5633\,\text{V}$ bei $0^\circ$, max. Fehler nur $\pm 1{,}45^\circ$).
+* **Closed-Loop Formel:** $\theta(V) = (V - 1{,}5633) \cdot 131{,}77^\circ$.
+* **Nächster Schritt:** Einlesen über ADC (z. B. ADS1115 via I2C oder MCP3008/MCP3208 via SPI).

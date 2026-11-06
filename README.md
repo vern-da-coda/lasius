@@ -1,6 +1,10 @@
 # Lasius Hexapod Control Software
 Modular control software, 3D Digital Twin, REST/WebSocket control API, and teleoperation system for an 18-DOF, 6-legged (hexapod) biomimetic walking robot.
 
+<p align="center">
+  <img src="mechanics/drawings/body_assembly.png" alt="Lasius Hexapod Full Body Assembly" width="750">
+</p>
+
 ## Repository Structure (Monorepo)
 
 The repository is organized into three decoupled modules using native PEP 420 namespace packages (`lasius.core` and `lasius.pilot`):
@@ -44,8 +48,26 @@ lasius
 │   ├── run_tests.sh                 # Execute test suite across core and pilot
 │   ├── backup_calibration.sh        # Backup calibration.json snapshot with timestamp
 │   └── status_pi.sh                 # Query live Pi telemetry, KPIs and robot status
+├── mechanics/                       # Mechanical engineering & precision digital fabrication
+│   ├── models/                      # Parametric CAD models (.FCStd, .scad, .csg, hardware/)
+│   │   ├── body_bottom.FCStd        # 2 mm chassis bottom plate (pure analytical G1 geometry)
+│   │   ├── body_top.FCStd           # 2 mm chassis top plate
+│   │   ├── coxa_bracket.FCStd       # Strengthened coxa bracket with 3 mm servo stabilization cheeks
+│   │   ├── femur_plate.FCStd        # Dual femur plate servo cage with countersunk bearings
+│   │   ├── tibia.FCStd              # Lightweight high-rigidity tibia limb (analytical curves)
+│   │   ├── tibia_servo_foot.FCStd   # Integrated servo foot mount & rounded ground tip
+│   │   ├── spacer_14x50.FCStd       # Ø 14 x 51.3 mm chassis standoff pillars
+│   │   ├── leg_assembly.FCStd       # 22-part full leg kinematic assembly with hardware
+│   │   ├── body_assembly.FCStd      # 142-part complete robot master assembly
+│   │   └── hardware/                # Parametric M4 nuts, shims, screws & bearings
+│   ├── export/                      # Production manufacturing files
+│   │   ├── step/                    # ISO 10303 STEP CAD models for CNC milling / precision machining
+│   │   ├── stl/                     # High-resolution meshes for 3D printing (SLA / SLS / FDM)
+│   │   └── dxf/                     # 2D CAD profiles for CNC laser / waterjet cutting
+│   ├── drawings/                    # 1:1 Scale technical drawings & printable drill templates (.svg)
+│   ├── scripts/                     # Python FreeCAD generators & scan contour calibration tools
+│   └── scans/                       # 1200 DPI flatbed & 3D reference scans for reverse-engineering
 ├── backups/                         # Local calibration backup snapshots (.gitignore)
-├── cad/scans/                       # 3D scan meshes (.stl / .obj) for reverse-engineered leg parts
 ├── GAMEPAD_STADIA.md                # Google Stadia Controller setup, button map & code changelog
 ├── TODOS.md                         # Project task list, backlog & feature ideas
 └── pyproject.toml                   # Top-level workspace & pytest configuration
@@ -62,14 +84,14 @@ All physical dimensions and servo configurations are maintained in [`lasius-core
   - **Femur:** 10 cm (100 mm)
   - **Tibia:** 13 cm (130 mm)
 - **Chassis Dimensions & Dual-Plate Construction:**
-  - **Dual Sandwich Plates:** Two distinct 5 mm chassis plates (carbon/aluminum) sandwiching and supporting the 6 coxa rotation axes from top and bottom.
-  - **Plate Clearance & Standoffs:** 24 mm internal vertical gap spanned by 6 cylindrical standoff spacer pillars.
-  - **Front & Rear width:** 13 cm (130 mm, $X = \pm 65\,\text{mm}$)
-  - **Middle width:** 15 cm (150 mm, $X = \pm 75\,\text{mm}$)
-  - **Axis distance along body:** 9 cm (90 mm, $Y = -90\,\text{mm}$ front, $0\,\text{mm}$ middle, $+90\,\text{mm}$ rear)
+  - **Dual Sandwich Plates:** Two distinct 2 mm chassis plates (carbon fiber / aluminum) sandwiching and supporting the 6 coxa rotation axes from top and bottom.
+  - **Plate Clearance & Standoffs:** 51.3 mm internal vertical gap spanned by 8 cylindrical standoff spacer pillars (Ø 14 mm).
+  - **Front & Rear width:** 13 cm (130 mm, $Y = \pm 65\,\text{mm}$)
+  - **Middle width:** 15 cm (150 mm, $Y = \pm 75\,\text{mm}$)
+  - **Axis distance along body:** 8.6 cm (86 mm, $X = +86\,\text{mm}$ front, $0\,\text{mm}$ middle, $-86\,\text{mm}$ rear)
   - **Default Stance:** $X = 160\,\text{mm}$ radial reach, $Z = -80\,\text{mm}$ ground clearance.
 - **Actuation & Planned Sensor Expansion:**
-  - **Servos (18×):** Standard 25T spline metal-gear servos.
+  - **Servos (18×):** Standard 25T spline metal-gear servos (Hitec HS-645MG / NR-645).
   - **PWM Drivers (2×):** PCA9685 on I2C Bus 1 at `0x40` (left 9 servos) and `0x42` (right 9 servos, A1 bridged), powered by a 6.0 V high-current UBEC. PCA9685 `ALLCALL` (`0x70`) is explicitly disabled in software to avoid address collision with the I2C multiplexer.
   - **Planned STEMMA QT / Qwiic Sensor Bus (I2C):**
     - `0x70`: Adafruit PCA9548 8-Channel I2C Multiplexer
@@ -77,6 +99,44 @@ All physical dimensions and servo configurations are maintained in [`lasius-core
     - `0x41` & `0x44`: 2× Adafruit INA260 High-Side Voltage/Current/Power Monitors (left & right servo banks)
     - `CH0–CH2` (`0x29`): 3× Adafruit VL53L4CD Time-of-Flight laser distance sensors (1–1300 mm, front left/center/right)
     - `0x20`: Adafruit MCP23017 16-pin I2C GPIO expander reading 6× foot contact microswitches
+
+---
+
+## Mechanical CAD & Digital Fabrication (`mechanics/`)
+
+All robot components are engineered as parametric CAD models in FreeCAD and reverse-engineered from calibrated 1200 DPI flatbed scans and original templates:
+
+### 1. Parametric 3D CAD Models (`mechanics/models/`)
+* **Chassis Bottom Plate ([`body_bottom.FCStd`](mechanics/models/body_bottom.FCStd)):**
+  * **Material & Thickness:** 2.0 mm solid plate (CFRP carbon fiber / aluminum).
+  * **Analytic Geometry:** Pure analytic OpenCASCADE B-Rep geometry (44 smooth faces, 126 edges; zero faceted polygon segments).
+  * **Contour:** Exact $G^1$-continuous concave fillets ($R_f = 4.5\text{ mm}$) transitioning into all leg mounts towards the nose and tail. Fully protruding circular pivot ears ($R = 13.5\text{ mm}$), $35.5^\circ$ flank line to the tapered rear with $R = 7.0\text{ mm}$ corner fillet.
+  * **Bores & Cutouts:** 6× coxa counter-bearing holes ($\varnothing 8.0\text{ mm}$), 8× M3 screw mounting holes ($\varnothing 3.0\text{ mm}$), and a central electronics cutout window ($50.0 \times 160.0\text{ mm}$).
+* **Chassis Top Plate ([`body_top.FCStd`](mechanics/models/body_top.FCStd)):**
+  * Upper chassis plate (2.0 mm solid), identical outer contour and mounting hole pattern as `body_bottom`.
+* **Coxa Bracket ([`coxa_bracket.FCStd`](mechanics/models/coxa_bracket.FCStd)):**
+  * **Structural Reinforcement:** Dual $3.0\text{ mm}$ lateral reinforcement cheeks fully enclose the Body-to-Coxa servo casing, eliminating shear failure at the pivot axis.
+  * **Cable Outlet:** Fully cleared and filleted wiring channel for the Coxa servo ($R = 2.0\text{ mm}$ outer corner radius).
+  * **Counter-Bearing:** Coaxial pivot bore aligned at $Y = 15.25\text{ mm}$ ($Z_{\text{world}} = 0.00\text{ mm}$).
+* **Femur Plate Cage ([`femur_plate.FCStd`](mechanics/models/femur_plate.FCStd)):**
+  * Dual-plate beam cage ($L = 100.0\text{ mm}$ inter-axis spacing, $W = 31.6\text{ mm}$) with flush-mounted ball bearings ($\varnothing 8 \times 3\text{ mm}$), standoff spacers ($51.3\text{ mm}$), and a $1.0\text{ mm}$ servo clearance gap with flush M4 fasteners.
+* **Tibia Limb ([`tibia.FCStd`](mechanics/models/tibia.FCStd)):**
+  * High-rigidity, weight-optimized lower limb ($L = 130.0\text{ mm}$, $X = -129.15 \dots +41.15\text{ mm}$).
+  * Pure analytic circular arcs and B-splines (26 faces, 72 edges) replacing the previous 229 polygon steps while preserving the exact profile.
+* **Tibia Servo Foot ([`tibia_servo_foot.FCStd`](mechanics/models/tibia_servo_foot.FCStd)):**
+  * Integrated servo mount and rounded foot tip with internal wire routing.
+* **Chassis Standoff Pillars ([`spacer_14x50.FCStd`](mechanics/models/spacer_14x50.FCStd)):**
+  * $\varnothing 14.0\text{ mm}$ standoff pillars ($L = 51.3\text{ mm}$) with M3 threaded bores spanning the internal gap between the chassis plates.
+* **Complete Modular Leg Assembly ([`leg_assembly.FCStd`](mechanics/models/leg_assembly.FCStd)):**
+  * Fully linked 22-part kinematic subassembly consisting of 3 servos (NR-645), brackets, bearings, M4 countersunk screws, shims, lock nuts, and standoffs.
+* **Complete Full-Body Assembly ([`body_assembly.FCStd`](mechanics/models/body_assembly.FCStd)):**
+  * Master full-robot assembly (142 components) linking the bottom plate (`body_bottom`), top plate (`body_top`), 8× standoff pillars (`spacer_14x50`, $\varnothing 14 \times 51.3\text{ mm}$) at all M3 mounting holes, and 6× modular leg assemblies (`leg_assembly`). Right-side legs (FR, MR, RR) are mirrored across the sagittal plane ($Y = 0$) so that all 6 servo horn outputs consistently face forward towards the front of the robot ($-X$), mounted with exact $0.00000\text{ mm}$ coxa pivot axis alignment.
+
+### 2. Digital Fabrication & Exchange Formats (`mechanics/export/`)
+* **STEP (`export/step/`):** ISO 10303 CAD exchange format for CNC milling, waterjet cutting, and CAD assembly imports.
+* **STL (`export/stl/`):** High-resolution triangulated meshes for 3D printing (SLA, SLS, FDM).
+* **DXF (`export/dxf/`):** 2D vector profiles for laser cutting and 2D CNC sheet processing (CFRP / Aluminum).
+* **1:1 Technical Drawings & Templates (`drawings/`):** True-to-scale SVG drill and fabrication templates.
 
 ---
 
@@ -103,7 +163,7 @@ All physical dimensions and servo configurations are maintained in [`lasius-core
   - Responsive keyboard controls (`WASD`, `QE`, `Arrows`, `Space`) with automatic `keyup` stop detection.
 - **Biomimetic 3D Digital Twin & Multi-View Interface:**
   - Real-time Three.js 3D WebGL viewport and 2D orthographic projections (Top XY, Side YZ, Front XZ).
-  - Dual 5 mm chassis plates sandwiching the 6 coxa rotation axes with internal standoff spacer pillars.
+  - Dual 2 mm chassis plates sandwiching the 6 coxa rotation axes with internal standoff spacer pillars.
   - Unified chassis and leg styling using identical PBR material (`#343746`) and a compact blue forward direction indicator triangle (`#3498db`).
   - Clean CAD orthographic projections using strictly straight vectors for all limb segments.
 - **4-Tab Control Sidebar:**

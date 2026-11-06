@@ -1,0 +1,246 @@
+  0
+SECTION
+  2
+HEADER
+  9
+$ACADVER
+  1
+AC1009
+  9
+$INSUNITS
+ 70
+     4
+  9
+$EXTMIN
+ 10
+-15.8
+ 20
+-15.8
+ 30
+0.0
+  9
+$EXTMAX
+ 10
+115.8
+ 20
+15.8
+ 30
+0.0
+  0
+ENDSEC
+  0
+SECTION
+  2
+ENTITIES
+  0
+LINE
+  8
+OUTER_CONTOUR
+ 10
+0.0
+ 20
+15.8
+ 30
+0.0
+ 11
+100.0
+ 21
+15.8
+ 31
+0.0
+  0
+LINE
+  8
+OUTER_CONTOUR
+ 10
+100.0
+ 20
+-15.8
+ 30
+0.0
+ 11
+0.0
+ 21
+-15.8
+ 31
+0.0
+  0
+ARC
+  8
+OUTER_CONTOUR
+ 10
+0.0
+ 20
+0.0
+ 30
+0.0
+ 40
+15.8
+ 50
+90.0
+ 51
+270.0
+  0
+ARC
+  8
+OUTER_CONTOUR
+ 10
+100.0
+ 20
+0.0
+ 30
+0.0
+ 40
+15.8
+ 50
+270.0
+ 51
+90.0
+  0
+CIRCLE
+  8
+SERVO_HUB_HOLES
+ 10
+0.0
+ 20
+0.0
+ 30
+0.0
+ 40
+4.0
+  0
+CIRCLE
+  8
+SERVO_HUB_HOLES
+ 10
+100.0
+ 20
+0.0
+ 30
+0.0
+ 40
+4.0
+  0
+CIRCLE
+  8
+HORN_MOUNT_HOLES
+ 10
+-8.0
+ 20
+0.0
+ 30
+0.0
+ 40
+1.0
+  0
+CIRCLE
+  8
+HORN_MOUNT_HOLES
+ 10
+8.0
+ 20
+0.0
+ 30
+0.0
+ 40
+1.0
+  0
+CIRCLE
+  8
+HORN_MOUNT_HOLES
+ 10
+0.0
+ 20
+-8.0
+ 30
+0.0
+ 40
+1.0
+  0
+CIRCLE
+  8
+HORN_MOUNT_HOLES
+ 10
+0.0
+ 20
+8.0
+ 30
+0.0
+ 40
+1.0
+  0
+CIRCLE
+  8
+HORN_MOUNT_HOLES
+ 10
+92.0
+ 20
+0.0
+ 30
+0.0
+ 40
+1.0
+  0
+CIRCLE
+  8
+HORN_MOUNT_HOLES
+ 10
+108.0
+ 20
+0.0
+ 30
+0.0
+ 40
+1.0
+  0
+CIRCLE
+  8
+HORN_MOUNT_HOLES
+ 10
+100.0
+ 20
+-8.0
+ 30
+0.0
+ 40
+1.0
+  0
+CIRCLE
+  8
+HORN_MOUNT_HOLES
+ 10
+100.0
+ 20
+8.0
+ 30
+0.0
+ 40
+1.0
+  0
+CIRCLE
+  8
+STANDOFF_HOLES
+ 10
+35.0
+ 20
+0.0
+ 30
+0.0
+ 40
+1.5
+  0
+CIRCLE
+  8
+STANDOFF_HOLES
+ 10
+65.0
+ 20
+0.0
+ 30
+0.0
+ 40
+1.5
+  0
+ENDSEC
+  0
+EOF

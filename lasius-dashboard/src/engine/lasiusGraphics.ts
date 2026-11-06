@@ -67,7 +67,7 @@ export class LasiusGraphicsEngine {
   private jointActiveMat!: THREE.MeshStandardMaterial;
   private axisGuideMat!: THREE.MeshBasicMaterial;
 
-  private sharedCoxaBracketGeo!: THREE.BoxGeometry;
+  private sharedCoxaBracketGeo!: THREE.ExtrudeGeometry;
   private sharedCoxaServoGeo!: THREE.BoxGeometry;
   private sharedCoxaPivotPinGeo!: THREE.CylinderGeometry;
   private sharedJointRingGeo!: THREE.TorusGeometry;
@@ -300,26 +300,83 @@ export class LasiusGraphicsEngine {
   }
 
   private initLegGeometries() {
-    this.sharedCoxaBracketGeo = new THREE.BoxGeometry(80, 22, 26);
-    this.sharedCoxaServoGeo = new THREE.BoxGeometry(40, 20, 22);
+    // Coxa 3D-printed cage & open U-fork bracket (measured from 300 DPI scan mechanics/scans/scan_20260514201021939.jpeg:
+    // total length 115.0mm [x = -40.3mm inner end to x = +74.7mm outer end],
+    // inner 41.3mm open U-fork [x = -32.6mm to +8.7mm] with 7.7mm end cap and 3.5mm lower rail,
+    // 8.6mm middle cross-wall, outer 30.5mm tall servo cage with 40.5x20.5mm servo window [x = +26.2mm to +66.7mm],
+    // extruded 19.0mm across Z [-9.5mm to +9.5mm] between the Femur side plates)
+    const coxaShape = new THREE.Shape();
+    coxaShape.moveTo(-40.3, -11.5);
+    coxaShape.lineTo(8.7, -11.5);
+    coxaShape.lineTo(8.7, -15.25);
+    coxaShape.lineTo(74.7, -15.25);
+    coxaShape.lineTo(74.7, 15.25);
+    coxaShape.lineTo(8.7, 15.25);
+    coxaShape.lineTo(8.7, -8.0);
+    coxaShape.lineTo(-32.6, -8.0);
+    coxaShape.lineTo(-32.6, 11.5);
+    coxaShape.lineTo(-40.3, 11.5);
+    coxaShape.closePath();
+
+    // 40.5mm x 20.5mm rectangular servo pocket cutout in the outer Coxa cage
+    const coxaServoWindow = new THREE.Path();
+    coxaServoWindow.moveTo(26.2, -10.25);
+    coxaServoWindow.lineTo(26.2, 10.25);
+    coxaServoWindow.lineTo(66.7, 10.25);
+    coxaServoWindow.lineTo(66.7, -10.25);
+    coxaServoWindow.closePath();
+    coxaShape.holes.push(coxaServoWindow);
+
+    this.sharedCoxaBracketGeo = new THREE.ExtrudeGeometry(coxaShape, {
+      depth: 18.2,
+      bevelEnabled: true,
+      bevelThickness: 0.4,
+      bevelSize: 0.4,
+      bevelSegments: 2
+    });
+    this.sharedCoxaBracketGeo.translate(0, 0, -9.1);
+
+    this.sharedCoxaServoGeo = new THREE.BoxGeometry(40, 20, 24);
     this.sharedCoxaPivotPinGeo = new THREE.CylinderGeometry(4.5, 4.5, 34, 16);
     this.sharedJointRingGeo = new THREE.TorusGeometry(6.5, 1.2, 8, 24);
     this.sharedCoxaCollarGeo = new THREE.CylinderGeometry(7.5, 7.5, 3.2, 20);
     this.sharedCoxaCollarGeo.rotateX(Math.PI / 2);
 
-    // Femur shape
+    // Femur side plate shape (measured from 300 DPI flatbed scan mechanics/scans/scan.jpeg:
+    // stadium length 131.6mm, width 31.6mm [R=15.8mm], 100mm pivot-to-pivot,
+    // 2x Ø8mm hub holes, 2x4 Ø2mm horn bolt circles at ±8mm cross, 2x Ø3mm standoff holes at x=35 & x=65)
+    const femurRadius = 15.8;
     const femurShape = new THREE.Shape();
-    femurShape.absarc(0, 0, 12, Math.PI / 2, -Math.PI / 2, false);
-    femurShape.lineTo(100, -12);
-    femurShape.absarc(100, 0, 12, -Math.PI / 2, Math.PI / 2, false);
-    femurShape.lineTo(0, 12);
+    femurShape.absarc(0, 0, femurRadius, Math.PI / 2, -Math.PI / 2, false);
+    femurShape.lineTo(100, -femurRadius);
+    femurShape.absarc(100, 0, femurRadius, -Math.PI / 2, Math.PI / 2, false);
+    femurShape.lineTo(0, femurRadius);
     femurShape.closePath();
+
+    const addCircleHole = (cx: number, cy: number, r: number, segments = 20) => {
+      const hole = new THREE.Path();
+      hole.absarc(cx, cy, r, 0, Math.PI * 2, true);
+      femurShape.holes.push(hole);
+    };
+
+    for (const pivotX of [0, 100]) {
+      // Main Ø8.0mm servo shaft / bearing hub hole
+      addCircleHole(pivotX, 0, 4.0, 24);
+      // 4x Ø2.0mm servo horn mounting holes in 90° cross on Ø16.0mm bolt circle (±8.0mm)
+      addCircleHole(pivotX - 8.0, 0, 1.0, 12);
+      addCircleHole(pivotX + 8.0, 0, 1.0, 12);
+      addCircleHole(pivotX, -8.0, 1.0, 12);
+      addCircleHole(pivotX, 8.0, 1.0, 12);
+    }
+    // 2x Ø3.0mm central M3 standoff holes at x = 35mm and x = 65mm (30mm spacing)
+    addCircleHole(35, 0, 1.5, 16);
+    addCircleHole(65, 0, 1.5, 16);
 
     this.sharedFemurPlateGeo = new THREE.ExtrudeGeometry(femurShape, {
       depth: 2.2,
       bevelEnabled: true,
-      bevelThickness: 0.5,
-      bevelSize: 0.5,
+      bevelThickness: 0.3,
+      bevelSize: 0.3,
       bevelSegments: 2
     });
     this.sharedFemurPlateGeo.translate(0, 0, -1.1);
@@ -682,15 +739,15 @@ export class LasiusGraphicsEngine {
   private createCoxaGroup(): THREE.Group {
     const group = new THREE.Group();
 
-    // Main Coxa bracket extending 30mm inwards towards body center (from x = -30 to x = +50)
+    // Main 115mm 3D-printed Coxa bracket (inner U-fork x = -40.3..+8.7, outer servo cage x = +8.7..+74.7)
     const bracket = new THREE.Mesh(this.sharedCoxaBracketGeo, this.legNeutralMat);
-    bracket.position.set(10, 0, 0);
+    bracket.position.set(0, 0, 0);
     bracket.userData = { jointType: 'coxa' };
     group.add(bracket);
 
-    // Servo body housed inside the bracket between the plates
+    // Servo body housed inside the outer 40.5x20.5mm Coxa pocket (output shaft at x = 60mm)
     const servoBox = new THREE.Mesh(this.sharedCoxaServoGeo, this.hardwareMat);
-    servoBox.position.set(-8, 0, 0);
+    servoBox.position.set(46.5, 0, -2.5);
     servoBox.userData = { jointType: 'coxa' };
     group.add(servoBox);
 
@@ -743,12 +800,12 @@ export class LasiusGraphicsEngine {
     group.add(plateOuter);
 
     const rung1 = new THREE.Mesh(this.sharedFemurRungGeo, this.hardwareMat);
-    rung1.position.set(32, 0, 0);
+    rung1.position.set(35, 0, 0);
     rung1.userData = { jointType: 'femur' };
     group.add(rung1);
 
     const rung2 = new THREE.Mesh(this.sharedFemurRungGeo, this.hardwareMat);
-    rung2.position.set(68, 0, 0);
+    rung2.position.set(65, 0, 0);
     rung2.userData = { jointType: 'femur' };
     group.add(rung2);
 
