@@ -2,7 +2,8 @@
 
 ---
 
-[Index](../README.md) | [Software](../software/README.md) | [Hardware](../hardware/README.md) | [Docs](../docs/README.md) | [Data](../data/README.md) | [Scripts](../scripts/README.md) |
+[Index](../README.md) | [Software](../software/README.md) | [Hardware](../hardware/README.md) | [Docs](../docs/README.md) | [Data](../data/README.md) | [Scripts](../scripts/README.md) |<br>
+[Decisions](hardware/decisions.md) | [Closed Loop](hardware/closed_loop_plan.md) | [Wiring](hardware/wiring_plan.md) | [Gamepad](pilot/gamepad_stadia.md) | [Roadmap](roadmap.md) |
 
 ---
 

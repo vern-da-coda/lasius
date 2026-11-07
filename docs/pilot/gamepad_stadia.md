@@ -1,5 +1,12 @@
 # Hexapod:Lasius – Google Stadia Controller & Architecture Guide
 
+---
+
+[Index](../../README.md) | [Software](../../software/README.md) | [Hardware](../../hardware/README.md) | [Docs](../../docs/README.md) | [Data](../../data/README.md) | [Scripts](../../scripts/README.md) |<br>
+[Decisions](../../docs/hardware/decisions.md) | [Closed Loop](../../docs/hardware/closed_loop_plan.md) | [Wiring](../../docs/hardware/wiring_plan.md) | [Gamepad](../../docs/pilot/gamepad_stadia.md) | [Roadmap](../../docs/roadmap.md) |
+
+---
+
 > **Status:** October 2026  
 > **Affected Packages:** `lasius-pilot`, `lasius-core`, `lasius-dashboard`
 

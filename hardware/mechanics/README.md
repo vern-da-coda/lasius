@@ -2,7 +2,8 @@
 
 ---
 
-[Index](../../README.md) | [Software](../../software/README.md) | [Hardware](../../hardware/README.md) | [Docs](../../docs/README.md) | [Data](../../data/README.md) | [Scripts](../../scripts/README.md) |
+[Index](../../README.md) | [Software](../../software/README.md) | [Hardware](../../hardware/README.md) | [Docs](../../docs/README.md) | [Data](../../data/README.md) | [Scripts](../../scripts/README.md) |<br>
+[Mechanics](../../hardware/mechanics/README.md) | [Electronics / Wiring](../../hardware/electronics/wiring/README.md) |
 
 ---
 

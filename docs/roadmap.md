@@ -1,5 +1,12 @@
 # Hexapod:Lasius – Task List, Backlog & Roadmap
 
+---
+
+[Index](../README.md) | [Software](../software/README.md) | [Hardware](../hardware/README.md) | [Docs](../docs/README.md) | [Data](../data/README.md) | [Scripts](../scripts/README.md) |<br>
+[Decisions](hardware/decisions.md) | [Closed Loop](hardware/closed_loop_plan.md) | [Wiring](hardware/wiring_plan.md) | [Gamepad](pilot/gamepad_stadia.md) | [Roadmap](roadmap.md) |
+
+---
+
 This document serves as the centralized task list, roadmap, and backlog for the continuous development of the Hexapod:Lasius robot (setup guides, developer workflows, and helper scripts are documented in [`README.md`](../README.md)).
 
 ---

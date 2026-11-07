@@ -2,7 +2,8 @@
 
 ---
 
-[Index](../README.md) | [Software](../software/README.md) | [Hardware](../hardware/README.md) | [Docs](../docs/README.md) | [Data](../data/README.md) | [Scripts](../scripts/README.md) |
+[Index](../README.md) | [Software](../software/README.md) | [Hardware](../hardware/README.md) | [Docs](../docs/README.md) | [Data](../data/README.md) | [Scripts](../scripts/README.md) |<br>
+[Script Index](#script-index) | [Dev & Test](#1-installation--local-simulation-workstation) | [Deploy](#2-physical-deployment-to-raspberry-pi) | [Bench](#3-analog-potentiometer-calibration-bench) |
 
 ---
 

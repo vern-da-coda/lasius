@@ -2,7 +2,8 @@
 
 ---
 
-[Index](../../README.md) | [Software](../../software/README.md) | [Hardware](../../hardware/README.md) | [Docs](../../docs/README.md) | [Data](../../data/README.md) | [Scripts](../../scripts/README.md) |
+[Index](../../README.md) | [Software](../../software/README.md) | [Hardware](../../hardware/README.md) | [Docs](../../docs/README.md) | [Data](../../data/README.md) | [Scripts](../../scripts/README.md) |<br>
+[lasius-core](../../software/lasius-core/README.md) | [lasius-dashboard](../../software/lasius-dashboard/README.md) | [lasius-pilot](../../software/lasius-pilot/README.md) |
 
 ---
 

@@ -1,5 +1,12 @@
 # Hexapod:Lasius – Wiring Plan: Electrical & Sensor Architecture
 
+---
+
+[Index](../../README.md) | [Software](../../software/README.md) | [Hardware](../../hardware/README.md) | [Docs](../../docs/README.md) | [Data](../../data/README.md) | [Scripts](../../scripts/README.md) |<br>
+[Decisions](../../docs/hardware/decisions.md) | [Closed Loop](../../docs/hardware/closed_loop_plan.md) | [Wiring](../../docs/hardware/wiring_plan.md) | [Gamepad](../../docs/pilot/gamepad_stadia.md) | [Roadmap](../../docs/roadmap.md) |
+
+---
+
 Complete electrical connection plans, I2C sensor bus topology, single leg feedback harnesses, and power distribution for Hexapod:Lasius.
 
 Detailed hardware specifications and formulas:

@@ -1,5 +1,12 @@
 # Hexapod:Lasius – Final Hardware, Sensor & CAD Decisions
 
+---
+
+[Index](../../README.md) | [Software](../../software/README.md) | [Hardware](../../hardware/README.md) | [Docs](../../docs/README.md) | [Data](../../data/README.md) | [Scripts](../../scripts/README.md) |<br>
+[Decisions](../../docs/hardware/decisions.md) | [Closed Loop](../../docs/hardware/closed_loop_plan.md) | [Wiring](../../docs/hardware/wiring_plan.md) | [Gamepad](../../docs/pilot/gamepad_stadia.md) | [Roadmap](../../docs/roadmap.md) |
+
+---
+
 > **Source:** *GitHub Lasius Project Assistance.pdf* (Concept, Electronics & Mechanics Specification)  
 > **Status:** October 2026
 

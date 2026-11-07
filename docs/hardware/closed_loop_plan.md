@@ -1,4 +1,12 @@
 # Hexapod:Lasius – 18-DOF Closed-Loop Potentiometer Feedback
+
+---
+
+[Index](../../README.md) | [Software](../../software/README.md) | [Hardware](../../hardware/README.md) | [Docs](../../docs/README.md) | [Data](../../data/README.md) | [Scripts](../../scripts/README.md) |<br>
+[Decisions](../../docs/hardware/decisions.md) | [Closed Loop](../../docs/hardware/closed_loop_plan.md) | [Wiring](../../docs/hardware/wiring_plan.md) | [Gamepad](../../docs/pilot/gamepad_stadia.md) | [Roadmap](../../docs/roadmap.md) |
+
+---
+
 ## Hardware Specification, Connection Plan & Architectural Findings
 
 > **Project:** Hexapod:Lasius (18 DOF, 6 Legs)  
