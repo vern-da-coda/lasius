@@ -11,18 +11,18 @@ import type { RobotLayout } from '@/types';
 
 export const DEFAULT_ROBOT_LAYOUT: RobotLayout = {
   body: {
-    width: 150.0,
-    length: 180.0,
+    width: 176.8,
+    length: 267.0,
     width_front_rear: 130.0,
     width_middle: 150.0,
-    axis_distance_longitudinal: 90.0,
+    axis_distance_longitudinal: 86.0,
     vertices: [
       { x: 75.0, y: 0.0 },     // Right Middle
-      { x: 65.0, y: 90.0 },    // Right Rear
-      { x: -65.0, y: 90.0 },   // Left Rear
+      { x: 65.0, y: 86.0 },    // Right Rear
+      { x: -65.0, y: 86.0 },   // Left Rear
       { x: -75.0, y: 0.0 },    // Left Middle
-      { x: -65.0, y: -90.0 },  // Left Front
-      { x: 65.0, y: -90.0 }    // Right Front
+      { x: -65.0, y: -86.0 },  // Left Front
+      { x: 65.0, y: -86.0 }    // Right Front
     ]
   },
   legs: {
@@ -34,14 +34,14 @@ export const DEFAULT_ROBOT_LAYOUT: RobotLayout = {
       tibia: { name: 'right_middle_tibia', length: 130.0, channel: 8 }
     },
     right_rear: {
-      mount_point: { x: 65.0, y: 90.0 },
+      mount_point: { x: 65.0, y: 86.0 },
       base_angle: 0.7853981633974483,
       coxa: { name: 'right_rear_coxa', length: 60.0, channel: 3 },
       femur: { name: 'right_rear_femur', length: 100.0, channel: 4 },
       tibia: { name: 'right_rear_tibia', length: 130.0, channel: 5 }
     },
     left_rear: {
-      mount_point: { x: -65.0, y: 90.0 },
+      mount_point: { x: -65.0, y: 86.0 },
       base_angle: 2.356194490192345,
       coxa: { name: 'left_rear_coxa', length: 60.0, channel: 9 },
       femur: { name: 'left_rear_femur', length: 100.0, channel: 10 },
@@ -55,14 +55,14 @@ export const DEFAULT_ROBOT_LAYOUT: RobotLayout = {
       tibia: { name: 'left_middle_tibia', length: 130.0, channel: 14 }
     },
     left_front: {
-      mount_point: { x: -65.0, y: -90.0 },
+      mount_point: { x: -65.0, y: -86.0 },
       base_angle: 3.9269908169872414,
       coxa: { name: 'left_front_coxa', length: 60.0, channel: 15 },
       femur: { name: 'left_front_femur', length: 100.0, channel: 16 },
       tibia: { name: 'left_front_tibia', length: 130.0, channel: 17 }
     },
     right_front: {
-      mount_point: { x: 65.0, y: -90.0 },
+      mount_point: { x: 65.0, y: -86.0 },
       base_angle: 5.497787143782138,
       coxa: { name: 'right_front_coxa', length: 60.0, channel: 0 },
       femur: { name: 'right_front_femur', length: 100.0, channel: 1 },

@@ -17,10 +17,12 @@ if [ -f "$ROOT_DIR/scripts/banner.txt" ]; then
 fi
 
 PYTHON_BIN=""
-if [ -x "$ROOT_DIR/.venv/bin/python3" ]; then
-    PYTHON_BIN="$ROOT_DIR/.venv/bin/python3"
+if command -v uv >/dev/null 2>&1; then
+    PYTHON_CMD="uv run python"
+elif [ -x "$ROOT_DIR/.venv/bin/python3" ]; then
+    PYTHON_CMD="$ROOT_DIR/.venv/bin/python3"
 elif command -v python3 >/dev/null 2>&1; then
-    PYTHON_BIN="python3"
+    PYTHON_CMD="python3"
 else
     echo "❌ Error: python3 not found."
     exit 1
@@ -42,4 +44,4 @@ if [ ! -f "$ROOT_DIR/lasius-dashboard/dist/index.html" ]; then
     (cd "$ROOT_DIR/lasius-dashboard" && npm run build)
 fi
 
-exec $PYTHON_BIN "$ROOT_DIR/lasius-core/run_server.py"
+exec $PYTHON_CMD "$ROOT_DIR/lasius-core/run_server.py"
