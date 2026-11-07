@@ -1,8 +1,12 @@
-# Lasius – Servo Potentiometer Calibration Data
-
-This directory contains experimental calibration data and linear regression models for analog joint position feedback (internal potentiometer wiper voltage) of Reely NR-645 MG BB servomotors.
+# Lasius Hexapod: Bench Calibration Data
 
 ---
+
+[Index](../../README.md) | [Software](../../software/README.md) | [Hardware](../../hardware/README.md) | [Docs](../../docs/README.md) | [Data](../../data/README.md) | [Scripts](../../scripts/README.md) |
+
+---
+
+This directory contains experimental calibration data and linear regression models for analog joint position feedback (internal potentiometer wiper voltage) of Reely NR-645 MG BB servomotors.
 
 ## 1. Overview & Test Setup
 

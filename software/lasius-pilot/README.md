@@ -1,8 +1,12 @@
-# lasius-pilot
-
-Teleoperation client and Linux joystick interface for the **Lasius** 18-DOF Hexapod robot. Provides low-latency gamepad control, radial deadzone filtering, and native support for the **Google Stadia Controller**.
+# Lasius Hexapod: lasius-pilot
 
 ---
+
+[Index](../../README.md) | [Software](../../software/README.md) | [Hardware](../../hardware/README.md) | [Docs](../../docs/README.md) | [Data](../../data/README.md) | [Scripts](../../scripts/README.md) |
+
+---
+
+Teleoperation client and Linux joystick interface for the **Lasius** 18-DOF Hexapod robot. Provides low-latency gamepad control, radial deadzone filtering, and native support for the **Google Stadia Controller**.
 
 ## Features
 

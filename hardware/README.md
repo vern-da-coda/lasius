@@ -1,8 +1,12 @@
-# Lasius Hardware: Mechanics & Electronics
-
-Physical robot engineering, mechanical CAD models, digital fabrication exports, power distribution, and electrical sensor bus harnesses for the **Lasius** 18-DOF Hexapod robot.
+# Lasius Hexapod: Hardware (Mechanics & Electronics)
 
 ---
+
+[Index](../README.md) | [Software](../software/README.md) | [Hardware](../hardware/README.md) | [Docs](../docs/README.md) | [Data](../data/README.md) | [Scripts](../scripts/README.md) |
+
+---
+
+Physical robot engineering, mechanical CAD models, digital fabrication exports, power distribution, and electrical sensor bus harnesses for the **Lasius** 18-DOF Hexapod robot.
 
 ## Physical Specifications
 

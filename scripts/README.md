@@ -1,8 +1,12 @@
-# Lasius Helper Scripts
-
-Automation, simulation, deployment, testing, and benchmark tools for the **Lasius** 18-DOF Hexapod robot.
+# Lasius Hexapod: Helper Scripts
 
 ---
+
+[Index](../README.md) | [Software](../software/README.md) | [Hardware](../hardware/README.md) | [Docs](../docs/README.md) | [Data](../data/README.md) | [Scripts](../scripts/README.md) |
+
+---
+
+Automation, simulation, deployment, testing, and benchmark tools for the **Lasius** 18-DOF Hexapod robot.
 
 ## Script Index
 

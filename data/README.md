@@ -1,8 +1,12 @@
-# Lasius Data: Benchmarks & Calibration Backups
-
-Measurement datasets, empirical potentiometer benchmarks, and runtime calibration snapshots for the **Lasius** 18-DOF Hexapod robot.
+# Lasius Hexapod: Data & Benchmarks
 
 ---
+
+[Index](../README.md) | [Software](../software/README.md) | [Hardware](../hardware/README.md) | [Docs](../docs/README.md) | [Data](../data/README.md) | [Scripts](../scripts/README.md) |
+
+---
+
+Measurement datasets, empirical potentiometer benchmarks, and runtime calibration snapshots for the **Lasius** 18-DOF Hexapod robot.
 
 ## Directory Organization
 

@@ -1,8 +1,12 @@
-# Hexapod:Lasius – Wiring & Harness Documentation (WireViz)
-
-This directory contains the complete electrical wiring and harness specifications for the **Hexapod:Lasius Robot** documented in **WireViz ("Cabling as Code")** format.
+# Lasius Hexapod: Wiring & Harnesses
 
 ---
+
+[Index](../../../README.md) | [Software](../../../software/README.md) | [Hardware](../../../hardware/README.md) | [Docs](../../../docs/README.md) | [Data](../../../data/README.md) | [Scripts](../../../scripts/README.md) |
+
+---
+
+This directory contains the complete electrical wiring and harness specifications for the **Hexapod:Lasius Robot** documented in **WireViz ("Cabling as Code")** format.
 
 ## 1. Hardware Components
 

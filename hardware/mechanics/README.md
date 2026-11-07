@@ -1,8 +1,12 @@
-# Lasius Mechanics: Parametric CAD & Digital Fabrication
-
-CAD engineering, digital fabrication exports, and assembly models for the **Lasius** 18-DOF Hexapod robot. All parts are reverse-engineered from calibrated 1200 DPI flatbed scans and physical reference templates into native, parametric OpenCASCADE B-Rep solid geometry in FreeCAD.
+# Lasius Hexapod: Mechanics & CAD
 
 ---
+
+[Index](../../README.md) | [Software](../../software/README.md) | [Hardware](../../hardware/README.md) | [Docs](../../docs/README.md) | [Data](../../data/README.md) | [Scripts](../../scripts/README.md) |
+
+---
+
+CAD engineering, digital fabrication exports, and assembly models for the **Lasius** 18-DOF Hexapod robot. All parts are reverse-engineered from calibrated 1200 DPI flatbed scans and physical reference templates into native, parametric OpenCASCADE B-Rep solid geometry in FreeCAD.
 
 ## Parametric 3D CAD Models (`models/`)
 

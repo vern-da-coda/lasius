@@ -1,8 +1,12 @@
-# Lasius Documentation
-
-Specifications, architectural decisions, wiring schematics, and development roadmaps for the **Lasius** 18-DOF Hexapod robot.
+# Lasius Hexapod: Documentation
 
 ---
+
+[Index](../README.md) | [Software](../software/README.md) | [Hardware](../hardware/README.md) | [Docs](../docs/README.md) | [Data](../data/README.md) | [Scripts](../scripts/README.md) |
+
+---
+
+Specifications, architectural decisions, wiring schematics, and development roadmaps for the **Lasius** 18-DOF Hexapod robot.
 
 ## Documentation Index
 

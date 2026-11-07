@@ -1,8 +1,12 @@
-# lasius-core
-
-Embedded Python locomotion engine, Hardware Abstraction Layer (HAL), 3-DOF inverse kinematics, order dispatch pipeline, and HTTP REST / WebSocket server daemon for the **Lasius** 18-DOF Hexapod robot.
+# Lasius Hexapod: lasius-core
 
 ---
+
+[Index](../../README.md) | [Software](../../software/README.md) | [Hardware](../../hardware/README.md) | [Docs](../../docs/README.md) | [Data](../../data/README.md) | [Scripts](../../scripts/README.md) |
+
+---
+
+Embedded Python locomotion engine, Hardware Abstraction Layer (HAL), 3-DOF inverse kinematics, order dispatch pipeline, and HTTP REST / WebSocket server daemon for the **Lasius** 18-DOF Hexapod robot.
 
 ## Architecture Overview
 

@@ -1,6 +1,10 @@
-# Hexapod:Lasius
+# Lasius Hexapod
 
-**Breadcrumb:** [Hexapod:Lasius](README.md) / [Software](software/README.md) / [Hardware](hardware/README.md) / [Docs](docs/README.md) / [Data](data/README.md) / [Scripts](scripts/README.md)
+---
+
+[Index](README.md) | [Software](software/README.md) | [Hardware](hardware/README.md) | [Docs](docs/README.md) | [Data](data/README.md) | [Scripts](scripts/README.md) |
+
+---
 
 <p align="left">
   <a href="software/README.md"><img src="https://img.shields.io/badge/Python-3.11+-3776AB.svg?logo=python&logoColor=white" alt="Python 3.11+"></a>

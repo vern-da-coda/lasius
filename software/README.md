@@ -1,4 +1,10 @@
-# Software Subsystems
+# Lasius Hexapod: Software Subsystems
+
+---
+
+[Index](../README.md) | [Software](../software/README.md) | [Hardware](../hardware/README.md) | [Docs](../docs/README.md) | [Data](../data/README.md) | [Scripts](../scripts/README.md) |
+
+---
 
 The `software/` directory contains the complete software stack for the Hexapod:Lasius robot, structured as an independent monorepo workspace.
 
