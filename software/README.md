@@ -6,9 +6,9 @@ The `software/` directory contains the complete software stack for the Hexapod:L
 
 ```text
 software/
-|-- lasius-core/        # Embedded Python locomotion engine, HAL & REST/WebSocket daemon
-|-- lasius-dashboard/   # Vue 3 + TypeScript + Three.js 3D Digital Twin & browser GUI
-\-- lasius-pilot/       # Gamepad teleoperation & Linux joystick client
+├── lasius-core/        # Embedded Python locomotion engine, HAL & REST/WebSocket daemon
+├── lasius-dashboard/   # Vue 3 + TypeScript + Three.js 3D Digital Twin & browser GUI
+└── lasius-pilot/       # Gamepad teleoperation & Linux joystick client
 ```
 
 ### 1. [**`lasius-core/`**](lasius-core/README.md)

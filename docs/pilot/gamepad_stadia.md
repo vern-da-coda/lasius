@@ -1,4 +1,4 @@
-# Hexapod:Lasius - Google Stadia Controller & Architecture Guide
+# Hexapod:Lasius – Google Stadia Controller & Architecture Guide
 
 > **Status:** October 2026  
 > **Affected Packages:** `lasius-pilot`, `lasius-core`, `lasius-dashboard`
@@ -7,7 +7,7 @@ This document details the configuration and button mapping for the **Google Stad
 
 ---
 
-## 1. Google Stadia Controller - Pairing & Setup
+## 1. Google Stadia Controller – Pairing & Setup
 
 The Google Stadia Controller operates via **USB-C cable** or wirelessly via **Bluetooth Low Energy (BLE)** on Raspberry Pi 4 or Linux workstations. Under Linux, it exposes a native joystick interface at `/dev/input/js0`.
 
@@ -56,7 +56,7 @@ The Google Stadia Controller operates via **USB-C cable** or wirelessly via **Bl
 | **Left Stick (Left / Right)** | `Axis 0` (`ABS_X`) | `set_velocity` (`walk_x`) | **Lateral Strafe** (`-1.0` Left .. `+1.0` Right) |
 | **Left Stick (Forward / Backward)** | `Axis 1` (`ABS_Y`) | `set_velocity` (`walk_y`) | **Forward / Backward Translation** (`+1.0` Forward .. `-1.0` Backward) |
 | **Right Stick (Left / Right)** | `Axis 2` (`ABS_Z`) | `set_velocity` (`turn_z`) | **Continuous Yaw Turn in Place** (`+1.0` Left .. `-1.0` Right; vertical `Axis 3` is ignored) |
-| **D-Pad Up / Down** | `Axis 7` (`ABS_HAT0Y`) | `set_height` | **Incremental Chassis Height Adjustment** (`+/-5 mm` per click, range `-40 mm` to `-120 mm`) |
+| **D-Pad Up / Down** | `Axis 7` (`ABS_HAT0Y`) | `set_height` | **Incremental Chassis Height Adjustment** (`±5 mm` per click, range `-40 mm` to `-120 mm`) |
 
 ### 2.2 Action Buttons & Safety Controls
 
@@ -65,12 +65,12 @@ The Google Stadia Controller operates via **USB-C cable** or wirelessly via **Bl
 | **Button `A`** (Bottom) | `Button 0` | `set_gait_type: "tripod"` | Switch to **Tripod Gait** (fast, dynamic, 3 legs grounded) |
 | **Button `X`** (Left) | `Button 2` | `set_gait_type: "ripple"` | Switch to **Ripple Gait** (smooth, 4 legs grounded) |
 | **Button `Y`** (Top) | `Button 3` | `set_gait_type: "wave"` | Switch to **Wave Gait** (maximum stability/power, 5 legs grounded) |
-| **Button `B`** (Right) | `Button 1` | `emergency_stop` | **[E-STOP] EMERGENCY STOP** (immediate motion halt & all 18 servos relaxed) |
-| **Stadia Button** (Center) | `Button 8` | `emergency_stop` | **[E-STOP] EMERGENCY STOP** (immediate motion halt & all 18 servos relaxed) |
+| **Button `B`** (Right) | `Button 1` | `emergency_stop` | **EMERGENCY STOP** (immediate motion halt & all 18 servos relaxed) |
+| **Stadia Button** (Center) | `Button 8` | `emergency_stop` | **EMERGENCY STOP** (immediate motion halt & all 18 servos relaxed) |
 | **Shoulder Button `L1`** | `Button 4` | `set_speed` | **Decrease Speed** (`-0.25x`, minimum `0.25x`) |
 | **Shoulder Button `R1`** | `Button 5` | `set_speed` | **Increase Speed** (`+0.25x`, maximum `3.00x`) |
-| **Options Button (`...`)** | `Button 6` | `reset_pose` | **Reset Body Pose** (`-80 mm` height, `0 deg` roll, `0 deg` pitch) |
-| **Menu Button (`==`)** | `Button 7` | `toggle_pause` | **Toggle Motion Pause / Resume** |
+| **Options Button (`...`)** | `Button 6` | `reset_pose` | **Reset Body Pose** (`-80 mm` height, `0°` roll, `0°` pitch) |
+| **Menu Button (`≡`)** | `Button 7` | `toggle_pause` | **Toggle Motion Pause / Resume** |
 
 ### 2.3 Launch Command
 

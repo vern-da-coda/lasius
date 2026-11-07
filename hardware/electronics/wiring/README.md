@@ -1,4 +1,4 @@
-# Hexapod:Lasius - Wiring & Harness Documentation (WireViz)
+# Hexapod:Lasius – Wiring & Harness Documentation (WireViz)
 
 This directory contains the complete electrical wiring and harness specifications for the **Hexapod:Lasius Robot** documented in **WireViz ("Cabling as Code")** format.
 
@@ -8,12 +8,12 @@ This directory contains the complete electrical wiring and harness specification
 
 | Component | Quantity | Function & Specifications |
 | :--- | :---: | :--- |
-| **TCA9548A** | 1x | 8-Channel I2C multiplexer (1.8V-5V, logic at 3.3V). Configured to address **`0x71`** via solder bridge on `A0`. |
-| **ADS1115** | 6x | 16-Bit 4-channel precision ADCs (1 board per leg). All set to default address **`0x48`** across isolated sub-channels `CH0` to `CH5`. |
-| **100 nF MLCC** | 18-24x | 0.1 uF 50V monolithic multi-layer ceramic capacitors as low-pass noise filters soldered directly between `Ax` and `GND`. |
-| **Reely NR-645 MG BB** | 18x | Metal-gear servos (3 per leg: Coxa, Femur, Tibia). Internal potentiometer wiper wire exposed for closed-loop telemetry. |
-| **PCA9685** | 2x | 16-Channel 12-bit PWM servo drivers on primary I2C bus (`0x40` Left, `0x42` Right). |
-| **Omron D2F-L** | 6x | Tactile microswitches in foot tips wired to pin `A3` of each leg ADS1115 board. |
+| **TCA9548A** | 1× | 8-Channel I2C multiplexer (1.8V–5V, logic at 3.3V). Configured to address **`0x71`** via solder bridge on `A0`. |
+| **ADS1115** | 6× | 16-Bit 4-channel precision ADCs (1 board per leg). All set to default address **`0x48`** across isolated sub-channels `CH0` to `CH5`. |
+| **100 nF MLCC** | 18–24× | 0.1 µF 50V monolithic multi-layer ceramic capacitors as low-pass noise filters soldered directly between `Ax` and `GND`. |
+| **Reely NR-645 MG BB** | 18× | Metal-gear servos (3 per leg: Coxa, Femur, Tibia). Internal potentiometer wiper wire exposed for closed-loop telemetry. |
+| **PCA9685** | 2× | 16-Channel 12-bit PWM servo drivers on primary I2C bus (`0x40` Left, `0x42` Right). |
+| **Omron D2F-L** | 6× | Tactile microswitches in foot tips wired to pin `A3` of each leg ADS1115 board. |
 
 ---
 
@@ -52,9 +52,9 @@ This directory contains the complete electrical wiring and harness specification
 ### Plan 3: `03_power_distribution.yml`
 * **Purpose:** Power distribution rails, dual voltage regulators, and centralized star ground.
 * **Branches:**
-  * 2S/3S LiPo -> 15A master power switch
-  * High-Current UBEC (6.0V 15A Peak) -> Servo V+ power terminals on both PCA9685 boards
-  * Step-Down Converter (5.1V 4A) -> Raspberry Pi 4 logic supply
+  * 2S/3S LiPo → 15A master power switch
+  * High-Current UBEC (6.0V 15A Peak) → Servo V+ power terminals on both PCA9685 boards
+  * Step-Down Converter (5.1V 4A) → Raspberry Pi 4 logic supply
   * Central star ground prevents ground bounces between high-current servo loads and precision ADC telemetry.
 
 <p align="center">

@@ -1,4 +1,4 @@
-# Hexapod:Lasius - Wiring Plan: Electrical & Sensor Architecture
+# Hexapod:Lasius – Wiring Plan: Electrical & Sensor Architecture
 
 Complete electrical connection plans, I2C sensor bus topology, single leg feedback harnesses, and power distribution for Hexapod:Lasius.
 
@@ -10,7 +10,7 @@ Detailed hardware specifications and formulas:
 
 ## 1. I2C Sensor Bus Topology
 
-Master I2C routing from Raspberry Pi 4 through the TCA9548A multiplexer (address `0x71`) to 6x ADS1115 16-bit ADC boards (address `0x48`), INA228 power monitors, and ToF distance sensors:
+Master I2C routing from Raspberry Pi 4 through the TCA9548A multiplexer (address `0x71`) to 6× ADS1115 16-bit ADC boards (address `0x48`), INA228 power monitors, and ToF distance sensors:
 
 <p align="center">
   <img src="../../hardware/electronics/wiring/01_i2c_sensor_bus_topology.svg" alt="I2C Sensor Bus Topology" width="850">
