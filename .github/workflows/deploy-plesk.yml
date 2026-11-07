@@ -39,5 +39,6 @@ jobs:
           server: ${{ vars.PLESK_FTP_SERVER || secrets.PLESK_FTP_SERVER }}
           username: ${{ secrets.PLESK_FTP_USERNAME }}
           password: ${{ secrets.PLESK_FTP_PASSWORD }}
+          protocol: ftps
           local-dir: software/lasius-dashboard/dist/
           server-dir: ${{ vars.PLESK_SERVER_DIR || '/' }}
