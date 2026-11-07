@@ -7,6 +7,13 @@
 
 ---
 
+<p align="left">
+  <a href="https://github.com/vern-da-coda/lasius/actions/workflows/ci.yml"><img src="https://github.com/vern-da-coda/lasius/actions/workflows/ci.yml/badge.svg" alt="CI Status"></a>
+  <a href="https://github.com/vern-da-coda/lasius/commits/main"><img src="https://img.shields.io/github/last-commit/vern-da-coda/lasius?logo=github&color=blue" alt="Last Commit"></a>
+  <img src="https://img.shields.io/badge/Python-3.11+-3776AB.svg?logo=python&logoColor=white" alt="Python 3.11+">
+  <img src="https://img.shields.io/badge/Locomotion-50Hz%20Harmonic%20Cosine-0284c7.svg" alt="50 Hz Harmonic Gait">
+</p>
+
 Embedded Python locomotion engine, Hardware Abstraction Layer (HAL), 3-DOF inverse kinematics, order dispatch pipeline, and HTTP REST / WebSocket server daemon for the **Lasius** 18-DOF Hexapod robot.
 
 ## Architecture Overview

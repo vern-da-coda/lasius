@@ -7,6 +7,13 @@
 
 ---
 
+<p align="left">
+  <a href="https://lasius.kaemmereit.de/"><img src="https://img.shields.io/badge/Live%20Demo-lasius.kaemmereit.de-38bdf8.svg?logo=googlechrome&logoColor=white" alt="Live Demo"></a>
+  <a href="https://github.com/vern-da-coda/lasius/actions/workflows/deploy-plesk.yml"><img src="https://github.com/vern-da-coda/lasius/actions/workflows/deploy-plesk.yml/badge.svg" alt="Deploy to Plesk"></a>
+  <a href="https://github.com/vern-da-coda/lasius/actions/workflows/ci.yml"><img src="https://github.com/vern-da-coda/lasius/actions/workflows/ci.yml/badge.svg" alt="CI Status"></a>
+  <a href="https://github.com/vern-da-coda/lasius/commits/main"><img src="https://img.shields.io/github/last-commit/vern-da-coda/lasius?logo=github&color=blue" alt="Last Commit"></a>
+</p>
+
 Modular Vue 3 + TypeScript + Pinia 3D Digital Twin and browser control interface for the **Lasius** 18-DOF Hexapod robot. Built with Vite and Three.js.
 
 **Live Web Demo:** [**https://lasius.kaemmereit.de/**](https://lasius.kaemmereit.de/) – Interactive 3D Digital Twin with real-time browser gait simulation.

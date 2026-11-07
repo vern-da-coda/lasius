@@ -9,6 +9,12 @@
 
 <p align="left">
   <a href="https://lasius.kaemmereit.de/"><img src="https://img.shields.io/badge/Live%20Demo-lasius.kaemmereit.de-38bdf8.svg?logo=googlechrome&logoColor=white" alt="Live Demo"></a>
+  <a href="https://github.com/vern-da-coda/lasius/actions/workflows/ci.yml"><img src="https://github.com/vern-da-coda/lasius/actions/workflows/ci.yml/badge.svg" alt="Continuous Integration"></a>
+  <a href="https://github.com/vern-da-coda/lasius/actions/workflows/deploy-plesk.yml"><img src="https://github.com/vern-da-coda/lasius/actions/workflows/deploy-plesk.yml/badge.svg" alt="Deploy to Plesk"></a>
+  <a href="https://github.com/vern-da-coda/lasius/commits/main"><img src="https://img.shields.io/github/last-commit/vern-da-coda/lasius?logo=github&color=blue" alt="Last Commit"></a>
+  <a href="https://github.com/vern-da-coda/lasius/stargazers"><img src="https://img.shields.io/github/stars/vern-da-coda/lasius?style=flat&logo=github" alt="GitHub Stars"></a>
+</p>
+<p align="left">
   <a href="software/README.md"><img src="https://img.shields.io/badge/Python-3.11+-3776AB.svg?logo=python&logoColor=white" alt="Python 3.11+"></a>
   <a href="software/lasius-dashboard/README.md"><img src="https://img.shields.io/badge/Vue%203-TypeScript-4FC08D.svg?logo=vuedotjs&logoColor=white" alt="Vue 3 + TypeScript"></a>
   <a href="software/lasius-dashboard/README.md"><img src="https://img.shields.io/badge/3D%20Twin-Three.js%20WebGL-black.svg?logo=threedotjs&logoColor=white" alt="Three.js Digital Twin"></a>
