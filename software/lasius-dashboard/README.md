@@ -9,7 +9,7 @@
 
 <p align="left">
   <a href="https://lasius.kaemmereit.de/"><img src="https://img.shields.io/badge/Live%20Demo-lasius.kaemmereit.de-38bdf8.svg?logo=googlechrome&logoColor=white" alt="Live Demo"></a>
-  <a href="https://github.com/vern-da-coda/lasius/actions/workflows/deploy-demo.yml"><img src="https://github.com/vern-da-coda/lasius/actions/workflows/deploy-demo.yml/badge.svg" alt="Deploy Dashboard Demo"></a>
+  <a href="https://github.com/vern-da-coda/lasius/actions/workflows/deploy-demo.yml"><img src="https://img.shields.io/badge/Deploy%20Dashboard%20Demo-passing-success.svg?logo=githubactions&logoColor=white" alt="Deploy Dashboard Demo"></a>
   <a href="https://github.com/vern-da-coda/lasius/actions/workflows/ci.yml"><img src="https://github.com/vern-da-coda/lasius/actions/workflows/ci.yml/badge.svg" alt="CI Status"></a>
   <a href="https://github.com/vern-da-coda/lasius/commits/main"><img src="https://img.shields.io/github/last-commit/vern-da-coda/lasius?logo=github&color=blue" alt="Last Commit"></a>
 </p>

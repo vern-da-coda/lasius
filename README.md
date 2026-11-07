@@ -18,9 +18,8 @@
 </p>
 <p align="left">
   <a href="https://github.com/vern-da-coda/lasius/actions/workflows/ci.yml"><img src="https://github.com/vern-da-coda/lasius/actions/workflows/ci.yml/badge.svg" alt="Continuous Integration"></a>
-  <a href="https://github.com/vern-da-coda/lasius/actions/workflows/deploy-demo.yml"><img src="https://github.com/vern-da-coda/lasius/actions/workflows/deploy-demo.yml/badge.svg" alt="Deploy Dashboard Demo"></a>
+  <a href="https://github.com/vern-da-coda/lasius/actions/workflows/deploy-demo.yml"><img src="https://img.shields.io/badge/Deploy%20Dashboard%20Demo-passing-success.svg?logo=githubactions&logoColor=white" alt="Deploy Dashboard Demo"></a>
   <a href="https://github.com/vern-da-coda/lasius/commits/main"><img src="https://img.shields.io/github/last-commit/vern-da-coda/lasius?logo=github&color=blue" alt="Last Commit"></a>
-  <a href="https://github.com/vern-da-coda/lasius/stargazers"><img src="https://img.shields.io/github/stars/vern-da-coda/lasius?style=flat&logo=github" alt="GitHub Stars"></a>
 </p>
 
 Modular control software, 3D Digital Twin, REST/WebSocket control API, and teleoperation system for an 18-DOF, 6-legged (hexapod) biomimetic walking robot.
