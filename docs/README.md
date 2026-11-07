@@ -9,6 +9,8 @@
 
 Specifications, architectural decisions, wiring schematics, and development roadmaps for the **Lasius** 18-DOF Hexapod robot.
 
+**Interactive 3D Digital Twin Demo:** [**https://lasius.kaemmereit.de/**](https://lasius.kaemmereit.de/) – Experience the browser-based simulation directly.
+
 ## Documentation Index
 
 ### Hardware & Electronics

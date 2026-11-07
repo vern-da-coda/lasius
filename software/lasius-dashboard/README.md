@@ -9,9 +9,25 @@
 
 Modular Vue 3 + TypeScript + Pinia 3D Digital Twin and browser control interface for the **Lasius** 18-DOF Hexapod robot. Built with Vite and Three.js.
 
+**Live Web Demo:** [**https://lasius.kaemmereit.de/**](https://lasius.kaemmereit.de/) – Interactive 3D Digital Twin with real-time browser gait simulation.
+
 <p align="center">
   <img src="docs/screenshots/dashboard_overview_3d_twin.png" alt="Lasius 3D Digital Twin & Gait Control Dashboard" width="850">
 </p>
+
+## Live Web Demo & Client Simulation
+
+The dashboard is accessible online at [**https://lasius.kaemmereit.de/**](https://lasius.kaemmereit.de/).
+
+### Additive Simulation Mode (`src/demo/`)
+When the dashboard is accessed without an active Raspberry Pi robot connection (e.g. public hosting), it automatically activates a self-contained, client-side kinematics simulation:
+- **In-Browser Gait Engine (`demoGaitEngine.ts`):** Complete TypeScript port of the 50 Hz harmonic cosine tripod, ripple, and wave gait generator with $C^1$-continuous foot trajectories.
+- **Closed-Form 3-DOF Inverse Kinematics:** Computes exact Coxa, Femur, and Tibia angles using the Law of Cosines for the 60 mm / 100 mm / 130 mm limb geometry.
+- **Full Teleoperation Interactivity:** Supports omnidirectional translation, rotation, and 6-DOF body posing (height $-120 \dots -40\,\text{mm}$, roll $\pm 25^\circ$, pitch $\pm 25^\circ$) via:
+  - On-screen Direction Pad and slider controls
+  - Keyboard hotkeys (`W`/`A`/`S`/`D`, `Q`/`E`, `Space`)
+  - USB and Bluetooth gamepads (Sony DualSense, Xbox, Google Stadia)
+- **Non-Intrusive Architecture (`useDemoSimulation.ts`):** Implemented as an isolated Vue 3 composable. It stays dormant when connected to a physical robot over WebSocket (`ws://<ip>:8765`), yielding completely to hardware telemetry with zero side effects.
 
 ## Architectural Highlights
 

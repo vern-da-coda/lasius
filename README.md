@@ -8,6 +8,7 @@
 ---
 
 <p align="left">
+  <a href="https://lasius.kaemmereit.de/"><img src="https://img.shields.io/badge/Live%20Demo-lasius.kaemmereit.de-38bdf8.svg?logo=googlechrome&logoColor=white" alt="Live Demo"></a>
   <a href="software/README.md"><img src="https://img.shields.io/badge/Python-3.11+-3776AB.svg?logo=python&logoColor=white" alt="Python 3.11+"></a>
   <a href="software/lasius-dashboard/README.md"><img src="https://img.shields.io/badge/Vue%203-TypeScript-4FC08D.svg?logo=vuedotjs&logoColor=white" alt="Vue 3 + TypeScript"></a>
   <a href="software/lasius-dashboard/README.md"><img src="https://img.shields.io/badge/3D%20Twin-Three.js%20WebGL-black.svg?logo=threedotjs&logoColor=white" alt="Three.js Digital Twin"></a>
@@ -19,11 +20,23 @@
 
 Modular control software, 3D Digital Twin, REST/WebSocket control API, and teleoperation system for an 18-DOF, 6-legged (hexapod) biomimetic walking robot.
 
+**Interactive Web Demo:** [**https://lasius.kaemmereit.de/**](https://lasius.kaemmereit.de/) – Test drive the 3D Digital Twin and gait engine directly in your browser.
+
 <p align="center">
   <img src="hardware/mechanics/drawings/renders/body_assembly.png" alt="Hexapod:Lasius Full Body Assembly" width="750">
 </p>
 
 Lasius combines embedded locomotion control, real-time 3D visualization, physical CAD engineering, and teleoperation into a single unified monorepo. The robot features a dual carbon-fiber sandwich chassis, 18 metal-gear servos driven by dual PCA9685 PWM controllers, closed-form 3-DOF inverse kinematics, a smooth 50 Hz harmonic cosine walking engine, and an interactive browser-based Digital Twin built with Vue 3 and Three.js.
+
+### Standalone Live Demo & Client-Side Simulation
+
+The complete 3D Digital Twin and control dashboard is deployed live at [**lasius.kaemmereit.de**](https://lasius.kaemmereit.de/).
+
+When accessed without an active Raspberry Pi robot connection, the dashboard operates in **Standalone Simulation Mode**:
+- An embedded, purely additive TypeScript kinematics engine calculates 50 Hz harmonic cosine tripod, ripple, and wave gait trajectories directly inside the browser.
+- Closed-form 3-DOF inverse kinematics solve joint angles for all 18 servos in real time.
+- Visitors can freely control the robot using the on-screen D-Pad, keyboard navigation (`W`/`A`/`S`/`D`, `Q`/`E`, `Space`), connected USB/Bluetooth gamepads, or 6-DOF chassis attitude sliders (height, roll, pitch).
+- When connected to a physical robot over WebSocket, the simulation engine automatically yields to real hardware telemetry.
 
 ---
 
