@@ -1,4 +1,4 @@
-# Lasius Hexapod Control Software
+# Hexapod:Lasius
 
 Modular control software, 3D Digital Twin, REST/WebSocket control API, and teleoperation system for an 18-DOF, 6-legged (hexapod) biomimetic walking robot.
 
@@ -29,21 +29,33 @@ lasius/
 
 ---
 
-## Table of Contents / Submodule Documentation
+## Documentation Index & Navigation
 
-Detailed documentation, specifications, and guides are maintained in the respective folders:
+Direct links to all distributed technical documentation, specifications, hardware plans, and subsystem guides:
 
-| Subsystem | Location | Description |
-| :--- | :--- | :--- |
-| **Locomotion Backend** | [**`lasius-core/`**](lasius-core/README.md) | 4-layer architecture, 50 Hz harmonic cosine gait engine, 3-DOF IK, dual PCA9685 driver with bus locking, safe arbitration state machine, OpenAPI 3.1 REST API, and Option C calibration overlay. |
-| **3D Digital Twin GUI** | [**`lasius-dashboard/`**](lasius-dashboard/README.md) | Vue 3 + TypeScript + Pinia SPA, Three.js WebGL twin, 2D orthographic projections, 4-tab sidebar (Gait, Leg Calibration, Tests, System KPIs), and E-Stop/reboot actions. |
-| **Gamepad Teleoperation** | [**`lasius-pilot/`**](lasius-pilot/README.md) | Direct Linux joystick reader (`/dev/input/js0`), radial deadzones, real-time velocity streaming, and Google Stadia controller mapping. |
-| **Hardware Overview** | [**`hardware/`**](hardware/README.md) | Physical robot specifications, chassis sandwich geometry, limb lengths, UBEC power rails, and I2C sensor bus architecture. |
-| **Mechanical CAD** | [**`hardware/mechanics/`**](hardware/mechanics/README.md) | Parametric FreeCAD models (`.FCStd`), digital fabrication exports (`export/` in STEP, STL, DXF), 1:1 SVG drill templates, and headless generation scripts. |
-| **Wiring & Harnesses** | [**`hardware/electronics/`**](hardware/electronics/wiring/README.md) | WireViz cable definitions (`.yml`), harness schematics (`.svg`, `.png`), and automated bills of materials (`.bom.tsv`). |
-| **Documentation & Specs** | [**`docs/`**](docs/README.md) | Hardware design decisions, 18-DOF closed-loop feedback plan, electrical connection plans, Stadia mapping, and backlog roadmap. |
-| **Data & Benchmarks** | [**`data/`**](data/README.md) | Empirical potentiometer bench measurements (`data/bench/`) and timestamped calibration backups (`data/calibration_backups/`). |
-| **Helper Scripts** | [**`scripts/`**](scripts/README.md) | Shell and Python automation for local simulation (`dev/dev_sim.sh`), testing (`dev/run_tests.sh`), Raspberry Pi deployment (`deploy/deploy_pi.sh`), and servo calibration. |
+### 📖 System Documentation & Specifications (`docs/`)
+- [**`docs/README.md`**](docs/README.md) – Documentation overview and navigation guide
+- [**`docs/roadmap.md`**](docs/roadmap.md) – Project roadmap, milestone progress (M1–M6), and backlog
+- [**`docs/hardware/decisions.md`**](docs/hardware/decisions.md) – Hardware decisions, power architecture (LiPo/UBEC), sensor bus & 3D print specs
+- [**`docs/hardware/closed_loop_plan.md`**](docs/hardware/closed_loop_plan.md) – 18-DOF closed-loop feedback plan, ADS1115 ADC pinout & CircuitPython drivers
+- [**`docs/hardware/wiring_plan.md`**](docs/hardware/wiring_plan.md) – Raspberry Pi to PCA9685 I2C daisy chain, logic levels & common ground scheme
+- [**`docs/pilot/gamepad_stadia.md`**](docs/pilot/gamepad_stadia.md) – Google Stadia Bluetooth/USB controller profile, button mappings & teleoperation
+
+### 💻 Software Subsystems
+- [**`lasius-core/README.md`**](lasius-core/README.md) – Locomotion engine, 50 Hz harmonic gait, 3-DOF IK, HAL, and REST/WebSocket API
+- [**`lasius-dashboard/README.md`**](lasius-dashboard/README.md) – Vue 3 + TypeScript 3D Digital Twin (Three.js WebGL), 2D projections & control GUI
+- [**`lasius-pilot/README.md`**](lasius-pilot/README.md) – Direct Linux joystick driver (`/dev/input/js0`), radial deadzones & teleoperation streaming
+
+### 🛠️ Physical Hardware & Engineering (`hardware/`)
+- [**`hardware/README.md`**](hardware/README.md) – Hardware overview, dual-plate chassis dimensions, limb lengths & power distribution
+- [**`hardware/mechanics/README.md`**](hardware/mechanics/README.md) – FreeCAD parametric models, fabrication exports (STEP, STL, DXF) & 1:1 SVG drill templates
+- [**`hardware/electronics/wiring/README.md`**](hardware/electronics/wiring/README.md) – WireViz cable harnesses (`.yml`), visual harness diagrams & automated BOMs
+
+### 📊 Data, Calibration & Tooling (`data/`, `scripts/`)
+- [**`data/README.md`**](data/README.md) – Runtime data index, calibration snapshots & benchmark measurements
+- [**`data/bench/README.md`**](data/bench/README.md) – Potentiometer sweep calibration data, linear regression parameters & validation results
+- [**`scripts/README.md`**](scripts/README.md) – Automation scripts for local simulation (`dev/dev_sim.sh`), testing, and Pi deployment (`deploy/deploy_pi.sh`)
+- [**`GEMINI.md`**](GEMINI.md) – AI developer briefing, coding standards, architecture summary & system configuration
 
 ---
 
