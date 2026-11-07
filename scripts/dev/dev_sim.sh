@@ -16,7 +16,6 @@ if [ -f "$ROOT_DIR/scripts/banner.txt" ]; then
     cat "$ROOT_DIR/scripts/banner.txt"
 fi
 
-PYTHON_BIN=""
 if command -v uv >/dev/null 2>&1; then
     PYTHON_CMD="uv run python"
 elif [ -x "$ROOT_DIR/.venv/bin/python3" ]; then

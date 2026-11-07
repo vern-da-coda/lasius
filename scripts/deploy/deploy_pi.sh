@@ -20,6 +20,7 @@ fi
 PI_USER="${PI_USER:-hexapod}"
 PI_IP="${1:-${PI_IP:-192.168.0.123}}"
 PI_TARGET="${PI_USER}@${PI_IP}"
+# shellcheck disable=SC2088
 REMOTE_DIR="~/lasius"
 
 echo "=========================================================="
