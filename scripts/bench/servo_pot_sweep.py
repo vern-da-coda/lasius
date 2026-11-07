@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Servo Potentiometer Sweep & Calibration Tool (`scripts/servo_pot_sweep.py`).
+Servo Potentiometer Sweep & Calibration Tool (`scripts/bench/servo_pot_sweep.py`).
 
 Purpose & Role:
     Drives a single servo on PCA9685 Board 1 (0x40) through automated angle profiles
@@ -99,17 +99,17 @@ def run_step_mode(pca: SimplePCA9685, channel: int, min_deg: float, max_deg: flo
         curr += step_deg
 
     print("\n" + "=" * 65)
-    print(f"🔬 STEP-AND-HOLD MESSMODUS: Kanal {channel} auf 0x40")
-    print(f"Bereich: {min_deg:.1f}° bis {max_deg:.1f}° | Schrittweite: {step_deg:.1f}° | Haltezeit: {hold_sec}s")
-    print("Drücke Strg+C zum sauberen Beenden (Servo wird stromlos geschaltet).")
+    print(f"🔬 STEP-AND-HOLD MEASUREMENT MODE: Channel {channel} on 0x{pca.address:02X}")
+    print(f"Range: {min_deg:.1f}° to {max_deg:.1f}° | Step: {step_deg:.1f}° | Hold: {hold_sec}s")
+    print("Press Ctrl+C to cleanly exit (servo will be relaxed).")
     print("=" * 65 + "\n")
 
     iteration = 1
     while True:
-        print(f"--- Durchlauf #{iteration} ---")
+        print(f"--- Sweep #{iteration} ---")
         for i, angle in enumerate(angles, 1):
             pulse_us = pca.set_angle(channel, angle)
-            print(f"[{i:02d}/{len(angles):02d}] 👉 Winkel: {angle:+6.1f}° | Puls: {pulse_us:6.1f} µs | ⏱  HALTEN ({hold_sec:.1f}s) -> [JETZT MESSEN]")
+            print(f"[{i:02d}/{len(angles):02d}] 👉 Angle: {angle:+6.1f}° | Pulse: {pulse_us:6.1f} µs | ⏱  HOLD ({hold_sec:.1f}s) -> [MEASURE NOW]")
             
             # Countdown
             start_t = time.time()
@@ -117,7 +117,7 @@ def run_step_mode(pca: SimplePCA9685, channel: int, min_deg: float, max_deg: flo
                 time.sleep(0.05)
 
         if not loop:
-            print("\n✔ Durchlauf abgeschlossen.")
+            print("\n✔ Sweep completed.")
             break
         iteration += 1
         time.sleep(1.0)
@@ -129,9 +129,9 @@ def run_sweep_mode(pca: SimplePCA9685, channel: int, min_deg: float, max_deg: fl
     amplitude = (max_deg - min_deg) / 2.0
 
     print("\n" + "=" * 65)
-    print(f"🌊 KONTINUIERLICHER HARMONISCHER SWEEP: Kanal {channel} auf 0x40")
-    print(f"Bereich: {min_deg:.1f}° bis {max_deg:.1f}° | Periode: {period_sec:.1f}s ({1.0/period_sec:.2f} Hz)")
-    print("Drücke Strg+C zum Beenden (Servo wird stromlos geschaltet).")
+    print(f"🌊 CONTINUOUS HARMONIC SWEEP: Channel {channel} on 0x{pca.address:02X}")
+    print(f"Range: {min_deg:.1f}° to {max_deg:.1f}° | Period: {period_sec:.1f}s ({1.0/period_sec:.2f} Hz)")
+    print("Press Ctrl+C to exit (servo will be relaxed).")
     print("=" * 65 + "\n")
 
     start_time = time.time()
@@ -153,7 +153,7 @@ def run_sweep_mode(pca: SimplePCA9685, channel: int, min_deg: float, max_deg: fl
             bar = [" "] * (bar_len + 1)
             bar[idx] = "█"
             bar_str = "[" + "".join(bar) + "]"
-            sys.stdout.write(f"\rWinkel: {angle:+6.1f}° | Puls: {pulse_us:6.1f} µs  {bar_str}   ")
+            sys.stdout.write(f"\rAngle: {angle:+6.1f}° | Pulse: {pulse_us:6.1f} µs  {bar_str}   ")
             sys.stdout.flush()
             last_print = elapsed
 
@@ -169,26 +169,26 @@ def run_table_mode(pca: SimplePCA9685, channel: int, min_deg: float, max_deg: fl
         curr += step_deg
 
     print("\n" + "=" * 65)
-    print(f"📋 INTERAKTIVE KENNLINIEN-AUFNAHME: Kanal {channel} auf 0x40")
-    print("Der Servo fährt jeden Winkel an und wartet auf die Eingabe der")
-    print("am Poti gemessenen Spannung (in Volt). [Enter] überspringt den Punkt.")
+    print(f"📋 INTERACTIVE CALIBRATION SWEEP: Channel {channel} on 0x{pca.address:02X}")
+    print("The servo targets each discrete angle and waits for user input of the")
+    print("measured potentiometer voltage (in Volts). Press [Enter] to skip a point.")
     print("=" * 65 + "\n")
 
     results: List[Tuple[float, float, str]] = []
 
     for i, angle in enumerate(angles, 1):
         pulse_us = pca.set_angle(channel, angle)
-        print(f"\n[{i:02d}/{len(angles):02d}] Winkel angefahren: {angle:+6.1f}° (Puls: {pulse_us:6.1f} µs)")
-        val = input("   👉 Gemessene Spannung am Poti (in V): ").strip()
+        print(f"\n[{i:02d}/{len(angles):02d}] Angle reached: {angle:+6.1f}° (Pulse: {pulse_us:6.1f} µs)")
+        val = input("   👉 Measured voltage at wiper (in V): ").strip()
         results.append((angle, pulse_us, val if val else "N/A"))
 
     print("\n" + "=" * 65)
-    print("📊 ERGEBNIS-TABELLE (Winkel vs. Poti-Spannung):")
+    print("📊 RESULT TABLE (Angle vs. Potentiometer Voltage):")
     print("=" * 65)
-    print(" Winkel [°] |  Puls [µs]  |  Spannung [V]")
+    print(" Angle [°]  |  Pulse [µs]  |  Voltage [V]")
     print("------------------------------------------")
     for angle, pulse_us, volt in results:
-        print(f" {angle:+9.1f}  |  {pulse_us:9.1f}  |  {volt:>10}")
+        print(f" {angle:+9.1f}  |  {pulse_us:9.1f}   |  {volt:>10}")
     print("=" * 65)
 
 
@@ -207,14 +207,14 @@ def main():
     parser.add_argument("--loop", action="store_true", help="Repeat step mode continuously.")
     args = parser.parse_args()
 
-    print(f"🔌 Verbinde mit PCA9685 auf 0x{args.address:02X} (Bus {args.i2c_bus}), Kanal {args.channel}...")
+    print(f"🔌 Connecting to PCA9685 at 0x{args.address:02X} (Bus {args.i2c_bus}), Channel {args.channel}...")
     try:
         pca = SimplePCA9685(address=args.address, bus_num=args.i2c_bus)
     except Exception as e:
-        print(f"❌ Fehler bei Verbindung mit PCA9685: {e}")
+        print(f"❌ Error connecting to PCA9685: {e}")
         sys.exit(1)
 
-    print(f"✔ PCA9685 bereit. Initialisiere Kanal {args.channel}...")
+    print(f"✔ PCA9685 ready. Initializing channel {args.channel}...")
 
     try:
         if args.mode == "step":
@@ -224,12 +224,12 @@ def main():
         elif args.mode == "table":
             run_table_mode(pca, args.channel, args.min, args.max, args.step)
     except KeyboardInterrupt:
-        print("\n\n⏹ Abbruch durch Benutzer (Strg+C).")
+        print("\n\n⏹ Interrupted by user (Ctrl+C).")
     finally:
-        print(f"💤 Schalte Servo auf Kanal {args.channel} stromlos (Relax)...")
+        print(f"💤 Relaxing servo channel {args.channel} (PWM off)...")
         pca.relax_channel(args.channel)
         pca.close()
-        print("✔ Beendet.")
+        print("✔ Done.")
 
 
 if __name__ == "__main__":

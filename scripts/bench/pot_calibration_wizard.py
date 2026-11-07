@@ -167,13 +167,13 @@ def main():
     print("\n" + "=" * 70)
     print("      🧙  LASIUS SERVO POTENTIOMETER CALIBRATION WIZARD  🧙")
     print("=" * 70)
-    print(f"  • Servo:           Kanal {args.channel} (PCA9685 Board 1, 0x40)")
-    print(f"  • Messbereich:     {args.min:+.1f}° bis {args.max:+.1f}° (Schrittweite: {args.step:.1f}°)")
-    print(f"  • Kennung:         {args.name}")
+    print(f"  • Servo:           Channel {args.channel} (PCA9685 Board 1, 0x40)")
+    print(f"  • Span:            {args.min:+.1f}° to {args.max:+.1f}° (Step: {args.step:.1f}°)")
+    print(f"  • Identifier:      {args.name}")
     print("=" * 70)
-    print("Drücke Strg+C jederzeit zum Abbruch (der Servo wird sicher stromlos geschaltet).\n")
+    print("Press Ctrl+C at any time to abort (servo will be relaxed safely).\n")
 
-    input("👉 Prüfe, ob die Messspitzen sitzen. Drücke [Enter] zum Starten...")
+    input("👉 Check probe placement. Press [Enter] to start...")
 
     pca = WizardPCA9685(address=0x40, bus_num=1)
 
@@ -188,25 +188,25 @@ def main():
         total_steps = len(angles)
         measurements: List[Tuple[float, float, float]] = []
 
-        print(f"\n🚀 Fahre sanft zur Startposition (Schritt 0 / {args.min:+.1f}°)...")
+        print(f"\n🚀 Driving smoothly to starting angle (Step 0 / {args.min:+.1f}°)...")
         pca.move_smooth(args.channel, args.min, speed_deg_per_sec=40.0)
         time.sleep(0.5)
 
         for idx, angle in enumerate(angles):
             pulse_us = pca.angle_to_pulse(angle)
             if idx > 0:
-                print(f"\n⏳ Fahre zu Schritt {idx + 1}/{total_steps} ({angle:+.1f}°)...")
+                print(f"\n⏳ Moving to step {idx + 1}/{total_steps} ({angle:+.1f}°)...")
                 pca.move_smooth(args.channel, angle, speed_deg_per_sec=45.0)
                 time.sleep(0.3)
 
             while True:
                 prompt = (
-                    f"[{idx + 1:02d}/{total_steps:02d}] 📍 Winkel: {angle:+6.1f}° | Puls: {pulse_us:6.1f} µs\n"
-                    f"       👉 Gemessene Spannung am Multimeter in Volt (z.B. 1.45, 'r'=wiederholen, 'q'=abbrechen): "
+                    f"[{idx + 1:02d}/{total_steps:02d}] 📍 Angle: {angle:+6.1f}° | Pulse: {pulse_us:6.1f} µs\n"
+                    f"       👉 Measured multimeter voltage in Volts (e.g. 1.45, 'r'=retry, 'q'=abort): "
                 )
                 val_str = input(prompt).strip()
                 if val_str.lower() == 'q':
-                    print("\n⏹ Wizard vorzeitig abgebrochen.")
+                    print("\n⏹ Wizard aborted.")
                     return
                 if val_str.lower() == 'r':
                     pca.move_smooth(args.channel, angle, speed_deg_per_sec=30.0)
@@ -216,37 +216,37 @@ def main():
                 try:
                     voltage = float(val_clean)
                     if voltage < 0 or voltage > 10.0:
-                        print("   ⚠️  Warnung: Ungewöhnliche Spannung. Bitte prüfen (0 bis 5V erwartet).")
+                        print("   ⚠️  Warning: Unusual voltage reading. Please verify (expected 0 to 5V).")
                     measurements.append((angle, pulse_us, voltage))
                     break
                 except ValueError:
-                    print("   ❌ Ungültige Eingabe! Bitte eine Zahl eingeben (z. B. '1.45').")
+                    print("   ❌ Invalid input! Please enter a number (e.g. '1.45').")
 
-        # Auswertung & Regression
+        # Evaluation & Regression
         print("\n" + "=" * 70)
-        print("🎉 Alle Messpunkte erfasst! Berechne lineare Kennlinie...")
+        print("🎉 All points recorded! Computing linear characteristic curve...")
         print("=" * 70)
 
         reg = compute_linear_regression(measurements)
 
-        print("\n📊 ERGEBNIS-TABELLE:")
-        print(" Schritt |  Winkel [°]  |  Puls [µs]  |  Gemessen [V]  |  Modell [V]  |  Fehler [mV]")
+        print("\n📊 RESULT TABLE:")
+        print(" Step  |  Angle [°]  |  Pulse [µs]  |  Measured [V]  |  Model [V]  |  Error [mV]")
         print("-" * 76)
         for idx, (a, p, v) in enumerate(measurements, 1):
             v_model = reg["slope_v_per_deg"] * a + reg["intercept_v_0deg"]
             diff_mv = (v - v_model) * 1000.0
-            print(f"  {idx:02d}/{total_steps:02d}  |   {a:+7.1f}    |   {p:7.1f}   |    {v:6.3f} V   |   {v_model:6.3f} V   |  {diff_mv:+6.1f} mV")
+            print(f"  {idx:02d}/{total_steps:02d} |   {a:+7.1f}   |   {p:7.1f}    |    {v:6.3f} V   |   {v_model:6.3f} V  |  {diff_mv:+6.1f} mV")
         print("-" * 76)
 
-        print("\n📐 KINEMATISCHE KENNLINIEN-PARAMETER:")
-        print(f"  • Steigung (Empfindlichkeit):     {reg['slope_mv_per_deg']:+.3f} mV / °  ({reg['slope_v_per_deg']:+.6f} V/°)")
-        print(f"  • Umrechnungsfaktor:              {reg['deg_per_volt']:+.2f} ° / V")
-        print(f"  • Nullpunkt-Spannung (bei 0°):    {reg['intercept_v_0deg']:.4f} V")
-        print(f"  • Linearitätsgüte (R²):           {reg['r_squared']:.5f}  (1.00000 = perfekt)")
-        print(f"  • Max. Winkel-Abweichung:         ±{reg['max_error_deg']:.2f}°")
+        print("\n📐 KINEMATIC CALIBRATION PARAMETERS:")
+        print(f"  • Slope (Sensitivity):            {reg['slope_mv_per_deg']:+.3f} mV / °  ({reg['slope_v_per_deg']:+.6f} V/°)")
+        print(f"  • Conversion Scale Factor:        {reg['deg_per_volt']:+.2f} ° / V")
+        print(f"  • Zero-Point Voltage (at 0°):     {reg['intercept_v_0deg']:.4f} V")
+        print(f"  • Linearity Coefficient (R²):     {reg['r_squared']:.5f}  (1.00000 = ideal)")
+        print(f"  • Max Angle Deviation:            ±{reg['max_error_deg']:.2f}°")
 
-        formula_str = f"Winkel [°] = (Spannung [V] - {reg['intercept_v_0deg']:.4f}) * {reg['deg_per_volt']:+.2f}"
-        print(f"\n💡 FORMEL FÜR CLOSED-LOOP REGELUNG:\n   👉 {formula_str}")
+        formula_str = f"Angle [°] = (Voltage [V] - {reg['intercept_v_0deg']:.4f}) * {reg['deg_per_volt']:+.2f}"
+        print(f"\n💡 CLOSED-LOOP CONVERSION FORMULA:\n   👉 {formula_str}")
 
         # Save to disk
         out_dir = Path(args.outdir)
@@ -281,23 +281,23 @@ def main():
                 err_mv = (v - v_model) * 1000.0
                 f.write(f"{idx},{a},{p},{v},{v_model:.4f},{err_mv:.2f}\n")
 
-        print(f"\n💾 Kalibrierdaten gespeichert:")
+        print(f"\n💾 Calibration saved:")
         print(f"   • JSON: {json_path}")
         print(f"   • CSV:  {csv_path}")
         print("=" * 70)
 
-        # Sanft zurück zu Neutral und Relax
-        print("\n🏁 Fahre sanft zurück auf Neutral (0.0°)...")
+        # Smooth return to neutral and relax
+        print("\n🏁 Returning smoothly to neutral (0.0°)...")
         pca.move_smooth(args.channel, 0.0, speed_deg_per_sec=50.0)
         time.sleep(0.4)
 
     except KeyboardInterrupt:
-        print("\n\n⏹ Abbruch durch Benutzer (Strg+C).")
+        print("\n\n⏹ Aborted by user (Ctrl+C).")
     finally:
-        print(f"💤 Schalte Servo auf Kanal {args.channel} stromlos (Relax)...")
+        print(f"💤 Relaxing servo channel {args.channel} (PWM off)...")
         pca.relax_channel(args.channel)
         pca.close()
-        print("✔ Abgeschlossen & Servo entspannt.\n")
+        print("✔ Finished & servo relaxed.\n")
 
 
 if __name__ == "__main__":

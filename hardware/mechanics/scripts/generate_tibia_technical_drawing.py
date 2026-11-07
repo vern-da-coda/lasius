@@ -182,7 +182,7 @@ def create_tibia_technische_zeichnung_svg():
     <line x1="{tx(0.0):.2f}" y1="{ty(0.0):.2f}" x2="{tx(tip_x):.2f}" y2="{ty(tip_y):.2f}" stroke="#38a169" stroke-width="0.3" stroke-dasharray="3,1"/>
     <g transform="translate({tx(tip_x / 2.0):.2f}, {ty(tip_y / 2.0):.2f}) rotate(-6.36)">
       <rect x="-30" y="-4.0" width="60" height="3.5" fill="#ffffff"/>
-      <text x="0" y="-1.5" font-family="Liberation Sans, Arial" font-size="2.3" font-weight="bold" fill="#276749" text-anchor="middle">L_DH = 130.00 (Kinematik-Nennmaß)</text>
+      <text x="0" y="-1.5" font-family="Liberation Sans, Arial" font-size="2.3" font-weight="bold" fill="#276749" text-anchor="middle">L_DH = 130.00 (Kinematic Nominal Span)</text>
     </g>
 
     <!-- DIMENSIONS -->
@@ -191,7 +191,7 @@ def create_tibia_technische_zeichnung_svg():
       <line x1="{tx(tip_x):.2f}" y1="0" x2="{tx(41.15):.2f}" y2="0" class="dim-line" marker-start="url(#arrow-start)" marker-end="url(#arrow-end)"/>
       <line x1="{tx(tip_x):.2f}" y1="-1.5" x2="{tx(tip_x):.2f}" y2="{ty(tip_y) - (ty(38.4) - 9.0):.2f}" class="dim-ext"/>
       <line x1="{tx(41.15):.2f}" y1="-1.5" x2="{tx(41.15):.2f}" y2="{ty(19.22) - (ty(38.4) - 9.0):.2f}" class="dim-ext"/>
-      <text x="{tx((tip_x + 41.15)/2.0):.2f}" y="-2.0" class="dim-text" font-weight="bold">170.30 (Gesamtlänge)</text>
+      <text x="{tx((tip_x + 41.15)/2.0):.2f}" y="-2.0" class="dim-text" font-weight="bold">170.30 (Overall Length)</text>
     </g>
 
     <!-- Overall Height 57.65 mm -->
@@ -307,60 +307,60 @@ def create_tibia_technische_zeichnung_svg():
 
     <!-- Detail Through Hole Callout -->
     <g transform="translate(20, 18)">
-      <text x="0" y="0" font-family="Liberation Sans, Arial" font-size="2.2" font-weight="bold" fill="#2b6cb0">Bohrungs-Querschnitt (4x Servo):</text>
+      <text x="0" y="0" font-family="Liberation Sans, Arial" font-size="2.2" font-weight="bold" fill="#2b6cb0">Bore Cross-Section (4x Servo):</text>
       <rect x="0" y="3" width="22" height="7" fill="#edf2f7" stroke="#000000" stroke-width="0.35"/>
       <rect x="9" y="3" width="4.0" height="7" fill="#ffffff" stroke="#718096" stroke-width="0.25"/>
       <line x1="11" y1="1.5" x2="11" y2="11.5" class="centerline"/>
-      <text x="28" y="6.0" class="dim-text-sm" text-anchor="start">• Bohrungsdurchmesser: Ø 4.00 mm</text>
-      <text x="28" y="8.8" class="dim-text-sm" text-anchor="start">• Ausführung: Durchgangsbohrung glatt, freistehend</text>
-      <text x="28" y="11.6" class="dim-text-sm" text-anchor="start">• Senkung / Vertiefung: KEINE</text>
+      <text x="28" y="6.0" class="dim-text-sm" text-anchor="start">• Bore Diameter: Ø 4.00 mm</text>
+      <text x="28" y="8.8" class="dim-text-sm" text-anchor="start">• Execution: Smooth through-hole</text>
+      <text x="28" y="11.6" class="dim-text-sm" text-anchor="start">• Countersink: NONE</text>
     </g>
   </g>
 
   <!-- ========================================================================= -->
-  <!-- PRÜFMASSTABELLE (Messschieber-Abgleich) -->
+  <!-- INSPECTION DIMENSIONS TABLE -->
   <!-- ========================================================================= -->
   <g id="prueftabelle" transform="translate(15, 158)">
     <rect x="0" y="0" width="128" height="40" fill="#f7fafc" stroke="#cbd5e0" stroke-width="0.3"/>
     
     <rect x="0" y="0" width="128" height="6.5" fill="#edf2f7" stroke="#cbd5e0" stroke-width="0.3"/>
-    <text x="4" y="4.5" class="table-text-bold">Prüfmaß (Feature)</text>
-    <text x="56" y="4.5" class="table-text-bold">Sollmaß [mm]</text>
-    <text x="82" y="4.5" class="table-text-bold">Toleranz</text>
-    <text x="105" y="4.5" class="table-text-bold">Ist-Maß [mm]</text>
+    <text x="4" y="4.5" class="table-text-bold">Inspection Feature</text>
+    <text x="56" y="4.5" class="table-text-bold">Target [mm]</text>
+    <text x="82" y="4.5" class="table-text-bold">Tolerance</text>
+    <text x="105" y="4.5" class="table-text-bold">Actual [mm]</text>
 
     <line x1="0" y1="13.0" x2="128" y2="13.0" stroke="#e2e8f0" stroke-width="0.25"/>
-    <text x="4" y="10.8" class="table-text">1. Servo Lochabstand X</text>
+    <text x="4" y="10.8" class="table-text">1. Servo Hole Spacing X</text>
     <text x="56" y="10.8" class="table-text-bold">48.50 mm</text>
     <text x="82" y="10.8" class="table-text">±0.10 mm</text>
     <text x="105" y="10.8" class="table-text">[       ]</text>
 
     <line x1="0" y1="19.5" x2="128" y2="19.5" stroke="#e2e8f0" stroke-width="0.25"/>
-    <text x="4" y="17.3" class="table-text">2. Servo Lochabstand Y</text>
+    <text x="4" y="17.3" class="table-text">2. Servo Hole Spacing Y</text>
     <text x="56" y="17.3" class="table-text-bold">10.00 mm</text>
     <text x="82" y="17.3" class="table-text">±0.10 mm</text>
     <text x="105" y="17.3" class="table-text">[       ]</text>
 
     <line x1="0" y1="26.0" x2="128" y2="26.0" stroke="#e2e8f0" stroke-width="0.25"/>
-    <text x="4" y="23.8" class="table-text">3. Servo Ausschnitt L x B</text>
+    <text x="4" y="23.8" class="table-text">3. Servo Cutout L x W</text>
     <text x="56" y="23.8" class="table-text-bold">40.50 x 20.50 mm</text>
     <text x="82" y="23.8" class="table-text">±0.15 mm</text>
     <text x="105" y="23.8" class="table-text">[       ]</text>
 
     <line x1="0" y1="32.5" x2="128" y2="32.5" stroke="#e2e8f0" stroke-width="0.25"/>
-    <text x="4" y="30.3" class="table-text">4. Knie-Achse zu Fußspitze (L_DH)</text>
+    <text x="4" y="30.3" class="table-text">4. Knee Axis to Foot Tip (L_DH)</text>
     <text x="56" y="30.3" class="table-text-bold">130.00 mm</text>
     <text x="82" y="30.3" class="table-text">±0.25 mm</text>
     <text x="105" y="30.3" class="table-text">[       ]</text>
 
-    <text x="4" y="36.8" class="table-text">5. Plattendicke (Material)</text>
+    <text x="4" y="36.8" class="table-text">5. Plate Thickness (Material)</text>
     <text x="56" y="36.8" class="table-text-bold">7.00 mm</text>
     <text x="82" y="36.8" class="table-text">±0.15 mm</text>
     <text x="105" y="36.8" class="table-text">[       ]</text>
   </g>
 
   <!-- ========================================================================= -->
-  <!-- DIN ISO 7200 SCHRIFTFELD (Title Block) -->
+  <!-- DIN ISO 7200 TITLE BLOCK -->
   <!-- ========================================================================= -->
   <g id="schriftfeld" transform="translate(148, 158)">
     <rect x="0" y="0" width="139" height="40" fill="#ffffff" stroke="#000000" stroke-width="0.35"/>
@@ -376,41 +376,41 @@ def create_tibia_technische_zeichnung_svg():
     <line x1="90" y1="28" x2="90" y2="40" stroke="#000" stroke-width="0.25"/>
 
     <!-- Row 1 -->
-    <text x="3" y="3.5" class="dim-text-sm" fill="#718096" text-anchor="start">Benennung / Title</text>
-    <text x="3" y="6.8" class="title" font-size="2.7">TIBIA (UNTERSCHENKEL / SICHELKRALLE)</text>
+    <text x="3" y="3.5" class="dim-text-sm" fill="#718096" text-anchor="start">Title</text>
+    <text x="3" y="6.8" class="title" font-size="2.7">TIBIA (LOWER LIMB / SICKLE CLAW)</text>
 
-    <text x="78" y="3.5" class="dim-text-sm" fill="#718096" text-anchor="start">Projekt / Robot</text>
+    <text x="78" y="3.5" class="dim-text-sm" fill="#718096" text-anchor="start">Project / Robot</text>
     <text x="78" y="6.8" class="title" font-size="2.4">LASIUS HEXAPOD</text>
 
-    <text x="108" y="3.5" class="dim-text-sm" fill="#718096" text-anchor="start">Maßstab / Scale</text>
+    <text x="108" y="3.5" class="dim-text-sm" fill="#718096" text-anchor="start">Scale</text>
     <text x="108" y="6.8" class="title" font-size="2.5">1:1 (DIN A4)</text>
 
     <!-- Row 2 -->
-    <text x="3" y="11.5" class="dim-text-sm" fill="#718096" text-anchor="start">Zeichnungsnummer / Drawing No.</text>
+    <text x="3" y="11.5" class="dim-text-sm" fill="#718096" text-anchor="start">Drawing No.</text>
     <text x="3" y="15.5" font-family="Liberation Sans, Arial" font-size="2.7" font-weight="bold" fill="#000">LH-CAD-TIB-001</text>
 
-    <text x="78" y="11.5" class="dim-text-sm" fill="#718096" text-anchor="start">Freigabe / Status</text>
-    <text x="78" y="15.5" font-family="Liberation Sans, Arial" font-size="2.3" font-weight="bold" fill="#38a169">FREIGEGEBEN (V1.2)</text>
+    <text x="78" y="11.5" class="dim-text-sm" fill="#718096" text-anchor="start">Status</text>
+    <text x="78" y="15.5" font-family="Liberation Sans, Arial" font-size="2.3" font-weight="bold" fill="#38a169">APPROVED (V1.2)</text>
 
-    <text x="108" y="11.5" class="dim-text-sm" fill="#718096" text-anchor="start">Blatt / Sheet</text>
+    <text x="108" y="11.5" class="dim-text-sm" fill="#718096" text-anchor="start">Sheet</text>
     <text x="108" y="15.5" font-family="Liberation Sans, Arial" font-size="2.4" font-weight="bold" fill="#000">1 / 1</text>
 
     <!-- Row 3 -->
-    <text x="3" y="21.5" class="dim-text-sm" fill="#718096" text-anchor="start">Werkstoff / Material</text>
-    <text x="3" y="25.5" font-family="Liberation Sans, Arial" font-size="2.4" font-weight="bold" fill="#000">POM / CFK / Alu / PETG (Plattendicke 7.00 mm)</text>
+    <text x="3" y="21.5" class="dim-text-sm" fill="#718096" text-anchor="start">Material</text>
+    <text x="3" y="25.5" font-family="Liberation Sans, Arial" font-size="2.4" font-weight="bold" fill="#000">CFRP / Aluminum / PETG (Thickness 7.00 mm)</text>
 
     <!-- Row 4 -->
-    <text x="3" y="30.5" class="dim-text-sm" fill="#718096" text-anchor="start">Allgemeintoleranz</text>
+    <text x="3" y="30.5" class="dim-text-sm" fill="#718096" text-anchor="start">General Tolerance</text>
     <text x="3" y="33.0" class="dim-text-sm" font-weight="bold" text-anchor="start">ISO 2768-m</text>
 
-    <text x="48" y="30.5" class="dim-text-sm" fill="#718096" text-anchor="start">Erstellt von / Author</text>
+    <text x="48" y="30.5" class="dim-text-sm" fill="#718096" text-anchor="start">Author</text>
     <text x="48" y="33.0" class="dim-text-sm" font-weight="bold" text-anchor="start">DeepMind / Antigravity CAD</text>
 
-    <text x="93" y="30.5" class="dim-text-sm" fill="#718096" text-anchor="start">Datum / Date</text>
+    <text x="93" y="30.5" class="dim-text-sm" fill="#718096" text-anchor="start">Date</text>
     <text x="93" y="33.0" class="dim-text-sm" font-weight="bold" text-anchor="start">2026-11-05</text>
 
     <!-- Row 5 -->
-    <text x="3" y="37.8" font-family="Liberation Sans, Arial" font-size="1.7" fill="#4a5568" text-anchor="start">Kanten entgraten. Alle Maße in Millimeter [mm]. Schutzvermerk ISO 16016 beachten.</text>
+    <text x="3" y="37.8" font-family="Liberation Sans, Arial" font-size="1.7" fill="#4a5568" text-anchor="start">Deburr edges. All dimensions in millimeters [mm]. ISO 16016 applies.</text>
   </g>
 
 </svg>''')

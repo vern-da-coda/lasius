@@ -1,110 +1,110 @@
 # Lasius Hexapod – 18-DOF Closed-Loop Potentiometer Feedback
-## Vollständige Hardware-Spezifikation, Anschlussplan & Architektur-Findings
+## Hardware Specification, Connection Plan & Architectural Findings
 
-> **Projekt:** Lasius Hexapod (18 DOF, 6 Beine)  
-> **Status:** Final verifiziert & spezifiziert  
-> **Datum:** November 2026  
-> **Architektur:** 100 % Python auf Raspberry Pi 4 (I2C-Multiplexing via TCA9548A + 6× ADS1115)
-
----
-
-## 1. Executive Summary & Architektur-Entscheidung
-
-Zur Realisierung einer vollständigen 18-DOF Ist-Winkel-Erfassung (Positions-Feedback, Blockadeerkennung, Drehmoment-Schätzung und taktile Fußaufsetz-Erkennung) wird die Schleiferspannung der internen Servopotentiometer aller 18 **Reely NR-645 MG BB** Servos abgegriffen.
-
-### Warum diese Architektur gewählt wurde (Findings & Trade-Offs):
-1. **Kein separates Flashen (Gegen die Co-Prozessor / Pico-Lösung):**  
-   Ein separater Mikrocontroller (RP2040 / Raspberry Pi Pico) würde das System spalten („Two-Brain-Problem“): getrennte Toolchains, manuelle `BOOTSEL`-Tasten-Flashes, kein nahtloses SSH-Deployment via `./scripts/deploy_pi.sh` und HF-Rauschen des Pico W neben den Analogpins.
-2. **Reine Single-Source-of-Truth in Python auf dem Raspberry Pi 4:**  
-   Die gesamte Sensordaten-Verarbeitung läuft nativ in `lasius-core` unter Linux. Vollständig per `pytest` auf dem Laptop simulierbar (`MockADC`), versionierbar in Git und atomar deploybar.
-3. **1:1 Bein-Symmetrie (1 Board = 1 Bein):**  
-   Mit einem **6er-Pack ADS1115** bekommt jedes der 6 Beine eine eigene 4-Kanal-ADC-Platine am Beinansatz. Keine Leitungsaufteilung quer durch den Torso.
-4. **TCA9548A 8-Kanal-Multiplexer als Master-Hub:**  
-   Entkoppelt alle 6 ADS1115-Boards auf getrennte I2C-Sub-Busse. Alle 6 Boards laufen stressfrei auf derselben Standardadresse `0x48`.
-5. **Budget:**  
-   Gesamtkosten für 18 Kanäle: **$17{,}98\,\text{€}$** (6× ADS1115 für 12,99 € + 2× TCA9548A für 4,99 €).
+> **Project:** Lasius Hexapod (18 DOF, 6 Legs)  
+> **Status:** Verified & Specified  
+> **Date:** November 2026  
+> **Architecture:** 100% Python on Raspberry Pi 4 (I2C Multiplexing via TCA9548A + 6× ADS1115)
 
 ---
 
-## 2. Experimentelle Kennlinien-Findings (Reely NR-645 MG BB)
+## 1. Executive Summary & Architectural Decisions
 
-Am Prüfstand (Kanal 15 auf PCA9685 Board 1 `0x40`) wurde die Kennlinie des internen Potentiometers über den interaktiven Wizard ([`scripts/bench/pot_calibration_wizard.py`](../../scripts/bench/pot_calibration_wizard.py)) empirisch vermessen:
+To achieve full 18-DOF real-time joint angle feedback (position telemetry, stall detection, torque estimation, and tactile foot contact sensing), the wiper voltage of the internal feedback potentiometers is tapped across all 18 **Reely NR-645 MG BB** servos.
 
+### Architectural Rationale & Trade-Offs:
+1. **No External Microcontroller / Flashing (Against Co-Processor / Pico solutions):**  
+   A dedicated co-processor (RP2040 / Raspberry Pi Pico) would introduce a "two-brain problem": fragmented toolchains, manual `BOOTSEL` flashing, loss of seamless SSH deployment via `./scripts/deploy/deploy_pi.sh`, and RF noise from the Pico W near analog lines.
+2. **Pure Single-Source-of-Truth in Python on Raspberry Pi 4:**  
+   All sensor processing runs natively inside `lasius-core` under Linux. Fully simulated in tests via `pytest` (`MockADC`), tracked in Git, and deployable atomically.
+3. **1:1 Leg Symmetry (1 Board = 1 Leg):**  
+   With a **6-pack of ADS1115 boards**, each of the 6 legs receives a dedicated 4-channel ADC board at the leg mount point, avoiding cross-torso analog routing.
+4. **TCA9548A 8-Channel Multiplexer as Master Hub:**  
+   Decouples all 6 ADS1115 boards onto isolated I2C sub-busses. All 6 boards run conflict-free on their default address `0x48`.
+5. **Cost Efficiency:**  
+   Total electronics cost for 18 channels: **€17.98** (6× ADS1115 for €12.99 + 2× TCA9548A for €4.99).
+
+---
+
+## 2. Experimental Characteristics & Calibration (Reely NR-645 MG BB)
+
+On the test bench (Channel 15 on PCA9685 Board 1 `0x40`), the characteristic curve of the internal potentiometer was empirically measured using the interactive calibration wizard ([`scripts/bench/pot_calibration_wizard.py`](../../scripts/bench/pot_calibration_wizard.py)):
+
+```text
+       Characteristic Curve: Reely NR-645 MG BB Potentiometer
+Voltage [V]
+  2.10 ┤                                           ╭── +60° (2.02V)
+  1.90 ┤                                     ╭─────╯
+  1.70 ┤                               ╭─────╯
+  1.50 ┤ ─────────── 0° (1.563V) ──────╯  [1500 µs Neutral]
+  1.30 ┤                         ╭─────╯
+  1.10 ┤                   ╭─────╯
+  0.90 ┤ ── -60° (1.11V) ──╯
+       └─┬───────┬───────┬───────┬───────┬───────┬───────┬── Joint Angle [°]
+       -60°    -45°    -30°    -15°      0°     +15°    +30°    +60°
 ```
-           Kennlinie: Reely NR-645 MG BB Potentiometer
-  Spannung [V]
-    2.10 ┤                                           ╭── +60° (2.02V)
-    1.90 ┤                                     ╭─────╯
-    1.70 ┤                               ╭─────╯
-    1.50 ┤ ─────────── 0° (1.563V) ──────╯  [1500 µs Neutral]
-    1.30 ┤                         ╭─────╯
-    1.10 ┤                   ╭─────╯
-    0.90 ┤ ── -60° (1.11V) ──╯
-         └─┬───────┬───────┬───────┬───────┬───────┬───────┬── Stellwinkel [°]
-         -60°    -45°    -30°    -15°      0°     +15°    +30°    +60°
-```
 
-### Verifizierte Modellparameter:
-- **Linearitätsgüte ($R^2$):** **$0{,}99959$** ($99{,}96\,\%$ Linearität – praktisch ideal)
-- **Empfindlichkeit (Steigung $m$):** **$+7{,}589\,\text{mV} / ^\circ$** ($0{,}007589\,\text{V}/^\circ$)
-- **Umrechnungsskalierung ($k$):** **$131{,}772^\circ / \text{V}$**
-- **Nullpunktspannung ($V_{0^\circ}$):** **$1{,}5633\,\text{V}$** bei $0{,}0^\circ$ (1500 µs Impuls)
-- **Max. Linearitätsabweichung:** nur **$\pm 1{,}45^\circ$** (bzw. $\pm 11{,}0\,\text{mV}$)
-- **Spannungsbereich bei Vollausschlag ($\pm 90^\circ$):** $\sim 0{,}88\,\text{V}$ bis $\sim 2{,}25\,\text{V}$  
-  *(Absolut sicher innerhalb der 3,3V-Toleranzgrenze des Raspberry Pi / ADS1115).*
+### Verified Model Parameters:
+- **Linearity ($R^2$):** **0.99959** (99.96% linearity — practically ideal)
+- **Sensitivity (Slope $m$):** **$+7.589\,\text{mV}/^\circ$** ($0.007589\,\text{V}/^\circ$)
+- **Scale Factor ($k$):** **$131.772^\circ/\text{V}$**
+- **Zero-Point Voltage ($V_{0^\circ}$):** **$1.5633\,\text{V}$** at $0.0^\circ$ (1500 µs neutral pulse)
+- **Max Linearity Deviation:** only **$\pm 1.45^\circ$** (or $\pm 11.0\,\text{mV}$)
+- **Full-Scale Voltage Range ($\pm 90^\circ$):** $\sim 0.88\,\text{V}$ to $\sim 2.25\,\text{V}$  
+  *(Safely within the 3.3V operating limit of the Raspberry Pi / ADS1115).*
 
-### Mathematische Closed-Loop Transformationsformeln:
-$$\theta(V) = (V_{\text{gemessen}} - 1{,}5633\,\text{V}) \cdot 131{,}772^\circ$$
-$$V_{\text{soll}}(\theta) = 1{,}5633\,\text{V} + (\theta \cdot 0{,}007589\,\text{V}/^\circ)$$
+### Mathematical Closed-Loop Transformation Formulas:
+$$\theta(V) = (V_{\text{measured}} - 1.5633\,\text{V}) \cdot 131.772^\circ$$
+$$V_{\text{target}}(\theta) = 1.5633\,\text{V} + (\theta \cdot 0.007589\,\text{V}/^\circ)$$
 
 ---
 
-## 3. Schaltungs-Topologie (Gesamtsystem: Aktorik & Sensorik)
+## 3. Circuit Topology (Full System: Actuation & Sensing)
 
-Das folgende Gesamtschaltbild zeigt die vollständige Trennung und Interaktion zwischen dem **PWM-Aktorik-Zweig** (PCA9685, 5–6V Last) und dem **ADC-Sensorik-Zweig** (TCA9548A, 3,3V Logik):
+The diagram below illustrates the strict separation and interaction between the **PWM Actuation Branch** (PCA9685, 5–6V high-current load) and the **ADC Sensing Branch** (TCA9548A, 3.3V logic):
 
 ```mermaid
 flowchart TD
-    subgraph Power["Stromversorgung"]
-        UBEC["Labornetzteil / UBECs 5.0V - 6.0V Servolast"]
-        PiPower["5V / 3A Logik-Netzteil Raspberry Pi 4"]
-        CommonGND["=== Gemeinsamer Massepunkt Common Star-GND ==="]
+    subgraph Power["Power Supply"]
+        UBEC["Bench Supply / UBECs 5.0V - 6.0V Servo Load"]
+        PiPower["5V / 3A Logic Supply Raspberry Pi 4"]
+        CommonGND["=== Common Star-GND Ground Bus ==="]
     end
 
-    subgraph Pi["Raspberry Pi 4 (Gehirn / lasius-core)"]
-        I2C_Main["Haupt-I2C-Bus 1: SDA Pin 3, SCL Pin 5"]
-        Rail3V3["Logik 3.3V Pin 1"]
+    subgraph Pi["Raspberry Pi 4 (Core / lasius-core)"]
+        I2C_Main["Primary I2C Bus 1: SDA Pin 3, SCL Pin 5"]
+        Rail3V3["Logic 3.3V Pin 1"]
         PiGND["GND Pin 6"]
     end
 
-    subgraph PWM_Actuation["Aktorik-Zweig (Haupt-I2C-Bus)"]
-        PCA1["PCA9685 Links 0x40 - 9 PWM-Kanäle LF, LM, LR"]
-        PCA2["PCA9685 Rechts 0x42 - 9 PWM-Kanäle RF, RM, RR"]
+    subgraph PWM_Actuation["Actuation Branch (Primary I2C Bus)"]
+        PCA1["PCA9685 Left 0x40 - 9 PWM Channels LF, LM, LR"]
+        PCA2["PCA9685 Right 0x42 - 9 PWM Channels RF, RM, RR"]
     end
 
-    subgraph Sensor_Hub["Sensorik-Zweig (TCA9548A Hub auf 0x71)"]
-        TCA["TCA9548A 8-Kanal Multiplexer Adresse 0x71 via A0-Bruecke"]
-        ADS_LF["CH0: ADS1115 LF 0x48 - Coxa, Femur, Tibia, Fuss"]
-        ADS_LM["CH1: ADS1115 LM 0x48 - Coxa, Femur, Tibia, Fuss"]
-        ADS_LR["CH2: ADS1115 LR 0x48 - Coxa, Femur, Tibia, Fuss"]
-        ADS_RF["CH3: ADS1115 RF 0x48 - Coxa, Femur, Tibia, Fuss"]
-        ADS_RM["CH4: ADS1115 RM 0x48 - Coxa, Femur, Tibia, Fuss"]
-        ADS_RR["CH5: ADS1115 RR 0x48 - Coxa, Femur, Tibia, Fuss"]
-        INA["CH6: 2x INA228 Stromueberwachung"]
-        ToF["CH7: VL53L4CD ToF Distanzsensor"]
+    subgraph Sensor_Hub["Sensing Branch (TCA9548A Hub on 0x71)"]
+        TCA["TCA9548A 8-Channel Multiplexer 0x71 via A0 Jumper"]
+        ADS_LF["CH0: ADS1115 LF 0x48 - Coxa, Femur, Tibia, Foot"]
+        ADS_LM["CH1: ADS1115 LM 0x48 - Coxa, Femur, Tibia, Foot"]
+        ADS_LR["CH2: ADS1115 LR 0x48 - Coxa, Femur, Tibia, Foot"]
+        ADS_RF["CH3: ADS1115 RF 0x48 - Coxa, Femur, Tibia, Foot"]
+        ADS_RM["CH4: ADS1115 RM 0x48 - Coxa, Femur, Tibia, Foot"]
+        ADS_RR["CH5: ADS1115 RR 0x48 - Coxa, Femur, Tibia, Foot"]
+        INA["CH6: 2x INA228 Power Monitors"]
+        ToF["CH7: VL53L4CD ToF Distance Sensor"]
     end
 
     subgraph Servos_Physical["18x Reely NR-645 MG BB Servos"]
-        Servos_L["9x Servos Linke Koerperhaelfte LF, LM, LR"]
-        Servos_R["9x Servos Rechte Koerperhaelfte RF, RM, RR"]
+        Servos_L["9x Servos Left Body Half LF, LM, LR"]
+        Servos_R["9x Servos Right Body Half RF, RM, RR"]
     end
 
-    %% I2C Hauptbus
-    I2C_Main ===|Haupt-Bus| PCA1
-    I2C_Main ===|Haupt-Bus| PCA2
-    I2C_Main ===|Haupt-Bus| TCA
+    %% Main I2C Bus
+    I2C_Main ===|Primary Bus| PCA1
+    I2C_Main ===|Primary Bus| PCA2
+    I2C_Main ===|Primary Bus| TCA
 
-    %% Multiplexer Sub-Kanäle
+    %% Multiplexer Sub-Channels
     TCA -->|Sub-I2C 0| ADS_LF
     TCA -->|Sub-I2C 1| ADS_LM
     TCA -->|Sub-I2C 2| ADS_LR
@@ -114,20 +114,20 @@ flowchart TD
     TCA -->|Sub-I2C 6| INA
     TCA -->|Sub-I2C 7| ToF
 
-    %% PWM Ansteuerung
-    PCA1 -->|9x PWM-Signale| Servos_L
-    PCA2 -->|9x PWM-Signale| Servos_R
+    %% PWM Signals
+    PCA1 -->|9x PWM Signals| Servos_L
+    PCA2 -->|9x PWM Signals| Servos_R
 
-    %% Poti Feedback
-    Servos_L -.->|Poti-Signale mit 100nF Filter| ADS_LF
+    %% Potentiometer Feedback
+    Servos_L -.->|Potentiometer Signals with 100nF Filter| ADS_LF
     Servos_L -.-> ADS_LM
     Servos_L -.-> ADS_LR
 
-    Servos_R -.->|Poti-Signale mit 100nF Filter| ADS_RF
+    Servos_R -.->|Potentiometer Signals with 100nF Filter| ADS_RF
     Servos_R -.-> ADS_RM
     Servos_R -.-> ADS_RR
 
-    %% Masse und Power
+    %% Common Ground
     UBEC -.-> CommonGND
     PiGND -.-> CommonGND
     PCA1 -.-> CommonGND
@@ -137,71 +137,71 @@ flowchart TD
 
 ---
 
-## 4. Detaillierter Verdrahtungs- und Anschlussplan
+## 4. Detailed Wiring and Connection Plan
 
-### 4.1 Multiplexer TCA9548A (Zentrales Hub)
-- **Versorgung:** `VIN` an **3,3 V** (Pi Pin 1), `GND` an **GND** (Pi Pin 6).
-- **Steuerbus zum Pi:** `SDA` an **GPIO 2** (Pi Pin 3), `SCL` an **GPIO 3** (Pi Pin 5).
-- **Reset-Pin (`RST`):** Bleibt **unbeschaltet** (interner 10k-Pull-Up aktiv).
-- **WICHTIGE LÖTBRÜCKE (`A0`):**  
+### 4.1 Multiplexer TCA9548A (Central Hub)
+- **Power:** `VIN` to **3.3V** (Pi Pin 1), `GND` to **GND** (Pi Pin 6).
+- **Control Bus to Pi:** `SDA` to **GPIO 2** (Pi Pin 3), `SCL` to **GPIO 3** (Pi Pin 5).
+- **Reset Pin (`RST`):** Leave **floating** (internal 10k pull-up active).
+- **CRITICAL SOLDER JUMPER (`A0`):**  
   > [!IMPORTANT]
-  > Auf dem TCA9548A-Breakout muss die **Lötbrücke `A0` geschlossen werden** (Löttropfen auf die beiden Kontakte).  
-  > **Grund:** Der Servo-Treiber PCA9685 wacht beim Booten mit aktivierter `ALLCALL`-Adresse `0x70` auf. Durch `A0=High` wechselt der TCA9548A fest auf **`0x71`**. Damit ist jeder Adresskonflikt beim Einschalten physikalisch ausgeschlossen!
+  > On the TCA9548A breakout, the **solder jumper `A0` must be bridged** (solder blob across both pads).  
+  > **Reason:** The PCA9685 servo driver boots with active `ALLCALL` address `0x70`. By setting `A0=High`, the TCA9548A operates permanently at **`0x71`**, eliminating address conflicts at power-on.
 
-### 4.2 Die 6 Bein-Module (ADS1115)
-Alle 6 ADS1115-Boards werden identisch beschaltet. Die Adressleitung `ADDR` wird auf jedem Board mit `GND` verbunden (**Standardadresse `0x48`** auf jedem isolierten Mux-Kanal):
+### 4.2 The 6 Leg Modules (ADS1115)
+All 6 ADS1115 boards are wired identically. The address line `ADDR` is connected to `GND` on each board (**Standard address `0x48`** on each isolated Mux channel):
 
-| ADS1115 Pin | Verbindung am TCA9548A Sub-Kanal | Funktion |
+| ADS1115 Pin | Connection on TCA9548A Sub-Channel | Function |
 | :--- | :--- | :--- |
-| **VDD** | Gemeinsame **3,3 V** Rail (Raspberry Pi) | Logik-Versorgung |
-| **GND** | Gemeinsame **GND** Rail (Common Ground) | Massebezug |
-| **SCL** | **`SCn`** am TCA9548A (z. B. `SC0` für LF) | Isolierter Sub-I2C Takt |
-| **SDA** | **`SDn`** am TCA9548A (z. B. `SD0` für LF) | Isolierte Sub-I2C Daten |
-| **ADDR** | An **GND** des Boards | Setzt Adresse fest auf `0x48` |
-| **ALRT** | *(Frei lassen)* | Nicht benötigt |
-| **A0** | **Coxa-Servo Poti-Leitung** | Hüftschwenk-Winkel |
-| **A1** | **Femur-Servo Poti-Leitung** | Oberschenkel-Winkel |
-| **A2** | **Tibia-Servo Poti-Leitung** | Krallen-/Knie-Winkel |
-| **A3** | **Fußkontakt-Sensor** *(oder Reserve)* | Taktile Bodenaufsetz-Erkennung |
+| **VDD** | Shared **3.3V** Rail (Raspberry Pi) | Logic power supply |
+| **GND** | Shared **GND** Rail (Common Ground) | Ground reference |
+| **SCL** | **`SCn`** on TCA9548A (e.g. `SC0` for LF) | Isolated sub-I2C clock |
+| **SDA** | **`SDn`** on TCA9548A (e.g. `SD0` for LF) | Isolated sub-I2C data |
+| **ADDR** | Board **GND** | Fixes address to `0x48` |
+| **ALRT** | *(Leave floating)* | Not used |
+| **A0** | **Coxa Servo Potentiometer Line** | Hip swing joint angle |
+| **A1** | **Femur Servo Potentiometer Line** | Thigh joint angle |
+| **A2** | **Tibia Servo Potentiometer Line** | Knee / claw joint angle |
+| **A3** | **Foot Contact Sensor** *(or reserve)* | Ground touchdown detection |
 
 ---
 
-## 5. Tiefpassfilter-Bestückung (100 nF Keramikkondensatoren)
+## 5. Low-Pass Filter Placement (100 nF Ceramic Capacitors)
 
-Um Motorbürsten- und PWM-Rauschen zu eliminieren, werden **monolithische Vielschicht-Keramikkondensatoren (MLCC, 100 nF, 50 V, Code `104`)** direkt am ADC-Eingang platziert.
+To eliminate motor brush and PWM switching noise, **monolithic ceramic capacitors (MLCC, 100 nF, 50V, code `104`)** are installed directly at the ADC inputs:
 
-```
-                  ADS1115 Breakout (Platinen-Rückseite)
-              ┌─────────────────────────────────────────┐
-              │  [VDD]   [GND]   [SCL]   [SDA]   [ADDR] │
-              │            │                            │
-              │            ├───┐       ┌───────┐        │
-              │            │ [100nF] [100nF] [100nF]    │
-              │            │   │       │       │        │
-              │  [ALRT]    └───┼───────┼───────┼──────┐ │
-              │                │       │       │      │ │
-              │              [A0]    [A1]    [A2]   [A3]│
-              │              Coxa    Femur   Tibia  Fuß │
-              └─────────────────────────────────────────┘
+```text
+              ADS1115 Breakout (Bottom PCB Side)
+          ┌─────────────────────────────────────────┐
+          │  [VDD]   [GND]   [SCL]   [SDA]   [ADDR] │
+          │            │                            │
+          │            ├───┐       ┌───────┐        │
+          │            │ [100nF] [100nF] [100nF]    │
+          │            │   │       │       │        │
+          │  [ALRT]    └───┼───────┼───────┼──────┐ │
+          │                │       │       │      │ │
+          │              [A0]    [A1]    [A2]   [A3]│
+          │              Coxa    Femur   Tibia  Foot│
+          └─────────────────────────────────────────┘
 ```
 
 > [!TIP]
-> **Kein separates Kondensator-Board:**  
-> Die 3 Kondensatoren werden **direkt auf die Unterseite der Stiftleiste** des jeweiligen ADS1115 zwischen `A0/GND`, `A1/GND` und `A2/GND` gelötet.  
-> Das spart 18 Zwischenkabel, verbraucht 0 mm zusätzlichen Bauraum und bietet die physikalisch beste Entstörung direkt an den Messpins!
+> **No Separate Filter PCB Required:**  
+> The 3 capacitors are soldered **directly across the underside of the pin header** on each ADS1115 between `A0/GND`, `A1/GND`, and `A2/GND`.  
+> This eliminates 18 intermediate jumper wires, occupies 0 mm of additional chassis space, and provides optimal filtering right at the measurement pins.
 
 ---
 
-## 6. Software-Treiber & Implementierung in Python
+## 6. Software Driver Implementation in Python
 
-Dank der Adafruit-CircuitPython-Treiberbibliothek integriert sich das System vollständig in den bestehenden `lasius-core`-Daemon auf dem Raspberry Pi 4.
+Using the Adafruit CircuitPython library stack, the telemetry driver integrates directly into the `lasius-core` daemon on the Raspberry Pi 4:
 
-### 6.1 Installation
+### 6.1 Package Requirements
 ```bash
 pip install adafruit-circuitpython-tca9548a adafruit-circuitpython-ads1x15
 ```
 
-### 6.2 Python-Treiber-Architektur ([`lasius.core.hardware.adc`](file:///home/bjoern/Workspace/Hexapods/lasius/lasius-core/src/lasius/core/hardware/)):
+### 6.2 Python Driver Architecture (`lasius.core.hardware.adc`):
 
 ```python
 """
@@ -214,9 +214,9 @@ import adafruit_ads1x15.ads1115 as ADS
 from adafruit_ads1x15.analog_in import AnalogIn
 
 class HexapodTelemetryADC:
-    # Empirisch kalibrierte Parameter (Reely NR-645 MG BB)
-    V_INTERCEPT = 1.5633  # Volt bei 0°
-    DEG_PER_VOLT = 131.772 # Grad pro Volt
+    # Empirically calibrated parameters (Reely NR-645 MG BB)
+    V_INTERCEPT = 1.5633    # Volts at 0.0°
+    DEG_PER_VOLT = 131.772  # Degrees per Volt
 
     LEG_MUX_CHANNELS = {
         "left_front":   0,
@@ -234,9 +234,9 @@ class HexapodTelemetryADC:
         self.inputs = {}
 
         for leg_name, ch in self.LEG_MUX_CHANNELS.items():
-            # Initialisiert ADS1115 auf dem jeweiligen isolierten Mux-Sub-Bus
+            # Initialize ADS1115 on isolated multiplexer sub-bus
             adc = ADS.ADS1115(self.tca[ch], address=0x48)
-            adc.data_rate = 860  # Maximaler Durchsatz
+            adc.data_rate = 860  # Maximum sampling rate
             self.adcs[leg_name] = adc
             self.inputs[leg_name] = {
                 "coxa":  AnalogIn(adc, ADS.P0),
@@ -246,13 +246,13 @@ class HexapodTelemetryADC:
             }
 
     def read_joint_angle(self, leg_name: str, joint: str) -> float:
-        """Gibt den physikalischen Gelenkwinkel in Grad zurück."""
+        """Returns the physical joint angle in degrees."""
         voltage = self.inputs[leg_name][joint].voltage
         angle_deg = (voltage - self.V_INTERCEPT) * self.DEG_PER_VOLT
         return round(angle_deg, 2)
 
     def read_leg_angles(self, leg_name: str) -> dict:
-        """Liest alle 3 Gelenke eines Beins aus."""
+        """Reads all 3 joint angles of a leg."""
         return {
             "coxa":  self.read_joint_angle(leg_name, "coxa"),
             "femur": self.read_joint_angle(leg_name, "femur"),
@@ -262,11 +262,11 @@ class HexapodTelemetryADC:
 
 ---
 
-## 7. Sicherheitsregeln & Best Practices
+## 7. Safety Rules & Best Practices
 
-1. **Gemeinsamer Massepunkt (Common Star-Ground):**  
-   Die Servostrom-Masse (Labornetzteil / UBECs) und die Raspberry-Pi-Masse (Pin 6) **müssen über eine solide Masseleitung verbunden sein**. Nur so haben die Potentiometer denselben Nullpunkt wie die ADCs.
-2. **Strikte 3,3V Logik-Trennung:**  
-   Die ADS1115- und TCA9548A-Boards dürfen **ausschließlich an 3,3 V** (Pin 1 des Pi) angeschlossen werden. Niemals an 5 V hängen, da sonst die I2C-Leitungen des Pi beschädigt werden.
-3. **Kabelbaum-Schutz:**  
-   Verwende für die Zuleitung von jedem Bein 4-polige Buchsen (z. B. JST-ZH oder DuPont). Die Poti-Ader niemals direkt parallel zu den dicken UBEC-Lastleitungen verlegen, sondern im Schirm der Servo-GND-Ader führen.
+1. **Common Star-Ground:**  
+   The servo power ground (bench power supply / UBECs) and Raspberry Pi ground (Pin 6) **must be bonded via a low-resistance ground wire**. This ensures potentiometers and ADCs share an identical reference voltage.
+2. **Strict 3.3V Logic Separation:**  
+   The ADS1115 and TCA9548A boards must be powered **exclusively from 3.3V** (Pi Pin 1). Never connect them to 5V, as this would expose the Raspberry Pi I2C pins to over-voltage damage.
+3. **Wire Routing & Shielding:**  
+   Use 4-pin connectors (e.g. JST-ZH or DuPont) for each leg lead. Never route the analog potentiometer wiper wires directly parallel to high-current UBEC power leads; always route them alongside the servo ground lead for shielding.

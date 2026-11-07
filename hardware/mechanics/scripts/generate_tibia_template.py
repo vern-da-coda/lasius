@@ -108,23 +108,23 @@ def create_tibia_schablone_svg():
 
   <!-- Header Title & Instructions -->
   <g transform="translate(14, 17)">
-    <text x="0" y="0" class="title" font-size="5.2">LASIUS HEXAPOD — TIBIA (1:1 PAPIERSCHABLONE)</text>
-    <text x="0" y="4.5" class="subtitle" font-size="2.6">Maßstabsgetreue 1:1 Prüf- &amp; Bohrschablone für Unterschenkel / Sichelkralle</text>
-    <text x="0" y="8.5" class="subtitle" font-size="2.2">Plattendicke: 7.0 mm | Knie-Servo Torcster NR-645 MG BB (Ø 4.0 mm Bohrungen freistehend) | Kinematik L_DH = 130.0 mm</text>
+    <text x="0" y="0" class="title" font-size="5.2">LASIUS HEXAPOD — TIBIA (1:1 SCALE TEMPLATE)</text>
+    <text x="0" y="4.5" class="subtitle" font-size="2.6">True-to-scale 1:1 inspection &amp; drill template for lower limb / sickle claw</text>
+    <text x="0" y="8.5" class="subtitle" font-size="2.2">Plate thickness: 7.0 mm | Knee servo NR-645 MG BB (Ø 4.0 mm through-holes) | Kinematics L_DH = 130.0 mm</text>
   </g>
 
   <!-- Print Scale Warning Notice -->
   <g transform="translate(190, 16)">
     <rect x="-3" y="-3.5" width="96" height="15" fill="#fff5f5" stroke="#feb2b2" stroke-width="0.3" rx="1"/>
-    <text x="0" y="0" class="note" font-size="2.4">DRUCKER-EINSTELLUNG: 100% (Tatsächliche Größe)</text>
-    <text x="0" y="3.5" font-family="Liberation Sans, Arial" font-size="1.9" fill="#c53030">KEINE Seitenanpassung / "Fit to page" verwenden!</text>
-    <text x="0" y="7.0" font-family="Liberation Sans, Arial" font-size="1.9" fill="#4a5568">Vor dem Bohren Kontrollmaßstab unten links mit Messschieber prüfen.</text>
+    <text x="0" y="0" class="note" font-size="2.4">PRINTER SETTING: 100% (Actual Size)</text>
+    <text x="0" y="3.5" font-family="Liberation Sans, Arial" font-size="1.9" fill="#c53030">DO NOT use "Fit to page" scaling!</text>
+    <text x="0" y="7.0" font-family="Liberation Sans, Arial" font-size="1.9" fill="#4a5568">Verify calibration ruler at bottom left with calipers before drilling.</text>
   </g>
 
   <!-- 100mm Calibration Scale & 50mm Square (Bottom Left) -->
   <g transform="translate(14, 150)">
     <rect x="0" y="0" width="112" height="48" fill="#f7fafc" stroke="#cbd5e0" stroke-width="0.3" rx="1.5"/>
-    <text x="5" y="6" class="title" font-size="2.8">1:1 KALIBRIERUNGS-KONTROLLE</text>
+    <text x="5" y="6" class="title" font-size="2.8">1:1 CALIBRATION CHECK</text>
     
     <g transform="translate(6, 17)">
       <line x1="0" y1="0" x2="100" y2="0" stroke="#000" stroke-width="0.6"/>
@@ -137,44 +137,44 @@ def create_tibia_schablone_svg():
             svg.append(f'      <text x="{mm}" y="-{h + 1.2}" class="ruler-text">{mm}</text>\n')
         elif mm % 5 == 0:
             h = 3.0
-            svg.append(f'      <line x1="{mm}" y1="-{h}" x2="{mm}" y2="0" class="ruler-tick" stroke-width="0.25"/>\n')
+            svg.append(f'      <line x1="{mm}" y1="-{h}" x2="{mm}" y2="0" class="ruler-tick"/>\n')
         else:
             h = 1.8
             svg.append(f'      <line x1="{mm}" y1="-{h}" x2="{mm}" y2="0" class="ruler-tick" stroke-width="0.15"/>\n')
 
-    svg.append(f'''      <text x="50" y="5.0" class="ruler-text" font-weight="bold">100.0 mm Referenzstrecke (mit Messschieber abmessen)</text>
+    svg.append(f'''      <text x="50" y="5.0" class="ruler-text" font-weight="bold">100.0 mm reference span (measure with calipers)</text>
     </g>
 
     <g transform="translate(6, 29)">
       <rect x="0" y="0" width="50" height="15" fill="#edf2f7" stroke="#4a5568" stroke-width="0.35"/>
       <text x="25" y="8" font-family="Liberation Sans, Arial" font-size="2.2" text-anchor="middle" fill="#2d3748">50.0 mm x 15.0 mm</text>
-      <text x="25" y="12" font-family="Liberation Sans, Arial" font-size="1.8" text-anchor="middle" fill="#718096">Prüffeld Kontrollbox</text>
+      <text x="25" y="12" font-family="Liberation Sans, Arial" font-size="1.8" text-anchor="middle" fill="#718096">Check Box</text>
     </g>
 
     <g transform="translate(62, 33)">
-      <text x="0" y="0" font-family="Liberation Sans, Arial" font-size="2.1" font-weight="bold" fill="#2d3748">Prüfkriterien:</text>
-      <text x="0" y="3.8" font-family="Liberation Sans, Arial" font-size="1.9" fill="#4a5568">• Strecke 0–100 mm = exakt 100.0 mm</text>
-      <text x="0" y="7.3" font-family="Liberation Sans, Arial" font-size="1.9" fill="#4a5568">• Boxbreite = exakt 50.0 mm</text>
-      <text x="0" y="10.8" font-family="Liberation Sans, Arial" font-size="1.9" fill="#4a5568">• Tibia-Körperdicke = 7.0 mm</text>
+      <text x="0" y="0" font-family="Liberation Sans, Arial" font-size="2.1" font-weight="bold" fill="#2d3748">Check Criteria:</text>
+      <text x="0" y="3.8" font-family="Liberation Sans, Arial" font-size="1.9" fill="#4a5568">• Span 0–100 mm = exactly 100.0 mm</text>
+      <text x="0" y="7.3" font-family="Liberation Sans, Arial" font-size="1.9" fill="#4a5568">• Box width = exactly 50.0 mm</text>
+      <text x="0" y="10.8" font-family="Liberation Sans, Arial" font-size="1.9" fill="#4a5568">• Tibia plate thickness = 7.0 mm</text>
     </g>
   </g>
 
   <!-- Technical Information & Checklist Table (Bottom Right) -->
   <g transform="translate(132, 150)">
     <rect x="0" y="0" width="151" height="48" fill="#f7fafc" stroke="#cbd5e0" stroke-width="0.3" rx="1.5"/>
-    <text x="5" y="6" class="title" font-size="2.8">BAUTEIL-DATEN &amp; BOHRANWEISUNG</text>
+    <text x="5" y="6" class="title" font-size="2.8">PART SPECIFICATIONS &amp; DRILL INSTRUCTIONS</text>
     
     <g transform="translate(5, 12)">
-      <text x="0" y="0" font-family="Liberation Sans, Arial" font-size="2.1" font-weight="bold" fill="#2b6cb0">Positions-Referenz:</text>
-      <text x="0" y="3.5" font-family="Liberation Sans, Arial" font-size="1.9" fill="#4a5568">• Knie-Drehachse (Pivot) = Ursprung (0.0, 0.0) mm</text>
-      <text x="0" y="7.0" font-family="Liberation Sans, Arial" font-size="1.9" fill="#4a5568">• Fußspitze (Tip) = (-129.15, -14.41) mm | Kinematik: 129.95 mm (nominal 130 mm)</text>
-      <text x="0" y="10.5" font-family="Liberation Sans, Arial" font-size="1.9" fill="#4a5568">• Fuß-Schalter-/Stopper-Bohrung = (-93.00, -11.50) mm | Ø 3.0 mm (M3)</text>
+      <text x="0" y="0" font-family="Liberation Sans, Arial" font-size="2.1" font-weight="bold" fill="#2b6cb0">Position Reference:</text>
+      <text x="0" y="3.5" font-family="Liberation Sans, Arial" font-size="1.9" fill="#4a5568">• Knee pivot axis = Origin (0.0, 0.0) mm</text>
+      <text x="0" y="7.0" font-family="Liberation Sans, Arial" font-size="1.9" fill="#4a5568">• Foot tip = (-129.15, -14.41) mm | Kinematics: 129.95 mm (nominal 130 mm)</text>
+      <text x="0" y="10.5" font-family="Liberation Sans, Arial" font-size="1.9" fill="#4a5568">• Foot switch / stopper hole = (-93.00, -11.50) mm | Ø 3.0 mm (M3)</text>
       
-      <text x="0" y="15.5" font-family="Liberation Sans, Arial" font-size="2.1" font-weight="bold" fill="#2b6cb0">Servo-Ausschnitt &amp; Verschraubung (Torcster NR-645 MG BB):</text>
-      <text x="0" y="19.0" font-family="Liberation Sans, Arial" font-size="1.9" fill="#4a5568">• Fenster-Maß: 40.5 mm x 20.5 mm (X: -30.25..10.25, Y: -10.25..10.25)</text>
-      <text x="0" y="22.5" font-family="Liberation Sans, Arial" font-size="1.9" fill="#4a5568">• Kabelauslass: 3.25 mm x 4.80 mm (mittig zwischen den beiden Bohrungen)</text>
-      <text x="0" y="26.0" font-family="Liberation Sans, Arial" font-size="1.9" fill="#4a5568">• 4x Servo-Bohrungen: Pitch X = 48.50 mm, Pitch Y = 10.00 mm (freistehend)</text>
-      <text x="0" y="29.5" font-family="Liberation Sans, Arial" font-size="1.9" fill="#4a5568">• Bohrung: Ø 4.0 mm Durchgang (glatt, ohne Senkung/Vertiefung)</text>
+      <text x="0" y="15.5" font-family="Liberation Sans, Arial" font-size="2.1" font-weight="bold" fill="#2b6cb0">Servo Cutout &amp; Mounting (NR-645 MG BB):</text>
+      <text x="0" y="19.0" font-family="Liberation Sans, Arial" font-size="1.9" fill="#4a5568">• Window cutout: 40.5 mm x 20.5 mm (X: -30.25..10.25, Y: -10.25..10.25)</text>
+      <text x="0" y="22.5" font-family="Liberation Sans, Arial" font-size="1.9" fill="#4a5568">• Cable notch: 3.25 mm x 4.80 mm (centered between mounting holes)</text>
+      <text x="0" y="26.0" font-family="Liberation Sans, Arial" font-size="1.9" fill="#4a5568">• 4x Servo mounting holes: Pitch X = 48.50 mm, Pitch Y = 10.00 mm</text>
+      <text x="0" y="29.5" font-family="Liberation Sans, Arial" font-size="1.9" fill="#4a5568">• Hole: Ø 4.0 mm through (smooth, without countersink)</text>
     </g>
   </g>
 
@@ -185,37 +185,37 @@ def create_tibia_schablone_svg():
   <!-- Outer Solid Contour -->
   <path d="{outer_d}" class="part-solid"/>
 
-  <!-- Inner Sichelfenster Slot -->
+  <!-- Inner Crescent Slot -->
   <path d="{slot_d}" class="part-cutout"/>
-  <text x="{tx(-48.0):.2f}" y="{ty(13.0):.2f}" class="dim-text-sm" fill="#718096">Sichelfenster</text>
+  <text x="{tx(-48.0):.2f}" y="{ty(13.0):.2f}" class="dim-text-sm" fill="#718096">Crescent Window</text>
 
   <!-- Servo Window Cutout with Cable Notch -->
   <path d="{win_d}" class="part-cutout"/>
 
-  <!-- Servo Torcster NR-645 MG BB Phantom Outline Overlay -->
+  <!-- Servo NR-645 MG BB Phantom Outline Overlay -->
   <rect x="{tx(-30.1):.2f}" y="{ty(10.05):.2f}" width="40.2" height="20.1" class="servo-overlay"/>
   <!-- Mounting tabs -->
   <rect x="{tx(-37.0):.2f}" y="{ty(9.5):.2f}" width="6.9" height="19.0" class="servo-overlay"/>
   <rect x="{tx(10.1):.2f}" y="{ty(9.5):.2f}" width="6.9" height="19.0" class="servo-overlay"/>
-  <text x="{tx(-18.0):.2f}" y="{ty(-2.0):.2f}" font-family="Liberation Sans, Arial" font-size="2.1" fill="#2b6cb0" text-anchor="middle" font-weight="bold">Torcster NR-645 MG BB</text>
+  <text x="{tx(-18.0):.2f}" y="{ty(-2.0):.2f}" font-family="Liberation Sans, Arial" font-size="2.1" fill="#2b6cb0" text-anchor="middle" font-weight="bold">NR-645 MG BB</text>
 
-  <!-- Torcster Round Disc Horn Phantom Overlay at Knee Shaft (0, 0) -->
+  <!-- Round Disc Horn Phantom Overlay at Knee Shaft (0, 0) -->
   <circle cx="{tx(0.0):.2f}" cy="{ty(0.0):.2f}" r="10.5" class="horn-overlay"/>
   <circle cx="{tx(0.0):.2f}" cy="{ty(0.0):.2f}" r="7.5" fill="none" stroke="#dd6b20" stroke-width="0.2" stroke-dasharray="1,1"/>
   <circle cx="{tx(0.0):.2f}" cy="{ty(0.0):.2f}" r="1.5" fill="#ffffff" stroke="#dd6b20" stroke-width="0.3"/>
-  <text x="{tx(0.0):.2f}" y="{ty(0.0) + 14.5:.2f}" font-family="Liberation Sans, Arial" font-size="2.0" fill="#c05621" text-anchor="middle" font-weight="bold">Ruderscheibe Ø 21 mm</text>
+  <text x="{tx(0.0):.2f}" y="{ty(0.0) + 14.5:.2f}" font-family="Liberation Sans, Arial" font-size="2.0" fill="#c05621" text-anchor="middle" font-weight="bold">Round Horn Ø 21 mm</text>
 
   <!-- Knee Shaft Pivot (0, 0) Crosshairs -->
   <line x1="{tx(-7.0):.2f}" y1="{ty(0.0):.2f}" x2="{tx(7.0):.2f}" y2="{ty(0.0):.2f}" class="crosshair"/>
   <line x1="{tx(0.0):.2f}" y1="{ty(-7.0):.2f}" x2="{tx(0.0):.2f}" y2="{ty(7.0):.2f}" class="crosshair"/>
   <circle cx="{tx(0.0):.2f}" cy="{ty(0.0):.2f}" r="0.8" fill="#e53e3e"/>
-  <text x="{tx(0.0):.2f}" y="{ty(0.0) - 7.5:.2f}" font-family="Liberation Sans, Arial" font-size="2.0" fill="#e53e3e" text-anchor="middle" font-weight="bold">Knie-Achse (0, 0)</text>
+  <text x="{tx(0.0):.2f}" y="{ty(0.0) - 7.5:.2f}" font-family="Liberation Sans, Arial" font-size="2.0" fill="#e53e3e" text-anchor="middle" font-weight="bold">Knee Axis (0, 0)</text>
 
   <!-- Kinematic Length Line from Knee Pivot (0, 0) to Foot Tip -->
   <line x1="{tx(0.0):.2f}" y1="{ty(0.0):.2f}" x2="{tx(tip_x):.2f}" y2="{ty(tip_y):.2f}" class="kinematic-line"/>
   <g transform="translate({tx(tip_x / 2.0):.2f}, {ty(tip_y / 2.0):.2f}) rotate(-6.36)">
     <rect x="-30" y="-4.0" width="60" height="3.5" fill="rgba(255,255,255,0.9)"/>
-    <text x="0" y="-1.5" class="kinematic-text">DH Kinematik-Länge L_tibia = 130.0 mm</text>
+    <text x="0" y="-1.5" class="kinematic-text">DH Kinematic Length L_tibia = 130.0 mm</text>
   </g>
 
   <!-- 4x Standalone Servo Mounting Holes (Ø 4.0 mm) -->
@@ -237,12 +237,12 @@ def create_tibia_schablone_svg():
   <line x1="{fh_px - 3.0:.2f}" y1="{fh_py:.2f}" x2="{fh_px + 3.0:.2f}" y2="{fh_py:.2f}" class="crosshair"/>
   <line x1="{fh_px:.2f}" y1="{fh_py - 3.0:.2f}" x2="{fh_px:.2f}" y2="{fh_py + 3.0:.2f}" class="crosshair"/>
   <text x="{fh_px:.2f}" y="{fh_py + 5.5:.2f}" class="dim-text-sm" font-weight="bold">Ø 3.0 mm (M3)</text>
-  <text x="{fh_px:.2f}" y="{fh_py + 8.0:.2f}" class="dim-text-sm" fill="#718096">Fußschalter</text>
+  <text x="{fh_px:.2f}" y="{fh_py + 8.0:.2f}" class="dim-text-sm" fill="#718096">Foot Switch</text>
 
   <!-- Foot Tip Marker -->
   <circle cx="{tx(tip_x):.2f}" cy="{ty(tip_y):.2f}" r="1.2" fill="#e53e3e"/>
   <circle cx="{tx(tip_x):.2f}" cy="{ty(tip_y):.2f}" r="3.0" fill="none" stroke="#e53e3e" stroke-width="0.3" stroke-dasharray="1,1"/>
-  <text x="{tx(tip_x) - 2.0:.2f}" y="{ty(tip_y) + 6.5:.2f}" class="dim-text" font-weight="bold" text-anchor="end">Fußspitze</text>
+  <text x="{tx(tip_x) - 2.0:.2f}" y="{ty(tip_y) + 6.5:.2f}" class="dim-text" font-weight="bold" text-anchor="end">Foot Tip</text>
   <text x="{tx(tip_x) - 2.0:.2f}" y="{ty(tip_y) + 9.0:.2f}" class="dim-text-sm" text-anchor="end">X = -129.2, Y = -14.4</text>
 
   <!-- Key Dimensions -->

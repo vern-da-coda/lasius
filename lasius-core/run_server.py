@@ -106,7 +106,7 @@ def main():
     robot.relax_all()
 
     if args.test_leg:
-        print(f"\n[Auto-Test] Starte automatischen Testlauf für Bein '{args.test_leg}' in 2 Sekunden...")
+        print(f"\n[Auto-Test] Starting automatic test routine for leg '{args.test_leg}' in 2 seconds...")
         def _delayed_test():
             time.sleep(2.0)
             server.test_leg(leg_name=args.test_leg, cycles=5)

@@ -1,59 +1,59 @@
-# Lasius Hexapod – Verkabelungs- und Kabelbaum-Dokumentation (WireViz)
+# Lasius Hexapod – Wiring & Harness Documentation (WireViz)
 
-Dieses Verzeichnis enthält die vollständige Kabelbaum- und Verdrahtungsplanung des **Lasius Hexapod Roboters** im **WireViz („Cabling as Code“)** Format.
+This directory contains the complete electrical wiring and harness specifications for the **Lasius Hexapod Robot** documented in **WireViz ("Cabling as Code")** format.
 
 ---
 
-## 1. Verwendete Hardware-Komponenten
+## 1. Hardware Components
 
-| Komponente | Anzahl | Funktion & Spezifikation |
+| Component | Quantity | Function & Specifications |
 | :--- | :---: | :--- |
-| **TCA9548A** | 1× | 8-Kanal I2C-Multiplexer (1.8V–5V, Logik auf 3.3V). Adresse per Lötbrücke an `A0` auf **`0x71`** konfiguriert. |
-| **ADS1115** | 6× | 16-Bit 4-Kanal Präzisions-ADCs (1 Board pro Bein). Alle auf Standard-Adresse **`0x48`** an den isolierten Sub-Kanälen `CH0` bis `CH5`. |
-| **100 nF MLCC** | 18–24× | 0,1 µF 50V monolithische Vielschicht-Keramikkondensatoren als Tiefpass-Entstörfilter direkt zwischen `Ax` und `GND`. |
-| **Reely NR-645 MG BB** | 18× | Metallgetriebe-Servos (3 pro Bein: Coxa, Femur, Tibia). Interner Schleiferkontakt (Weiß) herausgeführt für Closed-Loop Feedback. |
-| **PCA9685** | 2× | 16-Kanal 12-Bit PWM-Servotreiber auf Haupt-I2C-Bus (`0x40` Links, `0x42` Rechts). |
-| **Omron D2F-L** | 6× | Taktile Mikroschalter in den Fußspitzen an Pin `A3` des jeweiligen Bein-ADS1115. |
+| **TCA9548A** | 1× | 8-Channel I2C multiplexer (1.8V–5V, logic at 3.3V). Configured to address **`0x71`** via solder bridge on `A0`. |
+| **ADS1115** | 6× | 16-Bit 4-channel precision ADCs (1 board per leg). All set to default address **`0x48`** across isolated sub-channels `CH0` to `CH5`. |
+| **100 nF MLCC** | 18–24× | 0.1 µF 50V monolithic multi-layer ceramic capacitors as low-pass noise filters soldered directly between `Ax` and `GND`. |
+| **Reely NR-645 MG BB** | 18× | Metal-gear servos (3 per leg: Coxa, Femur, Tibia). Internal potentiometer wiper wire exposed for closed-loop telemetry. |
+| **PCA9685** | 2× | 16-Channel 12-bit PWM servo drivers on primary I2C bus (`0x40` Left, `0x42` Right). |
+| **Omron D2F-L** | 6× | Tactile microswitches in foot tips wired to pin `A3` of each leg ADS1115 board. |
 
 ---
 
-## 2. Pläne & Diagramme
+## 2. Wiring Plans & Schematics
 
 ### Plan 1: `01_i2c_sensor_bus_topology.yml`
-* **Zweck:** Visualisiert die I2C-Master-Hub-Topologie vom Raspberry Pi über den TCA9548A-Multiplexer zu den 6 Bein-ADCs.
-* **Kanalzuordnung:**
-  * `CH0`: Linkes Vorderbein (LF, `0x48`)
-  * `CH1`: Linkes Mittelbein (LM, `0x48`)
-  * `CH2`: Linkes Hinterbein (LR, `0x48`)
-  * `CH3`: Rechtes Vorderbein (RF, `0x48`)
-  * `CH4`: Rechtes Mittelbein (RM, `0x48`)
-  * `CH5`: Rechtes Hinterbein (RR, `0x48`)
+* **Purpose:** Visualizes the I2C master hub topology from Raspberry Pi through the TCA9548A multiplexer to the 6 leg ADC boards.
+* **Channel Allocation:**
+  * `CH0`: Left Front Leg (LF, `0x48`)
+  * `CH1`: Left Middle Leg (LM, `0x48`)
+  * `CH2`: Left Rear Leg (LR, `0x48`)
+  * `CH3`: Right Front Leg (RF, `0x48`)
+  * `CH4`: Right Middle Leg (RM, `0x48`)
+  * `CH5`: Right Rear Leg (RR, `0x48`)
 
 ### Plan 2: `02_single_leg_feedback_harness.yml`
-* **Zweck:** Detaillierter Kabelbaum für ein einzelnes 3-DOF-Bein.
-* **Signale & Filter:**
-  * `A0`: Coxa Servo Poti-Schleifer + 100 nF gegen GND
-  * `A1`: Femur Servo Poti-Schleifer + 100 nF gegen GND
-  * `A2`: Tibia Servo Poti-Schleifer + 100 nF gegen GND
-  * `A3`: Fußkontakt-Schalter + 100 nF gegen GND
-  * 3-polige PWM- und Laststromzuleitungen (Orange/Rot/Braun) zum PCA9685-Block
-* **Grenzfrequenz des Filters:**
-  $$f_c = \frac{1}{2 \pi \cdot R_{\text{poti}} \cdot C} \approx \frac{1}{2 \pi \cdot 2500\,\Omega \cdot 100\,\text{nF}} \approx 636\,\text{Hz}$$
-  *(Filtert hochfrequente PWM-Schaltimpulse und Motorkommutierungs-Rauschen wirksam heraus).*
+* **Purpose:** Detailed wiring harness for an individual 3-DOF leg assembly.
+* **Signals & Filters:**
+  * `A0`: Coxa servo potentiometer wiper + 100 nF to GND
+  * `A1`: Femur servo potentiometer wiper + 100 nF to GND
+  * `A2`: Tibia servo potentiometer wiper + 100 nF to GND
+  * `A3`: Foot contact switch + 100 nF to GND
+  * 3-pin PWM power and signal leads (Orange/Red/Brown) to PCA9685 driver block
+* **Filter Cutoff Frequency:**
+  $$f_c = \frac{1}{2 \pi \cdot R_{\text{pot}} \cdot C} \approx \frac{1}{2 \pi \cdot 2500\,\Omega \cdot 100\,\text{nF}} \approx 636\,\text{Hz}$$
+  *(Effectively suppresses high-frequency PWM switching transients and motor brush noise).*
 
 ### Plan 3: `03_power_distribution.yml`
-* **Zweck:** Stromversorgung, getrennte Spannungsregler und gemeinsame Sternmasse (Star-GND).
-* **Zweige:**
-  * 2S/3S LiPo $\to$ 15A Hauptschalter
-  * High-Current UBEC (6.0V 15A Peak) $\to$ Servo V+ Klemmen beider PCA9685
-  * Step-Down (5.1V 4A) $\to$ Raspberry Pi 4 Logik
-  * Gemeinsamer Masse-Sternpunkt verhindert Ground-Bounces zwischen Servolast und ADC-Sensorik.
+* **Purpose:** Power distribution rails, dual voltage regulators, and centralized star ground.
+* **Branches:**
+  * 2S/3S LiPo $\to$ 15A master power switch
+  * High-Current UBEC (6.0V 15A Peak) $\to$ Servo V+ power terminals on both PCA9685 boards
+  * Step-Down Converter (5.1V 4A) $\to$ Raspberry Pi 4 logic supply
+  * Central star ground prevents ground bounces between high-current servo loads and precision ADC telemetry.
 
 ---
 
-## 3. Diagramme & Stücklisten neu generieren
+## 3. Regenerating WireViz Schematics & BOMs
 
-Alle Pläne können jederzeit ohne Installation mit einem einzigen Befehl kompiliert werden:
+All diagrams can be compiled on demand without manual system packages using `uv`:
 
 ```bash
 cd hardware/electronics/wiring
@@ -62,8 +62,8 @@ uv run wireviz 02_single_leg_feedback_harness.yml
 uv run wireviz 03_power_distribution.yml
 ```
 
-WireViz erzeugt für jede Datei automatisch:
-* `.svg`: Skalierbare Vektorgrafik für Web & Dokumentation
-* `.png`: Rastergrafik zur schnellen Vorschau
-* `.html`: Interaktiver Schaltplan mit klickbaren Komponenten
-* `.bom.tsv`: Tabellarische Stückliste (Material, Längen, Aderquerschnitte)
+WireViz automatically produces for each YAML definition:
+* `.svg`: Scalable vector graphic for web and documentation
+* `.png`: High-resolution raster preview
+* `.html`: Interactive schematic with clickable component metadata
+* `.bom.tsv`: Tabular bill of materials (connectors, wires, lengths, gauges)

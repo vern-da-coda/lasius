@@ -43,4 +43,4 @@ All dimensions and physical kinematics are defined in [`lasius-core/src/lasius/c
 
 - [Hardware Decisions & 3D Printing Guide](../docs/hardware/decisions.md): Power architecture, UBEC, STEMMA QT sensor bus, and slicer/material specifications for PETG leg parts.
 - [18-DOF Closed-Loop Potentiometer Feedback Plan](../docs/hardware/closed_loop_plan.md): ADS1115 ADC tapping, RC filtering, and angle calibration.
-- [Wiring & Connection Plan](../docs/hardware/wiring_anschlussplan.md): Detailed electrical pinout and power rails.
+- [Wiring & Connection Plan](../docs/hardware/wiring_plan.md): Detailed electrical pinout and power rails.

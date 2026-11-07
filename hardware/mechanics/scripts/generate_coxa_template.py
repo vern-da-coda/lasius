@@ -46,17 +46,17 @@ def create_schablone_svg():
 
   <!-- Header Title & Instructions -->
   <g transform="translate(14, 17)">
-    <text x="0" y="0" class="title" font-size="5.0">LASIUS HEXAPOD — COXA BRACKET (1:1 PAPIERSCHABLONE)</text>
-    <text x="0" y="4.2" class="subtitle" font-size="2.5">Maßstabsgetreue 1:1 Prüf- &amp; Bohrschablone für Torcster NR-645 MG BB (59g) / Hitec HS-645MG</text>
+    <text x="0" y="0" class="title" font-size="5.0">LASIUS HEXAPOD — COXA BRACKET (1:1 SCALE TEMPLATE)</text>
+    <text x="0" y="4.2" class="subtitle" font-size="2.5">True-to-scale 1:1 inspection &amp; drill template for NR-645 MG BB (59g) / Hitec HS-645MG</text>
     <rect x="0" y="6.8" width="269" height="11.5" fill="#fff5f5" stroke="#feb2b2" stroke-width="0.3" rx="1"/>
-    <text x="3" y="10.5" class="note" font-size="2.4">DRUCKANWEISUNG (WICHTIG FÜR EXAKTE 1:1 GRÖßE):</text>
-    <text x="3" y="14.2" class="subtitle" font-size="2.2">1. Im Druckdialog zwingend „Tatsächliche Größe“ oder „Skalierung 100%“ wählen! (Keinesfalls „An Seite anpassen“ / „Fit to Page“!)</text>
-    <text x="3" y="17.0" class="subtitle" font-size="2.2">2. Druckkontrolle: Die beiden Kontrollmaßstäbe unten sofort mit dem Messschieber prüfen (Soll: exakt 100,0 mm bzw. 50,0 mm).</text>
+    <text x="3" y="10.5" class="note" font-size="2.4">PRINT INSTRUCTIONS (CRITICAL FOR ACCURATE 1:1 SCALE):</text>
+    <text x="3" y="14.2" class="subtitle" font-size="2.2">1. In print dialog, select "Actual Size" or "100% Scaling"! (Never select "Fit to Page"!)</text>
+    <text x="3" y="17.0" class="subtitle" font-size="2.2">2. Verification: Verify the calibration scales below with calipers immediately (Target: exactly 100.0 mm and 50.0 mm).</text>
   </g>
 
   <!-- 100 mm & 50 mm Calibration Check Scales (Bottom Left) -->
   <g transform="translate(14, 192)">
-    <text x="0" y="-3.5" class="title" font-size="2.5">KONTROLLMASSSTAB 100,0 mm (Mit Messschieber prüfen):</text>
+    <text x="0" y="-3.5" class="title" font-size="2.5">HORIZONTAL CALIBRATION RULER 100.0 mm (Verify with calipers):</text>
     <line x1="0" y1="0" x2="100" y2="0" stroke="#000" stroke-width="0.6"/>
     <line x1="0" y1="-3" x2="0" y2="3" class="ruler-tick" stroke-width="0.6"/>
     <line x1="100" y1="-3" x2="100" y2="3" class="ruler-tick" stroke-width="0.6"/>
@@ -70,7 +70,7 @@ def create_schablone_svg():
   </g>
 
   <g transform="translate(126, 192)">
-    <text x="0" y="-3.5" class="title" font-size="2.5">VERTIKALMASSSTAB 50,0 mm:</text>
+    <text x="0" y="-3.5" class="title" font-size="2.5">VERTICAL CALIBRATION RULER 50.0 mm:</text>
     <line x1="0" y1="0" x2="50" y2="0" stroke="#000" stroke-width="0.6"/>
     <line x1="0" y1="-3" x2="0" y2="3" class="ruler-tick" stroke-width="0.6"/>
     <line x1="50" y1="-3" x2="50" y2="3" class="ruler-tick" stroke-width="0.6"/>
@@ -85,24 +85,24 @@ def create_schablone_svg():
   <!-- Legend Box -->
   <g transform="translate(186, 187)">
     <rect x="0" y="0" width="97" height="15" fill="#f8fafc" stroke="#cbd5e0" stroke-width="0.3" rx="1"/>
-    <text x="3" y="4" class="title" font-size="2.3">LEGENDE:</text>
+    <text x="3" y="4" class="title" font-size="2.3">LEGEND:</text>
     <line x1="3" y1="7.5" x2="12" y2="7.5" stroke="#000" stroke-width="0.5"/>
-    <text x="14" y="8.5" class="subtitle" font-size="2.0">3D-Druck Bauteilkanten</text>
+    <text x="14" y="8.5" class="subtitle" font-size="2.0">3D-Print Component Outline</text>
     <line x1="3" y1="12" x2="12" y2="12" stroke="#3182ce" stroke-width="0.4" stroke-dasharray="2,1"/>
-    <text x="14" y="13" class="subtitle" font-size="2.0" fill="#2b6cb0">Servo 1 Kontur (Femur)</text>
+    <text x="14" y="13" class="subtitle" font-size="2.0" fill="#2b6cb0">Servo 1 Outline (Femur)</text>
     <line x1="50" y1="12" x2="59" y2="12" stroke="#dd6b20" stroke-width="0.4" stroke-dasharray="2,1"/>
-    <text x="61" y="13" class="subtitle" font-size="2.0" fill="#c05621">Servo 2 / Scheibe (Coxa)</text>
+    <text x="61" y="13" class="subtitle" font-size="2.0" fill="#c05621">Servo 2 / Horn Outline (Coxa)</text>
   </g>
 ''')
 
-    # View 1: TOP VIEW (Draufsicht M 1:1)
+    # View 1: TOP VIEW (Scale 1:1)
     vx1 = 18.0
     vy1 = 50.0
     svg.append(f'''
-  <!-- VIEW 1: DRAUFSICHT (1:1) -->
+  <!-- VIEW 1: TOP VIEW (1:1) -->
   <g transform="translate({vx1}, {vy1})">
-    <text x="0" y="-7" class="title" font-size="3.0">1. DRAUFSICHT (M 1:1) — Servo 1 (Femur) Schacht &amp; U-Gabel</text>
-    <text x="0" y="-3.5" class="subtitle" font-size="2.1">Draufsicht von oben (+Z). Zeigt Servo 1 Montagebohrungen, Schacht und U-Gabel Öffnung.</text>
+    <text x="0" y="-7" class="title" font-size="3.0">1. TOP VIEW (Scale 1:1) — Servo 1 (Femur) Cavity &amp; U-Fork</text>
+    <text x="0" y="-3.5" class="subtitle" font-size="2.1">Top-down view (+Z). Shows Servo 1 mounting holes, cavity, and U-fork opening.</text>
 
     <!-- Outer contour: 115 x 30.5 -->
     <path d="M 0,0 L 115,0 L 115,30.5 L 107.3,30.5 L 107.3,5.0 L 66.0,5.0 L 66.0,30.5 L 0,30.5 Z" class="part-solid"/>
@@ -158,10 +158,10 @@ def create_schablone_svg():
     vx2 = 18.0
     vy2 = 116.0
     svg.append(f'''
-  <!-- VIEW 2: VORDERANSICHT (1:1) -->
+  <!-- VIEW 2: FRONT VIEW (Scale 1:1) -->
   <g transform="translate({vx2}, {vy2})">
-    <text x="0" y="-7" class="title" font-size="3.0">2. VORDERANSICHT (M 1:1) — Lasche &amp; Coxa Pivot Drehachse</text>
-    <text x="0" y="-3.5" class="subtitle" font-size="2.1">Blick auf Stegseite (Y=0). Zeigt Gesamthöhe, Laschenüberstand nach unten und Drehachsenbohrung Ø4.2.</text>
+    <text x="0" y="-7" class="title" font-size="3.0">2. FRONT VIEW (Scale 1:1) — Tab &amp; Coxa Pivot Axis</text>
+    <text x="0" y="-3.5" class="subtitle" font-size="2.1">View of rib side (Y=0). Shows overall height, lower tab, and pivot hole Ø4.2.</text>
 
     <!-- Front Contour with lower tab -->
     <path d="M 0,0 L 115,0 L 115,19.0 L 25.7,19.0 L 25.7,34.0 L 7.2,34.0 L 7.2,19.0 L 0,19.0 Z" class="part-solid"/>
@@ -171,37 +171,37 @@ def create_schablone_svg():
 
     <!-- Cable Outlet open tunnel on left of tab -->
     <line x1="7.2" y1="19.0" x2="7.2" y2="31.0" stroke="#e53e3e" stroke-width="0.6" stroke-dasharray="1.5,1"/>
-    <text x="5.0" y="25.5" class="dim-text-sm" text-anchor="end" fill="#e53e3e">Kabelauslass (offen)</text>
+    <text x="5.0" y="25.5" class="dim-text-sm" text-anchor="end" fill="#e53e3e">Cable Outlet (Open)</text>
 
     <!-- Coxa Pivot Hole (X=74.70, Z=9.5; dia=4.2) -->
     <circle cx="74.70" cy="9.5" r="2.1" class="hole"/>
     <line x1="71.0" y1="9.5" x2="78.4" y2="9.5" class="crosshair"/>
     <line x1="74.70" y1="6.0" x2="74.70" y2="13.0" class="crosshair"/>
-    <text x="74.70" y="4.5" class="dim-text">Pivot Bohrung Ø4,2</text>
+    <text x="74.70" y="4.5" class="dim-text">Pivot Bore Ø4.2</text>
 
     <!-- Servo 1 Tab counter bearing hole axis (X=18.2) -->
     <line x1="18.2" y1="30.0" x2="18.2" y2="35.5" class="crosshair"/>
-    <text x="18.2" y="38.0" class="dim-text-sm">Gegenlager Ø3,5 (X=18.2)</text>
+    <text x="18.2" y="38.0" class="dim-text-sm">Counter-Bearing Ø3.5 (X=18.2)</text>
 
     <!-- Dimensions in Front View -->
-    <text x="57.5" y="-1.8" class="dim-text">Gesamtlänge: 115,0 mm</text>
+    <text x="57.5" y="-1.8" class="dim-text">Overall Length: 115.0 mm</text>
     <line x1="0" y1="-0.8" x2="115" y2="-0.8" class="dim-line"/>
     <line x1="0" y1="-2.0" x2="0" y2="0.5" class="dim-line"/>
     <line x1="115" y1="-2.0" x2="115" y2="0.5" class="dim-line"/>
 
-    <text x="117" y="10.0" class="dim-text" text-anchor="start">Höhe: 19,0 mm</text>
-    <text x="28.5" y="27.0" class="dim-text" text-anchor="start">Lasche: 15,0 mm (Gesamt: 34,0 mm)</text>
+    <text x="117" y="10.0" class="dim-text" text-anchor="start">Height: 19.0 mm</text>
+    <text x="28.5" y="27.0" class="dim-text" text-anchor="start">Tab: 15.0 mm (Total: 34.0 mm)</text>
   </g>
 ''')
 
-    # View 3: BACK VIEW (Rückansicht M 1:1)
+    # View 3: BACK VIEW (Scale 1:1)
     vx3 = 156.0
     vy3 = 50.0
     svg.append(f'''
-  <!-- VIEW 3: RÜCKANSICHT (1:1) — SERVO 2 MONTAGE -->
+  <!-- VIEW 3: REAR VIEW (Scale 1:1) — SERVO 2 MOUNT -->
   <g transform="translate({vx3}, {vy3})">
-    <text x="0" y="-7" class="title" font-size="3.0">3. RÜCKANSICHT (M 1:1) — Servo 2 (Coxa) Verschraubung</text>
-    <text x="0" y="-3.5" class="subtitle" font-size="2.1">Blick auf Rückseite (Y=30.5). Zeigt die 4x M3-Kernlochbohrungen für den Coxa-Servo.</text>
+    <text x="0" y="-7" class="title" font-size="3.0">3. REAR VIEW (Scale 1:1) — Servo 2 (Coxa) Mount</text>
+    <text x="0" y="-3.5" class="subtitle" font-size="2.1">View of rear face (Y=30.5). Shows the 4x M3 mounting holes for the Coxa servo.</text>
 
     <!-- Solid Back Face with U-fork opening cutout -->
     <path d="M 0,0 L 66.0,0 L 66.0,19.0 L 25.7,19.0 L 25.7,34.0 L 7.2,34.0 L 7.2,19.0 L 0,19.0 Z" class="part-solid"/>
@@ -210,7 +210,7 @@ def create_schablone_svg():
 
     <!-- Coxa Pivot Hole visible through U-fork (X=74.70, Z=9.5) -->
     <circle cx="74.70" cy="9.5" r="2.1" fill="none" stroke="#718096" stroke-width="0.3" stroke-dasharray="1,1"/>
-    <line x1="71.0" y1="9.5" x2="78.4" y2="9.5" class="crosshair"/>
+    <line x1="71.0" y1="9.5" x2="78.4" y2="9.5" class="centerline"/>
     <line x1="74.70" y1="6.0" x2="74.70" y2="13.0" class="crosshair"/>
 
     <!-- 4x Servo 2 Mounting Holes (X=60.55, 109.05; Z=4.5, 14.5; dia=2.8) -->
@@ -227,45 +227,45 @@ def create_schablone_svg():
     <text x="109.05" y="2.5" class="dim-text-sm">X=109.05</text>
 
     <!-- Pitch Dimension 48.5 mm -->
-    <text x="84.8" y="-1.8" class="dim-text" font-weight="bold">Lochabstand: 48,50 mm</text>
+    <text x="84.8" y="-1.8" class="dim-text" font-weight="bold">Hole Spacing: 48.50 mm</text>
     <line x1="60.55" y1="-0.8" x2="109.05" y2="-0.8" class="dim-line"/>
     <line x1="60.55" y1="-2.0" x2="60.55" y2="0.5" class="dim-line"/>
     <line x1="109.05" y1="-2.0" x2="109.05" y2="0.5" class="dim-line"/>
 
     <!-- Vertical Pitch 10.0 mm -->
-    <text x="117.0" y="10.0" class="dim-text" text-anchor="start">Raster: 10,0 mm</text>
+    <text x="117.0" y="10.0" class="dim-text" text-anchor="start">Grid: 10.0 mm</text>
 
-    <!-- OVERLAY: Torcster Servo 2 Outline & Round Servo Horn (from user photo!) -->
+    <!-- OVERLAY: Servo 2 Outline & Round Servo Horn -->
     <rect x="64.8" y="-0.5" width="40.2" height="20.0" class="horn-overlay" rx="1"/>
     <circle cx="74.70" cy="9.5" r="12.25" class="horn-overlay"/>
     <circle cx="74.70" cy="9.5" r="5.5" fill="none" stroke="#dd6b20" stroke-width="0.3" stroke-dasharray="1.5,1"/>
     <circle cx="74.70" cy="9.5" r="1.5" fill="none" stroke="#dd6b20" stroke-width="0.35"/>
-    <text x="74.70" y="24.5" class="dim-text" fill="#c05621">Torcster Servoscheibe Ø24,5 mm</text>
+    <text x="74.70" y="24.5" class="dim-text" fill="#c05621">Servo Horn Ø24.5 mm</text>
   </g>
 ''')
 
-    # View 4: DETAIL TAB BOTTOM VIEW (Unteransicht Lasche M 1:1)
+    # View 4: DETAIL TAB BOTTOM VIEW (Scale 1:1)
     vx4 = 150.0
     vy4 = 122.0
     svg.append(f'''
-  <!-- VIEW 4: UNTERANSICHT LASCHE (1:1) -->
+  <!-- VIEW 4: TAB BOTTOM VIEW (Scale 1:1) -->
   <g transform="translate({vx4}, {vy4})">
-    <text x="0" y="-7" class="title" font-size="3.0">4. UNTERANSICHT LASCHE (M 1:1)</text>
-    <text x="0" y="-3.5" class="subtitle" font-size="2.0">Blick von unten auf geschlossene Lasche (Z=-15).</text>
+    <text x="0" y="-7" class="title" font-size="3.0">4. TAB BOTTOM VIEW (Scale 1:1)</text>
+    <text x="0" y="-3.5" class="subtitle" font-size="2.0">Bottom view of tab (Z=-15).</text>
 
     <!-- Tab outer footprint: 18.5 x 30.5 -->
     <rect x="0" y="0" width="18.5" height="30.5" class="part-solid"/>
 
     <!-- Cable Outlet indicator at X=0 (left) -->
     <line x1="0" y1="5.0" x2="0" y2="25.5" stroke="#e53e3e" stroke-width="0.6"/>
-    <text x="-1.5" y="16.0" class="dim-text-sm" text-anchor="end" fill="#e53e3e">Kabelauslass</text>
+    <text x="-1.5" y="16.0" class="dim-text-sm" text-anchor="end" fill="#e53e3e">Cable Outlet</text>
 
     <!-- Center hole: X=11.0 from left edge of tab, Y=15.25 -->
     <circle cx="11.0" cy="15.25" r="1.75" class="hole"/>
     <line x1="7.0" y1="15.25" x2="15.0" y2="15.25" class="crosshair"/>
     <line x1="11.0" y1="11.25" x2="11.0" y2="19.25" class="crosshair"/>
-    <text x="11.0" y="24.0" class="dim-text-sm">Gegenlager Ø3,5 mm</text>
-    <text x="9.25" y="34.0" class="dim-text-sm">Länge: 18,5 mm</text>
+    <text x="11.0" y="24.0" class="dim-text-sm">Counter-Bearing Ø3.5 mm</text>
+    <text x="9.25" y="34.0" class="dim-text-sm">Length: 18.5 mm</text>
   </g>
 ''')
 
@@ -273,10 +273,10 @@ def create_schablone_svg():
     vx5 = 205.0
     vy5 = 122.0
     svg.append(f'''
-  <!-- VIEW 5: 3D-ISOMETRIE ÜBERSICHT -->
+  <!-- VIEW 5: 3D ISOMETRIC OVERVIEW -->
   <g transform="translate({vx5}, {vy5})">
-    <text x="0" y="-7" class="title" font-size="3.0">5. 3D-ISOMETRIE</text>
-    <text x="0" y="-3.5" class="subtitle" font-size="2.0">Räumliche Ansicht der neuen Geometrie</text>
+    <text x="0" y="-7" class="title" font-size="3.0">5. 3D ISOMETRIC</text>
+    <text x="0" y="-3.5" class="subtitle" font-size="2.0">Perspective view of the geometry</text>
 
     <!-- Clean Vector Isometric Wireframe -->
     <g transform="translate(10, 4) scale(0.68)">

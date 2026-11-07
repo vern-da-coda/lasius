@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Generate Fully Dimensioned Technical Drawing (Technische Zeichnung DIN EN ISO)
+Generate Fully Dimensioned Technical Drawing (DIN EN ISO)
 for Lasius Hexapod Coxa Bracket.
 Calibrated for DIN A4 Landscape printing at 100% true scale.
 """
@@ -148,19 +148,19 @@ def create_technische_zeichnung_svg():
             svg.append(f'    <line x1="{sx}" y1="{sy - 1.8}" x2="{sx}" y2="{sy + 1.8}" class="crosshair"/>\n')
 
     # Dimensions for View 1
-    dim1 = draw_dim_h(0, 115, -11.5, "115,0 ±0.2", -13.0, 2)
-    dim2 = draw_dim_h(8.0, 48.5, -6.8, "40,5 (Servofenster)", -8.0, 6.0)
-    dim3 = draw_dim_h(4.65, 53.15, -2.2, "48,50 ±0.1 (Torcster Lochabstand)", -3.5, 11)
-    dim4 = draw_dim_h(66.0, 107.3, -6.8, "41,3 (U-Gabel Öffnung)", -8.0, 6.0)
+    dim1 = draw_dim_h(0, 115, -11.5, "115.0 ±0.2", -13.0, 2)
+    dim2 = draw_dim_h(8.0, 48.5, -6.8, "40.5 (Servo Window)", -8.0, 6.0)
+    dim3 = draw_dim_h(4.65, 53.15, -2.2, "48.50 ±0.1 (Hole Spacing)", -3.5, 11)
+    dim4 = draw_dim_h(66.0, 107.3, -6.8, "41.3 (U-Fork Opening)", -8.0, 6.0)
     
     # Left Dimensions (Y):
-    dim_w1 = draw_dim_v(0, 30.5, -8.5, "30,5", 0, -10.0)
-    dim_w2 = draw_dim_v(5.0, 25.5, -3.0, "20,5", 4.0, -4.5)
-    dim_pitch_y = draw_dim_v(10.25, 20.25, 55.5, "10,0 ±0.1", 52.0, 57.0, text_left=False)
+    dim_w1 = draw_dim_v(0, 30.5, -8.5, "30.5", 0, -10.0)
+    dim_w2 = draw_dim_v(5.0, 25.5, -3.0, "20.5", 4.0, -4.5)
+    dim_pitch_y = draw_dim_v(10.25, 20.25, 55.5, "10.0 ±0.1", 52.0, 57.0, text_left=False)
 
     # Bottom Dimensions:
-    dim_pivot_x = draw_dim_h(0, 74.7, 34.5, "74,70 (Lage Drehachse)", 28, 36.0, text_above=False)
-    dim_steg_y = draw_dim_v(0, 5.0, 118.5, "5,0 (Steg)", 114, 120, text_left=False)
+    dim_pivot_x = draw_dim_h(0, 74.7, 34.5, "74.70 (Pivot Axis Pos)", 28, 36.0, text_above=False)
+    dim_steg_y = draw_dim_v(0, 5.0, 118.5, "5.0 (Rib)", 114, 120, text_left=False)
 
     svg.append(f'''
     <!-- View 1 Dimension Lines -->
@@ -175,24 +175,24 @@ def create_technische_zeichnung_svg():
     {dim_steg_y}
 
     <!-- Wall thicknesses annotations -->
-    <text x="61.7" y="3.5" class="dim-text-sm">8,6</text>
-    <text x="111.15" y="3.5" class="dim-text-sm">7,7</text>
-    <text x="18.2" y="8.0" class="dim-text-sm">Ø3,5 (Gegenlager)</text>
-    <text x="4.65" y="27.5" class="dim-text-sm">4x Ø2,2 (M2/M2.2)</text>
+    <text x="61.7" y="3.5" class="dim-text-sm">8.6</text>
+    <text x="111.15" y="3.5" class="dim-text-sm">7.7</text>
+    <text x="18.2" y="8.0" class="dim-text-sm">Ø3.5 (Counter-Bearing)</text>
+    <text x="4.65" y="27.5" class="dim-text-sm">4x Ø2.2 (M2/M2.2)</text>
   </g>
 ''')
 
     # ==========================================
-    # VIEW 2: VORDERANSICHT (M 1:1)
+    # VIEW 2: FRONT VIEW (Scale 1:1)
     # Origin: (38, 96)
     # Dimensions: 115 x 34
     # ==========================================
     v2_x = 38.0
     v2_y = 96.0
     svg.append(f'''
-  <!-- VIEW 2: VORDERANSICHT (M 1:1) -->
+  <!-- VIEW 2: FRONT VIEW (Scale 1:1) -->
   <g transform="translate({v2_x}, {v2_y})">
-    <text x="0" y="-7" class="title" font-size="3.2">VORDERANSICHT (M 1:1)</text>
+    <text x="0" y="-7" class="title" font-size="3.2">FRONT VIEW (Scale 1:1)</text>
 
     <!-- Contour with lower tab -->
     <path d="M 0,0 L 115,0 L 115,19.0 L 25.7,19.0 L 25.7,34.0 L 7.2,34.0 L 7.2,19.0 L 0,19.0 Z" class="part-solid"/>
@@ -202,7 +202,7 @@ def create_technische_zeichnung_svg():
 
     <!-- Open Cable Outlet on left of tab -->
     <line x1="7.2" y1="19.0" x2="7.2" y2="31.0" stroke="#e53e3e" stroke-width="0.5" stroke-dasharray="1.5,1"/>
-    <text x="5.5" y="25.5" class="dim-text-sm" text-anchor="end" fill="#e53e3e">Kabelauslass (offen)</text>
+    <text x="5.5" y="25.5" class="dim-text-sm" text-anchor="end" fill="#e53e3e">Cable Outlet (Open)</text>
 
     <!-- Centerlines -->
     <line x1="60" y1="9.5" x2="90" y2="9.5" class="centerline"/>
@@ -218,12 +218,12 @@ def create_technische_zeichnung_svg():
 
     <!-- Dimensions in View 2 -->
 ''')
-    dim_h_body = draw_dim_v(0, 19.0, -4.5, "19,0", 0, -6.0)
-    dim_h_tab = draw_dim_v(19.0, 34.0, -4.5, "15,0", 7.2, -6.0)
-    dim_h_tot = draw_dim_v(0, 34.0, -9.5, "34,0 ±0.2", 0, -11.0)
-    dim_tab_len = draw_dim_h(7.2, 25.7, 37.5, "18,5 (Lasche)", 33.0, 39.5, text_above=True)
-    dim_tab_thick = draw_dim_v(31.0, 34.0, 28.5, "3,0", 25.7, 30.5, text_left=False)
-    dim_pivot_z = draw_dim_v(0, 9.5, 118.5, "9,5", 114, 120, text_left=False)
+    dim_h_body = draw_dim_v(0, 19.0, -4.5, "19.0", 0, -6.0)
+    dim_h_tab = draw_dim_v(19.0, 34.0, -4.5, "15.0", 7.2, -6.0)
+    dim_h_tot = draw_dim_v(0, 34.0, -9.5, "34.0 ±0.2", 0, -11.0)
+    dim_tab_len = draw_dim_h(7.2, 25.7, 37.5, "18.5 (Tab)", 33.0, 39.5, text_above=True)
+    dim_tab_thick = draw_dim_v(31.0, 34.0, 28.5, "3.0", 25.7, 30.5, text_left=False)
+    dim_pivot_z = draw_dim_v(0, 9.5, 118.5, "9.5", 114, 120, text_left=False)
 
     svg.append(f'''
     <!-- View 2 Dimension Lines -->
@@ -235,25 +235,25 @@ def create_technische_zeichnung_svg():
     {dim_pivot_z}
 
     <!-- Leader Line to Pivot Hole -->
-    <text x="74.7" y="-2.0" class="dim-text">Ø4,2 Durchgangsbohrung (Pivot)</text>
+    <text x="74.7" y="-2.0" class="dim-text">Ø4.2 Through-Hole (Pivot)</text>
     <line x1="74.7" y1="-1.0" x2="74.7" y2="6.8" stroke="#000" stroke-width="0.2"/>
 
-    <text x="18.2" y="42.5" class="dim-text-sm">Ø3,5 Gegenlagerbohrung</text>
+    <text x="18.2" y="42.5" class="dim-text-sm">Ø3.5 Counter-Bearing Bore</text>
   </g>
 ''')
 
     # ==========================================
-    # VIEW 3: RÜCKANSICHT (M 1:1) — SERVO 2
+    # VIEW 3: REAR VIEW (Scale 1:1) — SERVO 2
     # Origin: (166, 32)
     # Dimensions: 115 x 34
     # ==========================================
     v3_x = 166.0
     v3_y = 32.0
     svg.append(f'''
-  <!-- VIEW 3: RÜCKANSICHT (M 1:1) — SERVO 2 MONTAGE -->
+  <!-- VIEW 3: REAR VIEW (Scale 1:1) — SERVO 2 MOUNT -->
   <g transform="translate({v3_x}, {v3_y})">
-    <text x="0" y="-12" class="title" font-size="3.2">RÜCKANSICHT (M 1:1) — SERVO 2 (COXA)</text>
-    <text x="0" y="-8.5" class="subtitle" font-size="2.1">Blick auf Rückseite (Y=30.5). Exakt kalibriert für Torcster NR-645 MG BB (48.5 x 10.0 mm Raster).</text>
+    <text x="0" y="-12" class="title" font-size="3.2">REAR VIEW (Scale 1:1) — SERVO 2 (COXA)</text>
+    <text x="0" y="-8.5" class="subtitle" font-size="2.1">View of rear face (Y=30.5). Calibrated for NR-645 MG BB (48.5 x 10.0 mm pattern).</text>
 
     <!-- Solid Back Face with U-fork opening cutout -->
     <path d="M 0,0 L 66.0,0 L 66.0,19.0 L 25.7,19.0 L 25.7,34.0 L 7.2,34.0 L 7.2,19.0 L 0,19.0 Z" class="part-solid"/>
@@ -273,9 +273,9 @@ def create_technische_zeichnung_svg():
             svg.append(f'    <line x1="{hx - 2.0}" y1="{hz}" x2="{hx + 2.0}" y2="{hz}" class="crosshair"/>\n')
             svg.append(f'    <line x1="{hx}" y1="{hz - 2.0}" x2="{hx}" y2="{hz + 2.0}" class="crosshair"/>\n')
 
-    dim_s2_x = draw_dim_h(60.55, 109.05, -3.5, "48,50 ±0.1 (Lochabstand)", -5.0, 5.0)
-    dim_s2_lever = draw_dim_h(60.55, 74.70, 22.0, "14,15 (Abtriebsversatz)", 15.5, 23.5, text_above=False)
-    dim_s2_z = draw_dim_v(4.5, 14.5, 118.5, "10,0 ±0.1", 108, 120, text_left=False)
+    dim_s2_x = draw_dim_h(60.55, 109.05, -3.5, "48.50 ±0.1 (Hole Spacing)", -5.0, 5.0)
+    dim_s2_lever = draw_dim_h(60.55, 74.70, 22.0, "14.15 (Output Offset)", 15.5, 23.5, text_above=False)
+    dim_s2_z = draw_dim_v(4.5, 14.5, 118.5, "10.0 ±0.1", 108, 120, text_left=False)
 
     svg.append(f'''
     <!-- View 3 Dimensions -->
@@ -285,9 +285,9 @@ def create_technische_zeichnung_svg():
 
     <text x="60.55" y="2.5" class="dim-text-sm">X=60.55</text>
     <text x="109.05" y="2.5" class="dim-text-sm">X=109.05</text>
-    <text x="84.8" y="16.5" class="dim-text-sm" fill="#b7791f">Koaxiale Ausrichtung:</text>
-    <text x="84.8" y="19.0" class="dim-text-sm" fill="#b7791f">60.55 + 14.15 = 74.70 mm (Pivot-Achse)</text>
-    <text x="109.05" y="28.0" class="dim-text-sm">4x Ø2,8 (M3-Kernloch)</text>
+    <text x="84.8" y="16.5" class="dim-text-sm" fill="#b7791f">Coaxial Alignment:</text>
+    <text x="84.8" y="19.0" class="dim-text-sm" fill="#b7791f">60.55 + 14.15 = 74.70 mm (Pivot Axis)</text>
+    <text x="109.05" y="28.0" class="dim-text-sm">4x Ø2.8 (M3 Core Hole)</text>
   </g>
 ''')
 
@@ -298,9 +298,9 @@ def create_technische_zeichnung_svg():
     v4_x = 166.0
     v4_y = 78.0
     svg.append(f'''
-  <!-- VIEW 4: 3D ISOMETRIE (M 0.75:1) -->
+  <!-- VIEW 4: 3D ISOMETRIC (Scale 0.75:1) -->
   <g transform="translate({v4_x}, {v4_y})">
-    <text x="0" y="-2" class="title" font-size="3.2">3D-ISOMETRIE (M 0.75:1)</text>
+    <text x="0" y="-2" class="title" font-size="3.2">3D ISOMETRIC (Scale 0.75:1)</text>
 
     <g transform="translate(18, 10) scale(0.72)">
       <!-- Base Main Outline -->
@@ -320,10 +320,10 @@ def create_technische_zeichnung_svg():
 
     <!-- Key Design Highlights Box -->
     <rect x="0" y="38" width="117" height="15" fill="#f0fff4" stroke="#9ae6b4" stroke-width="0.3" rx="1"/>
-    <text x="3" y="42" class="table-text-bold" fill="#22543d">Konstruktive Besonderheiten (Rev 3):</text>
-    <text x="3" y="45.5" class="table-text" fill="#276749">• Keine Risskerben: Durchgehend 5,0 mm massiver Steg &amp; geschlossener Laschenboden</text>
-    <text x="3" y="48.5" class="table-text" fill="#276749">• Servo 1 Kabelauslass nach links offen (ungehinderte Kabelführung)</text>
-    <text x="3" y="51.5" class="table-text" fill="#276749">• Perfekte Flucht: Coxa-Servowelle &amp; Pivot-Achse liegen exakt bei X = 74,70 mm</text>
+    <text x="3" y="42" class="table-text-bold" fill="#22543d">Design Highlights (Rev 3):</text>
+    <text x="3" y="45.5" class="table-text" fill="#276749">• Stress-relief: Solid 5.0 mm rib &amp; reinforced base</text>
+    <text x="3" y="48.5" class="table-text" fill="#276749">• Servo 1 cable outlet open to left (unobstructed routing)</text>
+    <text x="3" y="51.5" class="table-text" fill="#276749">• Coaxial alignment: Coxa servo shaft &amp; pivot axis at X = 74.70 mm</text>
   </g>
 ''')
 
@@ -332,36 +332,36 @@ def create_technische_zeichnung_svg():
     # Bottom Left: (28, 142)
     # ==========================================
     svg.append('''
-  <!-- CALIPER CHECK TABLE (MESSSCHIEBER-KONTROLLLISTE) -->
+  <!-- CALIPER CHECK TABLE -->
   <g transform="translate(28, 142)">
     <rect x="0" y="0" width="128" height="58" fill="#f8fafc" stroke="#cbd5e0" stroke-width="0.4" rx="1"/>
     
     <!-- Table Header -->
     <rect x="0" y="0" width="128" height="6.5" fill="#2d3748" rx="1"/>
-    <text x="4" y="4.5" class="table-text-bold" fill="#ffffff" font-size="2.4">PRÜFMAßE FÜR DEN MESSSCHIEBER-ABGLEICH (SOLLWERTE)</text>
+    <text x="4" y="4.5" class="table-text-bold" fill="#ffffff" font-size="2.4">VERIFICATION DIMENSIONS (CALIPER INSPECTION)</text>
 
     <!-- Sub-headers -->
     <rect x="0" y="6.5" width="128" height="5.0" fill="#edf2f7"/>
-    <text x="4" y="10.0" class="table-text-bold">Nr.</text>
-    <text x="12" y="10.0" class="table-text-bold">Messpunkt / Merkmal</text>
-    <text x="75" y="10.0" class="table-text-bold">Sollmaß</text>
-    <text x="96" y="10.0" class="table-text-bold">Toleranz</text>
+    <text x="4" y="10.0" class="table-text-bold">No.</text>
+    <text x="12" y="10.0" class="table-text-bold">Feature / Dimension</text>
+    <text x="75" y="10.0" class="table-text-bold">Target</text>
+    <text x="96" y="10.0" class="table-text-bold">Tolerance</text>
     <line x1="0" y1="11.5" x2="128" y2="11.5" stroke="#cbd5e0" stroke-width="0.3"/>
 ''')
 
     measurements = [
-        ("1", "Gesamtlänge Bauteil (X)", "115,00 mm", "±0,20 mm"),
-        ("2", "Gesamtbreite Hauptkörper (Y)", "30,50 mm", "±0,20 mm"),
-        ("3", "Grundkörperhöhe (Z)", "19,00 mm", "±0,15 mm"),
-        ("4", "Gesamthöhe mit Lasche (Z)", "34,00 mm", "±0,20 mm"),
-        ("5", "Servo 1 Schachtöffnung (X × Y)", "40,5 × 20,5 mm", "±0,20 mm"),
-        ("6", "Servo 1 Lochabstand (X × Y)", "48,50 × 10,00 mm", "±0,10 mm"),
-        ("7", "Servo 2 Lochabstand (X × Z)", "48,50 × 10,00 mm", "±0,10 mm"),
-        ("8", "U-Gabel lichte Weite (X)", "41,30 mm", "±0,20 mm"),
-        ("9", "U-Gabel Stegstärke (Y)", "5,00 mm", "±0,15 mm"),
-        ("10", "Drehachse Pivot (Lage ab Außenkante)", "74,70 mm", "±0,15 mm"),
-        ("11", "Drehachsenbohrung Ø", "4,20 mm", "+0,15 mm"),
-        ("12", "Laschen-Gegenlagerbohrung Ø", "3,50 mm", "+0,15 mm"),
+        ("1", "Overall Part Length (X)", "115.00 mm", "±0.20 mm"),
+        ("2", "Main Body Width (Y)", "30.50 mm", "±0.20 mm"),
+        ("3", "Base Body Height (Z)", "19.00 mm", "±0.15 mm"),
+        ("4", "Total Height with Tab (Z)", "34.00 mm", "±0.20 mm"),
+        ("5", "Servo 1 Cavity (X × Y)", "40.5 × 20.5 mm", "±0.20 mm"),
+        ("6", "Servo 1 Hole Spacing (X × Y)", "48.50 × 10.00 mm", "±0.10 mm"),
+        ("7", "Servo 2 Hole Spacing (X × Z)", "48.50 × 10.00 mm", "±0.10 mm"),
+        ("8", "U-Fork Inner Span (X)", "41.30 mm", "±0.20 mm"),
+        ("9", "U-Fork Rib Thickness (Y)", "5.00 mm", "±0.15 mm"),
+        ("10", "Pivot Axis Pos from Edge", "74.70 mm", "±0.15 mm"),
+        ("11", "Pivot Bore Ø", "4.20 mm", "+0.15 mm"),
+        ("12", "Tab Counter-Bearing Bore Ø", "3.50 mm", "+0.15 mm"),
     ]
 
     for idx, (nr, desc, val, tol) in enumerate(measurements):
@@ -377,12 +377,12 @@ def create_technische_zeichnung_svg():
     svg.append('  </g>\n')
 
     # ==========================================
-    # TITLE BLOCK (DIN EN ISO 7200 SCHRIFTFELD)
+    # TITLE BLOCK (DIN EN ISO 7200)
     # Bottom Right: (162, 142)
     # Dimensions: 126 x 58
     # ==========================================
     svg.append('''
-  <!-- TITLE BLOCK (DIN EN ISO 7200 SCHRIFTFELD) -->
+  <!-- TITLE BLOCK (DIN EN ISO 7200) -->
   <g transform="translate(162, 142)">
     <rect x="0" y="0" width="126" height="58" fill="#ffffff" stroke="#000000" stroke-width="0.5"/>
 
@@ -399,40 +399,40 @@ def create_technische_zeichnung_svg():
     <line x1="84" y1="48" x2="84" y2="58" stroke="#000" stroke-width="0.35"/>
 
     <!-- Field Contents -->
-    <text x="4" y="4.5" class="dim-text-sm" text-anchor="start" fill="#718096">Projekt / Baugruppe:</text>
+    <text x="4" y="4.5" class="dim-text-sm" text-anchor="start" fill="#718096">Project / Assembly:</text>
     <text x="4" y="9.5" class="title" font-size="3.2">LASIUS HEXAPOD</text>
 
-    <text x="67" y="4.5" class="dim-text-sm" text-anchor="start" fill="#718096">Zeichnungs-Nr. / Revision:</text>
+    <text x="67" y="4.5" class="dim-text-sm" text-anchor="start" fill="#718096">Drawing No. / Rev:</text>
     <text x="67" y="9.5" class="title" font-size="3.2">LH-COX-001-REV3</text>
 
-    <text x="4" y="16.5" class="dim-text-sm" text-anchor="start" fill="#718096">Benennung des Bauteils:</text>
+    <text x="4" y="16.5" class="dim-text-sm" text-anchor="start" fill="#718096">Part Name:</text>
     <text x="4" y="21.5" class="title" font-size="3.8">COXA BRACKET</text>
 
-    <text x="67" y="16.5" class="dim-text-sm" text-anchor="start" fill="#718096">Passend für Servotyp:</text>
-    <text x="67" y="21.5" class="title" font-size="2.6" fill="#2b6cb0">Torcster NR-645 MG BB (59g)</text>
+    <text x="67" y="16.5" class="dim-text-sm" text-anchor="start" fill="#718096">Servo Model:</text>
+    <text x="67" y="21.5" class="title" font-size="2.6" fill="#2b6cb0">Torcster / Reely NR-645 MG BB</text>
 
-    <text x="4" y="28.5" class="dim-text-sm" text-anchor="start" fill="#718096">Werkstoff / Fertigung:</text>
-    <text x="4" y="33.5" class="subtitle" font-weight="bold" font-size="2.6">3D-Druck (PETG / PLA / ABS)</text>
-    <text x="4" y="36.5" class="dim-text-sm" text-anchor="start" fill="#4a5568">Infill ≥ 40%, Wandlinien ≥ 4</text>
+    <text x="4" y="28.5" class="dim-text-sm" text-anchor="start" fill="#718096">Material / Process:</text>
+    <text x="4" y="33.5" class="subtitle" font-weight="bold" font-size="2.6">3D Print (PETG / ABS)</text>
+    <text x="4" y="36.5" class="dim-text-sm" text-anchor="start" fill="#4a5568">Infill ≥ 40%, Perimeters ≥ 4</text>
 
-    <text x="89" y="28.5" class="dim-text-sm" text-anchor="start" fill="#718096">Maßstab:</text>
+    <text x="89" y="28.5" class="dim-text-sm" text-anchor="start" fill="#718096">Scale:</text>
     <text x="89" y="34.5" class="title" font-size="4.0">1:1</text>
-    <text x="89" y="37.0" class="dim-text-sm" text-anchor="start" fill="#718096">(Isometrie 0.75:1)</text>
+    <text x="89" y="37.0" class="dim-text-sm" text-anchor="start" fill="#718096">(Isometric 0.75:1)</text>
 
-    <text x="4" y="42.5" class="dim-text-sm" text-anchor="start" fill="#718096">Allgemeintoleranz:</text>
-    <text x="4" y="46.5" class="subtitle" font-weight="bold" font-size="2.4">DIN ISO 2768-m (±0,2 mm)</text>
+    <text x="4" y="42.5" class="dim-text-sm" text-anchor="start" fill="#718096">General Tolerance:</text>
+    <text x="4" y="46.5" class="subtitle" font-weight="bold" font-size="2.4">DIN ISO 2768-m (±0.2 mm)</text>
 
-    <text x="89" y="42.5" class="dim-text-sm" text-anchor="start" fill="#718096">Blattgröße:</text>
-    <text x="89" y="46.5" class="subtitle" font-weight="bold" font-size="2.6">DIN A4 Quer</text>
+    <text x="89" y="42.5" class="dim-text-sm" text-anchor="start" fill="#718096">Sheet Size:</text>
+    <text x="89" y="46.5" class="subtitle" font-weight="bold" font-size="2.6">DIN A4 Landscape</text>
 
-    <text x="4" y="52.0" class="dim-text-sm" text-anchor="start" fill="#718096">Erstellt:</text>
+    <text x="4" y="52.0" class="dim-text-sm" text-anchor="start" fill="#718096">Author / Date:</text>
     <text x="4" y="56.0" class="subtitle" font-size="2.2">2026-11-05 / Antigravity</text>
 
-    <text x="46" y="52.0" class="dim-text-sm" text-anchor="start" fill="#718096">CAD-Quelle:</text>
-    <text x="46" y="56.0" class="subtitle" font-size="2.2">coxa_bracket.scad</text>
+    <text x="46" y="52.0" class="dim-text-sm" text-anchor="start" fill="#718096">CAD Source:</text>
+    <text x="46" y="56.0" class="subtitle" font-size="2.2">coxa_bracket.FCStd</text>
 
     <text x="88" y="52.0" class="dim-text-sm" text-anchor="start" fill="#718096">Status:</text>
-    <text x="88" y="56.0" class="subtitle" font-weight="bold" font-size="2.2" fill="#22543d">FREIGEGEBEN</text>
+    <text x="88" y="56.0" class="subtitle" font-weight="bold" font-size="2.2" fill="#22543d">APPROVED</text>
   </g>
 ''')
 

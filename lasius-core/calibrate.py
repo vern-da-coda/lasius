@@ -1,16 +1,16 @@
 #!/usr/bin/env python3
 """
-Lasius Hexapod - Interaktive Test-, Setup- und Kalibrierungs-Routine.
+Lasius Hexapod - Interactive Setup, Testing, and Calibration Routine.
 
-Dieses Tool ermöglicht:
-- Sichere Einzelbein-Isolation: Nur das ausgewählte Bein wird bestromt,
-  alle anderen 15 Servos bleiben stromlos (Schutz vor Blockaden & Getriebeschäden).
-- Live-Synchronisation mit dem 3D Digital Twin im Browser (Port 8000).
-- Trockenlauf (Dry-Run): Bewegungen erst im 3D-Modell prüfen, bevor Servostrom fließt.
-- Interaktiver Gelenk-Trimm (Offsets per Tastendruck in 1°- oder 5°-Schritten anpassen).
-- Direktes Speichern der Kalibrierwerte in config.yaml & servos.yaml.
-- Testen des neuen butterweichen 50-Hz-Harmonic-Schrittzyklus (C1-stetig).
-- Kollisionsprüfung durch langsamen Sweep von min_angle bis max_angle.
+Features:
+- Safe Single-Leg Isolation: Powers only the selected leg, keeping the remaining 15
+  servos relaxed (protecting gears and linkage from stall damage).
+- Live Synchronization with 3D Digital Twin in the browser (Port 8000).
+- Dry-Run Mode: Preview movements in the 3D model before applying physical servo power.
+- Interactive Joint Trimming: Adjust pulse offsets via keyboard in 10 µs or 50 µs increments.
+- Direct persistence of calibration offsets into config.yaml.
+- 50 Hz Harmonic Step Cycle testing (smooth C1-continuous trajectories).
+- Collision sweeps from min_angle to max_angle.
 """
 
 import argparse
@@ -54,12 +54,12 @@ RESET = "\033[0m"
 
 
 LEG_CHOICES = [
-    ("left_rear", "Hinten Links (left_rear)", LegIdentifier.LEFT_REAR, 0x40, [9, 10, 11]),
-    ("left_middle", "Mitte Links  (left_middle)", LegIdentifier.LEFT_MIDDLE, 0x40, [4, 5, 6]),
-    ("left_front", "Vorne Links  (left_front)", LegIdentifier.LEFT_FRONT, 0x40, [0, 1, 2]),
-    ("right_rear", "Hinten Rechts(right_rear)", LegIdentifier.RIGHT_REAR, 0x42, [8, 9, 10]),
-    ("right_middle", "Mitte Rechts (right_middle)", LegIdentifier.RIGHT_MIDDLE, 0x42, [4, 5, 6]),
-    ("right_front", "Vorne Rechts (right_front)", LegIdentifier.RIGHT_FRONT, 0x42, [0, 1, 2]),
+    ("left_rear", "Rear Left  (left_rear)", LegIdentifier.LEFT_REAR, 0x40, [9, 10, 11]),
+    ("left_middle", "Middle Left (left_middle)", LegIdentifier.LEFT_MIDDLE, 0x40, [4, 5, 6]),
+    ("left_front", "Front Left  (left_front)", LegIdentifier.LEFT_FRONT, 0x40, [0, 1, 2]),
+    ("right_rear", "Rear Right (right_rear)", LegIdentifier.RIGHT_REAR, 0x42, [8, 9, 10]),
+    ("right_middle", "Middle Right(right_middle)", LegIdentifier.RIGHT_MIDDLE, 0x42, [4, 5, 6]),
+    ("right_front", "Front Right (right_front)", LegIdentifier.RIGHT_FRONT, 0x42, [0, 1, 2]),
 ]
 
 
@@ -163,7 +163,7 @@ class CalibrationTool:
 
     def run_smooth_stance(self, leg_key: str, duration: float = 1.0) -> None:
         """Gently moves leg to its calibrated neutral stance over a smooth trajectory."""
-        print(f"\n{CYAN}Fahre Bein '{leg_key}' sanft in Neutralstellung...{RESET}")
+        print(f"\n{CYAN}Moving leg '{leg_key}' smoothly into neutral stance...{RESET}")
         ds = self.config.geometry.default_stance
         x_target = float(ds.default_x)
         y_target = 0.0
@@ -193,11 +193,11 @@ class CalibrationTool:
             self.set_servo_angle_safe(t_name, cur_t)
             time.sleep(0.020)
 
-        print(f"{GREEN}✔ Neutralstellung erreicht:{RESET} Coxa={tgt_c:.1f}°, Femur={tgt_f:.1f}°, Tibia={tgt_t:.1f}°")
+        print(f"{GREEN}✔ Neutral stance reached:{RESET} Coxa={tgt_c:.1f}°, Femur={tgt_f:.1f}°, Tibia={tgt_t:.1f}°")
 
     def run_harmonic_cycles(self, leg_key: str, cycles: int = 5, stride: float = 36.0, lift: float = 30.0) -> None:
         """Executes smooth 50 Hz harmonic step cycles on the chosen leg."""
-        print(f"\n{CYAN}Starte {cycles} butterweiche 50-Hz-Harmonic-Zyklen für '{leg_key}'...{RESET}")
+        print(f"\n{CYAN}Starting {cycles} smooth 50 Hz harmonic step cycles for '{leg_key}'...{RESET}")
         stride_half = stride / 2.0
         ds = self.config.geometry.default_stance
         z_ground = -abs(float(ds.ground_clearance))
@@ -211,7 +211,7 @@ class CalibrationTool:
 
         try:
             for cycle in range(1, cycles + 1):
-                print(f"  >>> Zyklus {cycle}/{cycles}...", flush=True)
+                print(f"  >>> Cycle {cycle}/{cycles}...", flush=True)
                 for s in range(steps_per_cycle):
                     phase = s / float(steps_per_cycle)
                     if phase < 0.5:
@@ -228,10 +228,10 @@ class CalibrationTool:
                     self.move_leg_tip_safe(leg_key, x_rad, y, z)
                     time.sleep(dt)
 
-            print(f"\n{GREEN}✔ Alle {cycles} Zyklen erfolgreich beendet!{RESET}")
+            print(f"\n{GREEN}✔ All {cycles} cycles completed successfully!{RESET}")
             self.run_smooth_stance(leg_key, duration=0.5)
         except KeyboardInterrupt:
-            print(f"\n{YELLOW}Abbruch durch Benutzer.{RESET}")
+            print(f"\n{YELLOW}Aborted by user.{RESET}")
             self.relax_leg(leg_key)
 
     def run_joint_sweep(self, servo_name: str) -> None:
@@ -239,7 +239,7 @@ class CalibrationTool:
         servo = self.servos[servo_name]
         min_a = servo.config.min_angle
         max_a = servo.config.max_angle
-        print(f"\n{CYAN}Prüfe Kollisionsfreiheit für '{servo_name}' ({min_a}° bis {max_a}°)...{RESET}")
+        print(f"\n{CYAN}Checking clearance for '{servo_name}' ({min_a}° to {max_a}°)...{RESET}")
 
         orig_angle = self.live_angles.get(servo_name, 0.0)
         steps = 40
@@ -266,9 +266,9 @@ class CalibrationTool:
                 self.set_servo_angle_safe(servo_name, a)
                 time.sleep(dt)
 
-            print(f"{GREEN}✔ Sweep abgeschlossen. Kein mechanischer Anschlag festgestellt?{RESET}")
+            print(f"{GREEN}✔ Sweep completed without binding.{RESET}")
         except KeyboardInterrupt:
-            print(f"\n{YELLOW}Sweep abgebrochen.{RESET}")
+            print(f"\n{YELLOW}Sweep interrupted.{RESET}")
 
     def interactive_joint_trim(self, servo_name: str) -> None:
         """Interactive live trim for a single joint's center_offset_pulse and orientation."""
@@ -276,9 +276,9 @@ class CalibrationTool:
         cfg = servo.config
 
         print(f"\n{'=' * 60}")
-        print(f"  {BOLD}Gelenk-Trimm:{RESET} {CYAN}{cfg.name}{RESET}")
-        print(f"  Board: 0x{cfg.board_address:02X} | Kanal: {cfg.channel}")
-        print(f"  Soft-Limits: [{cfg.min_angle}°, {cfg.max_angle}°]")
+        print(f"  {BOLD}Joint Trim:{RESET} {CYAN}{cfg.name}{RESET}")
+        print(f"  Board: 0x{cfg.board_address:02X} | Channel: {cfg.channel}")
+        print(f"  Soft Limits: [{cfg.min_angle}°, {cfg.max_angle}°]")
         print(f"{'=' * 60}")
 
         curr_offset = cfg.center_offset_pulse
@@ -292,19 +292,19 @@ class CalibrationTool:
             pulse_us = 1500.0 + curr_offset + (curr_orient * test_angle / 90.0) * (cfg.pulse_range / 2.0)
             approx_deg = curr_offset / (cfg.pulse_range / 180.0)
 
-            print(f"\n[Status] Offset: {BOLD}{curr_offset:+d} µs{RESET} (~{approx_deg:+.1f}°) | Orient: {curr_orient:+d} | Winkel: {test_angle:.1f}° | Puls: {pulse_us:.0f} µs")
-            print("  Befehle:")
+            print(f"\n[Status] Offset: {BOLD}{curr_offset:+d} µs{RESET} (~{approx_deg:+.1f}°) | Orient: {curr_orient:+d} | Angle: {test_angle:.1f}° | Pulse: {pulse_us:.0f} µs")
+            print("  Commands:")
             print("    [+] / [-]    : Offset ±50 µs (~±4.5°)")
             print("    [++] / [--]  : Offset ±10 µs (~±0.9°)")
-            print("    [a <Winkel>] : Winkel anfahren (z.B. 'a 20' oder 'a -15')")
-            print("    [o]          : Orientierung invertieren (+1 <-> -1)")
-            print("    [0]          : Offset auf 0 zurücksetzen")
-            print("    [s]          : Wert sofort in config.yaml & servos.yaml speichern")
-            print("    [r]          : Servo stromlos (relax)")
-            print("    [Enter]      : Fertig / Zurück zum Bein-Menü")
+            print("    [a <Angle>]  : Move to target angle (e.g. 'a 20' or 'a -15')")
+            print("    [o]          : Invert orientation (+1 <-> -1)")
+            print("    [0]          : Reset offset to 0")
+            print("    [s]          : Save calibration immediately to config.yaml")
+            print("    [r]          : Relax servo (PWM off)")
+            print("    [Enter]      : Done / Back to leg menu")
 
             try:
-                cmd = input(f"{YELLOW}Trimm-Befehl > {RESET}").strip()
+                cmd = input(f"{YELLOW}Trim Command > {RESET}").strip()
             except (KeyboardInterrupt, EOFError):
                 break
 
@@ -324,13 +324,13 @@ class CalibrationTool:
                 curr_orient = -1 if curr_orient == 1 else 1
                 cfg.orientation = curr_orient
                 servo.config.orientation = curr_orient
-                print(f"  Orientierung geändert auf: {curr_orient}")
+                print(f"  Orientation updated to: {curr_orient}")
             elif cmd.startswith("a "):
                 try:
                     val = float(cmd.split()[1])
                     test_angle = max(cfg.min_angle, min(cfg.max_angle, val))
                 except ValueError:
-                    print(f"  {RED}Ungültiger Winkelwert.{RESET}")
+                    print(f"  {RED}Invalid angle value.{RESET}")
             elif cmd == "s":
                 cfg.center_offset_pulse = curr_offset
                 cfg.orientation = curr_orient
@@ -342,16 +342,16 @@ class CalibrationTool:
                     }
                 )
                 if success:
-                    print(f"  {GREEN}✔ Erfolgreich in config.yaml und servos.yaml gespeichert!{RESET}")
+                    print(f"  {GREEN}✔ Successfully saved to config.yaml!{RESET}")
                 else:
-                    print(f"  {RED}✘ Fehler beim Schreiben der Konfigurationsdatei.{RESET}")
+                    print(f"  {RED}✘ Failed to write configuration file.{RESET}")
             elif cmd == "r":
                 if hasattr(servo.driver, "relax_channel"):
                     servo.driver.relax_channel(cfg.channel)
-                print("  Servo entspannt (PWM off).")
+                print("  Servo relaxed (PWM off).")
                 continue
             else:
-                print(f"  {RED}Unbekannter Befehl.{RESET}")
+                print(f"  {RED}Unknown command.{RESET}")
 
             # Update live configuration on servo object
             cfg.center_offset_pulse = curr_offset
@@ -369,28 +369,28 @@ class CalibrationTool:
             f_cfg = self.servos[f_name].config
             t_cfg = self.servos[t_name].config
 
-            dry_badge = f"{YELLOW}[TROCKENLAUF / NUR TWIN]{RESET} " if self.dry_run else f"{GREEN}[ECHTE HARDWARE AKTIV]{RESET} "
+            dry_badge = f"{YELLOW}[DRY-RUN / TWIN ONLY]{RESET} " if self.dry_run else f"{GREEN}[PHYSICAL HARDWARE ACTIVE]{RESET} "
 
             print(f"\n{'=' * 65}")
-            print(f"  {BOLD}Bein-Kalibrierung:{RESET} {CYAN}{label}{RESET} {dry_badge}")
+            print(f"  {BOLD}Leg Calibration:{RESET} {CYAN}{label}{RESET} {dry_badge}")
             print(f"{'=' * 65}")
-            print(f"  1. Hüfte (Coxa):       Ch {c_cfg.channel:2d} | Offset: {c_cfg.center_offset_pulse:+5d} µs | Orient: {c_cfg.orientation:+d} | Limits: [{c_cfg.min_angle}°, {c_cfg.max_angle}°]")
-            print(f"  2. Oberschenkel (Femur):Ch {f_cfg.channel:2d} | Offset: {f_cfg.center_offset_pulse:+5d} µs | Orient: {f_cfg.orientation:+d} | Limits: [{f_cfg.min_angle}°, {f_cfg.max_angle}°]")
-            print(f"  3. Unterschenkel (Tibia):Ch {t_cfg.channel:2d} | Offset: {t_cfg.center_offset_pulse:+5d} µs | Orient: {t_cfg.orientation:+d} | Limits: [{t_cfg.min_angle}°, {t_cfg.max_angle}°]")
+            print(f"  1. Coxa (Hip):         Ch {c_cfg.channel:2d} | Offset: {c_cfg.center_offset_pulse:+5d} µs | Orient: {c_cfg.orientation:+d} | Limits: [{c_cfg.min_angle}°, {c_cfg.max_angle}°]")
+            print(f"  2. Femur (Thigh):      Ch {f_cfg.channel:2d} | Offset: {f_cfg.center_offset_pulse:+5d} µs | Orient: {f_cfg.orientation:+d} | Limits: [{f_cfg.min_angle}°, {f_cfg.max_angle}°]")
+            print(f"  3. Tibia (Lower leg):  Ch {t_cfg.channel:2d} | Offset: {t_cfg.center_offset_pulse:+5d} µs | Orient: {t_cfg.orientation:+d} | Limits: [{t_cfg.min_angle}°, {t_cfg.max_angle}°]")
             print(f"{'-' * 65}")
-            print("  [1] Coxa trimmmen (Hüftschwenk)")
-            print("  [2] Femur trimmen (Oberschenkel Hub)")
-            print("  [3] Tibia trimmen (Unterschenkel Knie)")
-            print("  [4] Sanfte Neutralstellung anfahren (IK-Stance)")
-            print("  [5] 50-Hz-Harmonic-Schrittzyklus testen (5 Zyklen)")
-            print("  [6] Sanfter Min-Max-Sweep (Kollisionstest für ein Gelenk)")
-            print("  [d] Trockenlauf umschalten (Dry-Run an/aus)")
-            print("  [s] Alle Offsets dieses Beins fest in config.yaml sichern")
-            print("  [r] Dieses Bein stromlos schalten (relax)")
-            print("  [b] Zurück zum Hauptmenü")
+            print("  [1] Trim Coxa (Hip swing)")
+            print("  [2] Trim Femur (Thigh lift)")
+            print("  [3] Trim Tibia (Lower leg / knee)")
+            print("  [4] Move smoothly into neutral stance (IK stance)")
+            print("  [5] Test 50 Hz harmonic step cycle (5 cycles)")
+            print("  [6] Smooth min-max sweep (collision check for a joint)")
+            print("  [d] Toggle dry-run mode (on/off)")
+            print("  [s] Save all offsets of this leg to config.yaml")
+            print("  [r] Relax this leg (PWM off)")
+            print("  [b] Back to main menu")
 
             try:
-                choice = input(f"{YELLOW}Wähle Option [1-6/d/s/r/b] > {RESET}").strip().lower()
+                choice = input(f"{YELLOW}Select option [1-6/d/s/r/b] > {RESET}").strip().lower()
             except (KeyboardInterrupt, EOFError):
                 break
 
@@ -407,11 +407,11 @@ class CalibrationTool:
             elif choice == "5":
                 self.run_harmonic_cycles(leg_key, cycles=5)
             elif choice == "6":
-                print("\nWelches Gelenk soll gesweept werden?")
-                print("  [1] Coxa (Hüfte)")
-                print("  [2] Femur (Oberschenkel)")
-                print("  [3] Tibia (Unterschenkel)")
-                sub = input("Auswahl [1-3] > ").strip()
+                print("\nWhich joint would you like to sweep?")
+                print("  [1] Coxa (Hip)")
+                print("  [2] Femur (Thigh)")
+                print("  [3] Tibia (Lower leg)")
+                sub = input("Selection [1-3] > ").strip()
                 if sub == "1":
                     self.run_joint_sweep(c_name)
                 elif sub == "2":
@@ -420,8 +420,8 @@ class CalibrationTool:
                     self.run_joint_sweep(t_name)
             elif choice == "d":
                 self.dry_run = not self.dry_run
-                state = "AKTIVIERT (Nur Twin)" if self.dry_run else "DEAKTIVIERT (Echte Servos)"
-                print(f"  Trockenlauf ist nun {BOLD}{state}{RESET}.")
+                state = "ENABLED (Twin Only)" if self.dry_run else "DISABLED (Physical Servos)"
+                print(f"  Dry-run is now {BOLD}{state}{RESET}.")
                 if self.dry_run:
                     self.relax_leg(leg_key)
             elif choice == "s":
@@ -434,15 +434,15 @@ class CalibrationTool:
                             "orientation": s.config.orientation,
                         }
                     )
-                print(f"  {GREEN}✔ Alle Offsets für '{leg_key}' gespeichert!{RESET}")
+                print(f"  {GREEN}✔ All offsets for '{leg_key}' saved!{RESET}")
             elif choice == "r":
                 self.relax_leg(leg_key)
-                print(f"  {GREEN}Bein '{leg_key}' ist stromlos.{RESET}")
+                print(f"  {GREEN}Leg '{leg_key}' relaxed.{RESET}")
 
     def main_menu(self) -> None:
         """Main interaction loop."""
         while True:
-            dry_badge = f"{YELLOW}[TROCKENLAUF / NUR TWIN]{RESET}" if self.dry_run else f"{GREEN}[ECHTE HARDWARE AKTIV]{RESET}"
+            dry_badge = f"{YELLOW}[DRY-RUN / TWIN ONLY]{RESET}" if self.dry_run else f"{GREEN}[PHYSICAL HARDWARE ACTIVE]{RESET}"
 
             print(
                 f"{CYAN}"
@@ -459,22 +459,22 @@ class CalibrationTool:
                 f"{RESET}"
             )
             print(f"{'=' * 65}")
-            print(f"  {BOLD}Lasius Hexapod - Interaktive Setup- & Kalibrier-Routine{RESET}")
+            print(f"  {BOLD}Lasius Hexapod - Interactive Setup & Calibration Routine{RESET}")
             print(f"  Status: {dry_badge}")
             if self.visualizer:
-                print(f"  {GREEN}🌐 3D Digital Twin live erreichbar:{RESET} http://0.0.0.0:{self.visualizer.http_port} (oder Pi-IP:8000)")
+                print(f"  {GREEN}🌐 3D Digital Twin live at:{RESET} http://0.0.0.0:{self.visualizer.http_port} (or Pi-IP:8000)")
             print(f"{'=' * 65}")
-            print("  Wähle das zu testende / kalibrierende Bein:")
+            print("  Select leg to test / calibrate:")
             for idx, (leg_key, label, _, board, chs) in enumerate(LEG_CHOICES, start=1):
-                cal_note = " [Kalibriert]" if leg_key == "left_rear" else ""
+                cal_note = " [Calibrated]" if leg_key == "left_rear" else ""
                 print(f"  [{idx}] {label:28s} (Board 0x{board:02X}, Ch {chs[0]},{chs[1]},{chs[2]}){cal_note}")
             print(f"{'-' * 65}")
-            print("  [d] Trockenlauf umschalten (Dry-Run an/aus)")
-            print("  [r] Alle Servos aller Beine sofort stromlos (relax all)")
-            print("  [q] Beenden")
+            print("  [d] Toggle dry-run mode (on/off)")
+            print("  [r] Relax all servos immediately (relax all)")
+            print("  [q] Quit")
 
             try:
-                choice = input(f"{YELLOW}Auswahl [1-6/d/r/q] > {RESET}").strip().lower()
+                choice = input(f"{YELLOW}Selection [1-6/d/r/q] > {RESET}").strip().lower()
             except (KeyboardInterrupt, EOFError):
                 break
 
@@ -482,13 +482,13 @@ class CalibrationTool:
                 break
             elif choice == "d":
                 self.dry_run = not self.dry_run
-                state = "AKTIVIERT (Nur Twin)" if self.dry_run else "DEAKTIVIERT (Echte Servos)"
-                print(f"  Trockenlauf ist nun {BOLD}{state}{RESET}.")
+                state = "ENABLED (Twin Only)" if self.dry_run else "DISABLED (Physical Servos)"
+                print(f"  Dry-run is now {BOLD}{state}{RESET}.")
                 if self.dry_run:
                     self.relax_all_servos()
             elif choice == "r":
                 self.relax_all_servos()
-                print(f"  {GREEN}Alle Servos entspannt.{RESET}")
+                print(f"  {GREEN}All servos relaxed.{RESET}")
             elif choice in [str(i) for i in range(1, len(LEG_CHOICES) + 1)]:
                 idx = int(choice) - 1
                 leg_key, label, _, _, _ = LEG_CHOICES[idx]
@@ -496,17 +496,17 @@ class CalibrationTool:
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Lasius Hexapod Interaktive Setup- & Kalibrier-Routine")
-    parser.add_argument("--hardware", action="store_true", help="Echte PCA9685 I2C-Treiber ansteuern.")
-    parser.add_argument("--dry-run", action="store_true", help="Startet im Trockenlauf (nur Digital Twin, keine Servobewegung).")
-    parser.add_argument("--no-visualize", action="store_true", help="Digital Twin Webserver nicht starten.")
-    parser.add_argument("--i2c-bus", type=int, default=1, help="I2C Busnummer (Standard: 1).")
-    parser.add_argument("--port", type=int, default=8000, help="HTTP Port für 3D-Visualizer (Standard: 8000).")
-    parser.add_argument("--ws-port", type=int, default=8765, help="WebSocket Port für 3D-Visualizer (Standard: 8765).")
-    parser.add_argument("--leg", type=str, choices=[l[0] for l in LEG_CHOICES], help="Gezielt ein Bein auswählen (z.B. left_rear).")
-    parser.add_argument("--action", type=str, choices=["stance", "step", "sweep", "relax"], help="Direkte Aktion ausführen.")
-    parser.add_argument("--cycles", type=int, default=5, help="Anzahl der Zyklen für --action step (Standard: 5).")
-    parser.add_argument("--hold", type=float, default=5.0, help="Haltezeit in Sekunden für --action stance (Standard: 5.0).")
+    parser = argparse.ArgumentParser(description="Lasius Hexapod Interactive Setup & Calibration Routine")
+    parser.add_argument("--hardware", action="store_true", help="Connect to physical PCA9685 I2C drivers.")
+    parser.add_argument("--dry-run", action="store_true", help="Start in dry-run mode (3D Digital Twin only, no physical servo motion).")
+    parser.add_argument("--no-visualize", action="store_true", help="Do not start 3D Digital Twin webserver.")
+    parser.add_argument("--i2c-bus", type=int, default=1, help="I2C bus number (default: 1).")
+    parser.add_argument("--port", type=int, default=8000, help="HTTP port for 3D visualizer (default: 8000).")
+    parser.add_argument("--ws-port", type=int, default=8765, help="WebSocket port for 3D visualizer (default: 8765).")
+    parser.add_argument("--leg", type=str, choices=[l[0] for l in LEG_CHOICES], help="Target specific leg directly (e.g. left_rear).")
+    parser.add_argument("--action", type=str, choices=["stance", "step", "sweep", "relax"], help="Execute direct action non-interactively.")
+    parser.add_argument("--cycles", type=int, default=5, help="Cycle count for --action step (default: 5).")
+    parser.add_argument("--hold", type=float, default=5.0, help="Hold duration in seconds for --action stance (default: 5.0).")
     args = parser.parse_args()
 
     # Load configuration
@@ -518,15 +518,15 @@ def main():
     if not args.no_visualize:
         try:
             visualizer = VisualizerServer(host="0.0.0.0", http_port=args.port, ws_port=args.ws_port)
-            print(f"[Visualizer] Gestartet auf http://0.0.0.0:{args.port} (WebSocket: {args.ws_port})")
+            print(f"[Visualizer] Started at http://0.0.0.0:{args.port} (WebSocket: {args.ws_port})")
         except Exception as e:
-            print(f"[WARN] Visualizer konnte nicht gestartet werden: {e}")
+            print(f"[WARN] Failed to start visualizer: {e}")
 
     # Initialize Drivers
     drivers: Dict[int, PWMDriverProtocol] = {}
     if args.hardware:
         if not HAS_SMBUS:
-            print(f"{RED}[ERROR] smbus2 ist nicht installiert. Nutze 'pip install smbus2'.{RESET}")
+            print(f"{RED}[ERROR] smbus2 is not installed. Run 'pip install smbus2'.{RESET}")
             sys.exit(1)
         try:
             shared_bus = smbus2.SMBus(args.i2c_bus)
@@ -534,16 +534,16 @@ def main():
                 0x40: RealPCA9685Driver(address=0x40, bus_instance=shared_bus, visualizer_server=visualizer),
                 0x42: RealPCA9685Driver(address=0x42, bus_instance=shared_bus, visualizer_server=visualizer),
             }
-            print(f"[Hardware] RealPCA9685Driver initialisiert an I2C Bus {args.i2c_bus} (0x40 & 0x42).")
+            print(f"[Hardware] RealPCA9685Driver initialized on I2C bus {args.i2c_bus} (0x40 & 0x42).")
         except Exception as e:
-            print(f"{RED}[ERROR] I2C Hardware-Initialisierung fehlgeschlagen: {e}{RESET}")
+            print(f"{RED}[ERROR] I2C hardware initialization failed: {e}{RESET}")
             sys.exit(1)
     else:
         drivers = {
             0x40: MockPWMDriver(visualizer_server=visualizer),
             0x42: MockPWMDriver(visualizer_server=visualizer),
         }
-        print(f"[Simulation] Verwende MockPWMDriver (Trockenlauf / Simulation).")
+        print(f"[Simulation] Using MockPWMDriver (Dry-Run / Simulation).")
 
     # Start Visualizer thread with robot layout
     if visualizer is not None:
@@ -563,10 +563,10 @@ def main():
 
         if args.leg and args.action:
             label = next(l[1] for l in LEG_CHOICES if l[0] == args.leg)
-            print(f"\n{BOLD}Führe direkte Aktion '{args.action}' für '{label}' aus...{RESET}")
+            print(f"\n{BOLD}Executing direct action '{args.action}' for '{label}'...{RESET}")
             if args.action == "stance":
                 tool.run_smooth_stance(args.leg, duration=1.0)
-                print(f"Halte Position für {args.hold} Sekunden (3D-Visualizer aktiv auf Port {args.port})...")
+                print(f"Holding stance for {args.hold} seconds (3D visualizer live on port {args.port})...")
                 time.sleep(args.hold)
             elif args.action == "step":
                 tool.run_harmonic_cycles(args.leg, cycles=args.cycles)
@@ -578,11 +578,11 @@ def main():
         else:
             tool.main_menu()
     finally:
-        print("\nBeende Kalibrierungs-Tool...")
+        print("\nExiting calibration tool...")
         tool.relax_all_servos()
         if visualizer is not None:
             visualizer.stop()
-        print("Alle Servos stromlos geschaltet. Auf Wiedersehen!")
+        print("All servos relaxed. Goodbye!")
 
 
 if __name__ == "__main__":

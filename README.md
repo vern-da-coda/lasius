@@ -29,7 +29,7 @@ lasius/
 
 ---
 
-## Inhaltsverzeichnis / Submodule Documentation
+## Table of Contents / Submodule Documentation
 
 Detailed documentation, specifications, and guides are maintained in the respective folders:
 
