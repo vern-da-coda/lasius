@@ -15,6 +15,7 @@ Automation, simulation, deployment, testing, and benchmark tools for the **Lasiu
 | :--- | :--- | :--- | :--- |
 | **Dev & Test** | [`dev/dev_sim.sh`](dev/dev_sim.sh) | Starts local simulation daemon (Mock HAL) and builds dashboard if missing. | `./scripts/dev/dev_sim.sh` |
 | **Dev & Test** | [`dev/run_tests.sh`](dev/run_tests.sh) | Executes the complete test suite across `lasius-core` and `lasius-pilot` (61 tests). | `./scripts/dev/run_tests.sh` |
+| **Dev & Test** | [`dev/check_links.py`](dev/check_links.py) | Validates internal hyperlink and documentation integrity across all Markdown files. | `python3 scripts/dev/check_links.py` |
 | **Deploy** | [`deploy/deploy_pi.sh`](deploy/deploy_pi.sh) | Builds Vite dashboard, syncs files via `rsync` to the Raspberry Pi, and reloads daemon. | `./scripts/deploy/deploy_pi.sh [PI_IP]` |
 | **Deploy** | [`deploy/status_pi.sh`](deploy/status_pi.sh) | Queries live telemetry, Raspberry Pi KPIs, SoC temperature, power health, and gaits. | `./scripts/deploy/status_pi.sh [PI_IP]` |
 | **Deploy** | [`deploy/backup_calibration.sh`](deploy/backup_calibration.sh) | Downloads and validates `calibration.json` with a timestamp into `data/calibration_backups/`. | `./scripts/deploy/backup_calibration.sh [PI_IP]` |

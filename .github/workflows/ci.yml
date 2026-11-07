@@ -1,0 +1,91 @@
+name: Continuous Integration
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+permissions:
+  contents: read
+
+jobs:
+  python-tests:
+    name: Python Tests (${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12", "3.13"]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: "pip"
+
+      - name: Install dependencies & packages
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e software/lasius-core -e software/lasius-pilot pytest pytest-asyncio flake8
+
+      - name: Syntax & Lint check (flake8)
+        run: |
+          # Stop build on Python syntax errors or undefined symbols
+          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+
+      - name: Execute test suite (lasius-core & lasius-pilot)
+        run: |
+          pytest software/lasius-core/tests software/lasius-pilot/tests -v
+
+  frontend-build:
+    name: Frontend Typecheck & Build (Vue 3 / Vite)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "npm"
+          cache-dependency-path: software/lasius-dashboard/package-lock.json
+
+      - name: Install dashboard dependencies
+        working-directory: software/lasius-dashboard
+        run: npm ci
+
+      - name: TypeScript type-check (vue-tsc)
+        working-directory: software/lasius-dashboard
+        run: npx vue-tsc --noEmit
+
+      - name: Build production bundle (Vite)
+        working-directory: software/lasius-dashboard
+        run: npm run build
+
+      - name: Verify build artifacts
+        run: |
+          test -f software/lasius-dashboard/dist/index.html
+          echo "✔ Production dashboard bundle generated successfully."
+
+  docs-integrity:
+    name: Documentation & Link Integrity
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Validate Markdown cross-references
+        run: python3 scripts/dev/check_links.py

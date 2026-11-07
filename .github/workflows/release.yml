@@ -1,0 +1,62 @@
+name: Release Packaging
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  build-release:
+    name: Build & Publish Release Assets
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "npm"
+          cache-dependency-path: software/lasius-dashboard/package-lock.json
+
+      - name: Build Dashboard
+        working-directory: software/lasius-dashboard
+        run: |
+          npm ci
+          npm run build
+
+      - name: Package Dashboard Bundle
+        run: |
+          TAG_NAME="${GITHUB_REF_NAME}"
+          cd software/lasius-dashboard/dist
+          zip -r "../../../lasius-dashboard-${TAG_NAME}.zip" .
+          cd ../../..
+
+      - name: Package CAD & Digital Fabrication Bundle
+        run: |
+          TAG_NAME="${GITHUB_REF_NAME}"
+          cd hardware/mechanics/export
+          zip -r "../../../lasius-cad-fabrication-${TAG_NAME}.zip" dxf/ stl/ step/
+          cd ../../..
+
+      - name: Package Wiring & Schematics Bundle
+        run: |
+          TAG_NAME="${GITHUB_REF_NAME}"
+          cd hardware/electronics/wiring
+          zip -r "../../../lasius-wiring-harnesses-${TAG_NAME}.zip" *.svg *.png *.bom.tsv *.yml
+          cd ../../..
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: "Lasius Hexapod ${{ github.ref_name }}"
+          generate_release_notes: true
+          files: |
+            lasius-dashboard-*.zip
+            lasius-cad-fabrication-*.zip
+            lasius-wiring-harnesses-*.zip
