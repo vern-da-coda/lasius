@@ -79,6 +79,13 @@ const VALID_LEGS = new Set<LegKey>([
 
 function loadSavedTab(): 'gait' | 'legs' | 'system' {
   try {
+    if (typeof window !== 'undefined' && window.location) {
+      const params = new URLSearchParams(window.location.search);
+      const tabParam = params.get('tab');
+      if (tabParam && VALID_TABS.has(tabParam)) {
+        return tabParam as 'gait' | 'legs' | 'system';
+      }
+    }
     const saved = localStorage.getItem('lasius_active_tab');
     if (saved && VALID_TABS.has(saved)) {
       return saved as 'gait' | 'legs' | 'system';

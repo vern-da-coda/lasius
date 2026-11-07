@@ -9,6 +9,10 @@
 
 Modular Vue 3 + TypeScript + Pinia 3D Digital Twin and browser control interface for the **Lasius** 18-DOF Hexapod robot. Built with Vite and Three.js.
 
+<p align="center">
+  <img src="docs/screenshots/dashboard_overview_3d_twin.png" alt="Lasius 3D Digital Twin & Gait Control Dashboard" width="850">
+</p>
+
 ## Architectural Highlights
 
 - **Modern Vue 3 SPA:** Modular Single-File Components using `<script setup lang="ts">` and strict TypeScript interfaces.
@@ -35,29 +39,35 @@ Modular Vue 3 + TypeScript + Pinia 3D Digital Twin and browser control interface
 
 ---
 
-## 4-Tab Control Sidebar
+## Control Sidebar & Operating Panels
 
-- **Tab 1: Gait & Locomotion:**
-  - Direction Pad (WASD forward/backward/strafe, QE turn) and Stop.
-  - Gait pattern selector: **Tripod** (fast, dynamic), **Ripple** (stable, 4-leg support), **Wave** (maximum stability, 5-leg support).
-  - Gait parameter sliders: Speed, Step Height, Step Length.
-  - 6-DOF Body Attitude posing: Chassis Height, Roll, Pitch, and Reset Pose.
-- **Tab 2: Leg Control (Direct Drive & Calibration Modes):**
-  - Interactive 2D Chassis Minimap: Clickable attachment points on the robot body hull to select any of the 6 legs (`LF`, `LM`, `LR`, `RF`, `RM`, `RR`) with glow highlighting and orientation cues.
-  - **Direct Drive Mode:** 3 color-coded joint sliders (Coxa, Femur, Tibia) with live degree readouts; quick buttons for *Stance Position*, *Zero (0°)*, and *Relax Leg*.
-  - **Calibration Mode (Option C Robotics Overlay):**
-    - Isolated reference pose alignment (`Align Ref Pose (0°)`, relaxing the other 15 servos).
-    - Live microsecond pulse trim steppers: `[-10µs]`, `[-1µs]`, `[Zero]`, `[+1µs]`, `[+10µs]`.
-    - Direction inversion toggle (`Inverted (-1)`) and safety limits (`Min/Max Angle`).
-    - Joint collision sweep testing.
-    - Atomic persistence: `Save Calibration` (writes to `calibration.json`) and `Reset Leg` (reverts to `config.yaml` factory defaults).
-- **Tab 3: Tests & Diagnostics:**
-  - Parametrizable harmonic step cycles (1–10 cycles).
-  - Single-joint mechanical collision sweeps (Coxa, Femur, Tibia).
-  - System actions: *All in Stance*, *Relax All Servos*.
-  - Live Order Monitor with execution latency, duration, and return status logging.
-- **Tab 4: System (Raspberry Pi Telemetry & KPIs):**
-  - Real-time monitoring of SoC temperature (°C), CPU load average & utilization %, RAM memory & daemon RSS, hardware power health and under-voltage detection (`vcgencmd get_throttled`), Wi-Fi RSSI level (dBm) & link quality, root storage disk space, and system uptime.
+### 1. Gait & Directions Panel
+- **Gait Morphing:** Switch dynamically between **Tripod** (fast, dynamic 3-leg alternation), **Ripple** (smooth 4-leg support), and **Wave** (ultra-stable crawling with 5-leg support).
+- **Direction Pad:** Holonomic translation (forward, backward, lateral strafe) and in-place rotation with configurable speed, step height, and step length.
+- **Body Attitude (6-DOF Posing):** Dynamic chassis clearance height ($-60 \dots -110\,\text{mm}$), roll angle ($\pm 15^\circ$), and pitch angle ($\pm 15^\circ$) with single-click zero-reset.
+- **Choreographies & Poses:** Pre-programmed macro sequences including *Wave Hello*, *Push-Ups*, *Body Circle*, and *Stealth Crouch*.
+- **Live Order Monitor:** Real-time log of dispatched orders with priority, latency, and execution status.
+
+### 2. Leg Control & Calibration Panel
+<p align="center">
+  <img src="docs/screenshots/dashboard_leg_control.png" alt="Lasius Dashboard - Leg Control and Calibration Interface" width="850">
+</p>
+
+- **Interactive 2D Minimap & Leg Selection:** Quick-select any of the 6 legs (`LF`, `LM`, `LR`, `RF`, `RM`, `RR`) with synchronized 3D highlighting in the Digital Twin.
+- **Reference Pose & Stance:** *Align Ref (0°)* aligns the selected leg to kinematic zero while relaxing the other 15 servos for isolated mechanical alignment.
+- **Microsecond Pulse Trim (Option C Overlay):** High-precision servo endpoint and center-trim calibration with live `[-1µs]` / `[+1µs]` fine-adjustment and test range validation.
+- **Joint Safety Limits & Polarity:** Graphical min/max angle constraint sliders and direction inversion toggles (`Normal (+1)` / `Inverted (-1)`).
+- **Automated Collision Sweeps & Harmonic Cycles:** Built-in sweeps for Coxa, Femur, and Tibia joints, plus parametrizable multi-cycle step executions.
+
+### 3. System Telemetry & Hardware Health Panel
+<p align="center">
+  <img src="docs/screenshots/dashboard_system_telemetry.png" alt="Lasius Dashboard - Raspberry Pi Telemetry and Health Interface" width="850">
+</p>
+
+- **Processor & Thermal:** Live CPU utilization %, load averages (1/5/15 min), and Raspberry Pi SoC core temperature (°C).
+- **Power & Voltage Health:** Real-time hardware undervoltage, frequency throttling, and brownout monitoring via `vcgencmd get_throttled` flags.
+- **Memory & Storage:** RAM utilization vs total capacity, daemon resident set size (RSS), and root filesystem disk headroom.
+- **Network & Diagnostics:** Wi-Fi RSSI signal strength (dBm), link state, and system uptime.
 
 ---
 
