@@ -1,0 +1,128 @@
+# Lasius Hexapod - Power Distribution Architecture
+# LiPo Battery, Main Switch, Dual Step-Down Regulators & Star Ground
+
+connectors:
+  Battery_LiPo:
+    type: 2S/3S LiPo Battery (XT60)
+    pincount: 2
+    pinlabels: [BAT+, BAT-]
+    color: YE
+
+  Main_Switch:
+    type: SPST Rocker / Toggle Switch (15A DC)
+    pincount: 2
+    pinlabels: [IN, OUT]
+    color: RD
+
+  UBEC_Servos:
+    type: High-Current Step-Down (6.0V 15A Peak)
+    pincount: 4
+    pinlabels: [VIN+, GND_IN, VOUT_6V, GND_OUT]
+    color: BU
+
+  StepDown_Pi:
+    type: Logic Step-Down Regulator (5.1V 4.0A)
+    pincount: 4
+    pinlabels: [VIN+, GND_IN, VOUT_5V, GND_OUT]
+    color: GN
+
+  RaspberryPi_Power:
+    type: Raspberry Pi 4 Power Input (USB-C / GPIO)
+    pincount: 2
+    pinlabels: [5V, GND]
+    color: GN
+
+  PCA9685_Left_Power:
+    type: PCA9685 Left Terminal (0x40 Servo Power)
+    pincount: 2
+    pinlabels: [V+_6V, GND]
+    color: BU
+
+  PCA9685_Right_Power:
+    type: PCA9685 Right Terminal (0x42 Servo Power)
+    pincount: 2
+    pinlabels: [V+_6V, GND]
+    color: BU
+
+cables:
+  Bat_to_Switch:
+    gauge: 14 AWG
+    length: 0.08
+    colors: [RD]
+    wirecount: 1
+
+  Switch_to_UBEC:
+    gauge: 16 AWG
+    length: 0.06
+    colors: [RD]
+    wirecount: 1
+
+  Switch_to_PiStepDown:
+    gauge: 18 AWG
+    length: 0.06
+    colors: [RD]
+    wirecount: 1
+
+  Bat_GND_to_UBEC:
+    gauge: 14 AWG
+    length: 0.08
+    colors: [BK]
+    wirecount: 1
+
+  Bat_GND_to_PiStepDown:
+    gauge: 18 AWG
+    length: 0.08
+    colors: [BK]
+    wirecount: 1
+
+  Pi_5V_Supply:
+    gauge: 20 AWG
+    length: 0.10
+    colors: [RD, BK]
+    wirecount: 2
+
+  Servo_Power_Left:
+    gauge: 16 AWG
+    length: 0.12
+    colors: [RD, BK]
+    wirecount: 2
+
+  Servo_Power_Right:
+    gauge: 16 AWG
+    length: 0.12
+    colors: [RD, BK]
+    wirecount: 2
+
+connections:
+  -
+    - Battery_LiPo: [BAT+]
+    - Bat_to_Switch: [1]
+    - Main_Switch: [IN]
+  -
+    - Main_Switch: [OUT]
+    - Switch_to_UBEC: [1]
+    - UBEC_Servos: [VIN+]
+  -
+    - Main_Switch: [OUT]
+    - Switch_to_PiStepDown: [1]
+    - StepDown_Pi: [VIN+]
+  -
+    - Battery_LiPo: [BAT-]
+    - Bat_GND_to_UBEC: [1]
+    - UBEC_Servos: [GND_IN]
+  -
+    - Battery_LiPo: [BAT-]
+    - Bat_GND_to_PiStepDown: [1]
+    - StepDown_Pi: [GND_IN]
+  -
+    - StepDown_Pi: [VOUT_5V, GND_OUT]
+    - Pi_5V_Supply: [1, 2]
+    - RaspberryPi_Power: [5V, GND]
+  -
+    - UBEC_Servos: [VOUT_6V, GND_OUT]
+    - Servo_Power_Left: [1, 2]
+    - PCA9685_Left_Power: [V+_6V, GND]
+  -
+    - UBEC_Servos: [VOUT_6V, GND_OUT]
+    - Servo_Power_Right: [1, 2]
+    - PCA9685_Right_Power: [V+_6V, GND]

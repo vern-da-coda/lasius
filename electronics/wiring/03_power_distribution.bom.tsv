@@ -1,0 +1,13 @@
+Id	Description	Qty	Unit	Designators
+1	Cable, 1 x 14 AWG	0.16	m	Bat_GND_to_UBEC, Bat_to_Switch
+2	Cable, 1 x 16 AWG	0.06	m	Switch_to_UBEC
+3	Cable, 1 x 18 AWG	0.14	m	Bat_GND_to_PiStepDown, Switch_to_PiStepDown
+4	Cable, 2 x 16 AWG	0.24	m	Servo_Power_Left, Servo_Power_Right
+5	Cable, 2 x 20 AWG	0.1	m	Pi_5V_Supply
+6	Connector, 2S/3S LiPo Battery (XT60), 2 pins, YE	1		Battery_LiPo
+7	Connector, High-Current Step-Down (6.0V 15A Peak), 4 pins, BU	1		UBEC_Servos
+8	Connector, Logic Step-Down Regulator (5.1V 4.0A), 4 pins, GN	1		StepDown_Pi
+9	Connector, PCA9685 Left Terminal (0x40 Servo Power), 2 pins, BU	1		PCA9685_Left_Power
+10	Connector, PCA9685 Right Terminal (0x42 Servo Power), 2 pins, BU	1		PCA9685_Right_Power
+11	Connector, Raspberry Pi 4 Power Input (USB-C / GPIO), 2 pins, GN	1		RaspberryPi_Power
+12	Connector, SPST Rocker / Toggle Switch (15A DC), 2 pins, RD	1		Main_Switch

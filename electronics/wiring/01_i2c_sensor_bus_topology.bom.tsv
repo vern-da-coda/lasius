@@ -1,0 +1,12 @@
+Id	Description	Qty	Unit	Designators
+1	Cable, 2 x 28 AWG	0.52	m	Bus_LF, Bus_LM, Bus_LR, Bus_RF, Bus_RM, Bus_RR
+2	Cable, 4 x 26 AWG	0.08	m	Pi_to_TCA
+3	Connector, 40-Pin Header (Pins 1, 3, 5, 6), 4 pins, GN	1		RaspberryPi_GPIO
+4	Connector, ADS1115 (Left Front Leg, 0x48), 4 pins, OG	1		ADS1115_LF
+5	Connector, ADS1115 (Left Middle Leg, 0x48), 4 pins, OG	1		ADS1115_LM
+6	Connector, ADS1115 (Left Rear Leg, 0x48), 4 pins, OG	1		ADS1115_LR
+7	Connector, ADS1115 (Right Front Leg, 0x48), 4 pins, OG	1		ADS1115_RF
+8	Connector, ADS1115 (Right Middle Leg, 0x48), 4 pins, OG	1		ADS1115_RM
+9	Connector, ADS1115 (Right Rear Leg, 0x48), 4 pins, OG	1		ADS1115_RR
+10	Connector, TCA9548A Channel Headers (CH0-CH5), 12 pins, BU	1		TCA9548A_Outputs
+11	Connector, TCA9548A Main Bus (Addr 0x71 via A0), 4 pins, BU	1		TCA9548A_Input

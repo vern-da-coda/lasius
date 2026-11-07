@@ -1,0 +1,142 @@
+# Lasius Hexapod - I2C Sensor Bus Topology
+# TCA9548A 8-Channel Multiplexer & 6x ADS1115 Leg ADCs
+
+connectors:
+  RaspberryPi_GPIO:
+    type: 40-Pin Header (Pins 1, 3, 5, 6)
+    pincount: 4
+    pinlabels: [3.3V, SDA, SCL, GND]
+    color: GN
+
+  TCA9548A_Input:
+    type: TCA9548A Main Bus (Addr 0x71 via A0)
+    pincount: 4
+    pinlabels: [VIN_3V3, SDA, SCL, GND]
+    color: BU
+
+  TCA9548A_Outputs:
+    type: TCA9548A Channel Headers (CH0-CH5)
+    pincount: 12
+    pinlabels:
+      - CH0_SD
+      - CH0_SC
+      - CH1_SD
+      - CH1_SC
+      - CH2_SD
+      - CH2_SC
+      - CH3_SD
+      - CH3_SC
+      - CH4_SD
+      - CH4_SC
+      - CH5_SD
+      - CH5_SC
+    color: BU
+
+  ADS1115_LF:
+    type: ADS1115 (Left Front Leg, 0x48)
+    pincount: 4
+    pinlabels: [VDD_3V3, GND, SCL, SDA]
+    color: OG
+
+  ADS1115_LM:
+    type: ADS1115 (Left Middle Leg, 0x48)
+    pincount: 4
+    pinlabels: [VDD_3V3, GND, SCL, SDA]
+    color: OG
+
+  ADS1115_LR:
+    type: ADS1115 (Left Rear Leg, 0x48)
+    pincount: 4
+    pinlabels: [VDD_3V3, GND, SCL, SDA]
+    color: OG
+
+  ADS1115_RF:
+    type: ADS1115 (Right Front Leg, 0x48)
+    pincount: 4
+    pinlabels: [VDD_3V3, GND, SCL, SDA]
+    color: OG
+
+  ADS1115_RM:
+    type: ADS1115 (Right Middle Leg, 0x48)
+    pincount: 4
+    pinlabels: [VDD_3V3, GND, SCL, SDA]
+    color: OG
+
+  ADS1115_RR:
+    type: ADS1115 (Right Rear Leg, 0x48)
+    pincount: 4
+    pinlabels: [VDD_3V3, GND, SCL, SDA]
+    color: OG
+
+cables:
+  Pi_to_TCA:
+    gauge: 26 AWG
+    length: 0.08
+    colors: [RD, YE, GN, BK]
+    wirecount: 4
+
+  Bus_LF:
+    gauge: 28 AWG
+    length: 0.10
+    colors: [YE, GN]
+    wirecount: 2
+
+  Bus_LM:
+    gauge: 28 AWG
+    length: 0.06
+    colors: [YE, GN]
+    wirecount: 2
+
+  Bus_LR:
+    gauge: 28 AWG
+    length: 0.10
+    colors: [YE, GN]
+    wirecount: 2
+
+  Bus_RF:
+    gauge: 28 AWG
+    length: 0.10
+    colors: [YE, GN]
+    wirecount: 2
+
+  Bus_RM:
+    gauge: 28 AWG
+    length: 0.06
+    colors: [YE, GN]
+    wirecount: 2
+
+  Bus_RR:
+    gauge: 28 AWG
+    length: 0.10
+    colors: [YE, GN]
+    wirecount: 2
+
+connections:
+  -
+    - RaspberryPi_GPIO: [3.3V, SDA, SCL, GND]
+    - Pi_to_TCA: [1, 2, 3, 4]
+    - TCA9548A_Input: [VIN_3V3, SDA, SCL, GND]
+  -
+    - TCA9548A_Outputs: [CH0_SD, CH0_SC]
+    - Bus_LF: [1, 2]
+    - ADS1115_LF: [SDA, SCL]
+  -
+    - TCA9548A_Outputs: [CH1_SD, CH1_SC]
+    - Bus_LM: [1, 2]
+    - ADS1115_LM: [SDA, SCL]
+  -
+    - TCA9548A_Outputs: [CH2_SD, CH2_SC]
+    - Bus_LR: [1, 2]
+    - ADS1115_LR: [SDA, SCL]
+  -
+    - TCA9548A_Outputs: [CH3_SD, CH3_SC]
+    - Bus_RF: [1, 2]
+    - ADS1115_RF: [SDA, SCL]
+  -
+    - TCA9548A_Outputs: [CH4_SD, CH4_SC]
+    - Bus_RM: [1, 2]
+    - ADS1115_RM: [SDA, SCL]
+  -
+    - TCA9548A_Outputs: [CH5_SD, CH5_SC]
+    - Bus_RR: [1, 2]
+    - ADS1115_RR: [SDA, SCL]
