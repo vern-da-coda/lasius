@@ -10,7 +10,7 @@ CAD engineering, digital fabrication exports, and assembly models for the **Lasi
   - **Material & Thickness:** 2.0 mm solid plate (CFRP carbon fiber / aluminum).
   - **Geometry:** Pure analytic OpenCASCADE B-Rep geometry (44 smooth faces, 126 edges; zero faceted polygon segments).
   - **Contour:** Exact $G^1$-continuous concave fillets ($R_f = 4.5\,\text{mm}$) transitioning into leg mounts. Fully protruding circular pivot ears ($R = 13.5\,\text{mm}$), $35.5^\circ$ flank line to tapered rear with $R = 7.0\,\text{mm}$ corner fillet.
-  - **Bores:** 6× coxa counter-bearing holes ($\varnothing 8.0\,\text{mm}$), 8× M3 standoff mounting holes ($\varnothing 3.0\,\text{mm}$), and central electronics cutout window ($50.0 \times 160.0\,\text{mm}$).
+  - **Bores:** 6x coxa counter-bearing holes ($\varnothing 8.0\,\text{mm}$), 8x M3 standoff mounting holes ($\varnothing 3.0\,\text{mm}$), and central electronics cutout window ($50.0 \times 160.0\,\text{mm}$).
 - **Chassis Top Plate ([`body_top.FCStd`](models/body_top.FCStd)):**
   - Upper chassis plate (2.0 mm solid), matching outer contour and mounting hole pattern as `body_bottom`.
 - **Coxa Bracket ([`coxa_bracket.FCStd`](models/coxa_bracket.FCStd)):**
@@ -29,7 +29,7 @@ CAD engineering, digital fabrication exports, and assembly models for the **Lasi
 - **Complete Modular Leg Assembly ([`leg_assembly.FCStd`](models/leg_assembly.FCStd)):**
   - Fully linked 22-part kinematic subassembly consisting of 3 servos (NR-645), brackets, bearings, M4 countersunk screws, shims, lock nuts, and standoffs.
 - **Complete Full-Body Assembly ([`body_assembly.FCStd`](models/body_assembly.FCStd)):**
-  - Master full-robot assembly (142 components) linking bottom plate (`body_bottom`), top plate (`body_top`), 8× standoff pillars (`spacer_14x50`), and 6× modular leg assemblies (`leg_assembly`). Right-side legs (FR, MR, RR) are mirrored across the sagittal plane ($Y = 0$) so that all 6 servo horn outputs consistently face forward ($-X$).
+  - Master full-robot assembly (142 components) linking bottom plate (`body_bottom`), top plate (`body_top`), 8x standoff pillars (`spacer_14x50`), and 6x modular leg assemblies (`leg_assembly`). Right-side legs (FR, MR, RR) are mirrored across the sagittal plane ($Y = 0$) so that all 6 servo horn outputs consistently face forward ($-X$).
 
 ---
 
@@ -37,19 +37,19 @@ CAD engineering, digital fabrication exports, and assembly models for the **Lasi
 
 ```text
 hardware/mechanics/
-├── models/                  # FreeCAD CAD documents
-│   ├── hardware/            # Standard parts (bearings, screws, nuts, washers)
-│   ├── legacy_scad/         # Archived OpenSCAD (.scad, .csg) reference models
-│   └── *.FCStd              # Native FreeCAD part & assembly files
-├── export/                  # Digital fabrication outputs
-│   ├── step/                # ISO 10303 CAD exchange format (CNC milling & waterjet)
-│   ├── stl/                 # High-resolution meshes for 3D printing (PETG, SLA)
-│   └── dxf/                 # 2D vector profiles for laser cutting / sheet processing
-├── drawings/
-│   ├── renders/             # High-resolution CAD 3D renders (.png)
-│   └── templates/           # 1:1 true-to-scale SVG drill & fabrication templates
-├── scripts/                 # Parametric Python FreeCAD generators & scan math
-└── scans/                   # 1200 DPI reference flatbed scans of physical parts
+|-- models/                  # FreeCAD CAD documents
+|   |-- hardware/            # Standard parts (bearings, screws, nuts, washers)
+|   |-- legacy_scad/         # Archived OpenSCAD (.scad, .csg) reference models
+|   \-- *.FCStd              # Native FreeCAD part & assembly files
+|-- export/                  # Digital fabrication outputs
+|   |-- step/                # ISO 10303 CAD exchange format (CNC milling & waterjet)
+|   |-- stl/                 # High-resolution meshes for 3D printing (PETG, SLA)
+|   \-- dxf/                 # 2D vector profiles for laser cutting / sheet processing
+|-- drawings/
+|   |-- renders/             # High-resolution CAD 3D renders (.png)
+|   \-- templates/           # 1:1 true-to-scale SVG drill & fabrication templates
+|-- scripts/                 # Parametric Python FreeCAD generators & scan math
+\-- scans/                   # 1200 DPI reference flatbed scans of physical parts
 ```
 
 ---

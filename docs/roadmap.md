@@ -1,23 +1,23 @@
-# Lasius Hexapod – Task List, Backlog & Roadmap
+# Hexapod:Lasius - Task List, Backlog & Roadmap
 
-This document serves as the centralized task list, roadmap, and backlog for the continuous development of the Lasius Hexapod robot (setup guides, developer workflows, and helper scripts are documented in [`README.md`](../README.md)).
+This document serves as the centralized task list, roadmap, and backlog for the continuous development of the Hexapod:Lasius robot (setup guides, developer workflows, and helper scripts are documented in [`README.md`](../README.md)).
 
 ---
 
 ## 1. Current Project Status (Status: October 2026)
 
 ### Mechanical Status
-* **Status:** ⚠️ **Full physical locomotion temporarily paused.**
+* **Status:** [WARNING] **Full physical locomotion temporarily paused.**
 * **Root Cause:** Several 3D-printed Coxa brackets (hip joints) fractured under load and must be reprinted.
 * **Consequence:** Physical walking and payload tests on desk/floor are temporarily paused until reinforced PETG reprints are mounted.
 
 ### Software & Digital Twin Status
-* **Status:** ✔ **100% operational, modular, and fully simulatable.**
+* **Status:** [x] **100% operational, modular, and fully simulatable.**
 * **Backend (`lasius-core`):**
   * 4-layer decoupled architecture (HAL, kinematics/motion, OrderDispatcher, HTTP REST & WebSocket server).
   * 50 Hz harmonic cosine locomotion engine ($C^1$-continuous, $>5\times$ acceleration jerk reduction) with `engage=False` on startup (servos unpowered at boot) and explicit [`locomotion_active`](../software/lasius-core/src/lasius/core/robot.py) arbitration state machine.
   * Thread-safe I2C bus (`threading.RLock`) and disabled PCA9685 `_ALLCALL` bit (`0x70`) in [`driver.py`](../software/lasius-core/src/lasius/core/hardware/driver.py) in preparation for the PCA9548 I2C multiplexer.
-  * Jerk-free cosine trajectory entry/exit interpolation in [`dispatcher.py`](../software/lasius-core/src/lasius/core/control/dispatcher.py): starting angles calculated from live servo positions or neutral stance height ($z = -80\,\text{mm}$), preventing sudden 0° sag.
+  * Jerk-free cosine trajectory entry/exit interpolation in [`dispatcher.py`](../software/lasius-core/src/lasius/core/control/dispatcher.py): starting angles calculated from live servo positions or neutral stance height ($z = -80\,\text{mm}$), preventing sudden 0 deg sag.
 * **Frontend (`lasius-dashboard`):**
   * Modern Vue 3 + TypeScript + Pinia Single-Page Application (SFCs, reusable `JointCard.vue`).
   * 3D Digital Twin (Three.js WebGL via `shallowRef` & zero-leak buffer updates in [`updateFanGeometry`](../software/lasius-dashboard/src/engine/lasiusGraphics.ts) / [`disposeObject3D`](../software/lasius-dashboard/src/engine/lasiusGraphics.ts)): dual-plate sandwich chassis, inward-extended coxa brackets (30 mm), unified PBR material (`#343746`), forward orientation chevron.
@@ -52,7 +52,7 @@ flowchart TD
     F --> F2["3x VL53L4CD ToF (0x29) + 2x INA260 Power + 6x Foot Switches (MCP23017)"]
 ```
 
-### Milestone 1: Tooling, Helper Scripts & CI [✔ COMPLETED]
+### Milestone 1: Tooling, Helper Scripts & CI [[x] COMPLETED]
 * **Goal:** Standardized scripts for daily development workflows (simulation, deployment, backup, health check) with centralized ASCII banner [`scripts/banner.txt`](../scripts/banner.txt).
 * **Location:** [`scripts/`](../scripts/) folder (workflows documented in [`scripts/README.md`](../scripts/README.md)).
 
@@ -63,28 +63,28 @@ flowchart TD
 * **Fabrication & Slicing Specifications:**
   * **Material:** **PETG** (tough-elastic, will not shatter under shock loads).
   * **Print Orientation:** Print parts flat on bed so tensile/bending stresses align with continuous extrusion paths.
-  * **Perimeters & Infill:** **4 perimeters (1.6 mm wall thickness)**, **40% gyroid infill**, **5 top/bottom layers (1.0 mm)**, 0.20 mm layer height at 240–245 °C with minimal part cooling (max. 20–30%) for maximum interlayer adhesion.
-  * **Structural Reinforcement:** Fillet sharp 90° interior corners ($R \ge 2\text{--}3\,\text{mm}$), increase wall thickness around 25T servo horns to $\ge 3.5\text{--}4.0\,\text{mm}$, and incorporate M3 heat-set brass threaded inserts.
+  * **Perimeters & Infill:** **4 perimeters (1.6 mm wall thickness)**, **40% gyroid infill**, **5 top/bottom layers (1.0 mm)**, 0.20 mm layer height at 240-245  deg C with minimal part cooling (max. 20-30%) for maximum interlayer adhesion.
+  * **Structural Reinforcement:** Fillet sharp 90 deg interior corners ($R \ge 2\text{--}3\,\text{mm}$), increase wall thickness around 25T servo horns to $\ge 3.5\text{--}4.0\,\text{mm}$, and incorporate M3 heat-set brass threaded inserts.
 
 ### Milestone 3: Dashboard & Teleoperation (100% Software)
-* **Google Stadia & PS5 DualSense Profiles (`lasius-pilot` & `lasius-dashboard`) [✔ COMPLETED]:**
+* **Google Stadia & PS5 DualSense Profiles (`lasius-pilot` & `lasius-dashboard`) [[x] COMPLETED]:**
   * Declarative YAML profiles (`profiles/ps5.yaml`, `profiles/stadia.yaml`, `profiles/xbox.yaml`) with auto-detection and manual selector in dashboard (`GET /api/v1/gamepads`) plus browser control via `navigator.getGamepads()`.
-* **Calibration Profile Management (Export / Import) [✔ COMPLETED]:**
-  * Download `calibration.json` (`⬇ Export JSON`) and upload/restore (`⬆ Import JSON`) directly inside the *Leg Control* sidebar tab.
-* **3D Ground Contact Indicators & Foot Trails [✔ COMPLETED]:**
+* **Calibration Profile Management (Export / Import) [[x] COMPLETED]:**
+  * Download `calibration.json` (`[DOWN] Export JSON`) and upload/restore (`[UP] Import JSON`) directly inside the *Leg Control* sidebar tab.
+* **3D Ground Contact Indicators & Foot Trails [[x] COMPLETED]:**
   * Live ground contact glow rings under Tibia tips in stance phase ($z \le -75\,\text{mm}$) and toggleable 3D foot trajectory curves (`Trails: ON/OFF`) in the 3D viewport.
-* **Kinematic Ground Coupling (`Ground Lock` vs. `Test Stand`) & Odometry Grid [✔ COMPLETED]:**
+* **Kinematic Ground Coupling (`Ground Lock` vs. `Test Stand`) & Odometry Grid [[x] COMPLETED]:**
   * 2-stage least-squares support plane calculation (`fitSupportPlane` & `computeWorldKinematics`): supporting feet remain grounded ($Z = -80\,\text{mm}$) while chassis dynamically tilts, rolls, pitches, and lifts during *Push-Ups*, *Crouch*, *Body Circle*, and walking.
   * Slip-free ground propulsion: 3D floor grid scrolls and rotates synchronously under grounded stance legs (`Ground: ON`), toggleable to stationary workbench mode (`Test Stand`).
 * **Rigid Body Physics Engine Bridge (MuJoCo / PyBullet via URDF/MJCF) [Backlog]:**
   * Export robot geometry as MJCF/URDF for **MuJoCo**, coupled via the 50 Hz WebSocket stream (`ws://...:8765`), to simulate full rigid-body dynamics (gravity, tipping moments, contact friction, rough terrain, servo torque limits).
 
 ### Milestone 4: Gestures, Poses & Choreographies (`lasius-core`)
-* **Show Poses & Acrobatic Actions [✔ COMPLETED]:**
+* **Show Poses & Acrobatic Actions [[x] COMPLETED]:**
   * `WAVE_HELLO`: Lifts front leg and waves Tibia/Coxa back and forth while remaining 5 legs maintain balanced stance.
   * `PUSH_UPS`: Rhythmic vertical body pumping via sinusoidal interpolation ($-50\,\text{mm}$ to $-108\,\text{mm}$).
   * `BODY_CIRCLE`: Smooth 6-DOF circular body revolution coupling roll and pitch angles.
-  * `CROUCH`: Low lurking stance with tilted nose (`height: -48 mm`, `pitch: -12°`).
+  * `CROUCH`: Low lurking stance with tilted nose (`height: -48 mm`, `pitch: -12 deg`).
 * **Arc Walking:**
   * Continuous simultaneous translation ($X/Y$) and yaw rotation ($Z$) for smooth circular path following.
 
@@ -95,14 +95,14 @@ flowchart TD
   * **Adafruit BNO085 9-DOF Orientation IMU (`0x4A`)** with on-chip sensor fusion (quaternions, gravity vector).
   * Closed-loop PID attitude control in `lasius-core`: ground slope angles are automatically compensated by inverse body roll and pitch adjustments.
 * **Current & Voltage Telemetry:**
-  * **2× Adafruit INA260 (`0x41` Left, `0x44` Right)** for real-time monitoring of voltage (V), current (A), and power (W) per servo bank, including low-voltage cut-off protection.
+  * **2x Adafruit INA260 (`0x41` Left, `0x44` Right)** for real-time monitoring of voltage (V), current (A), and power (W) per servo bank, including low-voltage cut-off protection.
 * **ToF Obstacle Avoidance & Tactile Foot Switches:**
-  * **3× Adafruit VL53L4CD ToF Distance Sensors (`0x29` on Mux channels 0, 1, 2)** for proximity sensing (1–1300 mm, front left/center/right).
-  * **6× Subminiature Lever Microswitches** at Tibia tips via **Adafruit MCP23017 I2C GPIO Expander (`0x20`)** for reactive ground contact sensing on rough terrain.
+  * **3x Adafruit VL53L4CD ToF Distance Sensors (`0x29` on Mux channels 0, 1, 2)** for proximity sensing (1-1300 mm, front left/center/right).
+  * **6x Subminiature Lever Microswitches** at Tibia tips via **Adafruit MCP23017 I2C GPIO Expander (`0x20`)** for reactive ground contact sensing on rough terrain.
 
-### Milestone 6: Analog Servo Potentiometer Feedback (Closed-Loop Telemetry) [✔ Calibration COMPLETED]
+### Milestone 6: Analog Servo Potentiometer Feedback (Closed-Loop Telemetry) [[x] Calibration COMPLETED]
 * **Potentiometer Feedback:** Tapping internal feedback wiper of Reely NR-645 MG BB servos for direct joint angle telemetry, stall detection, and torque estimation.
 * **Calibration Tooling:** Interactive CLI wizard [`scripts/bench/pot_calibration_wizard.py`](../scripts/bench/pot_calibration_wizard.py) with cosine interpolation and linear regression.
 * **Calibration Findings ([`data/bench/`](../data/bench/)):** Empirically verified on Channel 15 ($R^2 = 0.9996$, sensitivity $7.59\,\text{mV}/^\circ$, zero point $1.5633\,\text{V}$ at $0^\circ$, max error $\pm 1.45^\circ$).
 * **Closed-Loop Formula:** $\theta(V) = (V - 1.5633) \cdot 131.77^\circ$.
-* **Hardware Integration:** 6× ADS1115 ADCs over TCA9548A multiplexer with 100 nF low-pass RC filters (see [`docs/hardware/closed_loop_plan.md`](hardware/closed_loop_plan.md)).
+* **Hardware Integration:** 6x ADS1115 ADCs over TCA9548A multiplexer with 100 nF low-pass RC filters (see [`docs/hardware/closed_loop_plan.md`](hardware/closed_loop_plan.md)).

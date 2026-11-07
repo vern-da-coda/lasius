@@ -1,10 +1,10 @@
-# Lasius Hexapod – 18-DOF Closed-Loop Potentiometer Feedback
+# Hexapod:Lasius - 18-DOF Closed-Loop Potentiometer Feedback
 ## Hardware Specification, Connection Plan & Architectural Findings
 
-> **Project:** Lasius Hexapod (18 DOF, 6 Legs)  
+> **Project:** Hexapod:Lasius (18 DOF, 6 Legs)  
 > **Status:** Verified & Specified  
 > **Date:** November 2026  
-> **Architecture:** 100% Python on Raspberry Pi 4 (I2C Multiplexing via TCA9548A + 6× ADS1115)
+> **Architecture:** 100% Python on Raspberry Pi 4 (I2C Multiplexing via TCA9548A + 6x ADS1115)
 
 ---
 
@@ -22,7 +22,7 @@ To achieve full 18-DOF real-time joint angle feedback (position telemetry, stall
 4. **TCA9548A 8-Channel Multiplexer as Master Hub:**  
    Decouples all 6 ADS1115 boards onto isolated I2C sub-busses. All 6 boards run conflict-free on their default address `0x48`.
 5. **Cost Efficiency:**  
-   Total electronics cost for 18 channels: **€17.98** (6× ADS1115 for €12.99 + 2× TCA9548A for €4.99).
+   Total electronics cost for 18 channels: **EUR17.98** (6x ADS1115 for EUR12.99 + 2x TCA9548A for EUR4.99).
 
 ---
 
@@ -33,22 +33,22 @@ On the test bench (Channel 15 on PCA9685 Board 1 `0x40`), the characteristic cur
 ```text
        Characteristic Curve: Reely NR-645 MG BB Potentiometer
 Voltage [V]
-  2.10 ┤                                           ╭── +60° (2.02V)
-  1.90 ┤                                     ╭─────╯
-  1.70 ┤                               ╭─────╯
-  1.50 ┤ ─────────── 0° (1.563V) ──────╯  [1500 µs Neutral]
-  1.30 ┤                         ╭─────╯
-  1.10 ┤                   ╭─────╯
-  0.90 ┤ ── -60° (1.11V) ──╯
-       └─┬───────┬───────┬───────┬───────┬───────┬───────┬── Joint Angle [°]
-       -60°    -45°    -30°    -15°      0°     +15°    +30°    +60°
+  2.10 +                                           +-- +60 deg (2.02V)
+  1.90 +                                     +-----+
+  1.70 +                               +-----+
+  1.50 + ----------- 0 deg (1.563V) ------+  [1500 us Neutral]
+  1.30 +                         +-----+
+  1.10 +                   +-----+
+  0.90 + -- -60 deg (1.11V) --+
+       +-+-------+-------+-------+-------+-------+-------+-- Joint Angle [ deg]
+       -60 deg    -45 deg    -30 deg    -15 deg      0 deg     +15 deg    +30 deg    +60 deg
 ```
 
 ### Verified Model Parameters:
-- **Linearity ($R^2$):** **0.99959** (99.96% linearity — practically ideal)
+- **Linearity ($R^2$):** **0.99959** (99.96% linearity -- practically ideal)
 - **Sensitivity (Slope $m$):** **$+7.589\,\text{mV}/^\circ$** ($0.007589\,\text{V}/^\circ$)
 - **Scale Factor ($k$):** **$131.772^\circ/\text{V}$**
-- **Zero-Point Voltage ($V_{0^\circ}$):** **$1.5633\,\text{V}$** at $0.0^\circ$ (1500 µs neutral pulse)
+- **Zero-Point Voltage ($V_{0^\circ}$):** **$1.5633\,\text{V}$** at $0.0^\circ$ (1500 us neutral pulse)
 - **Max Linearity Deviation:** only **$\pm 1.45^\circ$** (or $\pm 11.0\,\text{mV}$)
 - **Full-Scale Voltage Range ($\pm 90^\circ$):** $\sim 0.88\,\text{V}$ to $\sim 2.25\,\text{V}$  
   *(Safely within the 3.3V operating limit of the Raspberry Pi / ADS1115).*
@@ -61,7 +61,7 @@ $$V_{\text{target}}(\theta) = 1.5633\,\text{V} + (\theta \cdot 0.007589\,\text{V
 
 ## 3. Circuit Topology (Full System: Actuation & Sensing)
 
-The diagram below illustrates the strict separation and interaction between the **PWM Actuation Branch** (PCA9685, 5–6V high-current load) and the **ADC Sensing Branch** (TCA9548A, 3.3V logic):
+The diagram below illustrates the strict separation and interaction between the **PWM Actuation Branch** (PCA9685, 5-6V high-current load) and the **ADC Sensing Branch** (TCA9548A, 3.3V logic):
 
 ```mermaid
 flowchart TD
@@ -135,6 +135,10 @@ flowchart TD
     TCA -.-> CommonGND
 ```
 
+<p align="center">
+  <img src="../../hardware/electronics/wiring/01_i2c_sensor_bus_topology.svg" alt="I2C Sensor Bus Topology" width="850">
+</p>
+
 ---
 
 ## 4. Detailed Wiring and Connection Plan
@@ -172,23 +176,31 @@ To eliminate motor brush and PWM switching noise, **monolithic ceramic capacitor
 
 ```text
               ADS1115 Breakout (Bottom PCB Side)
-          ┌─────────────────────────────────────────┐
-          │  [VDD]   [GND]   [SCL]   [SDA]   [ADDR] │
-          │            │                            │
-          │            ├───┐       ┌───────┐        │
-          │            │ [100nF] [100nF] [100nF]    │
-          │            │   │       │       │        │
-          │  [ALRT]    └───┼───────┼───────┼──────┐ │
-          │                │       │       │      │ │
-          │              [A0]    [A1]    [A2]   [A3]│
-          │              Coxa    Femur   Tibia  Foot│
-          └─────────────────────────────────────────┘
+          +-----------------------------------------+
+          |  [VDD]   [GND]   [SCL]   [SDA]   [ADDR] |
+          |            |                            |
+          |            |---+       +-------+        |
+          |            | [100nF] [100nF] [100nF]    |
+          |            |   |       |       |        |
+          |  [ALRT]    \---+-------+-------+------+ |
+          |                |       |       |      | |
+          |              [A0]    [A1]    [A2]   [A3]|
+          |              Coxa    Femur   Tibia  Foot|
+          \-----------------------------------------+
 ```
 
 > [!TIP]
 > **No Separate Filter PCB Required:**  
 > The 3 capacitors are soldered **directly across the underside of the pin header** on each ADS1115 between `A0/GND`, `A1/GND`, and `A2/GND`.  
 > This eliminates 18 intermediate jumper wires, occupies 0 mm of additional chassis space, and provides optimal filtering right at the measurement pins.
+
+<p align="center">
+  <img src="../../hardware/electronics/wiring/02_single_leg_feedback_harness.svg" alt="Single Leg Feedback Harness" width="850">
+</p>
+
+<p align="center">
+  <img src="../../hardware/electronics/wiring/03_power_distribution.svg" alt="Power Distribution Rails" width="850">
+</p>
 
 ---
 
@@ -215,7 +227,7 @@ from adafruit_ads1x15.analog_in import AnalogIn
 
 class HexapodTelemetryADC:
     # Empirically calibrated parameters (Reely NR-645 MG BB)
-    V_INTERCEPT = 1.5633    # Volts at 0.0°
+    V_INTERCEPT = 1.5633    # Volts at 0.0 deg
     DEG_PER_VOLT = 131.772  # Degrees per Volt
 
     LEG_MUX_CHANNELS = {

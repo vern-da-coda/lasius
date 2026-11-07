@@ -39,28 +39,28 @@ Modular Vue 3 + TypeScript + Pinia 3D Digital Twin and browser control interface
   - 6-DOF Body Attitude posing: Chassis Height, Roll, Pitch, and Reset Pose.
 - **Tab 2: Leg Control (Direct Drive & Calibration Modes):**
   - Interactive 2D Chassis Minimap: Clickable attachment points on the robot body hull to select any of the 6 legs (`LF`, `LM`, `LR`, `RF`, `RM`, `RR`) with glow highlighting and orientation cues.
-  - **Direct Drive Mode:** 3 color-coded joint sliders (Coxa, Femur, Tibia) with live degree readouts; quick buttons for *Stance Position*, *Zero (0°)*, and *Relax Leg*.
+  - **Direct Drive Mode:** 3 color-coded joint sliders (Coxa, Femur, Tibia) with live degree readouts; quick buttons for *Stance Position*, *Zero (0 deg)*, and *Relax Leg*.
   - **Calibration Mode (Option C Robotics Overlay):**
-    - Isolated reference pose alignment (`🎯 Align Ref Pose (0°)`, relaxing the other 15 servos).
-    - Live microsecond pulse trim steppers: `[-10µs]`, `[-1µs]`, `[Zero]`, `[+1µs]`, `[+10µs]`.
+    - Isolated reference pose alignment (`[ALIGN] Align Ref Pose (0 deg)`, relaxing the other 15 servos).
+    - Live microsecond pulse trim steppers: `[-10us]`, `[-1us]`, `[Zero]`, `[+1us]`, `[+10us]`.
     - Direction inversion toggle (`Inverted (-1)`) and safety limits (`Min/Max Angle`).
     - Joint collision sweep testing.
-    - Atomic persistence: `💾 Save Calibration` (writes to `calibration.json`) and `↺ Reset Leg` (reverts to `config.yaml` factory defaults).
+    - Atomic persistence: `[SAVE] Save Calibration` (writes to `calibration.json`) and `[RESET] Reset Leg` (reverts to `config.yaml` factory defaults).
 - **Tab 3: Tests & Diagnostics:**
-  - Parametrizable harmonic step cycles (1–10 cycles).
+  - Parametrizable harmonic step cycles (1-10 cycles).
   - Single-joint mechanical collision sweeps (Coxa, Femur, Tibia).
   - System actions: *All in Stance*, *Relax All Servos*.
   - Live Order Monitor with execution latency, duration, and return status logging.
 - **Tab 4: System (Raspberry Pi Telemetry & KPIs):**
-  - Real-time monitoring of SoC temperature (°C), CPU load average & utilization %, RAM memory & daemon RSS, hardware power health and under-voltage detection (`vcgencmd get_throttled`), Wi-Fi RSSI level (dBm) & link quality, root storage disk space, and system uptime.
+  - Real-time monitoring of SoC temperature ( deg C), CPU load average & utilization %, RAM memory & daemon RSS, hardware power health and under-voltage detection (`vcgencmd get_throttled`), Wi-Fi RSSI level (dBm) & link quality, root storage disk space, and system uptime.
 
 ---
 
 ## Global Header Actions
 
-- **⛔ Emergency Stop (E-Stop):** Prominent red header button executing Priority-99 E-Stop: immediately halts motion and de-energizes all 18 servos.
-- **⟳ Restart Server:** Safely relaxes servos, re-executes the daemon via `os.execv`, and polls for automatic reconnection.
-- **⏻ Shutdown:** Interactive confirmation dialog, relaxes servos, and cleanly executes `sudo shutdown -h now` on the Raspberry Pi.
+- **[E-STOP] Emergency Stop (E-Stop):** Prominent red header button executing Priority-99 E-Stop: immediately halts motion and de-energizes all 18 servos.
+- **[RELOAD] Restart Server:** Safely relaxes servos, re-executes the daemon via `os.execv`, and polls for automatic reconnection.
+- **[POWER] Shutdown:** Interactive confirmation dialog, relaxes servos, and cleanly executes `sudo shutdown -h now` on the Raspberry Pi.
 
 ---
 

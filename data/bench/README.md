@@ -1,4 +1,4 @@
-# Lasius – Servo Potentiometer Calibration Data
+# Lasius - Servo Potentiometer Calibration Data
 
 This directory contains experimental calibration data and linear regression models for analog joint position feedback (internal potentiometer wiper voltage) of Reely NR-645 MG BB servomotors.
 
@@ -11,7 +11,7 @@ This directory contains experimental calibration data and linear regression mode
 - **Signal:** Analog DC voltage referenced to servo ground (GND).
 - **Drive Electronics:** PCA9685 Board 1 (`0x40`), channel slot 15 at 50 Hz PWM.
 - **Logic Voltage:** 3.3V (Raspberry Pi 4).
-- **Load Supply:** 5.0–6.0V (Bench power supply).
+- **Load Supply:** 5.0-6.0V (Bench power supply).
 - **Measurement Sweep:** 9 discrete angle steps from $-60.0^\circ$ to $+60.0^\circ$ in $15^\circ$ increments via [`scripts/bench/pot_calibration_wizard.py`](../../scripts/bench/pot_calibration_wizard.py).
 
 ---
@@ -25,9 +25,9 @@ This directory contains experimental calibration data and linear regression mode
 | **Linearity Coefficient ($R^2$)** | **`0.999591`** | -- | 99.96% linearity across the full calibrated span |
 | **Slope / Sensitivity ($m$)** | **`+7.589`** | $\text{mV} / ^\circ$ | Voltage shift per degree of deflection ($0.007589\,\text{V}/^\circ$) |
 | **Conversion Scale ($k$)** | **`131.772`** | $^\circ / \text{V}$ | Angular displacement per volt |
-| **Neutral Voltage ($V_{0^\circ}$)** | **`1.5633`** | $\text{V}$ | Wiper voltage at $0.0^\circ$ (1500 µs center pulse) |
-| **Max Angular Deviation** | **`±1.45`** | $^\circ$ | Maximum angular residual under linear approximation |
-| **Max Voltage Residual** | **`±11.0`** | $\text{mV}$ | Maximum residual voltage deviation |
+| **Neutral Voltage ($V_{0^\circ}$)** | **`1.5633`** | $\text{V}$ | Wiper voltage at $0.0^\circ$ (1500 us center pulse) |
+| **Max Angular Deviation** | **`+/-1.45`** | $^\circ$ | Maximum angular residual under linear approximation |
+| **Max Voltage Residual** | **`+/-11.0`** | $\text{mV}$ | Maximum residual voltage deviation |
 
 ### 2.2 Closed-Loop Conversion Formula
 
@@ -59,7 +59,7 @@ $$V(\theta) = 1.5633\,\text{V} + (\theta \cdot 0.007589\,\text{V}/^\circ)$$
 
 ## 4. File Manifest
 
-- [`../../docs/hardware/closed_loop_plan.md`](../../docs/hardware/closed_loop_plan.md): **Master Specification:** Complete 18-channel wiring plan (TCA9548A Mux + 6× ADS1115), solder jumper `A0` (`0x71`), RC low-pass filters & Python telemetry driver.
+- [`../../docs/hardware/closed_loop_plan.md`](../../docs/hardware/closed_loop_plan.md): **Master Specification:** Complete 18-channel wiring plan (TCA9548A Mux + 6x ADS1115), solder jumper `A0` (`0x71`), RC low-pass filters & Python telemetry driver.
 - [`servo_ch15_pot_calibration.json`](servo_ch15_pot_calibration.json): Machine-readable calibration dataset and regression parameters.
 - [`servo_ch15_pot_calibration.csv`](servo_ch15_pot_calibration.csv): CSV tabular export for spreadsheet and data analysis pipelines.
 - [`README.md`](README.md): Calibration methodology and equations.

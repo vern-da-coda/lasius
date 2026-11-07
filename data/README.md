@@ -8,12 +8,12 @@ Measurement datasets, empirical potentiometer benchmarks, and runtime calibratio
 
 ```text
 data/
-├── bench/                   # Empirical bench measurements & calibration curves
-│   ├── servo_ch15_pot_calibration.csv   # Raw ADC / potentiometer voltage samples
-│   ├── servo_ch15_pot_calibration.json  # Fitted linear/polynomial regression parameters
-│   └── README.md                        # Calibration methodology and bench test instructions
-└── calibration_backups/     # Local timestamped calibration snapshots (.gitignore)
-    └── .gitkeep             # Directory placeholder
+|-- bench/                   # Empirical bench measurements & calibration curves
+|   |-- servo_ch15_pot_calibration.csv   # Raw ADC / potentiometer voltage samples
+|   |-- servo_ch15_pot_calibration.json  # Fitted linear/polynomial regression parameters
+|   \-- README.md                        # Calibration methodology and bench test instructions
+\-- calibration_backups/     # Local timestamped calibration snapshots (.gitignore)
+    \-- .gitkeep             # Directory placeholder
 ```
 
 ---

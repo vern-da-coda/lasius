@@ -10,20 +10,20 @@ Embedded Python locomotion engine, Hardware Abstraction Layer (HAL), 3-DOF inver
 
 ```text
 src/lasius/core/
-├── hardware/        # Hardware Abstraction Layer (HAL)
-│   ├── driver.py    # PWMDriverProtocol, MockPWMDriver, RealPCA9685Driver (smbus2, I2C lock)
-│   └── servo.py     # Servo motor model with software limits, pulse conversion & relax
-├── motion/          # Kinematics & Locomotion
-│   ├── kinematics.py# 3-DOF closed-form insect inverse kinematics
-│   ├── leg.py       # Leg and Joint abstractions with BodySide & LegRow enums
-│   └── gait.py      # 50 Hz Harmonic Cosine gait engine (OmniGait, Tripod, Ripple, Wave)
-├── control/         # Command & Order Pipeline
-│   ├── orders.py    # Order, OrderAction, OrderStatus, OrderPriority, OrderResult
-│   └── dispatcher.py# OrderDispatcher: arbitration, async worker, watchdog, E-Stop
-└── server/          # Transport & Telemetry
-    ├── app.py       # LasiusServer combining HTTP REST and 50 Hz WebSocket server
-    ├── handlers.py  # LasiusRestHandler (/api/v1/...) serving static Vite dist/
-    └── system_stats.py # Raspberry Pi KPIs: CPU, RAM, Temp, Power Health, Wi-Fi
+|-- hardware/        # Hardware Abstraction Layer (HAL)
+|   |-- driver.py    # PWMDriverProtocol, MockPWMDriver, RealPCA9685Driver (smbus2, I2C lock)
+|   \-- servo.py     # Servo motor model with software limits, pulse conversion & relax
+|-- motion/          # Kinematics & Locomotion
+|   |-- kinematics.py# 3-DOF closed-form insect inverse kinematics
+|   |-- leg.py       # Leg and Joint abstractions with BodySide & LegRow enums
+|   \-- gait.py      # 50 Hz Harmonic Cosine gait engine (OmniGait, Tripod, Ripple, Wave)
+|-- control/         # Command & Order Pipeline
+|   |-- orders.py    # Order, OrderAction, OrderStatus, OrderPriority, OrderResult
+|   \-- dispatcher.py# OrderDispatcher: arbitration, async worker, watchdog, E-Stop
+\-- server/          # Transport & Telemetry
+    |-- app.py       # LasiusServer combining HTTP REST and 50 Hz WebSocket server
+    |-- handlers.py  # LasiusRestHandler (/api/v1/...) serving static Vite dist/
+    \-- system_stats.py # Raspberry Pi KPIs: CPU, RAM, Temp, Power Health, Wi-Fi
 ```
 
 ---
