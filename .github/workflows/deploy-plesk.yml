@@ -33,12 +33,19 @@ jobs:
           npm ci
           npm run build
 
-      - name: Deploy to Plesk via FTPS
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
-        with:
-          server: ${{ vars.PLESK_FTP_SERVER || secrets.PLESK_FTP_SERVER }}
-          username: ${{ secrets.PLESK_FTP_USERNAME }}
-          password: ${{ secrets.PLESK_FTP_PASSWORD }}
-          protocol: ftps
-          local-dir: software/lasius-dashboard/dist/
-          server-dir: ${{ vars.PLESK_SERVER_DIR || '/' }}
+      - name: Deploy to Plesk via LFTP (FTPS)
+        env:
+          FTP_SERVER: ${{ vars.PLESK_FTP_SERVER || secrets.PLESK_FTP_SERVER }}
+          FTP_USER: ${{ secrets.PLESK_FTP_USERNAME }}
+          FTP_PASSWORD: ${{ secrets.PLESK_FTP_PASSWORD }}
+          FTP_DIR: ${{ vars.PLESK_SERVER_DIR || '/' }}
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq lftp
+          lftp -e "
+            set ftp:ssl-force true;
+            set ftp:ssl-protect-data true;
+            set ssl:verify-certificate true;
+            set ftp:passive-mode true;
+            mirror -R -a --delete --verbose software/lasius-dashboard/dist/ \"$FTP_DIR\";
+            bye
+          " -u "$FTP_USER","$FTP_PASSWORD" "$FTP_SERVER"
