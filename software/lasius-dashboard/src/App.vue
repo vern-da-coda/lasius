@@ -12,6 +12,7 @@
 import { ref, shallowRef, onMounted, onBeforeUnmount, watch } from 'vue';
 import { useDashboardStore } from './stores/dashboardStore';
 import { LasiusGraphicsEngine } from './engine/lasiusGraphics';
+import { useDemoSimulation } from './demo/useDemoSimulation';
 
 import AppHeader from './components/AppHeader.vue';
 import OrthogonalStrip2D from './components/OrthogonalStrip2D.vue';
@@ -25,6 +26,9 @@ const twin3dRef = ref<InstanceType<typeof DigitalTwin3D> | null>(null);
 
 // Non-reactive Three.js engine held in shallowRef to prevent Vue proxy overhead
 const engineRef = shallowRef<LasiusGraphicsEngine | null>(null);
+
+// Additive standalone simulation adapter (dormant when connected to physical robot)
+useDemoSimulation(store, engineRef);
 
 const showShutdownOverlay = ref(false);
 
