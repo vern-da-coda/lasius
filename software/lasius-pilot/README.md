@@ -32,7 +32,7 @@ Teleoperation client and Linux joystick interface for the **Lasius** 18-DOF Hexa
 ## Detailed Specifications
 
 For complete axis assignments, button code mappings, and controller pairing instructions, refer to:
-- [Google Stadia Controller Specification & Teleoperation Guide](../docs/pilot/gamepad_stadia.md)
+- [Google Stadia Controller Specification & Teleoperation Guide](../../docs/pilot/gamepad_stadia.md)
 
 ---
 

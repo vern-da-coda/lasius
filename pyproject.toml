@@ -16,8 +16,8 @@ dev = [
 
 [tool.uv.workspace]
 members = [
-    "lasius-core",
-    "lasius-pilot",
+    "software/lasius-core",
+    "software/lasius-pilot",
 ]
 
 [tool.uv.sources]
@@ -26,11 +26,11 @@ lasius-pilot = { workspace = true }
 
 [tool.pytest.ini_options]
 pythonpath = [
-    "lasius-core/src",
-    "lasius-pilot/src",
+    "software/lasius-core/src",
+    "software/lasius-pilot/src",
 ]
 testpaths = [
-    "lasius-core/tests",
-    "lasius-pilot/tests",
+    "software/lasius-core/tests",
+    "software/lasius-pilot/tests",
 ]
 

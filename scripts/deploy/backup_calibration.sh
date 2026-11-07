@@ -36,11 +36,11 @@ if curl -s -f "http://${PI_IP}:8000/api/v1/calibration" >/dev/null 2>&1; then
 else
     # Fallback to SCP / rsync of calibration.json directly
     echo "▶ Fetching calibration.json via scp from ${PI_TARGET}..."
-    if scp "${PI_TARGET}:~/lasius/lasius-core/calibration.json" "$BACKUP_FILE" 2>/dev/null; then
+    if scp "${PI_TARGET}:~/lasius/software/lasius-core/calibration.json" "$BACKUP_FILE" 2>/dev/null || scp "${PI_TARGET}:~/lasius/lasius-core/calibration.json" "$BACKUP_FILE" 2>/dev/null; then
         echo "✔ calibration.json copied via scp: ${BACKUP_FILE}"
-    elif [ -f "$ROOT_DIR/lasius-core/calibration.json" ]; then
-        echo "⚠️ Pi unreachable; copying local lasius-core/calibration.json..."
-        cp "$ROOT_DIR/lasius-core/calibration.json" "$BACKUP_FILE"
+    elif [ -f "$ROOT_DIR/software/lasius-core/calibration.json" ]; then
+        echo "⚠️ Pi unreachable; copying local software/lasius-core/calibration.json..."
+        cp "$ROOT_DIR/software/lasius-core/calibration.json" "$BACKUP_FILE"
         echo "✔ Local file backed up: ${BACKUP_FILE}"
     else
         echo "❌ Error: Could not locate calibration.json on Pi or locally."

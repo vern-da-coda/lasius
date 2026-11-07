@@ -25,17 +25,17 @@ Automation, simulation, deployment, testing, and benchmark tools for the **Lasiu
 
 1. **Install Python dependencies with uv or pip:**
    ```bash
-   uv sync
+   uv sync --extra dev
    # or manually:
-   pip install -e lasius-core -e lasius-pilot
+   pip install -e software/lasius-core -e software/lasius-pilot
    ```
 
 2. **Build the Vue 3 Dashboard:**
    ```bash
-   cd lasius-dashboard
+   cd software/lasius-dashboard
    npm install
    npm run build
-   cd ..
+   cd ../..
    ```
 
 3. **Run the Automated Test Suite:**
@@ -61,10 +61,10 @@ Deploy updated code and dashboard assets from your workstation or configure the 
 ./scripts/deploy/deploy_pi.sh 192.168.0.123
 
 # 2. Run directly on the Raspberry Pi with physical PCA9685 hardware
-python3 lasius-core/run_server.py --hardware
+python3 software/lasius-core/run_server.py --hardware
 
 # 3. Configure systemd autostart on the Raspberry Pi
-sudo cp lasius-core/lasius.service /etc/systemd/system/
+sudo cp software/lasius-core/lasius.service /etc/systemd/system/
 sudo systemctl daemon-reload
 sudo systemctl enable --now lasius.service
 

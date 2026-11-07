@@ -39,9 +39,9 @@ echo "Press Ctrl+C to stop the simulation server."
 echo "=========================================================="
 
 # Check if dashboard dist exists; build if missing
-if [ ! -f "$ROOT_DIR/lasius-dashboard/dist/index.html" ]; then
+if [ ! -f "$ROOT_DIR/software/lasius-dashboard/dist/index.html" ]; then
     echo "📦 Building dashboard production assets first..."
-    (cd "$ROOT_DIR/lasius-dashboard" && npm run build)
+    (cd "$ROOT_DIR/software/lasius-dashboard" && npm run build)
 fi
 
-exec $PYTHON_CMD "$ROOT_DIR/lasius-core/run_server.py"
+exec $PYTHON_CMD "$ROOT_DIR/software/lasius-core/run_server.py"

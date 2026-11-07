@@ -15,12 +15,12 @@ This document serves as the centralized task list, roadmap, and backlog for the 
 * **Status:** ✔ **100% operational, modular, and fully simulatable.**
 * **Backend (`lasius-core`):**
   * 4-layer decoupled architecture (HAL, kinematics/motion, OrderDispatcher, HTTP REST & WebSocket server).
-  * 50 Hz harmonic cosine locomotion engine ($C^1$-continuous, $>5\times$ acceleration jerk reduction) with `engage=False` on startup (servos unpowered at boot) and explicit [`locomotion_active`](../lasius-core/src/lasius/core/robot.py) arbitration state machine.
-  * Thread-safe I2C bus (`threading.RLock`) and disabled PCA9685 `_ALLCALL` bit (`0x70`) in [`driver.py`](../lasius-core/src/lasius/core/hardware/driver.py) in preparation for the PCA9548 I2C multiplexer.
-  * Jerk-free cosine trajectory entry/exit interpolation in [`dispatcher.py`](../lasius-core/src/lasius/core/control/dispatcher.py): starting angles calculated from live servo positions or neutral stance height ($z = -80\,\text{mm}$), preventing sudden 0° sag.
+  * 50 Hz harmonic cosine locomotion engine ($C^1$-continuous, $>5\times$ acceleration jerk reduction) with `engage=False` on startup (servos unpowered at boot) and explicit [`locomotion_active`](../software/lasius-core/src/lasius/core/robot.py) arbitration state machine.
+  * Thread-safe I2C bus (`threading.RLock`) and disabled PCA9685 `_ALLCALL` bit (`0x70`) in [`driver.py`](../software/lasius-core/src/lasius/core/hardware/driver.py) in preparation for the PCA9548 I2C multiplexer.
+  * Jerk-free cosine trajectory entry/exit interpolation in [`dispatcher.py`](../software/lasius-core/src/lasius/core/control/dispatcher.py): starting angles calculated from live servo positions or neutral stance height ($z = -80\,\text{mm}$), preventing sudden 0° sag.
 * **Frontend (`lasius-dashboard`):**
   * Modern Vue 3 + TypeScript + Pinia Single-Page Application (SFCs, reusable `JointCard.vue`).
-  * 3D Digital Twin (Three.js WebGL via `shallowRef` & zero-leak buffer updates in [`updateFanGeometry`](../lasius-dashboard/src/engine/lasiusGraphics.ts) / [`disposeObject3D`](../lasius-dashboard/src/engine/lasiusGraphics.ts)): dual-plate sandwich chassis, inward-extended coxa brackets (30 mm), unified PBR material (`#343746`), forward orientation chevron.
+  * 3D Digital Twin (Three.js WebGL via `shallowRef` & zero-leak buffer updates in [`updateFanGeometry`](../software/lasius-dashboard/src/engine/lasiusGraphics.ts) / [`disposeObject3D`](../software/lasius-dashboard/src/engine/lasiusGraphics.ts)): dual-plate sandwich chassis, inward-extended coxa brackets (30 mm), unified PBR material (`#343746`), forward orientation chevron.
   * 2D CAD orthographic projections: straight vectors (`ctx.lineTo`) without curved distortion.
 * **Teleoperation (`lasius-pilot`):**
   * Native support for **Google Stadia Controller** (including auto-profiling `--profile auto | stadia | standard`; see [`docs/pilot/gamepad_stadia.md`](pilot/gamepad_stadia.md)), as well as PS4/PS5, Xbox, and 8BitDo via Linux `/dev/input/js0`.
@@ -31,7 +31,7 @@ This document serves as the centralized task list, roadmap, and backlog for the 
 
 ## 2. Task Backlog & Milestones
 
-Because the entire system can be simulated independently of physical hardware using [`MockPWMDriver`](../lasius-core/src/lasius/core/hardware/driver.py) and the 3D Digital Twin, development proceeds seamlessly:
+Because the entire system can be simulated independently of physical hardware using [`MockPWMDriver`](../software/lasius-core/src/lasius/core/hardware/driver.py) and the 3D Digital Twin, development proceeds seamlessly:
 
 ```mermaid
 flowchart TD

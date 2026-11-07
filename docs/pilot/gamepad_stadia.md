@@ -47,7 +47,7 @@ The Google Stadia Controller operates via **USB-C cable** or wirelessly via **Bl
 
 ## 2. Button & Axis Mapping (`lasius-pilot`)
 
-[`GamepadController`](../../lasius-pilot/src/lasius/pilot/gamepad.py) detects the Google Stadia Controller automatically from `/sys/class/input/js0/device/name` (`active_profile == "stadia"`), or can be launched explicitly with `--profile stadia`.
+[`GamepadController`](../../software/lasius-pilot/src/lasius/pilot/gamepad.py) detects the Google Stadia Controller automatically from `/sys/class/input/js0/device/name` (`active_profile == "stadia"`), or can be launched explicitly with `--profile stadia`.
 
 ### 2.1 Analog Sticks & Directional Pad (D-Pad)
 
@@ -87,20 +87,20 @@ uv run lasius-pilot --host 192.168.0.123 --port 8765 --profile stadia
 ## 3. Monorepo Architecture Highlights
 
 ### 3.1 `lasius-core` (Backend, HAL, Kinematics & Server)
-- **`OmniGait` & `locomotion_active` State Machine ([`run_server.py`](../../lasius-core/run_server.py), [`robot.py`](../../lasius-core/src/lasius/core/robot.py), [`dispatcher.py`](../../lasius-core/src/lasius/core/control/dispatcher.py), [`app.py`](../../lasius-core/src/lasius/core/server/app.py)):**
+- **`OmniGait` & `locomotion_active` State Machine ([`run_server.py`](../../software/lasius-core/run_server.py), [`robot.py`](../../software/lasius-core/src/lasius/core/robot.py), [`dispatcher.py`](../../software/lasius-core/src/lasius/core/control/dispatcher.py), [`app.py`](../../software/lasius-core/src/lasius/core/server/app.py)):**
   - Upon server boot, `OmniGait` initializes in a disengaged state (`engage=False`, zero velocities) and `robot.relax_all()` is executed so no servos draw idle holding current.
   - Locomotion orders (`SET_VELOCITY`, `SET_WALK`, `SET_TURN`, `SET_POSE`, `SET_HEIGHT`, `SET_ROLL`, `SET_PITCH`, `RESET_POSE`, `RESUME`) engage the 50 Hz gait loop (`locomotion_active = True`).
   - Isolated joint and leg orders (`SET_JOINT_ANGLE`, `SET_LEG_JOINTS`, `RELAX_LEG`, `RELAX_ALL`, `EMERGENCY_STOP`) and test sequences (`TEST_LEG`, `STANCE_LEG`, `SWEEP_JOINT`) disengage the full-body gait loop (`locomotion_active = False`) so single-leg calibration is never overwritten.
-- **I2C Thread Safety & Bus Address Protection ([`driver.py`](../../lasius-core/src/lasius/core/hardware/driver.py)):**
+- **I2C Thread Safety & Bus Address Protection ([`driver.py`](../../software/lasius-core/src/lasius/core/hardware/driver.py)):**
   - All `RealPCA9685Driver` instances on the same I2C bus share a `threading.RLock` to eliminate race conditions between the 50 Hz loop and async `OrderDispatcher` worker threads.
   - The `_ALLCALL` bit (`0x70`) in the PCA9685 `MODE1` register is explicitly disabled to avoid address collisions with the **Adafruit PCA9548 I2C multiplexer (`0x70`)**.
-- **Geometry Configuration ([`config.py`](../../lasius-core/src/lasius/core/config.py), [`config.yaml`](../../lasius-core/src/lasius/core/config.yaml)):**
+- **Geometry Configuration ([`config.py`](../../software/lasius-core/src/lasius/core/config.py), [`config.yaml`](../../software/lasius-core/src/lasius/core/config.yaml)):**
   - Parameterized `default_x: 160.0` and `ground_clearance: 80.0` defined centrally in `config.geometry.default_stance`.
 
 ### 3.2 `lasius-dashboard` (Vue 3 + TypeScript + Three.js Digital Twin)
-- **Key-Up Stop Detection ([`App.vue`](../../lasius-dashboard/src/App.vue)):**
+- **Key-Up Stop Detection ([`App.vue`](../../software/lasius-dashboard/src/App.vue)):**
   - `handleKeyUp` triggers `store.dpadStop()` immediately when movement hotkeys are released; keyboard auto-repeat events (`e.repeat`) are filtered out.
-- **50 Hz WebGL Memory Optimization ([`lasiusGraphics.ts`](../../lasius-dashboard/src/engine/lasiusGraphics.ts)):**
+- **50 Hz WebGL Memory Optimization ([`lasiusGraphics.ts`](../../software/lasius-dashboard/src/engine/lasiusGraphics.ts)):**
   - `updateFanGeometry()` mutates existing `Float32BufferAttribute` arrays in-place (`needsUpdate = true`), eliminating per-frame GPU buffer reallocation.
   - `disposeObject3D()` recursively deallocates WebGL geometries and materials during scene rebuilds.
 

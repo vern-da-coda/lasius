@@ -126,6 +126,7 @@ cython_debug/
 
 # IDE-specific
 .idea/
+/software/lasius-dashboard/vendor/
 /lasius-dashboard/vendor/
 
 # Robot Calibration Overlay (Option C - specific per physical robot hardware)

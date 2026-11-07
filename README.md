@@ -16,9 +16,10 @@ The repository is organized into focused subdomains:
 
 ```text
 lasius/
-├── lasius-core/         # Embedded Python locomotion engine, HAL & REST/WebSocket daemon
-├── lasius-dashboard/    # Vue 3 + TypeScript + Three.js 3D Digital Twin & browser GUI
-├── lasius-pilot/        # Gamepad teleoperation & Linux joystick client
+├── software/            # Complete robot software stack & monorepo workspace
+│   ├── lasius-core/     # Embedded Python locomotion engine, HAL & REST/WebSocket daemon
+│   ├── lasius-dashboard/# Vue 3 + TypeScript + Three.js 3D Digital Twin & browser GUI
+│   └── lasius-pilot/    # Gamepad teleoperation & Linux joystick client
 ├── hardware/            # Physical robot engineering
 │   ├── mechanics/       # Parametric CAD models, drawings, exports & fabrication
 │   └── electronics/     # Sensor bus topology, harnesses & WireViz diagrams
@@ -33,7 +34,7 @@ lasius/
 
 Direct links to all distributed technical documentation, specifications, hardware plans, and subsystem guides:
 
-### 📖 System Documentation & Specifications (`docs/`)
+### System Documentation & Specifications (`docs/`)
 - [**`docs/README.md`**](docs/README.md) – Documentation overview and navigation guide
 - [**`docs/roadmap.md`**](docs/roadmap.md) – Project roadmap, milestone progress (M1–M6), and backlog
 - [**`docs/hardware/decisions.md`**](docs/hardware/decisions.md) – Hardware decisions, power architecture (LiPo/UBEC), sensor bus & 3D print specs
@@ -41,17 +42,18 @@ Direct links to all distributed technical documentation, specifications, hardwar
 - [**`docs/hardware/wiring_plan.md`**](docs/hardware/wiring_plan.md) – Raspberry Pi to PCA9685 I2C daisy chain, logic levels & common ground scheme
 - [**`docs/pilot/gamepad_stadia.md`**](docs/pilot/gamepad_stadia.md) – Google Stadia Bluetooth/USB controller profile, button mappings & teleoperation
 
-### 💻 Software Subsystems
-- [**`lasius-core/README.md`**](lasius-core/README.md) – Locomotion engine, 50 Hz harmonic gait, 3-DOF IK, HAL, and REST/WebSocket API
-- [**`lasius-dashboard/README.md`**](lasius-dashboard/README.md) – Vue 3 + TypeScript 3D Digital Twin (Three.js WebGL), 2D projections & control GUI
-- [**`lasius-pilot/README.md`**](lasius-pilot/README.md) – Direct Linux joystick driver (`/dev/input/js0`), radial deadzones & teleoperation streaming
+### Software Subsystems (`software/`)
+- [**`software/README.md`**](software/README.md) – Software architecture overview and package guide
+- [**`software/lasius-core/README.md`**](software/lasius-core/README.md) – Locomotion engine, 50 Hz harmonic gait, 3-DOF IK, HAL, and REST/WebSocket API
+- [**`software/lasius-dashboard/README.md`**](software/lasius-dashboard/README.md) – Vue 3 + TypeScript 3D Digital Twin (Three.js WebGL), 2D projections & control GUI
+- [**`software/lasius-pilot/README.md`**](software/lasius-pilot/README.md) – Direct Linux joystick driver (`/dev/input/js0`), radial deadzones & teleoperation streaming
 
-### 🛠️ Physical Hardware & Engineering (`hardware/`)
+### Physical Hardware & Engineering (`hardware/`)
 - [**`hardware/README.md`**](hardware/README.md) – Hardware overview, dual-plate chassis dimensions, limb lengths & power distribution
 - [**`hardware/mechanics/README.md`**](hardware/mechanics/README.md) – FreeCAD parametric models, fabrication exports (STEP, STL, DXF) & 1:1 SVG drill templates
 - [**`hardware/electronics/wiring/README.md`**](hardware/electronics/wiring/README.md) – WireViz cable harnesses (`.yml`), visual harness diagrams & automated BOMs
 
-### 📊 Data, Calibration & Tooling (`data/`, `scripts/`)
+### Data, Calibration & Tooling (`data/`, `scripts/`)
 - [**`data/README.md`**](data/README.md) – Runtime data index, calibration snapshots & benchmark measurements
 - [**`data/bench/README.md`**](data/bench/README.md) – Potentiometer sweep calibration data, linear regression parameters & validation results
 - [**`scripts/README.md`**](scripts/README.md) – Automation scripts for local simulation (`dev/dev_sim.sh`), testing, and Pi deployment (`deploy/deploy_pi.sh`)
@@ -65,11 +67,11 @@ Direct links to all distributed technical documentation, specifications, hardwar
 
 ```bash
 # Set up Python environment and packages in editable mode:
-uv sync
-# or: pip install -e lasius-core -e lasius-pilot
+uv sync --extra dev
+# or: pip install -e software/lasius-core -e software/lasius-pilot
 
 # Install frontend dependencies and build dashboard:
-cd lasius-dashboard && npm install && npm run build && cd ..
+cd software/lasius-dashboard && npm install && npm run build && cd ../..
 ```
 
 ### 2. Run Test Suite

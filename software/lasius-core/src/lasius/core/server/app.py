@@ -94,25 +94,43 @@ class LasiusServer:
                     candidates.append(dash_dir)
 
             # 2. Search from current working directory
-            cwd_dash = Path.cwd() / "lasius-dashboard"
+            cwd_dash = Path.cwd() / "software" / "lasius-dashboard"
             if (cwd_dash / "dist").is_dir():
                 candidates.append(cwd_dash / "dist")
             if cwd_dash.is_dir():
                 candidates.append(cwd_dash)
 
+            cwd_dash_legacy = Path.cwd() / "lasius-dashboard"
+            if (cwd_dash_legacy / "dist").is_dir():
+                candidates.append(cwd_dash_legacy / "dist")
+            if cwd_dash_legacy.is_dir():
+                candidates.append(cwd_dash_legacy)
+
             # 3. Standard user home locations for lasius
-            home_dash = Path.home() / "lasius" / "lasius-dashboard"
+            home_dash = Path.home() / "lasius" / "software" / "lasius-dashboard"
             if (home_dash / "dist").is_dir():
                 candidates.append(home_dash / "dist")
             if home_dash.is_dir():
                 candidates.append(home_dash)
 
+            home_dash_legacy = Path.home() / "lasius" / "lasius-dashboard"
+            if (home_dash_legacy / "dist").is_dir():
+                candidates.append(home_dash_legacy / "dist")
+            if home_dash_legacy.is_dir():
+                candidates.append(home_dash_legacy)
+
             # 4. Standard robot daemon path on Raspberry Pi
-            pi_dash = Path("/home/hexapod/lasius/lasius-dashboard")
+            pi_dash = Path("/home/hexapod/lasius/software/lasius-dashboard")
             if (pi_dash / "dist").is_dir():
                 candidates.append(pi_dash / "dist")
             if pi_dash.is_dir():
                 candidates.append(pi_dash)
+
+            pi_dash_legacy = Path("/home/hexapod/lasius/lasius-dashboard")
+            if (pi_dash_legacy / "dist").is_dir():
+                candidates.append(pi_dash_legacy / "dist")
+            if pi_dash_legacy.is_dir():
+                candidates.append(pi_dash_legacy)
 
             self.dashboard_dir = next((c for c in candidates if c.is_dir()), None)
 

@@ -36,14 +36,14 @@ echo "✔ Network connectivity confirmed."
 
 # 2. Build Dashboard (Vue 3 + Vite)
 echo "📦 Building dashboard production bundle (Vite + TypeScript)..."
-(cd "$ROOT_DIR/lasius-dashboard" && npx vue-tsc --noEmit && npm run build)
-echo "✔ Dashboard bundle compiled in lasius-dashboard/dist/."
+(cd "$ROOT_DIR/software/lasius-dashboard" && npx vue-tsc --noEmit && npm run build)
+echo "✔ Dashboard bundle compiled in software/lasius-dashboard/dist/."
 
 # 3. Synchronize Dashboard dist
 echo "🔄 Synchronizing dashboard dist to Pi..."
 rsync -avz --delete \
-    "$ROOT_DIR/lasius-dashboard/dist/" \
-    "${PI_TARGET}:${REMOTE_DIR}/lasius-dashboard/dist/"
+    "$ROOT_DIR/software/lasius-dashboard/dist/" \
+    "${PI_TARGET}:${REMOTE_DIR}/software/lasius-dashboard/dist/"
 
 # 4. Synchronize lasius-core
 echo "🔄 Synchronizing lasius-core to Pi..."
@@ -53,8 +53,8 @@ rsync -avz \
     --exclude '.pytest_cache' \
     --exclude '.venv' \
     --exclude 'calibration.json' \
-    "$ROOT_DIR/lasius-core/" \
-    "${PI_TARGET}:${REMOTE_DIR}/lasius-core/"
+    "$ROOT_DIR/software/lasius-core/" \
+    "${PI_TARGET}:${REMOTE_DIR}/software/lasius-core/"
 
 # 5. Synchronize lasius-pilot
 echo "🔄 Synchronizing lasius-pilot to Pi..."
@@ -63,8 +63,8 @@ rsync -avz \
     --exclude '*.pyc' \
     --exclude '.pytest_cache' \
     --exclude '.venv' \
-    "$ROOT_DIR/lasius-pilot/" \
-    "${PI_TARGET}:${REMOTE_DIR}/lasius-pilot/"
+    "$ROOT_DIR/software/lasius-pilot/" \
+    "${PI_TARGET}:${REMOTE_DIR}/software/lasius-pilot/"
 
 # 6. Trigger graceful daemon restart on Pi
 echo "🔄 Triggering graceful server restart on Pi..."
