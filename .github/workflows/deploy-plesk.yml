@@ -13,7 +13,9 @@ jobs:
   deploy-plesk:
     name: Build & Deploy to Plesk Webserver
     runs-on: ubuntu-latest
-    environment: plesk
+    environment:
+      name: lasius.kaemmereit.de
+      url: https://lasius.kaemmereit.de
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
