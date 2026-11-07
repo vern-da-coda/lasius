@@ -139,6 +139,7 @@ gemini.md
 
 # Hardware & CAD files
 hardware/mechanics/scans/*
+!/hardware/mechanics/scans/README.md
 *.FCBak
 *.fcbak
 

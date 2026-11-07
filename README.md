@@ -74,7 +74,6 @@ Direct links to all distributed technical documentation, specifications, hardwar
 - [**`data/README.md`**](data/README.md) – Runtime data index, calibration snapshots & benchmark measurements
 - [**`data/bench/README.md`**](data/bench/README.md) – Potentiometer sweep calibration data, linear regression parameters & validation results
 - [**`scripts/README.md`**](scripts/README.md) – Automation scripts for local simulation (`dev/dev_sim.sh`), testing, and Pi deployment (`deploy/deploy_pi.sh`)
-- [**`GEMINI.md`**](GEMINI.md) – AI developer briefing, coding standards, architecture summary & system configuration
 
 ---
 
