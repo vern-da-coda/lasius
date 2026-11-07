@@ -48,8 +48,8 @@ coverage.xml
 *.pot
 
 # Local calibration backups
-backups/*.json
-!backups/.gitkeep
+data/calibration_backups/*.json
+!data/calibration_backups/.gitkeep
 
 # Node / Frontend
 node_modules/
@@ -132,16 +132,15 @@ cython_debug/
 **/calibration.json
 *.tmp
 
-# Local AI / Agent briefing & hardware decision files
+# Local AI / Agent briefing files
 GEMINI.md
 gemini.md
-HARDWARE_DECISIONS.md
-GAMEPAD_STADIA.md
-mechanics/scans/*
+
+# Hardware & CAD files
+hardware/mechanics/scans/*
 *.FCBak
+*.fcbak
 
-
-!/mechanics/export/step/leg_assembly.step
-!/mechanics/export/stl/body_assembly.stl
-
-!/mechanics/export/stl/leg_assembly.stl
+!/hardware/mechanics/export/step/leg_assembly.step
+!/hardware/mechanics/export/stl/body_assembly.stl
+!/hardware/mechanics/export/stl/leg_assembly.stl

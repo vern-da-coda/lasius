@@ -2,12 +2,12 @@
 Modular control software, 3D Digital Twin, REST/WebSocket control API, and teleoperation system for an 18-DOF, 6-legged (hexapod) biomimetic walking robot.
 
 <p align="center">
-  <img src="mechanics/drawings/body_assembly.png" alt="Lasius Hexapod Full Body Assembly" width="750">
+  <img src="hardware/mechanics/drawings/renders/body_assembly.png" alt="Lasius Hexapod Full Body Assembly" width="750">
 </p>
 
 ## Repository Structure (Monorepo)
 
-The repository is organized into three decoupled modules using native PEP 420 namespace packages (`lasius.core` and `lasius.pilot`):
+The repository is organized into four main functional pillars:
 
 ```text
 lasius
@@ -41,36 +41,29 @@ lasius
 │   ├── tests/                       # Controller unit tests
 │   ├── cli.py                       # Bluetooth gamepad CLI launcher
 │   └── pyproject.toml               # Pilot package dependencies & CLI entry point (lasius-pilot)
-├── scripts/                         # Development, simulation, deployment & backup helper tools
-│   ├── banner.txt                   # Shared ASCII CLI header banner
-│   ├── dev_sim.sh                   # Launch local mock simulation server & dashboard
-│   ├── deploy_pi.sh                 # Compile and deploy to Raspberry Pi with graceful reload
-│   ├── run_tests.sh                 # Execute test suite across core and pilot
-│   ├── backup_calibration.sh        # Backup calibration.json snapshot with timestamp
-│   └── status_pi.sh                 # Query live Pi telemetry, KPIs and robot status
-├── mechanics/                       # Mechanical engineering & precision digital fabrication
-│   ├── models/                      # Parametric CAD models (.FCStd, .scad, .csg, hardware/)
-│   │   ├── body_bottom.FCStd        # 2 mm chassis bottom plate (pure analytical G1 geometry)
-│   │   ├── body_top.FCStd           # 2 mm chassis top plate
-│   │   ├── coxa_bracket.FCStd       # Strengthened coxa bracket with 3 mm servo stabilization cheeks
-│   │   ├── femur_plate.FCStd        # Dual femur plate servo cage with countersunk bearings
-│   │   ├── tibia.FCStd              # Lightweight high-rigidity tibia limb (analytical curves)
-│   │   ├── tibia_servo_foot.FCStd   # Integrated servo foot mount & rounded ground tip
-│   │   ├── spacer_14x50.FCStd       # Ø 14 x 51.3 mm chassis standoff pillars
-│   │   ├── leg_assembly.FCStd       # 22-part full leg kinematic assembly with hardware
-│   │   ├── body_assembly.FCStd      # 142-part complete robot master assembly
-│   │   └── hardware/                # Parametric M4 nuts, shims, screws & bearings
-│   ├── export/                      # Production manufacturing files
-│   │   ├── step/                    # ISO 10303 STEP CAD models for CNC milling / precision machining
-│   │   ├── stl/                     # High-resolution meshes for 3D printing (SLA / SLS / FDM)
-│   │   └── dxf/                     # 2D CAD profiles for CNC laser / waterjet cutting
-│   ├── drawings/                    # 1:1 Scale technical drawings & printable drill templates (.svg)
-│   ├── scripts/                     # Python FreeCAD generators & scan contour calibration tools
-│   └── scans/                       # 1200 DPI flatbed & 3D reference scans for reverse-engineering
-├── backups/                         # Local calibration backup snapshots (.gitignore)
-├── GAMEPAD_STADIA.md                # Google Stadia Controller setup, button map & code changelog
-├── TODOS.md                         # Project task list, backlog & feature ideas
-└── pyproject.toml                   # Top-level workspace & pytest configuration
+├── hardware/                        # Physical robot engineering (Mechanics & Electronics)
+│   ├── mechanics/                   # Mechanical CAD & digital fabrication
+│   │   ├── models/                  # Parametric FreeCAD models (.FCStd, hardware/, legacy_scad/)
+│   │   ├── export/                  # Digital fabrication exports (step/, stl/, dxf/)
+│   │   ├── drawings/                # Renders (.png) & 1:1 fabrication templates (.svg)
+│   │   ├── scripts/                 # FreeCAD model generator & scan calibration scripts
+│   │   └── scans/                   # 1200 DPI reference flatbed scans
+│   └── electronics/                 # Electrical wiring & harness planning
+│       └── wiring/                  # WireViz definitions (.yml), renders (.svg, .png), & BOMs (.tsv)
+├── docs/                            # Central project specifications & architectural guides
+│   ├── hardware/                    # Hardware decisions & closed-loop feedback wiring plan
+│   ├── pilot/                       # Gamepad controller mapping (Google Stadia)
+│   └── roadmap.md                   # Project backlog, task list & feature roadmap
+├── data/                            # Runtime telemetry & calibration snapshots
+│   ├── bench/                       # Experimental potentiometer benchmark measurements
+│   └── calibration_backups/         # Local timestamped calibration snapshots (.gitignore)
+├── scripts/                         # Development, simulation, deployment & bench helper tools
+│   ├── dev/                         # Local development & testing (dev_sim.sh, run_tests.sh)
+│   ├── deploy/                      # Raspberry Pi deployment & status (deploy_pi.sh, status_pi.sh)
+│   ├── bench/                       # Potentiometer calibration wizard & servo sweeps
+│   └── banner.txt                   # Shared ASCII CLI header banner
+├── pyproject.toml                   # Top-level workspace & dev dependencies (pytest, wireviz)
+└── uv.lock                          # Pinned dependency lockfile
 ```
 
 ---
@@ -102,41 +95,41 @@ All physical dimensions and servo configurations are maintained in [`lasius-core
 
 ---
 
-## Mechanical CAD & Digital Fabrication (`mechanics/`)
+## Mechanical CAD & Digital Fabrication (`hardware/mechanics/`)
 
 All robot components are engineered as parametric CAD models in FreeCAD and reverse-engineered from calibrated 1200 DPI flatbed scans and original templates:
 
-### 1. Parametric 3D CAD Models (`mechanics/models/`)
-* **Chassis Bottom Plate ([`body_bottom.FCStd`](mechanics/models/body_bottom.FCStd)):**
+### 1. Parametric 3D CAD Models (`hardware/mechanics/models/`)
+* **Chassis Bottom Plate ([`body_bottom.FCStd`](hardware/mechanics/models/body_bottom.FCStd)):**
   * **Material & Thickness:** 2.0 mm solid plate (CFRP carbon fiber / aluminum).
   * **Analytic Geometry:** Pure analytic OpenCASCADE B-Rep geometry (44 smooth faces, 126 edges; zero faceted polygon segments).
   * **Contour:** Exact $G^1$-continuous concave fillets ($R_f = 4.5\text{ mm}$) transitioning into all leg mounts towards the nose and tail. Fully protruding circular pivot ears ($R = 13.5\text{ mm}$), $35.5^\circ$ flank line to the tapered rear with $R = 7.0\text{ mm}$ corner fillet.
   * **Bores & Cutouts:** 6× coxa counter-bearing holes ($\varnothing 8.0\text{ mm}$), 8× M3 screw mounting holes ($\varnothing 3.0\text{ mm}$), and a central electronics cutout window ($50.0 \times 160.0\text{ mm}$).
-* **Chassis Top Plate ([`body_top.FCStd`](mechanics/models/body_top.FCStd)):**
+* **Chassis Top Plate ([`body_top.FCStd`](hardware/mechanics/models/body_top.FCStd)):**
   * Upper chassis plate (2.0 mm solid), identical outer contour and mounting hole pattern as `body_bottom`.
-* **Coxa Bracket ([`coxa_bracket.FCStd`](mechanics/models/coxa_bracket.FCStd)):**
+* **Coxa Bracket ([`coxa_bracket.FCStd`](hardware/mechanics/models/coxa_bracket.FCStd)):**
   * **Structural Reinforcement:** Dual $3.0\text{ mm}$ lateral reinforcement cheeks fully enclose the Body-to-Coxa servo casing, eliminating shear failure at the pivot axis.
   * **Cable Outlet:** Fully cleared and filleted wiring channel for the Coxa servo ($R = 2.0\text{ mm}$ outer corner radius).
   * **Counter-Bearing:** Coaxial pivot bore aligned at $Y = 15.25\text{ mm}$ ($Z_{\text{world}} = 0.00\text{ mm}$).
-* **Femur Plate Cage ([`femur_plate.FCStd`](mechanics/models/femur_plate.FCStd)):**
+* **Femur Plate Cage ([`femur_plate.FCStd`](hardware/mechanics/models/femur_plate.FCStd)):**
   * Dual-plate beam cage ($L = 100.0\text{ mm}$ inter-axis spacing, $W = 31.6\text{ mm}$) with flush-mounted ball bearings ($\varnothing 8 \times 3\text{ mm}$), standoff spacers ($51.3\text{ mm}$), and a $1.0\text{ mm}$ servo clearance gap with flush M4 fasteners.
-* **Tibia Limb ([`tibia.FCStd`](mechanics/models/tibia.FCStd)):**
+* **Tibia Limb ([`tibia.FCStd`](hardware/mechanics/models/tibia.FCStd)):**
   * High-rigidity, weight-optimized lower limb ($L = 130.0\text{ mm}$, $X = -129.15 \dots +41.15\text{ mm}$).
   * Pure analytic circular arcs and B-splines (26 faces, 72 edges) replacing the previous 229 polygon steps while preserving the exact profile.
-* **Tibia Servo Foot ([`tibia_servo_foot.FCStd`](mechanics/models/tibia_servo_foot.FCStd)):**
+* **Tibia Servo Foot ([`tibia_servo_foot.FCStd`](hardware/mechanics/models/tibia_servo_foot.FCStd)):**
   * Integrated servo mount and rounded foot tip with internal wire routing.
-* **Chassis Standoff Pillars ([`spacer_14x50.FCStd`](mechanics/models/spacer_14x50.FCStd)):**
+* **Chassis Standoff Pillars ([`spacer_14x50.FCStd`](hardware/mechanics/models/spacer_14x50.FCStd)):**
   * $\varnothing 14.0\text{ mm}$ standoff pillars ($L = 51.3\text{ mm}$) with M3 threaded bores spanning the internal gap between the chassis plates.
-* **Complete Modular Leg Assembly ([`leg_assembly.FCStd`](mechanics/models/leg_assembly.FCStd)):**
+* **Complete Modular Leg Assembly ([`leg_assembly.FCStd`](hardware/mechanics/models/leg_assembly.FCStd)):**
   * Fully linked 22-part kinematic subassembly consisting of 3 servos (NR-645), brackets, bearings, M4 countersunk screws, shims, lock nuts, and standoffs.
-* **Complete Full-Body Assembly ([`body_assembly.FCStd`](mechanics/models/body_assembly.FCStd)):**
+* **Complete Full-Body Assembly ([`body_assembly.FCStd`](hardware/mechanics/models/body_assembly.FCStd)):**
   * Master full-robot assembly (142 components) linking the bottom plate (`body_bottom`), top plate (`body_top`), 8× standoff pillars (`spacer_14x50`, $\varnothing 14 \times 51.3\text{ mm}$) at all M3 mounting holes, and 6× modular leg assemblies (`leg_assembly`). Right-side legs (FR, MR, RR) are mirrored across the sagittal plane ($Y = 0$) so that all 6 servo horn outputs consistently face forward towards the front of the robot ($-X$), mounted with exact $0.00000\text{ mm}$ coxa pivot axis alignment.
 
-### 2. Digital Fabrication & Exchange Formats (`mechanics/export/`)
+### 2. Digital Fabrication & Exchange Formats (`hardware/mechanics/export/`)
 * **STEP (`export/step/`):** ISO 10303 CAD exchange format for CNC milling, waterjet cutting, and CAD assembly imports.
 * **STL (`export/stl/`):** High-resolution triangulated meshes for 3D printing (SLA, SLS, FDM).
 * **DXF (`export/dxf/`):** 2D vector profiles for laser cutting and 2D CNC sheet processing (CFRP / Aluminum).
-* **1:1 Technical Drawings & Templates (`drawings/`):** True-to-scale SVG drill and fabrication templates.
+* **1:1 Technical Drawings & Templates (`drawings/templates/`):** True-to-scale SVG drill and fabrication templates.
 
 ---
 
@@ -178,7 +171,7 @@ All robot components are engineered as parametric CAD models in FreeCAD and reve
   - Global `⛔ E-Stop` button: Immediately halts motion and relaxes all 18 servos.
   - `⟳ Restart Server` button: Safely relaxes PWM and re-executes the server daemon in the background with automated reconnection polling.
   - `⏻ Shutdown` button: Safely relaxes all 18 servos, stops the daemon, and powers off the Raspberry Pi with interactive confirmation and status overlay.
-- **Gamepad Teleoperation (`lasius-pilot`, see [`GAMEPAD_STADIA.md`](GAMEPAD_STADIA.md)):**
+- **Gamepad Teleoperation (`lasius-pilot`, see [`docs/pilot/gamepad_stadia.md`](docs/pilot/gamepad_stadia.md)):**
   - High-performance, zero-external-dependency Linux joystick reader (`/dev/input/js0`) with configurable radial deadzones, atomic `set_velocity` WebSocket streaming, and first-class **Google Stadia Controller** support (`Axis 2` turn mapping + action buttons for E-Stop, gait switching, speed, body height, and pose reset).
 
 ---
@@ -219,10 +212,12 @@ Pre-configured shell scripts in [`scripts/`](scripts/) automate common developme
 | Script | Description | Usage |
 | :--- | :--- | :--- |
 | [`scripts/dev_sim.sh`](scripts/dev_sim.sh) | Launches the local simulation server (Mock HAL) on port 8000 (HTTP) & 8765 (WS). | `./scripts/dev_sim.sh` |
-| [`scripts/run_tests.sh`](scripts/run_tests.sh) | Runs all 59 unit & integration tests across `lasius-core` (55) and `lasius-pilot` (4). | `./scripts/run_tests.sh` |
-| [`scripts/deploy_pi.sh`](scripts/deploy_pi.sh) | Builds the Vue 3 dashboard (Vite), syncs `core`, `pilot`, & `dist/` to the Pi via `rsync`, and gracefully reloads the daemon. | `./scripts/deploy_pi.sh [PI_IP]` |
-| [`scripts/status_pi.sh`](scripts/status_pi.sh) | Queries live telemetry, Raspberry Pi KPIs, SoC temperature, power health, and gait vectors. | `./scripts/status_pi.sh [PI_IP]` |
-| [`scripts/backup_calibration.sh`](scripts/backup_calibration.sh) | Downloads and validates `calibration.json` with a timestamp into [`backups/`](backups/). | `./scripts/backup_calibration.sh [PI_IP]` |
+| [`scripts/dev/dev_sim.sh`](scripts/dev/dev_sim.sh) | Launches the local simulation server (Mock HAL) on port 8000 (HTTP) & 8765 (WS). | `./scripts/dev/dev_sim.sh` |
+| [`scripts/dev/run_tests.sh`](scripts/dev/run_tests.sh) | Runs all unit & integration tests across `lasius-core` and `lasius-pilot`. | `./scripts/dev/run_tests.sh` |
+| [`scripts/deploy/deploy_pi.sh`](scripts/deploy/deploy_pi.sh) | Builds the Vue 3 dashboard (Vite), syncs `core`, `pilot`, & `dist/` to the Pi via `rsync`, and gracefully reloads the daemon. | `./scripts/deploy/deploy_pi.sh [PI_IP]` |
+| [`scripts/deploy/status_pi.sh`](scripts/deploy/status_pi.sh) | Queries live telemetry, Raspberry Pi KPIs, SoC temperature, power health, and gait vectors. | `./scripts/deploy/status_pi.sh [PI_IP]` |
+| [`scripts/deploy/backup_calibration.sh`](scripts/deploy/backup_calibration.sh) | Downloads and validates `calibration.json` with a timestamp into [`data/calibration_backups/`](data/calibration_backups/). | `./scripts/deploy/backup_calibration.sh [PI_IP]` |
+| [`scripts/bench/pot_calibration_wizard.py`](scripts/bench/pot_calibration_wizard.py) | Interactive CLI wizard for closed-loop servo potentiometer calibration & regression. | `uv run scripts/bench/pot_calibration_wizard.py` |
 | [`scripts/banner.txt`](scripts/banner.txt) | Centralized `Lasius HexaPod` ASCII CLI header banner displayed by all shell scripts. | `cat scripts/banner.txt` |
 
 ### 1. Installation & Local Simulation (Workstation without Robot)
@@ -240,15 +235,15 @@ Pre-configured shell scripts in [`scripts/`](scripts/) automate common developme
    npm run build
    cd ..
    ```
-3. **Run the Automated Test Suite (59 tests: 55 in `lasius-core`, 4 in `lasius-pilot`):**
+3. **Run the Automated Test Suite:**
    ```bash
-   ./scripts/run_tests.sh
+   ./scripts/dev/run_tests.sh
    # or directly via uv:
    uv run pytest
    ```
 4. **Launch the Simulation Daemon & 3D Digital Twin:**
    ```bash
-   ./scripts/dev_sim.sh
+   ./scripts/dev/dev_sim.sh
    # or directly:
    python3 lasius-core/run_server.py
    ```
@@ -260,7 +255,7 @@ Pre-configured shell scripts in [`scripts/`](scripts/) automate common developme
 Deploy code and pre-built dashboard assets from your workstation or configure `systemd` on the Raspberry Pi:
 ```bash
 # Deploy from workstation (pings Pi, builds dashboard, syncs files via rsync, restarts service)
-./scripts/deploy_pi.sh 192.168.0.123
+./scripts/deploy/deploy_pi.sh 192.168.0.123
 
 # Run directly on the Raspberry Pi with physical PCA9685 hardware
 python3 lasius-core/run_server.py --hardware
@@ -279,11 +274,11 @@ journalctl -u lasius -f
 
 - **Query Live Robot Status & Raspberry Pi System Health:**
   ```bash
-  ./scripts/status_pi.sh 192.168.0.123
+  ./scripts/deploy/status_pi.sh 192.168.0.123
   ```
-- **Backup Servo Calibration (`backups/calibration_YYYYMMDD_HHMMSS.json`):**
+- **Backup Servo Calibration (`data/calibration_backups/calibration_YYYYMMDD_HHMMSS.json`):**
   ```bash
-  ./scripts/backup_calibration.sh 192.168.0.123
+  ./scripts/deploy/backup_calibration.sh 192.168.0.123
   ```
 - **Emergency Stop (E-Stop) & Relax All 18 Servos via CLI:**
   ```bash
