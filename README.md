@@ -8,20 +8,19 @@
 ---
 
 <p align="left">
-  <a href="https://lasius.kaemmereit.de/"><img src="https://img.shields.io/badge/Live%20Demo-lasius.kaemmereit.de-38bdf8.svg?logo=googlechrome&logoColor=white" alt="Live Demo"></a>
-  <a href="https://github.com/vern-da-coda/lasius/actions/workflows/ci.yml"><img src="https://github.com/vern-da-coda/lasius/actions/workflows/ci.yml/badge.svg" alt="Continuous Integration"></a>
-  <a href="https://github.com/vern-da-coda/lasius/actions/workflows/deploy-plesk.yml"><img src="https://github.com/vern-da-coda/lasius/actions/workflows/deploy-plesk.yml/badge.svg" alt="Deploy to Plesk"></a>
-  <a href="https://github.com/vern-da-coda/lasius/commits/main"><img src="https://img.shields.io/github/last-commit/vern-da-coda/lasius?logo=github&color=blue" alt="Last Commit"></a>
-  <a href="https://github.com/vern-da-coda/lasius/stargazers"><img src="https://img.shields.io/github/stars/vern-da-coda/lasius?style=flat&logo=github" alt="GitHub Stars"></a>
-</p>
-<p align="left">
   <a href="software/README.md"><img src="https://img.shields.io/badge/Python-3.11+-3776AB.svg?logo=python&logoColor=white" alt="Python 3.11+"></a>
   <a href="software/lasius-dashboard/README.md"><img src="https://img.shields.io/badge/Vue%203-TypeScript-4FC08D.svg?logo=vuedotjs&logoColor=white" alt="Vue 3 + TypeScript"></a>
   <a href="software/lasius-dashboard/README.md"><img src="https://img.shields.io/badge/3D%20Twin-Three.js%20WebGL-black.svg?logo=threedotjs&logoColor=white" alt="Three.js Digital Twin"></a>
   <a href="software/lasius-core/README.md"><img src="https://img.shields.io/badge/Locomotion-50Hz%20Harmonic%20Cosine-0284c7.svg" alt="50 Hz Harmonic Gait"></a>
-  <a href="scripts/README.md"><img src="https://img.shields.io/badge/Tests-61%20Passed-success.svg" alt="61 Tests Passed"></a>
-  <a href="software/lasius-core/README.md"><img src="https://img.shields.io/badge/API-OpenAPI%203.1-6BA539.svg?logo=openapiinitiative&logoColor=white" alt="OpenAPI 3.1"></a>
   <a href="hardware/README.md"><img src="https://img.shields.io/badge/Hardware-18%20DOF%20%7C%20CFRP%20Sandwich-orange.svg" alt="18 DOF Robot Hardware"></a>
+  <a href="software/lasius-core/README.md"><img src="https://img.shields.io/badge/API-OpenAPI%203.1-6BA539.svg?logo=openapiinitiative&logoColor=white" alt="OpenAPI 3.1"></a>
+  <a href="software/lasius-core/README.md"><img src="https://img.shields.io/badge/WebSocket-50Hz%20Real--Time-0284c7.svg?logo=socketdotio&logoColor=white" alt="50 Hz WebSocket Telemetry"></a>
+</p>
+<p align="left">
+  <a href="https://github.com/vern-da-coda/lasius/actions/workflows/ci.yml"><img src="https://github.com/vern-da-coda/lasius/actions/workflows/ci.yml/badge.svg" alt="Continuous Integration"></a>
+  <a href="https://github.com/vern-da-coda/lasius/actions/workflows/deploy-plesk.yml"><img src="https://github.com/vern-da-coda/lasius/actions/workflows/deploy-plesk.yml/badge.svg" alt="Deploy to Plesk"></a>
+  <a href="https://github.com/vern-da-coda/lasius/commits/main"><img src="https://img.shields.io/github/last-commit/vern-da-coda/lasius?logo=github&color=blue" alt="Last Commit"></a>
+  <a href="https://github.com/vern-da-coda/lasius/stargazers"><img src="https://img.shields.io/github/stars/vern-da-coda/lasius?style=flat&logo=github" alt="GitHub Stars"></a>
 </p>
 
 Modular control software, 3D Digital Twin, REST/WebSocket control API, and teleoperation system for an 18-DOF, 6-legged (hexapod) biomimetic walking robot.
