@@ -95,12 +95,12 @@ spacer_positions = [
     ("Spacer_Window_FR", "Standoff Pillar Window FR", 45.0, -30.0),
     ("Spacer_Window_RL", "Standoff Pillar Window RL", -45.0, 30.0),
     ("Spacer_Window_RR", "Standoff Pillar Window RR", -45.0, -30.0),
-    # 2x Nose centerline standoffs
-    ("Spacer_Nose_1", "Standoff Pillar Nose Mid 1", 90.0, 0.0),
-    ("Spacer_Nose_2", "Standoff Pillar Nose Tip 2", 120.0, 0.0),
-    # 2x Tail standoffs
-    ("Spacer_Tail_L", "Standoff Pillar Tail Left", -128.0, 12.0),
-    ("Spacer_Tail_R", "Standoff Pillar Tail Right", -128.0, -12.0),
+    # 2x Front standoffs (side-by-side)
+    ("Spacer_Front_L", "Standoff Pillar Front Left", 128.0, 12.0),
+    ("Spacer_Front_R", "Standoff Pillar Front Right", 128.0, -12.0),
+    # 2x Rear centerline standoffs (inline)
+    ("Spacer_Rear_1", "Standoff Pillar Rear Mid 1", -90.0, 0.0),
+    ("Spacer_Rear_2", "Standoff Pillar Rear Tip 2", -120.0, 0.0),
 ]
 
 for s_name, s_label, sx, sy in spacer_positions:
@@ -175,3 +175,5 @@ for d in [doc_bottom, doc_top, doc_spacer, doc_leg]:
         pass
 
 print("--- Done ---")
+import sys
+sys.exit(0)

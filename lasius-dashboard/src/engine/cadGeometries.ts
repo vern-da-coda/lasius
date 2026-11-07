@@ -22,7 +22,7 @@ export interface Point2D {
  * 125-point analytic outer contour of the chassis plates (body_bottom / body_top).
  * Coordinate system (Dashboard):
  * - X: Lateral axis (Left: -88.4 mm .. Right: +88.4 mm across ears)
- * - Y: Longitudinal axis (Front Nose: -132.0 mm .. Rear Tail: +135.0 mm)
+ * - Y: Longitudinal axis (Front: -135.0 mm .. Rear: +132.0 mm)
  */
 export const CHASSIS_HULL_CONTOUR: Point2D[] = chassisContourData as Point2D[];
 
@@ -49,6 +49,8 @@ export const CHASSIS_COXA_HOLES: Point2D[] = [
 
 /**
  * 8x Chassis standoff spacer pillar positions (Ø 14.0 mm, L = 51.3 mm).
+ * The 2 front standoffs are placed side-by-side (transverse) at y = -128.0 mm.
+ * The 2 rear standoffs are placed inline along the longitudinal centerline at y = +90.0 and +120.0 mm.
  */
 export const CHASSIS_STANDOFF_POSITIONS: Point2D[] = [
   // 4x Central electronics window flanking standoffs
@@ -56,12 +58,12 @@ export const CHASSIS_STANDOFF_POSITIONS: Point2D[] = [
   { x:  30.0, y: -45.0 },
   { x: -30.0, y:  45.0 },
   { x:  30.0, y:  45.0 },
-  // 2x Nose centerline standoffs
-  { x:   0.0, y: -90.0 },
-  { x:   0.0, y: -120.0 },
-  // 2x Tail standoffs
-  { x: -12.0, y:  128.0 },
-  { x:  12.0, y:  128.0 }
+  // 2x Front standoffs (side-by-side)
+  { x: -12.0, y: -128.0 },
+  { x:  12.0, y: -128.0 },
+  // 2x Rear centerline standoffs (inline)
+  { x:   0.0, y:   90.0 },
+  { x:   0.0, y:  120.0 }
 ];
 
 /**

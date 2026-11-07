@@ -626,11 +626,11 @@ export class LasiusGraphicsEngine {
       bodyGroup.add(post);
     });
 
-    // 2. Front Direction Indicator (Blue Triangle on Top Plate pointing forward to nose apex)
+    // 2. Front Direction Indicator (Blue Triangle on Top Plate pointing forward)
     const triangleShape = new THREE.Shape();
-    triangleShape.moveTo(0, -112);       // Tip pointing forward towards nose apex (-132 mm)
-    triangleShape.lineTo(7, -95);        // Right base corner
-    triangleShape.lineTo(-7, -95);       // Left base corner
+    triangleShape.moveTo(0, -118);       // Tip pointing forward towards front (-135 mm)
+    triangleShape.lineTo(7, -98);        // Right base corner
+    triangleShape.lineTo(-7, -98);       // Left base corner
     triangleShape.closePath();
 
     const triangleGeo = new THREE.ExtrudeGeometry(triangleShape, {
@@ -1787,7 +1787,7 @@ export class LasiusGraphicsEngine {
     ctx.strokeStyle = '#4a5568';
     ctx.lineWidth = 1.0;
     const standoffWPx = Math.max(CHASSIS_SPECS.standoffDiameter * scale, 3.0);
-    for (const sx of [-30, 30]) {
+    for (const sx of [-30, -12, 12, 30]) {
       ctx.fillRect(sx * scale - standoffWPx / 2, -gapPx / 2, standoffWPx, gapPx);
       ctx.strokeRect(sx * scale - standoffWPx / 2, -gapPx / 2, standoffWPx, gapPx);
     }
@@ -1947,7 +1947,7 @@ export class LasiusGraphicsEngine {
     ctx.strokeStyle = '#4a5568';
     ctx.lineWidth = 1.0;
     const standoffWPx = Math.max(CHASSIS_SPECS.standoffDiameter * scale, 3.0);
-    for (const sy of [-120, -90, -45, 45, 128]) {
+    for (const sy of [-128, -45, 45, 90, 120]) {
       ctx.fillRect(sy * scale - standoffWPx / 2, -gapPx / 2, standoffWPx, gapPx);
       ctx.strokeRect(sy * scale - standoffWPx / 2, -gapPx / 2, standoffWPx, gapPx);
     }

@@ -171,6 +171,11 @@ all_edges = left_edges + right_edges
 outer_wire = Part.Wire(Part.__sortEdges__(all_edges))
 outer_face = Part.Face(outer_wire)
 
+# Rotate 180 deg around Z:
+# In the physical robot, the 2 side-by-side spacers are FRONT (+X = +128 mm)
+# and the 2 centerline spacers are REAR (-X = -90, -120 mm).
+outer_face.rotate(App.Vector(0.0, 0.0, 0.0), App.Vector(0.0, 0.0, 1.0), 180.0)
+
 # -------------------------------------------------------------
 # 3. Central Window Cutout (50.0 mm x 160.0 mm)
 # -------------------------------------------------------------
@@ -207,10 +212,10 @@ for xc, yc in coxa_holes:
 screw_holes = [
     # 4x Window flanking screws:
     (45.0, 30.0), (45.0, -30.0), (-45.0, 30.0), (-45.0, -30.0),
-    # 2x Nose centerline screws:
-    (90.0, 0.0), (120.0, 0.0),
-    # 2x Tail screws:
-    (-128.0, 12.0), (-128.0, -12.0)
+    # 2x Front screws (side-by-side):
+    (128.0, 12.0), (128.0, -12.0),
+    # 2x Rear centerline screws (inline):
+    (-90.0, 0.0), (-120.0, 0.0)
 ]
 for xc, yc in screw_holes:
     cyl = Part.makeCylinder(1.5, thickness + 4.0, App.Vector(xc, yc, -2.0), App.Vector(0.0, 0.0, 1.0))
@@ -262,3 +267,5 @@ except Exception as e:
 
 App.closeDocument(doc_name)
 print("--- Done ---")
+import sys
+sys.exit(0)
