@@ -4,7 +4,7 @@
  * Purpose & Role:
  *   Non-intrusive, purely additive composable that attaches a client-side 50 Hz
  *   gait simulation loop to the dashboard when no physical robot backend is connected
- *   (e.g., static hosting on Plesk / GitHub Pages).
+ *   (e.g., static demo hosting / GitHub Pages).
  *
  * Design:
  *   - Strictly additive: Has zero side-effects on core hardware stores or API contracts.

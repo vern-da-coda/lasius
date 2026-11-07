@@ -18,7 +18,7 @@
 </p>
 <p align="left">
   <a href="https://github.com/vern-da-coda/lasius/actions/workflows/ci.yml"><img src="https://github.com/vern-da-coda/lasius/actions/workflows/ci.yml/badge.svg" alt="Continuous Integration"></a>
-  <a href="https://github.com/vern-da-coda/lasius/actions/workflows/deploy-plesk.yml"><img src="https://github.com/vern-da-coda/lasius/actions/workflows/deploy-plesk.yml/badge.svg" alt="Deploy to Plesk"></a>
+  <a href="https://github.com/vern-da-coda/lasius/actions/workflows/deploy-demo.yml"><img src="https://github.com/vern-da-coda/lasius/actions/workflows/deploy-demo.yml/badge.svg" alt="Deploy Dashboard Demo"></a>
   <a href="https://github.com/vern-da-coda/lasius/commits/main"><img src="https://img.shields.io/github/last-commit/vern-da-coda/lasius?logo=github&color=blue" alt="Last Commit"></a>
   <a href="https://github.com/vern-da-coda/lasius/stargazers"><img src="https://img.shields.io/github/stars/vern-da-coda/lasius?style=flat&logo=github" alt="GitHub Stars"></a>
 </p>

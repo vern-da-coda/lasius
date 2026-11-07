@@ -5,7 +5,7 @@
  * Purpose & Role:
  *   High-fidelity TypeScript port of the Python `OmniGait` and `calculate_leg_ik` solver.
  *   Enables the 3D Digital Twin and 2D Orthographic projections to walk, strafe, turn,
- *   and tilt when deployed in standalone mode on static webservers (e.g. Plesk / GitHub Pages)
+ *   and tilt when deployed in standalone mode on static webservers (e.g. standalone webservers / GitHub Pages)
  *   without an active WebSocket connection to a physical Raspberry Pi backend.
  *
  * Capabilities:

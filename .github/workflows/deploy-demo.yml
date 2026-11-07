@@ -1,4 +1,4 @@
-name: Deploy Dashboard to Plesk
+name: Deploy Dashboard Demo
 
 on:
   push:
@@ -6,12 +6,12 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: "plesk-deploy"
+  group: "demo-deploy"
   cancel-in-progress: true
 
 jobs:
-  deploy-plesk:
-    name: Build & Deploy to Plesk Webserver
+  deploy-demo:
+    name: Build & Deploy Dashboard Demo
     runs-on: ubuntu-latest
     environment:
       name: lasius.kaemmereit.de
@@ -33,7 +33,7 @@ jobs:
           npm ci
           npm run build
 
-      - name: Deploy to Plesk via LFTP (FTPS)
+      - name: Deploy Demo via LFTP (FTPS)
         env:
           FTP_SERVER: ${{ vars.PLESK_FTP_SERVER || secrets.PLESK_FTP_SERVER }}
           FTP_USER: ${{ secrets.PLESK_FTP_USERNAME }}
