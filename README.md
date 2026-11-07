@@ -24,7 +24,7 @@
 
 Modular control software, 3D Digital Twin, REST/WebSocket control API, and teleoperation system for an 18-DOF, 6-legged (hexapod) biomimetic walking robot.
 
-**Interactive Web Demo:** [**https://lasius.kaemmereit.de/**](https://lasius.kaemmereit.de/) – Test drive the 3D Digital Twin and gait engine directly in your browser.
+**Interactive Web Demo:** [**https://dashboard.lasius.kaemmereit.de/**](https://dashboard.lasius.kaemmereit.de/) – Test drive the 3D Digital Twin and gait engine directly in your browser.
 
 <p align="center">
   <img src="hardware/mechanics/drawings/renders/body_assembly.png" alt="Hexapod:Lasius Full Body Assembly" width="750">
@@ -34,7 +34,7 @@ Lasius combines embedded locomotion control, real-time 3D visualization, physica
 
 ### Standalone Live Demo & Client-Side Simulation
 
-The complete 3D Digital Twin and control dashboard is deployed live at [**lasius.kaemmereit.de**](https://lasius.kaemmereit.de/).
+The complete 3D Digital Twin and control dashboard is deployed live at [**dashboard.lasius.kaemmereit.de**](https://dashboard.lasius.kaemmereit.de/).
 
 When accessed without an active Raspberry Pi robot connection, the dashboard operates in **Standalone Simulation Mode**:
 - An embedded, purely additive TypeScript kinematics engine calculates 50 Hz harmonic cosine tripod, ripple, and wave gait trajectories directly inside the browser.

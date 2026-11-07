@@ -14,8 +14,8 @@ jobs:
     name: Build & Deploy Dashboard Demo
     runs-on: ubuntu-latest
     environment:
-      name: lasius.kaemmereit.de
-      url: https://lasius.kaemmereit.de
+      name: dashboard.lasius.kaemmereit.de
+      url: https://dashboard.lasius.kaemmereit.de
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4

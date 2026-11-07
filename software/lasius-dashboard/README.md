@@ -8,7 +8,7 @@
 ---
 
 <p align="left">
-  <a href="https://lasius.kaemmereit.de/"><img src="https://img.shields.io/badge/Live%20Demo-lasius.kaemmereit.de-38bdf8.svg?logo=googlechrome&logoColor=white" alt="Live Demo"></a>
+  <a href="https://dashboard.lasius.kaemmereit.de/"><img src="https://img.shields.io/badge/Live%20Demo-dashboard.lasius.kaemmereit.de-38bdf8.svg?logo=googlechrome&logoColor=white" alt="Live Demo"></a>
   <a href="https://github.com/vern-da-coda/lasius/actions/workflows/deploy-demo.yml"><img src="https://img.shields.io/badge/Deploy%20Dashboard%20Demo-passing-success.svg?logo=githubactions&logoColor=white" alt="Deploy Dashboard Demo"></a>
   <a href="https://github.com/vern-da-coda/lasius/actions/workflows/ci.yml"><img src="https://github.com/vern-da-coda/lasius/actions/workflows/ci.yml/badge.svg" alt="CI Status"></a>
   <a href="https://github.com/vern-da-coda/lasius/commits/main"><img src="https://img.shields.io/github/last-commit/vern-da-coda/lasius?logo=github&color=blue" alt="Last Commit"></a>
@@ -16,7 +16,7 @@
 
 Modular Vue 3 + TypeScript + Pinia 3D Digital Twin and browser control interface for the **Lasius** 18-DOF Hexapod robot. Built with Vite and Three.js.
 
-**Live Web Demo:** [**https://lasius.kaemmereit.de/**](https://lasius.kaemmereit.de/) – Interactive 3D Digital Twin with real-time browser gait simulation.
+**Live Web Demo:** [**https://dashboard.lasius.kaemmereit.de/**](https://dashboard.lasius.kaemmereit.de/) – Interactive 3D Digital Twin with real-time browser gait simulation.
 
 <p align="center">
   <img src="docs/screenshots/dashboard_overview_3d_twin.png" alt="Lasius 3D Digital Twin & Gait Control Dashboard" width="850">
@@ -24,7 +24,7 @@ Modular Vue 3 + TypeScript + Pinia 3D Digital Twin and browser control interface
 
 ## Live Web Demo & Client Simulation
 
-The dashboard is accessible online at [**https://lasius.kaemmereit.de/**](https://lasius.kaemmereit.de/).
+The dashboard is accessible online at [**https://dashboard.lasius.kaemmereit.de/**](https://dashboard.lasius.kaemmereit.de/).
 
 ### Additive Simulation Mode (`src/demo/`)
 When the dashboard is accessed without an active Raspberry Pi robot connection (e.g. public hosting), it automatically activates a self-contained, client-side kinematics simulation:

@@ -28,7 +28,7 @@ The embedded Python robot backend running directly on the Raspberry Pi 4 (or in 
 
 ### 2. [**`lasius-dashboard/`**](lasius-dashboard/README.md)
 The modern single-page web interface for real-time monitoring and robot control:
-- **Live Demo:** Hosted online at [**https://lasius.kaemmereit.de/**](https://lasius.kaemmereit.de/).
+- **Live Demo:** Hosted online at [**https://dashboard.lasius.kaemmereit.de/**](https://dashboard.lasius.kaemmereit.de/).
 - **3D Digital Twin:** High-performance WebGL visualization powered by Three.js and encapsulated with `shallowRef` to eliminate Vue proxy overhead.
 - **2D CAD Projections:** Real-time top, front, and side projections with point-to-segment distance picking.
 - **Studio Interface:** 4-tab control panel covering Gaits & Directions, Leg Calibration, Test Sequences, and Raspberry Pi System Telemetry.
