@@ -125,7 +125,7 @@ function handleEstop() {
 <template>
   <header>
     <div class="header-left">
-      <h1>Lasius Dashboard</h1>
+      <h1>Lasius Hexapod Dashboard</h1>
     </div>
     <div class="header-right">
       <div class="server-toolbar">
