@@ -244,11 +244,32 @@ function applyKeyboardMotion() {
   store.dpadWalk(wx, wy, tz);
 }
 
+// Helper to resolve remote API and WebSocket hosts (enables static hosting without local Python backend)
+function getApiHost(): string {
+  if (typeof window === 'undefined') return '';
+  const params = new URLSearchParams(window.location.search);
+  const hostParam = params.get('host') || params.get('api_host');
+  if (hostParam) {
+    return hostParam.includes(':') ? `http://${hostParam}` : `http://${hostParam}:8000`;
+  }
+  return '';
+}
+
+function getWebSocketUrl(): string {
+  if (typeof window === 'undefined') return 'ws://localhost:8765';
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('ws')) return params.get('ws')!;
+
+  const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+  const hostParam = params.get('host') || params.get('ws_host');
+  const wsHost = hostParam || window.location.hostname || 'localhost';
+  const wsPort = params.get('port') || params.get('ws_port') || '8765';
+  return `${wsProtocol}//${wsHost}:${wsPort}`;
+}
+
 // WebSocket Connection
 function connectWebSocket() {
-  const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-  const wsHost = window.location.hostname || 'localhost';
-  const wsUrl = `${wsProtocol}//${wsHost}:8765`;
+  const wsUrl = getWebSocketUrl();
 
   try {
     ws = new WebSocket(wsUrl);
@@ -292,7 +313,8 @@ function connectWebSocket() {
 // Polling Fallback for system stats and initial state
 async function pollBackend() {
   try {
-    const res = await fetch('/api/v1/system/stats');
+    const apiBase = getApiHost();
+    const res = await fetch(`${apiBase}/api/v1/system/stats`);
     if (res.ok) {
       store.systemStats = await res.json();
     }
@@ -340,8 +362,9 @@ onMounted(async () => {
 
   // Load initial layout, calibration & YAML gamepad profiles from REST API
   try {
+    const apiBase = getApiHost();
     const [robotRes] = await Promise.all([
-      fetch('/api/v1/robot'),
+      fetch(`${apiBase}/api/v1/robot`),
       store.fetchCalibrationData(),
       store.fetchGamepadProfiles()
     ]);

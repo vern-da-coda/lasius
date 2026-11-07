@@ -77,6 +77,20 @@ const VALID_LEGS = new Set<LegKey>([
   'right_front', 'right_middle', 'right_rear'
 ]);
 
+function getApiBase(): string {
+  if (typeof window === 'undefined') return '';
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const hostParam = params.get('host') || params.get('api_host');
+    if (hostParam) {
+      return hostParam.includes(':') ? `http://${hostParam}` : `http://${hostParam}:8000`;
+    }
+  } catch {
+    // ignore
+  }
+  return '';
+}
+
 function loadSavedTab(): 'gait' | 'legs' | 'system' {
   try {
     if (typeof window !== 'undefined' && window.location) {
@@ -244,7 +258,8 @@ export const useDashboardStore = defineStore('dashboard', () => {
     if (activeWs && activeWs.readyState === WebSocket.OPEN) {
       activeWs.send(JSON.stringify({ type: 'command', ...cmd }));
     } else {
-      fetch('/api/v1/orders', {
+      const apiBase = getApiBase();
+      fetch(`${apiBase}/api/v1/orders`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(cmd)
@@ -342,7 +357,8 @@ export const useDashboardStore = defineStore('dashboard', () => {
 
   async function fetchGamepadProfiles() {
     try {
-      const resp = await fetch('/api/v1/gamepads');
+      const apiBase = getApiBase();
+      const resp = await fetch(`${apiBase}/api/v1/gamepads`);
       if (resp.ok) {
         const data = await resp.json();
         if (data && data.profiles && Object.keys(data.profiles).length > 0) {
@@ -460,7 +476,8 @@ export const useDashboardStore = defineStore('dashboard', () => {
   // Calibration API
   async function fetchCalibrationData() {
     try {
-      const resp = await fetch('/api/v1/calibration');
+      const apiBase = getApiBase();
+      const resp = await fetch(`${apiBase}/api/v1/calibration`);
       if (resp.ok) {
         const data = await resp.json();
         calibrationData.value = data.servos || {};

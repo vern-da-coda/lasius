@@ -1,0 +1,24 @@
+version: 2
+updates:
+  # Automated security updates for GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+
+  # Automated security updates for Python backend
+  - package-ecosystem: "pip"
+    directory: "/software/lasius-core"
+    schedule:
+      interval: "weekly"
+
+  - package-ecosystem: "pip"
+    directory: "/software/lasius-pilot"
+    schedule:
+      interval: "weekly"
+
+  # Automated security updates for Vue 3 frontend
+  - package-ecosystem: "npm"
+    directory: "/software/lasius-dashboard"
+    schedule:
+      interval: "weekly"

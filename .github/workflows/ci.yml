@@ -10,6 +10,9 @@ permissions:
   contents: read
 
 jobs:
+  # ============================================================================
+  # 1. Automated Test Suite (Python 3.11, 3.12, 3.13)
+  # ============================================================================
   python-tests:
     name: Python Tests (${{ matrix.python-version }})
     runs-on: ubuntu-latest
@@ -31,19 +34,17 @@ jobs:
       - name: Install dependencies & packages
         run: |
           python -m pip install --upgrade pip
-          pip install -e software/lasius-core -e software/lasius-pilot pytest pytest-asyncio flake8
-
-      - name: Syntax & Lint check (flake8)
-        run: |
-          # Stop build on Python syntax errors or undefined symbols
-          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+          pip install -e software/lasius-core -e software/lasius-pilot pytest pytest-asyncio
 
       - name: Execute test suite (lasius-core & lasius-pilot)
         run: |
           pytest software/lasius-core/tests software/lasius-pilot/tests -v
 
+  # ============================================================================
+  # 2. Frontend Build Verification (Vue 3 / Vite SPA)
+  # ============================================================================
   frontend-build:
-    name: Frontend Typecheck & Build (Vue 3 / Vite)
+    name: Frontend Build (Vue 3 / Vite)
     runs-on: ubuntu-latest
 
     steps:
@@ -61,10 +62,6 @@ jobs:
         working-directory: software/lasius-dashboard
         run: npm ci
 
-      - name: TypeScript type-check (vue-tsc)
-        working-directory: software/lasius-dashboard
-        run: npx vue-tsc --noEmit
-
       - name: Build production bundle (Vite)
         working-directory: software/lasius-dashboard
         run: npm run build
@@ -72,8 +69,104 @@ jobs:
       - name: Verify build artifacts
         run: |
           test -f software/lasius-dashboard/dist/index.html
-          echo "✔ Production dashboard bundle generated successfully."
+          echo "✔ Static 3D Digital Twin bundle generated successfully."
 
+  # ============================================================================
+  # 3. Code Quality & Static Analysis
+  # ============================================================================
+  code-quality:
+    name: Code Quality (Python, TypeScript, Shell)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install Python linting tools
+        run: |
+          python -m pip install --upgrade pip
+          pip install flake8 ruff
+
+      - name: Python Syntax & Linter Check (flake8 & ruff)
+        run: |
+          # Check for Python syntax errors, undefined names, and critical issues
+          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+          ruff check --select=E9,F63,F7,F82 software/lasius-core software/lasius-pilot
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "npm"
+          cache-dependency-path: software/lasius-dashboard/package-lock.json
+
+      - name: Install TypeScript tools
+        working-directory: software/lasius-dashboard
+        run: npm ci
+
+      - name: TypeScript Static Typecheck (vue-tsc)
+        working-directory: software/lasius-dashboard
+        run: npx vue-tsc --noEmit
+
+      - name: Shell Script Quality Check (shellcheck)
+        run: |
+          sudo apt-get update && sudo apt-get install -y shellcheck
+          shellcheck scripts/**/*.sh
+
+  # ============================================================================
+  # 4. Security & Vulnerability Auditing
+  # ============================================================================
+  security-scan:
+    name: Security & Vulnerability Audit
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install Python security scanners
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e software/lasius-core -e software/lasius-pilot bandit pip-audit
+
+      - name: Python Dependency Vulnerability Scan (pip-audit)
+        run: |
+          # Audits Python packages against the PyPA Advisory Database
+          pip-audit
+
+      - name: Python Static Application Security Testing (Bandit)
+        run: |
+          # Scans for security flaws: injection, hardcoded credentials, unsafe calls
+          bandit -r software/lasius-core/src software/lasius-pilot/src -s B104,B110,B404,B603,B606,B607
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "npm"
+          cache-dependency-path: software/lasius-dashboard/package-lock.json
+
+      - name: Node.js Dependency Security Audit (npm audit)
+        working-directory: software/lasius-dashboard
+        run: |
+          # Checks for critical vulnerabilities in frontend dependencies
+          npm audit --audit-level=critical
+
+  # ============================================================================
+  # 5. Documentation & Link Integrity
+  # ============================================================================
   docs-integrity:
     name: Documentation & Link Integrity
     runs-on: ubuntu-latest
