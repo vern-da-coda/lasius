@@ -31,8 +31,9 @@ async function handleRestart() {
   restartText.value = 'Restarting...';
   store.appendOrderLog('Server restart initiated...', 'running');
 
+  const apiBase = store.getApiBase();
   try {
-    await fetch('/api/v1/server/restart', {
+    await fetch(`${apiBase}/api/v1/server/restart`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({})
@@ -48,7 +49,7 @@ async function handleRestart() {
   const pollInterval = setInterval(async () => {
     attempts++;
     try {
-      const res = await fetch('/api/v1/status');
+      const res = await fetch(`${apiBase}/api/v1/status`);
       if (res.ok) {
         clearInterval(pollInterval);
         isRestarting.value = false;
@@ -57,7 +58,7 @@ async function handleRestart() {
         store.showToast('Server back online!', 'success');
 
         try {
-          const r = await fetch('/api/v1/robot');
+          const r = await fetch(`${apiBase}/api/v1/robot`);
           if (r.ok) {
             const data = await r.json();
             if (data && data.legs) {
@@ -98,8 +99,9 @@ async function handleShutdown() {
   shutdownText.value = 'Shutting down...';
   store.appendOrderLog('Robot shutdown initiated. Servos relaxing & Pi powering off...', 'warning');
 
+  const apiBase = store.getApiBase();
   try {
-    await fetch('/api/v1/server/shutdown', {
+    await fetch(`${apiBase}/api/v1/server/shutdown`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({})

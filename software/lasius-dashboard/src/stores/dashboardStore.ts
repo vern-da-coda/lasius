@@ -457,7 +457,8 @@ export const useDashboardStore = defineStore('dashboard', () => {
     const legKey = selectedLegKey.value;
     if (!confirm(`Revert calibration overrides for ${legKey} to factory defaults?`)) return;
     try {
-      const resp = await fetch('/api/v1/calibration/reset', {
+      const apiBase = getApiBase();
+      const resp = await fetch(`${apiBase}/api/v1/calibration/reset`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ leg: legKey })
@@ -692,7 +693,8 @@ export const useDashboardStore = defineStore('dashboard', () => {
         }
       }
 
-      const resp = await fetch('/api/v1/calibration', {
+      const apiBase = getApiBase();
+      const resp = await fetch(`${apiBase}/api/v1/calibration`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ batch })
@@ -757,6 +759,7 @@ export const useDashboardStore = defineStore('dashboard', () => {
     gamepadId,
     resolvedGamepadProfile,
     toasts,
+    getApiBase,
     setWebSocket,
     showToast,
     appendOrderLog,
