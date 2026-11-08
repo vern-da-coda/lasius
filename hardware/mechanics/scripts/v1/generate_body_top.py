@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
-Generate Lasius Hexapod Body Bottom Plate FreeCAD Model (body_bottom.FCStd)
+Generate Lasius Hexapod Body Top Plate FreeCAD Model (body_top.FCStd)
 Plate Thickness: 2.0 mm solid
 Coordinate origin: (0, 0, 0) at chassis center (midpoint between ML and MR coxa pivots)
-Analytic Geometry: Pure G1-continuous circular arcs and lines (no faceted polygon sampling)
+Analytic Geometry: Pure G1-continuous circular arcs and lines (matching body_bottom exactly)
 """
 
 import math
@@ -11,13 +11,13 @@ import os
 import FreeCAD as App
 import Part
 
-print("--- Generating Lasius Body Bottom Model (Pure Analytic Geometry) ---")
+print("--- Generating Lasius Body Top Model (Pure Analytic Geometry) ---")
 
-doc_name = "body_bottom"
-fcstd_path = "/home/bjoern/Workspace/Hexapods/lasius/hardware/mechanics/models/body_bottom.FCStd"
-stl_path = "/home/bjoern/Workspace/Hexapods/lasius/hardware/mechanics/export/stl/body_bottom.stl"
-step_path = "/home/bjoern/Workspace/Hexapods/lasius/hardware/mechanics/export/step/body_bottom.step"
-dxf_path = "/home/bjoern/Workspace/Hexapods/lasius/hardware/mechanics/export/dxf/body_bottom.dxf"
+doc_name = "body_top"
+fcstd_path = "/home/bjoern/Workspace/Hexapods/lasius/hardware/mechanics/models/custom/v1/parts/body_top.FCStd"
+stl_path = "/home/bjoern/Workspace/Hexapods/lasius/hardware/mechanics/export/stl/custom/v1/parts/body_top.stl"
+step_path = "/home/bjoern/Workspace/Hexapods/lasius/hardware/mechanics/export/step/custom/v1/parts/body_top.step"
+dxf_path = "/home/bjoern/Workspace/Hexapods/lasius/hardware/mechanics/export/dxf/custom/v1/parts/body_top.dxf"
 
 try:
     doc = App.getDocument(doc_name)
@@ -224,9 +224,9 @@ for xc, yc in screw_holes:
 # -------------------------------------------------------------
 # 7. FreeCAD Document Setup & Properties
 # -------------------------------------------------------------
-part_obj = doc.addObject("Part::Feature", "BodyBottom")
+part_obj = doc.addObject("Part::Feature", "BodyTop")
 part_obj.Shape = plate_solid
-part_obj.Label = "BodyBottom (Chassis Bottom Plate 2mm)"
+part_obj.Label = "BodyTop (Chassis Top Plate 2mm)"
 
 doc.recompute()
 

@@ -14,7 +14,7 @@ def create_tibia_technische_zeichnung_svg():
     width_mm = 297.0
     height_mm = 210.0
     
-    with open('/home/bjoern/Workspace/Hexapods/lasius/hardware/mechanics/scripts/tibia_geom.json') as f:
+    with open('/home/bjoern/Workspace/Hexapods/lasius/hardware/mechanics/scripts/v1/tibia_geom.json') as f:
         d = json.load(f)
 
     outer = d['outer_polygon']

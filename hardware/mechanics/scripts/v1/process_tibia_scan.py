@@ -165,7 +165,7 @@ tibia_geom = {
     "plate_thickness": 2.2
 }
 
-with open('/home/bjoern/Workspace/Hexapods/lasius/hardware/mechanics/scripts/tibia_geom.json', 'w') as f:
+with open('/home/bjoern/Workspace/Hexapods/lasius/hardware/mechanics/scripts/v1/tibia_geom.json', 'w') as f:
     json.dump(tibia_geom, f, indent=2)
 
-print('Saved /home/bjoern/Workspace/Hexapods/lasius/hardware/mechanics/scripts/tibia_geom.json!')
+print('Saved /home/bjoern/Workspace/Hexapods/lasius/hardware/mechanics/scripts/v1/tibia_geom.json!')

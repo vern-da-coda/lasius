@@ -19,12 +19,14 @@ import Part
 print("--- Generating Lasius Full Body Assembly (body_assembly.FCStd) ---")
 
 doc_name = "body_assembly"
-models_dir = "/home/bjoern/Workspace/Hexapods/lasius/hardware/mechanics/models"
+models_base = "/home/bjoern/Workspace/Hexapods/lasius/hardware/mechanics/models"
+parts_dir = f"{models_base}/custom/v1/parts"
+asm_dir = f"{models_base}/custom/v1"
 export_dir = "/home/bjoern/Workspace/Hexapods/lasius/hardware/mechanics/export"
 
-fcstd_path = f"{models_dir}/body_assembly.FCStd"
-step_path = f"{export_dir}/step/body_assembly.step"
-stl_path = f"{export_dir}/stl/body_assembly.stl"
+fcstd_path = f"{asm_dir}/body_assembly.FCStd"
+step_path = f"{export_dir}/step/custom/v1/body_assembly.step"
+stl_path = f"{export_dir}/stl/custom/v1/body_assembly.stl"
 
 # Close any open document with same name
 try:
@@ -34,16 +36,16 @@ except Exception:
 
 # Create and immediately save new assembly document (required for App::Link resolution)
 doc = App.newDocument(doc_name)
-os.makedirs(models_dir, exist_ok=True)
-os.makedirs(f"{export_dir}/step", exist_ok=True)
-os.makedirs(f"{export_dir}/stl", exist_ok=True)
+os.makedirs(asm_dir, exist_ok=True)
+os.makedirs(f"{export_dir}/step/custom/v1", exist_ok=True)
+os.makedirs(f"{export_dir}/stl/custom/v1", exist_ok=True)
 doc.saveAs(fcstd_path)
 
 # Open source master documents
-doc_bottom = App.openDocument(f"{models_dir}/body_bottom.FCStd")
-doc_top = App.openDocument(f"{models_dir}/body_top.FCStd")
-doc_spacer = App.openDocument(f"{models_dir}/spacer_14x50.FCStd")
-doc_leg = App.openDocument(f"{models_dir}/leg_assembly.FCStd")
+doc_bottom = App.openDocument(f"{parts_dir}/body_bottom.FCStd")
+doc_top = App.openDocument(f"{parts_dir}/body_top.FCStd")
+doc_spacer = App.openDocument(f"{parts_dir}/spacer_14x50.FCStd")
+doc_leg = App.openDocument(f"{asm_dir}/leg_assembly.FCStd")
 
 # Main Assembly Container
 asm_part = doc.addObject("App::Part", "Body_Assembly")

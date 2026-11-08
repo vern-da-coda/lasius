@@ -6,10 +6,12 @@ print("--- Generating Clean Modular Leg Assembly with Hardware Library Links ---
 
 doc_name = "leg_assembly"
 models_dir = "/home/bjoern/Workspace/Hexapods/lasius/hardware/mechanics/models"
+v1_parts_dir = f"{models_dir}/custom/v1/parts"
+v1_asm_dir = f"{models_dir}/custom/v1"
 hw_dir = f"{models_dir}/hardware"
-fcstd_path = f"{models_dir}/leg_assembly.FCStd"
-step_path = "/home/bjoern/Workspace/Hexapods/lasius/hardware/mechanics/export/step/leg_assembly.step"
-stl_path = "/home/bjoern/Workspace/Hexapods/lasius/hardware/mechanics/export/stl/leg_assembly.stl"
+fcstd_path = f"{v1_asm_dir}/leg_assembly.FCStd"
+step_path = "/home/bjoern/Workspace/Hexapods/lasius/hardware/mechanics/export/step/custom/v1/leg_assembly.step"
+stl_path = "/home/bjoern/Workspace/Hexapods/lasius/hardware/mechanics/export/stl/custom/v1/leg_assembly.stl"
 
 try:
     App.closeDocument(doc_name)
@@ -20,12 +22,12 @@ doc = App.newDocument(doc_name)
 doc.saveAs(fcstd_path)
 
 # Open all master part documents
-doc_coxa = App.openDocument(f"{models_dir}/coxa_bracket.FCStd")
-doc_femur = App.openDocument(f"{models_dir}/femur_plate.FCStd")
-doc_tibia = App.openDocument(f"{models_dir}/tibia.FCStd")
-doc_spacer = App.openDocument(f"{models_dir}/spacer_14x50.FCStd")
-doc_servo = App.openDocument(f"{models_dir}/servo_nr645.FCStd")
-doc_foot = App.openDocument(f"{models_dir}/tibia_servo_foot.FCStd")
+doc_coxa = App.openDocument(f"{v1_parts_dir}/coxa_bracket.FCStd")
+doc_femur = App.openDocument(f"{v1_parts_dir}/femur_plate.FCStd")
+doc_tibia = App.openDocument(f"{v1_parts_dir}/tibia.FCStd")
+doc_spacer = App.openDocument(f"{v1_parts_dir}/spacer_14x50.FCStd")
+doc_servo = App.openDocument(f"{hw_dir}/servo_nr645.FCStd")
+doc_foot = App.openDocument(f"{v1_parts_dir}/tibia_servo_foot.FCStd")
 
 # Open hardware library documents
 doc_b = App.openDocument(f"{hw_dir}/bearing_684_6x3.FCStd")

@@ -138,3 +138,11 @@ To isolate the 6 leg ADC boards (**ADS1115**) and maintain a clean I2C bus hiera
 ### 5.4 Single-Leg Docking Test Rig
 - Sturdy hollow desktop test stand featuring identical geometry to a single chassis corner segment.
 - Equipped with a 2nd TCA9548A multiplexer and ADS1115 breakout for isolated workbench testing and calibration of individual leg assemblies.
+
+### 5.5 CAD Directory & Versioning Architecture (*Hardware-as-Code*)
+- **3-Tier Hierarchy (`hardware/mechanics/models/` & `export/`):**
+  1. **Origin (`hardware/` vs. `custom/`):** Immutable COTS/standard components (`hardware/`, including `servo_nr645.FCStd`, bearings, and M4 fasteners) are strictly separated from custom-engineered parts (`custom/`).
+  2. **Evolutionary Generations (`custom/v1/`, `custom/v2/`):** `v1` preserves the reverse-engineered multi-plate/spacer baseline; `v2` encapsulates the monolithic 3D-printed redesign with integrated ADS1115 chambers and internal cable routing.
+  3. **System Entry Points vs. Components (`v{N}/` vs. `v{N}/parts/`):** Assemblies (`leg_assembly.FCStd`, `body_assembly.FCStd`) reside directly at the root of each generation folder (`custom/v{N}/`), while individual components are encapsulated in `custom/v{N}/parts/`.
+- **Canonical Naming & Cross-Generation Inheritance:** Files use canonical, versionless names (`femur.FCStd`, `tibia.FCStd`, `leg_assembly.FCStd`) rather than SemVer filename suffixes to keep FreeCAD `App::Link` references and Git history intact. Components unchanged between generations (e.g., `coxa_bracket.FCStd` in `v2`) are linked relatively from the parent generation (`../v1/parts/coxa_bracket.FCStd`) without file duplication.
+
