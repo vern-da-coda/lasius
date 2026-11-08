@@ -27,4 +27,4 @@ Due to repository performance and size limits, raw high-resolution scan archives
 
 - Parametric Models: [`../models/`](../models/)
 - Fabrication Exports (STEP, STL, DXF): [`../export/`](../export/)
-- 1:1 Fabrication Drill Templates: [`../drawings/templates/`](../drawings/templates/)
+- 3D CAD Renders: [`../drawings/renders/`](../drawings/renders/)

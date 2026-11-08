@@ -48,6 +48,8 @@ CAD engineering, digital fabrication exports, and assembly models for the **Lasi
   - Merges the sickle claw (`tibia`) and counter-bearing foot (`tibia_servo_foot`) into a single 3D-printed component connected via 4 organic hourglass-waisted corner struts (*Eckstege*).
 - **Complete Modular Leg Assembly v2 ([`leg_assembly.FCStd`](models/custom/v2/leg_assembly.FCStd)):**
   - Modular leg subassembly combining the v1 [`coxa_bracket.FCStd`](models/custom/v1/parts/coxa_bracket.FCStd) with the v2 [`femur.FCStd`](models/custom/v2/parts/femur.FCStd) and [`tibia.FCStd`](models/custom/v2/parts/tibia.FCStd).
+- **Complete Full-Body Assembly v2 ([`body_assembly.FCStd`](models/custom/v2/body_assembly.FCStd)):**
+  - Master full-robot assembly (v2) combining the v1 chassis plates ([`body_bottom.FCStd`](models/custom/v1/parts/body_bottom.FCStd), [`body_top.FCStd`](models/custom/v1/parts/body_top.FCStd)) and 8× standoff pillars ([`spacer_14x50.FCStd`](models/custom/v1/parts/spacer_14x50.FCStd)) with 6× modular v2 leg assemblies ([`leg_assembly.FCStd`](models/custom/v2/leg_assembly.FCStd)).
 
 ---
 
@@ -60,15 +62,14 @@ hardware/mechanics/
 │   └── custom/              # Custom-engineered robot assemblies & parts (canonical filenames)
 │       ├── v1/              # Generation 1 (leg_assembly, body_assembly + parts/)
 │       │   └── parts/       # Generation 1 single parts
-│       └── v2/              # Generation 2 (leg_assembly + parts/)
+│       └── v2/              # Generation 2 (leg_assembly, body_assembly + parts/)
 │           └── parts/       # Generation 2 single parts
 ├── export/                  # Digital fabrication outputs (mirrors models/ structure)
 │   ├── step/                # ISO 10303 CAD exchange format (custom/{v1,v2}[/parts], hardware/)
 │   ├── stl/                 # High-resolution meshes for 3D printing (custom/{v1,v2}[/parts], hardware/)
 │   └── dxf/                 # 2D vector profiles for laser/CNC sheet cutting (custom/v1/parts/)
 ├── drawings/
-│   ├── renders/             # High-resolution CAD 3D renders (.png)
-│   └── templates/           # 1:1 true-to-scale SVG/PDF drill & fabrication templates
+│   └── renders/             # High-resolution CAD 3D renders (.png)
 ├── scripts/                 # Parametric Python FreeCAD generators & scan math
 │   ├── v1/                  # Generation 1 part, assembly & technical drawing generators
 │   └── v2/                  # Generation 2 monolithic part & assembly generators
@@ -88,8 +89,9 @@ Parametric geometry and assembly exports can be generated headlessly using FreeC
 /snap/bin/freecad.cmd hardware/mechanics/scripts/v1/generate_leg_assembly.py
 /snap/bin/freecad.cmd hardware/mechanics/scripts/v1/generate_body_assembly.py
 
-# Generate v2 monolithic femur, tibia, and v2 leg assembly:
+# Generate v2 monolithic femur, tibia, and v2 leg & body assemblies:
 /snap/bin/freecad.cmd hardware/mechanics/scripts/v2/generate_femur.py
 /snap/bin/freecad.cmd hardware/mechanics/scripts/v2/generate_tibia.py
 /snap/bin/freecad.cmd hardware/mechanics/scripts/v2/generate_leg_assembly.py
+/snap/bin/freecad.cmd hardware/mechanics/scripts/v2/generate_body_assembly.py
 ```

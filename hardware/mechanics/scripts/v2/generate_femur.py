@@ -261,9 +261,9 @@ def build_femur_shapes():
     # 6. Pivot Hub Bores (2x Ø8.0 mm), Reinforced Horn Bosses & Bearing Seats
     # =========================================================================
     for px in [0.0, 100.0]:
-        # Ø8.00 mm main shaft / ball bearing bore through both jaws
-        hub_cyl = Part.makeCylinder(4.00, 80.0, App.Vector(px, -35.0, 0.0), App.Vector(0.0, 1.0, 0.0))
-        base_solid = base_solid.cut(hub_cyl)
+        # Front Jaw: Ø8.00 mm central bore for servo horn hub & central screw access
+        hub_front = Part.makeCylinder(4.00, 20.0, App.Vector(px, 20.0, 0.0), App.Vector(0.0, 1.0, 0.0))
+        base_solid = base_solid.cut(hub_front)
 
         # Front Jaw (Servo Horn Mount):
         # Keep the ENTIRE Ø31.60 mm boss at full 6.00 mm thickness (Y = +29.30..+35.30),
@@ -271,17 +271,20 @@ def build_femur_shapes():
         # leaving 4.00 mm solid clamping material directly under each M2 screw head
         # and 6.00 mm solid webs everywhere between the holes!
         for dx, dz in [(8.0, 0.0), (-8.0, 0.0), (0.0, 8.0), (0.0, -8.0)]:
-            horn_cyl = Part.makeCylinder(1.00, 80.0, App.Vector(px + dx, -35.0, dz), App.Vector(0.0, 1.0, 0.0))
+            horn_cyl = Part.makeCylinder(1.00, 20.0, App.Vector(px + dx, 20.0, dz), App.Vector(0.0, 1.0, 0.0))
             m2_cbore = Part.makeCylinder(2.15, 5.0, App.Vector(px + dx, Y_front_seat, dz), App.Vector(0.0, 1.0, 0.0))
             base_solid = base_solid.cut(horn_cyl).cut(m2_cbore)
 
-        # Rear Jaw (Counter-Bearing & M4 Nut Seat):
-        # Compact Ø10.60 mm counterbore from Y = -24.00 outward (to Y = -28.00) houses
-        # the M4 hex nut (SW7, Ø_corners = 8.08 mm, Y = -27.20..-24.00) flush inside
-        # the 6.00 mm thick jaw, while preserving a 10.50 mm wide solid 6.00 mm thick
-        # structural ring all around the bearing!
-        spot_rear = Part.makeCylinder(5.30, 6.0, App.Vector(px, Y_rear_seat, 0.0), App.Vector(0.0, -1.0, 0.0))
-        base_solid = base_solid.cut(spot_rear)
+        # Rear Jaw (External-Entry Counter-Bearing Seat for Option A):
+        # - Inner retention lip (Y in [-21.65, -21.35], Ø6.60 mm / R=3.30 mm) clears the Ø5.80 mm
+        #   shim washer and bearing inner race while stopping the Ø8.00 mm bearing outer race.
+        # - Precision Ø8.00 mm bearing seat (Y in [-24.65, -21.65], 3.00 mm wide) pressed from outside.
+        # - Outer Ø9.60 mm access counterbore (Y in [-28.00, -24.65]) houses the external M4 screw head
+        #   completely recessed inside the rear jaw!
+        rear_lip_bore = Part.makeCylinder(3.30, 10.0, App.Vector(px, -30.0, 0.0), App.Vector(0.0, 1.0, 0.0))
+        rear_bearing_seat = Part.makeCylinder(4.00, 8.35, App.Vector(px, -21.65, 0.0), App.Vector(0.0, -1.0, 0.0))
+        spot_rear = Part.makeCylinder(4.80, 5.0, App.Vector(px, -24.65, 0.0), App.Vector(0.0, -1.0, 0.0))
+        base_solid = base_solid.cut(rear_lip_bore).cut(rear_bearing_seat).cut(spot_rear)
 
     # =========================================================================
     # 7. Encapsulated Central ADS1115 Chamber, Stepped Cover Rebate & Channels
@@ -422,7 +425,7 @@ def build_femur_shapes():
     return base_solid, cover_solid, ads_shape
 
 
-if __name__ in ("__main__", "generate_femur"):
+if __name__ == "__main__":
     femur_body, femur_cover, ads_module = build_femur_shapes()
 
     print(f"Femur_Body Valid: {femur_body.isValid()}, Volume: {femur_body.Volume:.1f} mm^3, BB: {femur_body.BoundBox}")
@@ -460,5 +463,3 @@ if __name__ in ("__main__", "generate_femur"):
     print(f"Exported STL:  {stl_femur_path} & {stl_cover_path}")
 
     App.closeDocument("femur")
-    import sys
-    sys.exit(0)
