@@ -36,6 +36,60 @@ step_coxa_path = f"{export_step_dir}/coxa_bracket.step"
 stl_coxa_path = f"{export_stl_dir}/coxa_bracket.stl"
 
 
+def make_filleted_polygon_2d(pts, r_list):
+    """
+    Construct a planar Part.Face in XY plane from a list of vertices pts (CCW)
+    with each corner i filleted with radius r_list[i].
+    """
+    n = len(pts)
+    if isinstance(r_list, (int, float)):
+        r_list = [float(r_list)] * n
+    tangents_in, tangents_out, arcs = [], [], []
+    for i in range(n):
+        p_prev, p_curr, p_next = pts[(i - 1) % n], pts[i], pts[(i + 1) % n]
+        r = r_list[i]
+        v_in = (p_curr - p_prev).normalize()
+        v_out = (p_next - p_curr).normalize()
+        cross_z = v_in.x * v_out.y - v_in.y * v_out.x
+        dot = max(-1.0, min(1.0, v_in.dot(v_out)))
+        turn_angle = math.atan2(cross_z, dot)
+        half_beta = 0.5 * (math.pi - abs(turn_angle))
+        d = 0.0 if half_beta < 1e-4 else r / math.tan(half_beta)
+        t1 = p_curr - v_in * d
+        t2 = p_curr + v_out * d
+        b = (v_out - v_in).normalize()
+        if cross_z < 0:
+            b = -b
+        center = p_curr + b * (r / math.sin(half_beta))
+        p_mid = center - b * r
+        tangents_in.append(t1)
+        tangents_out.append(t2)
+        arcs.append(Part.Arc(t1, p_mid, t2).toShape() if d > 1e-4 else None)
+    wire_edges = []
+    for i in range(n):
+        p_start, p_end = tangents_out[i], tangents_in[(i + 1) % n]
+        if (p_end - p_start).Length > 1e-4:
+            wire_edges.append(Part.makeLine(p_start, p_end))
+        if arcs[(i + 1) % n] is not None:
+            wire_edges.append(arcs[(i + 1) % n])
+    return Part.Face(Part.Wire(wire_edges))
+
+
+def extrude_face_xz(face_xy, y_pos, y_extrude):
+    """
+    Map an XY face to XZ plane at Y = y_pos and extrude by y_extrude along Y.
+    """
+    edges = []
+    for e in face_xy.OuterWire.Edges:
+        pts = [App.Vector(v.Point.x, y_pos, v.Point.y) for v in e.Vertexes]
+        if "Line" in str(type(e.Curve)):
+            edges.append(Part.makeLine(pts[0], pts[1]))
+        else:
+            pm = e.valueAt(0.5 * (e.FirstParameter + e.LastParameter))
+            edges.append(Part.Arc(pts[0], App.Vector(pm.x, y_pos, pm.y), pts[1]).toShape())
+    return Part.Face(Part.Wire(edges)).extrude(App.Vector(0.0, y_extrude, 0.0))
+
+
 def make_rounded_rect_face_2d(x1, x2, y1, y2, r):
     """
     Construct a planar Part.Face in the XY plane representing a rectangle
@@ -141,45 +195,46 @@ def build_coxa_bracket_v2_shape():
     shape = shape.cut(cut_gw)
 
     # -------------------------------------------------------------
-    # 3. Organic Rounded Truss Windows in Front & Rear Walls
+    # 3. 45-Degree Symmetrical A-Truss (Chevron) Windows in Bridge & Tail
     # -------------------------------------------------------------
-    # A. Central Bridge Front Window (X in [28.5, 57.5], Z in [2.5, 15.5], R = 2.8 mm):
-    f_win1 = make_rounded_rect_face_2d(28.50, 57.50, 2.50, 15.50, 2.80)
-    edges_f1 = []
-    for e in f_win1.OuterWire.Edges:
-        pts = [App.Vector(v.Point.x, -2.0, v.Point.y) for v in e.Vertexes]
-        if "Line" in str(type(e.Curve)):
-            edges_f1.append(Part.makeLine(pts[0], pts[1]))
-        else:
-            pm = e.valueAt(0.5 * (e.FirstParameter + e.LastParameter))
-            edges_f1.append(Part.Arc(pts[0], App.Vector(pm.x, -2.0, pm.y), pts[1]).toShape())
-    cut_f1 = Part.Face(Part.Wire(edges_f1)).extrude(App.Vector(0.0, 8.0, 0.0))
-    shape = shape.cut(cut_f1)
+    # A. Central Bridge Symmetrical A-Truss (X in [28.5, 57.5], Z in [2.5, 15.5])
+    # 45-degree diagonal struts (w_strut = 3.50 mm) meeting at top apex (X = 43.00, Z = 12.50)
+    # 1. Central triangle (apex up)
+    p_c1 = App.Vector(33.00, 2.50, 0.0)
+    p_c2 = App.Vector(53.00, 2.50, 0.0)
+    p_c3 = App.Vector(43.00, 12.50, 0.0)
+    fc = make_filleted_polygon_2d([p_c1, p_c2, p_c3], 1.60)
 
-    # B. Central Bridge Matching Rear Window (Y in [25.0, 33.0]):
-    edges_rear = []
-    for e in f_win1.OuterWire.Edges:
-        pts = [App.Vector(v.Point.x, 26.0, v.Point.y) for v in e.Vertexes]
-        if "Line" in str(type(e.Curve)):
-            edges_rear.append(Part.makeLine(pts[0], pts[1]))
-        else:
-            pm = e.valueAt(0.5 * (e.FirstParameter + e.LastParameter))
-            edges_rear.append(Part.Arc(pts[0], App.Vector(pm.x, 26.0, pm.y), pts[1]).toShape())
-    cut_rear = Part.Face(Part.Wire(edges_rear)).extrude(App.Vector(0.0, 8.0, 0.0))
-    shape = shape.cut(cut_rear)
+    # 2. Left corner triangle (hypotenuse at 45 deg, strut width = 3.50 mm)
+    p_l1 = App.Vector(28.50, 3.00, 0.0)
+    p_l2 = App.Vector(41.00, 15.50, 0.0)
+    p_l3 = App.Vector(28.50, 15.50, 0.0)
+    fl = make_filleted_polygon_2d([p_l1, p_l2, p_l3], 1.60)
 
-    # C. Rear Tail Front Window (X in [84.5, 106.0], Z in [2.0, 16.0], R = 2.8 mm):
-    f_win2 = make_rounded_rect_face_2d(84.50, 106.00, 2.00, 16.00, 2.80)
-    edges_f2 = []
-    for e in f_win2.OuterWire.Edges:
-        pts = [App.Vector(v.Point.x, -2.0, v.Point.y) for v in e.Vertexes]
-        if "Line" in str(type(e.Curve)):
-            edges_f2.append(Part.makeLine(pts[0], pts[1]))
-        else:
-            pm = e.valueAt(0.5 * (e.FirstParameter + e.LastParameter))
-            edges_f2.append(Part.Arc(pts[0], App.Vector(pm.x, -2.0, pm.y), pts[1]).toShape())
-    cut_f2 = Part.Face(Part.Wire(edges_f2)).extrude(App.Vector(0.0, 8.0, 0.0))
-    shape = shape.cut(cut_f2)
+    # 3. Right corner triangle (mirror of left across X = 43.0)
+    p_r1 = App.Vector(45.00, 15.50, 0.0)
+    p_r2 = App.Vector(57.50, 3.00, 0.0)
+    p_r3 = App.Vector(57.50, 15.50, 0.0)
+    fr = make_filleted_polygon_2d([p_r1, p_r2, p_r3], 1.60)
+
+    # Cut A-truss into Bridge Front Wall (Y in [0.0, 5.0]):
+    for f in [fc, fl, fr]:
+        shape = shape.cut(extrude_face_xz(f, -2.0, 8.0))
+
+    # Cut matching A-truss into Bridge Rear Wall (Y in [25.5, 31.7]):
+    for f in [fc, fl, fr]:
+        shape = shape.cut(extrude_face_xz(f, 26.0, 8.0))
+
+    # B. Rear Tail Diagonal Truss Window (X in [84.5, 106.0], Z in [2.0, 16.0])
+    # Diagonal strut connecting (84.5, 2.0) to (106.0, 16.0)
+    p_t_bot = [App.Vector(87.5, 2.0, 0.0), App.Vector(106.0, 2.0, 0.0), App.Vector(106.0, 13.0, 0.0)]
+    f_t_bot = make_filleted_polygon_2d(p_t_bot, 1.60)
+
+    p_t_top = [App.Vector(84.5, 5.0, 0.0), App.Vector(103.0, 16.0, 0.0), App.Vector(84.5, 16.0, 0.0)]
+    f_t_top = make_filleted_polygon_2d(p_t_top, 1.60)
+
+    shape = shape.cut(extrude_face_xz(f_t_bot, -2.0, 8.0))
+    shape = shape.cut(extrude_face_xz(f_t_top, -2.0, 8.0))
 
     # -------------------------------------------------------------
     # 4. Bulkhead & Tail Block Weight-Relief Cavities
