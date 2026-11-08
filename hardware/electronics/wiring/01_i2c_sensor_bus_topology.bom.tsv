@@ -1,12 +1,14 @@
 Id	Description	Qty	Unit	Designators
-1	Cable, 2 x 28 AWG	0.52	m	Bus_LF, Bus_LM, Bus_LR, Bus_RF, Bus_RM, Bus_RR
-2	Cable, 4 x 26 AWG	0.08	m	Pi_to_TCA
-3	Connector, 40-Pin Header (Pins 1, 3, 5, 6), 4 pins, GN	1		RaspberryPi_GPIO
-4	Connector, ADS1115 (Left Front Leg, 0x48), 4 pins, OG	1		ADS1115_LF
-5	Connector, ADS1115 (Left Middle Leg, 0x48), 4 pins, OG	1		ADS1115_LM
-6	Connector, ADS1115 (Left Rear Leg, 0x48), 4 pins, OG	1		ADS1115_LR
-7	Connector, ADS1115 (Right Front Leg, 0x48), 4 pins, OG	1		ADS1115_RF
-8	Connector, ADS1115 (Right Middle Leg, 0x48), 4 pins, OG	1		ADS1115_RM
-9	Connector, ADS1115 (Right Rear Leg, 0x48), 4 pins, OG	1		ADS1115_RR
-10	Connector, TCA9548A Channel Headers (CH0-CH5), 12 pins, BU	1		TCA9548A_Outputs
-11	Connector, TCA9548A Main Bus (Addr 0x71 via A0), 4 pins, BU	1		TCA9548A_Input
+1	Cable, 4 x 26 AWG	0.45	m	Bus_to_PCA_Left, Bus_to_PCA_Right, Bus_to_TCA9548A, Pi_to_PrimaryHub
+2	Cable, 4 x 28 AWG	1	m	SubBus_CH0_LF, SubBus_CH1_LM, SubBus_CH2_LR, SubBus_CH3_RF, SubBus_CH4_RM, SubBus_CH5_RR
+3	Connector, ADS1115 16-Bit ADC Breakout, Left Front Leg (CH0, Addr 0x48), 4 pins, OG	1		ADS1115_LF
+4	Connector, ADS1115 16-Bit ADC Breakout, Left Middle Leg (CH1, Addr 0x48), 4 pins, OG	1		ADS1115_LM
+5	Connector, ADS1115 16-Bit ADC Breakout, Left Rear Leg (CH2, Addr 0x48), 4 pins, OG	1		ADS1115_LR
+6	Connector, ADS1115 16-Bit ADC Breakout, Right Front Leg (CH3, Addr 0x48), 4 pins, OG	1		ADS1115_RF
+7	Connector, ADS1115 16-Bit ADC Breakout, Right Middle Leg (CH4, Addr 0x48), 4 pins, OG	1		ADS1115_RM
+8	Connector, ADS1115 16-Bit ADC Breakout, Right Rear Leg (CH5, Addr 0x48), 4 pins, OG	1		ADS1115_RR
+9	Connector, Adafruit TCA9548A 8-Ch Multiplexer, Central Sensor Hub (Addr 0x71 via A0), 28 pins, BU	1		TCA9548A_Mux
+10	Connector, PCA9685 Left Servo Driver, I2C Logic Header (Addr 0x40), 4 pins, BU	1		PCA9685_Left_I2C
+11	Connector, PCA9685 Right Servo Driver, I2C Logic Header (Addr 0x42 via A1), 4 pins, BU	1		PCA9685_Right_I2C
+12	Connector, Primary I2C1 Bus Distribution, 3.3V STEMMA QT / Header Busbar, 4 pins, GY	1		I2C_Primary_Hub
+13	Connector, Raspberry Pi 4 (40-Pin Header), Pins 1 (3.3V), 3 (SDA1), 5 (SCL1), 6 (GND), 4 pins, GN	1		RaspberryPi_GPIO

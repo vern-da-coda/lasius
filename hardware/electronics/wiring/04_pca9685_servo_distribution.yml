@@ -1,0 +1,168 @@
+# Lasius Hexapod - PCA9685 18-DOF Servo Channel Allocation & Front Expansion Plan
+# Dual PCA9685 Drivers (0x40 Left, 0x42 Right) with Spare Front Slots for Camera Turret & Mandibles
+
+options:
+  fontname: "DejaVu Sans"
+
+connectors:
+  PCA9685_Left:
+    type: PCA9685 Left Board (Addr 0x40)
+    subtype: 4x 4-Channel PWM Header Blocks (CH0-CH15)
+    pinlabels:
+      - CH0_LF_Coxa
+      - CH1_LF_Femur
+      - CH2_LF_Tibia
+      - CH3_FRONT_SPARE_L1
+      - CH4_LM_Coxa
+      - CH5_LM_Femur
+      - CH6_LM_Tibia
+      - CH7_FRONT_SPARE_L2
+      - CH8_LR_Coxa
+      - CH9_LR_Femur
+      - CH10_LR_Tibia
+      - CH11_REAR_SPARE_L3
+      - CH12_AUX_SPARE
+      - CH13_AUX_SPARE
+      - CH14_AUX_SPARE
+      - CH15_AUX_SPARE
+    color: BU
+    notes: "Last pin of each 4-block (CH3, CH7, CH11) + CH12-15 kept free. Note: config.yaml currently maps LR to CH9-11."
+
+  PCA9685_Right:
+    type: PCA9685 Right Board (Addr 0x42 via A1)
+    subtype: 4x 4-Channel PWM Header Blocks (CH0-CH15)
+    pinlabels:
+      - CH0_RF_Coxa
+      - CH1_RF_Femur
+      - CH2_RF_Tibia
+      - CH3_FRONT_SPARE_R1
+      - CH4_RM_Coxa
+      - CH5_RM_Femur
+      - CH6_RM_Tibia
+      - CH7_FRONT_SPARE_R2
+      - CH8_RR_Coxa
+      - CH9_RR_Femur
+      - CH10_RR_Tibia
+      - CH11_REAR_SPARE_R3
+      - CH12_AUX_SPARE
+      - CH13_AUX_SPARE
+      - CH14_AUX_SPARE
+      - CH15_AUX_SPARE
+    color: BU
+    notes: "Solder bridge A1 closed (0x42). Symmetric 4-block layout with CH3 and CH7 free near front for head actuators."
+
+  Leg_LF_Servos: &leg_servo_group
+    type: Left Front Leg (LF)
+    subtype: 3x Reely NR-645 MG BB
+    pinlabels: [Coxa_PWM, Femur_PWM, Tibia_PWM]
+    color: GY
+
+  Leg_LM_Servos:
+    <<: *leg_servo_group
+    type: Left Middle Leg (LM)
+
+  Leg_LR_Servos:
+    <<: *leg_servo_group
+    type: Left Rear Leg (LR)
+
+  Leg_RF_Servos:
+    <<: *leg_servo_group
+    type: Right Front Leg (RF)
+
+  Leg_RM_Servos:
+    <<: *leg_servo_group
+    type: Right Middle Leg (RM)
+
+  Leg_RR_Servos:
+    <<: *leg_servo_group
+    type: Right Rear Leg (RR)
+
+  Front_Head_Expansion_L:
+    type: Front Expansion Slots (Left Side)
+    subtype: Reserved for Mandible L / Camera Turret Pan
+    pinlabels: [Mandible_L_PWM, Turret_Pan_PWM]
+    color: GN
+    notes: "Uses front-most spare slots CH3 and CH7 on 0x40 (no long cable routing through torso)"
+
+  Front_Head_Expansion_R:
+    type: Front Expansion Slots (Right Side)
+    subtype: Reserved for Mandible R / Camera Turret Tilt
+    pinlabels: [Mandible_R_PWM, Turret_Tilt_PWM]
+    color: GN
+    notes: "Uses front-most spare slots CH3 and CH7 on 0x42 (no long cable routing through torso)"
+
+cables:
+  Harness_LF: &leg_pwm_bundle
+    gauge: 24 AWG
+    length: 0.20
+    colors: [OG, YE, BN]
+    wirecount: 3
+
+  Harness_LM:
+    <<: *leg_pwm_bundle
+    length: 0.15
+
+  Harness_LR:
+    <<: *leg_pwm_bundle
+    length: 0.20
+
+  Harness_RF:
+    <<: *leg_pwm_bundle
+    length: 0.20
+
+  Harness_RM:
+    <<: *leg_pwm_bundle
+    length: 0.15
+
+  Harness_RR:
+    <<: *leg_pwm_bundle
+    length: 0.20
+
+  Harness_Head_L:
+    gauge: 26 AWG
+    length: 0.15
+    colors: [WH, VT]
+    wirecount: 2
+
+  Harness_Head_R:
+    gauge: 26 AWG
+    length: 0.15
+    colors: [WH, VT]
+    wirecount: 2
+
+connections:
+  # Left Board (0x40): 3 Legs + Front Expansion Slots (CH3, CH7)
+  -
+    - PCA9685_Left: [CH0_LF_Coxa, CH1_LF_Femur, CH2_LF_Tibia]
+    - Harness_LF: [1, 2, 3]
+    - Leg_LF_Servos: [Coxa_PWM, Femur_PWM, Tibia_PWM]
+  -
+    - PCA9685_Left: [CH4_LM_Coxa, CH5_LM_Femur, CH6_LM_Tibia]
+    - Harness_LM: [1, 2, 3]
+    - Leg_LM_Servos: [Coxa_PWM, Femur_PWM, Tibia_PWM]
+  -
+    - PCA9685_Left: [CH8_LR_Coxa, CH9_LR_Femur, CH10_LR_Tibia]
+    - Harness_LR: [1, 2, 3]
+    - Leg_LR_Servos: [Coxa_PWM, Femur_PWM, Tibia_PWM]
+  -
+    - PCA9685_Left: [CH3_FRONT_SPARE_L1, CH7_FRONT_SPARE_L2]
+    - Harness_Head_L: [1, 2]
+    - Front_Head_Expansion_L: [Mandible_L_PWM, Turret_Pan_PWM]
+
+  # Right Board (0x42): 3 Legs + Front Expansion Slots (CH3, CH7)
+  -
+    - PCA9685_Right: [CH0_RF_Coxa, CH1_RF_Femur, CH2_RF_Tibia]
+    - Harness_RF: [1, 2, 3]
+    - Leg_RF_Servos: [Coxa_PWM, Femur_PWM, Tibia_PWM]
+  -
+    - PCA9685_Right: [CH4_RM_Coxa, CH5_RM_Femur, CH6_RM_Tibia]
+    - Harness_RM: [1, 2, 3]
+    - Leg_RM_Servos: [Coxa_PWM, Femur_PWM, Tibia_PWM]
+  -
+    - PCA9685_Right: [CH8_RR_Coxa, CH9_RR_Femur, CH10_RR_Tibia]
+    - Harness_RR: [1, 2, 3]
+    - Leg_RR_Servos: [Coxa_PWM, Femur_PWM, Tibia_PWM]
+  -
+    - PCA9685_Right: [CH3_FRONT_SPARE_R1, CH7_FRONT_SPARE_R2]
+    - Harness_Head_R: [1, 2]
+    - Front_Head_Expansion_R: [Mandible_R_PWM, Turret_Tilt_PWM]

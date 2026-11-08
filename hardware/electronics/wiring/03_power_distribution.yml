@@ -1,128 +1,215 @@
-# Lasius Hexapod - Power Distribution Architecture
-# LiPo Battery, Main Switch, Dual Step-Down Regulators & Star Ground
+# Lasius Hexapod - Power Distribution & Star Ground Architecture
+# Bench Supply / 2S-3S LiPo (XT60BE-M), 25A Blade Fuse, Main Switch, Dual 6V Servo Rails & 5.1V Pi Logic
+
+options:
+  fontname: "DejaVu Sans"
 
 connectors:
-  Battery_LiPo:
-    type: 2S/3S LiPo Battery (XT60)
+  Power_Inlet_XT60:
+    type: Amass XT60BE-M Chassis Inlet
+    subtype: Bench Supply (6V-12V) or 2S/3S LiPo
     pincount: 2
     pinlabels: [BAT+, BAT-]
     color: YE
+    notes: "Panel-mount rear power inlet (currently operated on bench supply)"
+
+  Inline_Fuse:
+    type: Automotive Blade Fuse Holder
+    subtype: 25A Fast-Acting Fuse
+    pincount: 2
+    pinlabels: [IN, OUT]
+    color: OG
 
   Main_Switch:
-    type: SPST Rocker / Toggle Switch (15A DC)
+    type: High-Current SPST Rocker Switch
+    subtype: "20A DC Continuous Rating"
     pincount: 2
     pinlabels: [IN, OUT]
     color: RD
 
-  UBEC_Servos:
-    type: High-Current Step-Down (6.0V 15A Peak)
+  Pos_Distribution:
+    type: Switched V+ Distribution Bus
+    subtype: High-Current Splice / Terminal
+    pincount: 4
+    pinlabels: [SW_IN+, FEED_UBEC_L+, FEED_UBEC_R+, FEED_PI_BUCK+]
+    color: RD
+
+  Star_Ground_Bus:
+    type: Central Star-GND Busbar
+    subtype: Common Reference Point
+    pincount: 4
+    pinlabels:
+      - BAT_GND
+      - UBEC_L_GND
+      - UBEC_R_GND
+      - PI_BUCK_GND
+    color: BK
+    notes: "Prevents ground bounce between high-current servo loads and 16-bit ADC telemetry"
+
+  UBEC_Left:
+    type: High-Current UBEC Left (6.0V)
+    subtype: 10A-15A Step-Down (or Direct Bench 6V)
     pincount: 4
     pinlabels: [VIN+, GND_IN, VOUT_6V, GND_OUT]
     color: BU
+    notes: "Dedicated rail for Left 9 servos + front aux"
+
+  UBEC_Right:
+    type: High-Current UBEC Right (6.0V)
+    subtype: 10A-15A Step-Down (or Direct Bench 6V)
+    pincount: 4
+    pinlabels: [VIN+, GND_IN, VOUT_6V, GND_OUT]
+    color: BU
+    notes: "Dedicated rail for Right 9 servos + front aux"
 
   StepDown_Pi:
-    type: Logic Step-Down Regulator (5.1V 4.0A)
+    type: Logic Buck Converter (5.1V 4.0A)
+    subtype: Dedicated Raspberry Pi Regulator
     pincount: 4
-    pinlabels: [VIN+, GND_IN, VOUT_5V, GND_OUT]
-    color: GN
-
-  RaspberryPi_Power:
-    type: Raspberry Pi 4 Power Input (USB-C / GPIO)
-    pincount: 2
-    pinlabels: [5V, GND]
+    pinlabels: [VIN+, GND_IN, VOUT_5V1, GND_OUT]
     color: GN
 
   PCA9685_Left_Power:
-    type: PCA9685 Left Terminal (0x40 Servo Power)
+    type: PCA9685 Left Screw Terminal (0x40)
+    subtype: V+ Servo Power Input
     pincount: 2
     pinlabels: [V+_6V, GND]
     color: BU
 
   PCA9685_Right_Power:
-    type: PCA9685 Right Terminal (0x42 Servo Power)
+    type: PCA9685 Right Screw Terminal (0x42)
+    subtype: V+ Servo Power Input
     pincount: 2
     pinlabels: [V+_6V, GND]
     color: BU
 
+  RaspberryPi_Power:
+    type: Raspberry Pi 4 Power Input
+    subtype: USB-C / 5V Header Supply
+    pincount: 2
+    pinlabels: [5V1, GND]
+    color: GN
+
 cables:
-  Bat_to_Switch:
+  Inlet_to_Fuse:
     gauge: 14 AWG
-    length: 0.08
+    length: 0.05
     colors: [RD]
     wirecount: 1
 
-  Switch_to_UBEC:
+  Fuse_to_Switch:
+    gauge: 14 AWG
+    length: 0.05
+    colors: [RD]
+    wirecount: 1
+
+  Switch_to_PosBus:
+    gauge: 14 AWG
+    length: 0.05
+    colors: [RD]
+    wirecount: 1
+
+  Inlet_to_StarGND:
+    gauge: 14 AWG
+    length: 0.08
+    colors: [BK]
+    wirecount: 1
+
+  Supply_UBEC_Left:
     gauge: 16 AWG
-    length: 0.06
-    colors: [RD]
-    wirecount: 1
-
-  Switch_to_PiStepDown:
-    gauge: 18 AWG
-    length: 0.06
-    colors: [RD]
-    wirecount: 1
-
-  Bat_GND_to_UBEC:
-    gauge: 14 AWG
     length: 0.08
-    colors: [BK]
-    wirecount: 1
+    colors: [RD, BK]
+    wirecount: 2
 
-  Bat_GND_to_PiStepDown:
+  Supply_UBEC_Right:
+    gauge: 16 AWG
+    length: 0.08
+    colors: [RD, BK]
+    wirecount: 2
+
+  Supply_Pi_Buck:
     gauge: 18 AWG
     length: 0.08
-    colors: [BK]
-    wirecount: 1
+    colors: [RD, BK]
+    wirecount: 2
 
-  Pi_5V_Supply:
+  Servo_Rail_Left:
+    gauge: 16 AWG
+    length: 0.12
+    colors: [RD, BK]
+    wirecount: 2
+
+  Servo_Rail_Right:
+    gauge: 16 AWG
+    length: 0.12
+    colors: [RD, BK]
+    wirecount: 2
+
+  Pi_5V_Rail:
     gauge: 20 AWG
     length: 0.10
     colors: [RD, BK]
     wirecount: 2
 
-  Servo_Power_Left:
-    gauge: 16 AWG
-    length: 0.12
-    colors: [RD, BK]
-    wirecount: 2
-
-  Servo_Power_Right:
-    gauge: 16 AWG
-    length: 0.12
-    colors: [RD, BK]
-    wirecount: 2
-
 connections:
+  # Main Positive Path: XT60 Inlet -> 25A Fuse -> Master Switch -> V+ Distribution
   -
-    - Battery_LiPo: [BAT+]
-    - Bat_to_Switch: [1]
+    - Power_Inlet_XT60: [BAT+]
+    - Inlet_to_Fuse: [1]
+    - Inline_Fuse: [IN]
+  -
+    - Inline_Fuse: [OUT]
+    - Fuse_to_Switch: [1]
     - Main_Switch: [IN]
   -
     - Main_Switch: [OUT]
-    - Switch_to_UBEC: [1]
-    - UBEC_Servos: [VIN+]
+    - Switch_to_PosBus: [1]
+    - Pos_Distribution: [SW_IN+]
+
+  # Main Ground Path: XT60 Inlet -> Central Star Ground Busbar
   -
-    - Main_Switch: [OUT]
-    - Switch_to_PiStepDown: [1]
+    - Power_Inlet_XT60: [BAT-]
+    - Inlet_to_StarGND: [1]
+    - Star_Ground_Bus: [BAT_GND]
+
+  # Regulator Inputs from V+ Bus and Star Ground
+  -
+    - Pos_Distribution: [FEED_UBEC_L+]
+    - Supply_UBEC_Left: [1]
+    - UBEC_Left: [VIN+]
+  -
+    - Star_Ground_Bus: [UBEC_L_GND]
+    - Supply_UBEC_Left: [2]
+    - UBEC_Left: [GND_IN]
+
+  -
+    - Pos_Distribution: [FEED_UBEC_R+]
+    - Supply_UBEC_Right: [1]
+    - UBEC_Right: [VIN+]
+  -
+    - Star_Ground_Bus: [UBEC_R_GND]
+    - Supply_UBEC_Right: [2]
+    - UBEC_Right: [GND_IN]
+
+  -
+    - Pos_Distribution: [FEED_PI_BUCK+]
+    - Supply_Pi_Buck: [1]
     - StepDown_Pi: [VIN+]
   -
-    - Battery_LiPo: [BAT-]
-    - Bat_GND_to_UBEC: [1]
-    - UBEC_Servos: [GND_IN]
-  -
-    - Battery_LiPo: [BAT-]
-    - Bat_GND_to_PiStepDown: [1]
+    - Star_Ground_Bus: [PI_BUCK_GND]
+    - Supply_Pi_Buck: [2]
     - StepDown_Pi: [GND_IN]
+
+  # Regulated Outputs to PCA9685 Left (0x40), PCA9685 Right (0x42), and Raspberry Pi 4
   -
-    - StepDown_Pi: [VOUT_5V, GND_OUT]
-    - Pi_5V_Supply: [1, 2]
-    - RaspberryPi_Power: [5V, GND]
-  -
-    - UBEC_Servos: [VOUT_6V, GND_OUT]
-    - Servo_Power_Left: [1, 2]
+    - UBEC_Left: [VOUT_6V, GND_OUT]
+    - Servo_Rail_Left: [1, 2]
     - PCA9685_Left_Power: [V+_6V, GND]
   -
-    - UBEC_Servos: [VOUT_6V, GND_OUT]
-    - Servo_Power_Right: [1, 2]
+    - UBEC_Right: [VOUT_6V, GND_OUT]
+    - Servo_Rail_Right: [1, 2]
     - PCA9685_Right_Power: [V+_6V, GND]
+  -
+    - StepDown_Pi: [VOUT_5V1, GND_OUT]
+    - Pi_5V_Rail: [1, 2]
+    - RaspberryPi_Power: [5V1, GND]

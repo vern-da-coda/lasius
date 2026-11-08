@@ -1,13 +1,16 @@
 Id	Description	Qty	Unit	Designators
-1	Cable, 1 x 14 AWG	0.16	m	Bat_GND_to_UBEC, Bat_to_Switch
-2	Cable, 1 x 16 AWG	0.06	m	Switch_to_UBEC
-3	Cable, 1 x 18 AWG	0.14	m	Bat_GND_to_PiStepDown, Switch_to_PiStepDown
-4	Cable, 2 x 16 AWG	0.24	m	Servo_Power_Left, Servo_Power_Right
-5	Cable, 2 x 20 AWG	0.1	m	Pi_5V_Supply
-6	Connector, 2S/3S LiPo Battery (XT60), 2 pins, YE	1		Battery_LiPo
-7	Connector, High-Current Step-Down (6.0V 15A Peak), 4 pins, BU	1		UBEC_Servos
-8	Connector, Logic Step-Down Regulator (5.1V 4.0A), 4 pins, GN	1		StepDown_Pi
-9	Connector, PCA9685 Left Terminal (0x40 Servo Power), 2 pins, BU	1		PCA9685_Left_Power
-10	Connector, PCA9685 Right Terminal (0x42 Servo Power), 2 pins, BU	1		PCA9685_Right_Power
-11	Connector, Raspberry Pi 4 Power Input (USB-C / GPIO), 2 pins, GN	1		RaspberryPi_Power
-12	Connector, SPST Rocker / Toggle Switch (15A DC), 2 pins, RD	1		Main_Switch
+1	Cable, 1 x 14 AWG	0.23	m	Fuse_to_Switch, Inlet_to_Fuse, Inlet_to_StarGND, Switch_to_PosBus
+2	Cable, 2 x 16 AWG	0.4	m	Servo_Rail_Left, Servo_Rail_Right, Supply_UBEC_Left, Supply_UBEC_Right
+3	Cable, 2 x 18 AWG	0.08	m	Supply_Pi_Buck
+4	Cable, 2 x 20 AWG	0.1	m	Pi_5V_Rail
+5	Connector, Amass XT60BE-M Chassis Inlet, Bench Supply (6V-12V) or 2S/3S LiPo, 2 pins, YE	1		Power_Inlet_XT60
+6	Connector, Automotive Blade Fuse Holder, 25A Fast-Acting Fuse, 2 pins, OG	1		Inline_Fuse
+7	Connector, Central Star-GND Busbar, Common Reference Point, 4 pins, BK	1		Star_Ground_Bus
+8	Connector, High-Current SPST Rocker Switch, 20A DC Continuous Rating, 2 pins, RD	1		Main_Switch
+9	Connector, High-Current UBEC Left (6.0V), 10A-15A Step-Down (or Direct Bench 6V), 4 pins, BU	1		UBEC_Left
+10	Connector, High-Current UBEC Right (6.0V), 10A-15A Step-Down (or Direct Bench 6V), 4 pins, BU	1		UBEC_Right
+11	Connector, Logic Buck Converter (5.1V 4.0A), Dedicated Raspberry Pi Regulator, 4 pins, GN	1		StepDown_Pi
+12	Connector, PCA9685 Left Screw Terminal (0x40), V+ Servo Power Input, 2 pins, BU	1		PCA9685_Left_Power
+13	Connector, PCA9685 Right Screw Terminal (0x42), V+ Servo Power Input, 2 pins, BU	1		PCA9685_Right_Power
+14	Connector, Raspberry Pi 4 Power Input, USB-C / 5V Header Supply, 2 pins, GN	1		RaspberryPi_Power
+15	Connector, Switched V+ Distribution Bus, High-Current Splice / Terminal, 4 pins, RD	1		Pos_Distribution

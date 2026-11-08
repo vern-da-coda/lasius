@@ -1,0 +1,13 @@
+Id	Description	Qty	Unit	Designators
+1	Cable, 2 x 26 AWG	0.3	m	Harness_Head_L, Harness_Head_R
+2	Cable, 3 x 24 AWG	1.1	m	Harness_LF, Harness_LM, Harness_LR, Harness_RF, Harness_RM, Harness_RR
+3	Connector, Front Expansion Slots (Left Side), Reserved for Mandible L / Camera Turret Pan, 2 pins, GN	1		Front_Head_Expansion_L
+4	Connector, Front Expansion Slots (Right Side), Reserved for Mandible R / Camera Turret Tilt, 2 pins, GN	1		Front_Head_Expansion_R
+5	Connector, Left Front Leg (LF), 3x Reely NR-645 MG BB, 3 pins, GY	1		Leg_LF_Servos
+6	Connector, Left Middle Leg (LM), 3x Reely NR-645 MG BB, 3 pins, GY	1		Leg_LM_Servos
+7	Connector, Left Rear Leg (LR), 3x Reely NR-645 MG BB, 3 pins, GY	1		Leg_LR_Servos
+8	Connector, PCA9685 Left Board (Addr 0x40), 4x 4-Channel PWM Header Blocks (CH0-CH15), 16 pins, BU	1		PCA9685_Left
+9	Connector, PCA9685 Right Board (Addr 0x42 via A1), 4x 4-Channel PWM Header Blocks (CH0-CH15), 16 pins, BU	1		PCA9685_Right
+10	Connector, Right Front Leg (RF), 3x Reely NR-645 MG BB, 3 pins, GY	1		Leg_RF_Servos
+11	Connector, Right Middle Leg (RM), 3x Reely NR-645 MG BB, 3 pins, GY	1		Leg_RM_Servos
+12	Connector, Right Rear Leg (RR), 3x Reely NR-645 MG BB, 3 pins, GY	1		Leg_RR_Servos

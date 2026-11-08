@@ -1,10 +1,13 @@
 # Lasius Hexapod - Single Leg Wiring & Potentiometer Feedback Harness
-# 3x Reely NR-645 MG Servos, ADS1115 ADC, 100nF MLCC Low-Pass Filters & Foot Switch
+# 3x Reely NR-645 MG BB Servos, Omron D2F-L Foot Switch, ADS1115 ADC, 4x 100nF MLCC & 10k Pull-Up
+
+options:
+  fontname: "DejaVu Sans"
 
 connectors:
   PCA9685_Leg_Block:
-    type: PCA9685 3x3 Pin Header (Channels N, N+1, N+2)
-    pincount: 9
+    type: PCA9685 4-Channel Header Block
+    subtype: Channels 4k, 4k+1, 4k+2 (4k+3 Spare)
     pinlabels:
       - Coxa_PWM
       - Coxa_V+
@@ -15,43 +18,68 @@ connectors:
       - Tibia_PWM
       - Tibia_V+
       - Tibia_GND
+      - Spare_CH_PWM
+      - Spare_CH_V+
+      - Spare_CH_GND
+    color: BU
+    notes: "4th slot in each 4-channel block (CH3, CH7, CH11) remains free for front/aux servos"
+
+  TCA9548A_SubBus:
+    type: TCA9548A Sub-Channel Uplink (CHx)
+    subtype: 4-Pin I2C + 3.3V Feed
+    pinlabels: [3V3, GND, SDA, SCL]
     color: BU
 
-  Servo_Coxa:
-    type: Reely NR-645 MG BB (Coxa Servo)
-    pincount: 4
+  Servo_Coxa: &servo_template
+    type: Reely NR-645 MG BB
+    subtype: Modified 4-Wire Servo (Coxa)
     pinlabels: [PWM, V+, GND, POT_WIPER]
     color: GY
+    notes: "Wiper voltage 0.88V-2.25V (1.563V @ 0 deg)"
 
   Servo_Femur:
-    type: Reely NR-645 MG BB (Femur Servo)
-    pincount: 4
-    pinlabels: [PWM, V+, GND, POT_WIPER]
-    color: GY
+    <<: *servo_template
+    subtype: Modified 4-Wire Servo (Femur)
 
   Servo_Tibia:
-    type: Reely NR-645 MG BB (Tibia Servo)
-    pincount: 4
-    pinlabels: [PWM, V+, GND, POT_WIPER]
-    color: GY
+    <<: *servo_template
+    subtype: Modified 4-Wire Servo (Tibia)
 
   Foot_Sensor:
-    type: Omron D2F-L Microswitch / Contact Sensor
-    pincount: 2
-    pinlabels: [SIG, GND]
+    type: Omron D2F-L Microswitch
+    subtype: Tactile Foot Contact (Active-Low)
+    pinlabels: [NO_SIG, COM_GND]
     color: BK
 
-  Filter_Array_100nF:
-    type: 4x 100nF 50V MLCC Low-Pass Capacitors (Soldered on ADC pins)
-    pincount: 4
-    pinlabels: [C_A0_GND, C_A1_GND, C_A2_GND, C_A3_GND]
-    color: YE
-
   ADS1115_Leg_Board:
-    type: ADS1115 16-Bit ADC Breakout (0x48 on Mux CHx)
-    pincount: 8
-    pinlabels: [A0_Coxa, A1_Femur, A2_Tibia, A3_Foot, VDD_3V3, GND, SCL, SDA]
+    type: ADS1115 16-Bit ADC Breakout
+    subtype: Leg Telemetry Module (Addr 0x48)
+    pinlabels:
+      - VDD_3V3
+      - GND
+      - SDA
+      - SCL
+      - ADDR
+      - A0_Coxa
+      - A1_Femur
+      - A2_Tibia
+      - A3_Foot
     color: OG
+    notes: "ADDR bridged to GND (0x48). PGA Gain = 1 (+/-4.096V, 860 SPS)."
+
+  Onboard_RC_Pullup:
+    type: Passive Filter + Pull-Up Network
+    subtype: Soldered Directly Under ADS1115 Header
+    pinlabels:
+      - C0_A0
+      - C1_A1
+      - C2_A2
+      - C3_A3
+      - R_PULLUP_A3
+      - R_PULLUP_3V3
+      - C_COMMON_GND
+    color: YE
+    notes: "4x 100nF 50V MLCC (A0..A3 to GND, fc ~ 636 Hz) + 1x 10kOhm Pull-Up (A3 to VDD_3V3)"
 
 cables:
   Coxa_Power_PWM:
@@ -96,13 +124,26 @@ cables:
     colors: [BU, BK]
     wirecount: 2
 
-  Filter_Grounding:
-    gauge: 26 AWG
-    length: 0.02
-    colors: [YE, YE, YE, YE]
+  SubBus_I2C_Feed:
+    gauge: 28 AWG
+    length: 0.20
+    colors: [RD, BK, BU, YE]
     wirecount: 4
 
+  Direct_Header_Solder:
+    gauge: 26 AWG
+    length: 0.01
+    colors: [YE, YE, YE, YE, VT, RD, BK]
+    wirecount: 7
+
 connections:
+  # I2C & 3.3V Supply from TCA9548A Multiplexer to Leg ADS1115
+  -
+    - TCA9548A_SubBus: [3V3, GND, SDA, SCL]
+    - SubBus_I2C_Feed: [1, 2, 3, 4]
+    - ADS1115_Leg_Board: [VDD_3V3, GND, SDA, SCL]
+
+  # Coxa Servo PWM + Potentiometer Wiper
   -
     - PCA9685_Leg_Block: [Coxa_PWM, Coxa_V+, Coxa_GND]
     - Coxa_Power_PWM: [1, 2, 3]
@@ -112,6 +153,7 @@ connections:
     - Coxa_Pot_Line: [1]
     - ADS1115_Leg_Board: [A0_Coxa]
 
+  # Femur Servo PWM + Potentiometer Wiper
   -
     - PCA9685_Leg_Block: [Femur_PWM, Femur_V+, Femur_GND]
     - Femur_Power_PWM: [1, 2, 3]
@@ -121,6 +163,7 @@ connections:
     - Femur_Pot_Line: [1]
     - ADS1115_Leg_Board: [A1_Femur]
 
+  # Tibia Servo PWM + Potentiometer Wiper
   -
     - PCA9685_Leg_Block: [Tibia_PWM, Tibia_V+, Tibia_GND]
     - Tibia_Power_PWM: [1, 2, 3]
@@ -130,12 +173,14 @@ connections:
     - Tibia_Pot_Line: [1]
     - ADS1115_Leg_Board: [A2_Tibia]
 
+  # Tactile Foot Switch (Active-Low to GND)
   -
-    - Foot_Sensor: [SIG, GND]
+    - Foot_Sensor: [NO_SIG, COM_GND]
     - Foot_Switch_Line: [1, 2]
     - ADS1115_Leg_Board: [A3_Foot, GND]
 
+  # Soldered Onboard 4x 100nF Low-Pass Capacitors (Ax -> GND) & 10k Pull-Up (A3 -> VDD_3V3)
   -
-    - Filter_Array_100nF: [C_A0_GND, C_A1_GND, C_A2_GND, C_A3_GND]
-    - Filter_Grounding: [1, 2, 3, 4]
-    - ADS1115_Leg_Board: [A0_Coxa, A1_Femur, A2_Tibia, A3_Foot]
+    - ADS1115_Leg_Board: [A0_Coxa, A1_Femur, A2_Tibia, A3_Foot, A3_Foot, VDD_3V3, GND]
+    - Direct_Header_Solder: [1, 2, 3, 4, 5, 6, 7]
+    - Onboard_RC_Pullup: [C0_A0, C1_A1, C2_A2, C3_A3, R_PULLUP_A3, R_PULLUP_3V3, C_COMMON_GND]
