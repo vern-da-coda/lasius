@@ -32,6 +32,86 @@ stl_femur_path = f"{export_stl_dir}/femur.stl"
 stl_cover_path = f"{export_stl_dir}/femur_cover.stl"
 
 
+def make_filleted_polygon_2d(pts, r_list):
+    """
+    Construct a planar Part.Face in XY plane from a list of vertices pts (CCW)
+    with each corner i filleted with radius r_list[i].
+    """
+    n = len(pts)
+    if isinstance(r_list, (int, float)):
+        r_list = [float(r_list)] * n
+    tangents_in, tangents_out, arcs = [], [], []
+    for i in range(n):
+        p_prev, p_curr, p_next = pts[(i - 1) % n], pts[i], pts[(i + 1) % n]
+        r = r_list[i]
+        v_in = (p_curr - p_prev).normalize()
+        v_out = (p_next - p_curr).normalize()
+        cross_z = v_in.x * v_out.y - v_in.y * v_out.x
+        dot = max(-1.0, min(1.0, v_in.dot(v_out)))
+        turn_angle = math.atan2(cross_z, dot)
+        half_beta = 0.5 * (math.pi - abs(turn_angle))
+        d = 0.0 if half_beta < 1e-4 else r / math.tan(half_beta)
+        t1 = p_curr - v_in * d
+        t2 = p_curr + v_out * d
+        b = (v_out - v_in).normalize()
+        if cross_z < 0:
+            b = -b
+        center = p_curr + b * (r / math.sin(half_beta))
+        p_mid = center - b * r
+        tangents_in.append(t1)
+        tangents_out.append(t2)
+        arcs.append(Part.Arc(t1, p_mid, t2).toShape() if d > 1e-4 else None)
+    wire_edges = []
+    for i in range(n):
+        p_start, p_end = tangents_out[i], tangents_in[(i + 1) % n]
+        if (p_end - p_start).Length > 1e-4:
+            wire_edges.append(Part.makeLine(p_start, p_end))
+        if arcs[(i + 1) % n] is not None:
+            wire_edges.append(arcs[(i + 1) % n])
+    return Part.Face(Part.Wire(wire_edges))
+
+
+def extrude_face_xz(face_xy, y_pos, y_extrude):
+    """
+    Map an XY face to XZ plane at Y = y_pos and extrude by y_extrude along Y.
+    """
+    edges = []
+    for e in face_xy.OuterWire.Edges:
+        pts = [App.Vector(v.Point.x, y_pos, v.Point.y) for v in e.Vertexes]
+        if "Line" in str(type(e.Curve)):
+            edges.append(Part.makeLine(pts[0], pts[1]))
+        else:
+            pm = e.valueAt(0.5 * (e.FirstParameter + e.LastParameter))
+            edges.append(Part.Arc(pts[0], App.Vector(pm.x, y_pos, pm.y), pts[1]).toShape())
+    return Part.Face(Part.Wire(edges)).extrude(App.Vector(0.0, y_extrude, 0.0))
+
+
+def make_chevron_slot(cx, cy, arm_len, width, angle_deg=45.0, z_min=7.0, z_max=20.0):
+    """
+    Construct a 45-degree chevron inspection/ventilation slot in the cover.
+    """
+    rad = math.radians(angle_deg)
+    dx = arm_len * math.cos(rad)
+    dy = arm_len * math.sin(rad)
+    p_apex = App.Vector(cx, cy, z_min)
+    p_top = App.Vector(cx - dx, cy + dy, z_min)
+    p_bot = App.Vector(cx - dx, cy - dy, z_min)
+
+    def make_pill(p1, p2, r):
+        v = (p2 - p1).normalize()
+        n = App.Vector(-v.y, v.x, 0.0) * r
+        c1 = Part.makeCylinder(r, z_max - z_min, p1)
+        c2 = Part.makeCylinder(r, z_max - z_min, p2)
+        pts = [p1 + n, p2 + n, p2 - n, p1 - n, p1 + n]
+        box = Part.Face(Part.makePolygon(pts)).extrude(App.Vector(0, 0, z_max - z_min))
+        return box.fuse(c1).fuse(c2)
+
+    r = 0.5 * width
+    pill1 = make_pill(p_apex, p_top, r)
+    pill2 = make_pill(p_apex, p_bot, r)
+    return pill1.fuse(pill2)
+
+
 def build_femur_shapes():
     # =========================================================================
     # 1. Core Kinematic & Dimensional Parameters (mm)
@@ -218,44 +298,69 @@ def build_femur_shapes():
         base_solid = base_solid.fuse(collar)
 
     # =========================================================================
-    # 5. Sculpted I-Beam Relief Pockets in the 4 U-Fork Cheeks (Non-Through!)
+    # 5. 45-Degree Truss Pockets in Cheeks & Symmetrical Flank A-Truss Pockets
     # =========================================================================
-    # Instead of cutting completely through the U-fork cheeks (which would weaken
-    # the load path between pivot and central body), we carve 1.50 mm deep blind
-    # organic teardrop pockets into the outer faces only. This preserves a solid,
-    # continuous 4.50 mm structural web framed by 6.00 mm thick outer flanges
-    # (true I-beam / framework cross-section)!
-    def make_blind_teardrop_pocket(x1, r1, x2, r2, y_start, y_len):
-        dx = x2 - x1
-        dr = r1 - r2
-        alpha = math.asin(dr / dx)
-        ca = math.cos(alpha)
-        sa = math.sin(alpha)
+    # A. 45-Degree Cheek Truss Pockets (Non-Through, 1.80 mm deep):
+    # Instead of simple horizontal teardrops, we carve upper and lower triangulated
+    # pockets leaving a 45-degree chevron diagonal rib directly connecting the
+    # U-throat bulkheads (X = 26 and X = 74) to the bearing/horn bosses (X = 0 and X = 100).
+    # Leaves a solid, continuous 4.20 mm structural inner web!
+    p_u1 = App.Vector(13.00, 2.50, 0.0)
+    p_u2 = App.Vector(24.50, 11.50, 0.0)
+    p_u3 = App.Vector(13.00, 11.50, 0.0)
+    fu_left = make_filleted_polygon_2d([p_u1, p_u2, p_u3], 1.60)
 
-        p1_top = App.Vector(x1 + r1 * sa, y_start, r1 * ca)
-        p2_top = App.Vector(x2 + r2 * sa, y_start, r2 * ca)
-        p2_mid = App.Vector(x2 + r2 * math.copysign(1.0, dx), y_start, 0.0)
-        p2_bot = App.Vector(x2 + r2 * sa, y_start, -r2 * ca)
-        p1_bot = App.Vector(x1 + r1 * sa, y_start, -r1 * ca)
-        p1_mid = App.Vector(x1 - r1 * math.copysign(1.0, dx), y_start, 0.0)
+    p_d1 = App.Vector(13.00, -2.50, 0.0)
+    p_d2 = App.Vector(13.00, -11.50, 0.0)
+    p_d3 = App.Vector(24.50, -11.50, 0.0)
+    fd_left = make_filleted_polygon_2d([p_d1, p_d2, p_d3], 1.60)
 
-        edges = [
-            Part.makeLine(p1_top, p2_top),
-            Part.Edge(Part.ArcOfCircle(p2_top, p2_mid, p2_bot)),
-            Part.makeLine(p2_bot, p1_bot),
-            Part.Edge(Part.ArcOfCircle(p1_bot, p1_mid, p1_top)),
-        ]
-        face = Part.Face(Part.Wire(edges))
-        return face.extrude(App.Vector(0.0, y_len, 0.0))
+    p_ru1 = App.Vector(87.00, 2.50, 0.0)
+    p_ru2 = App.Vector(87.00, 11.50, 0.0)
+    p_ru3 = App.Vector(75.50, 11.50, 0.0)
+    fu_right = make_filleted_polygon_2d([p_ru1, p_ru2, p_ru3], 1.60)
 
-    pocket_depth = 1.50  # Leaves 4.50 mm solid continuous inner web!
-    # Front jaw outer blind pockets (Y = +33.80 .. +35.30 mm):
-    pf_left = make_blind_teardrop_pocket(15.5, 3.8, 19.5, 4.8, Y_front_out - pocket_depth, pocket_depth + 1.0)
-    pf_right = make_blind_teardrop_pocket(84.5, 3.8, 80.5, 4.8, Y_front_out - pocket_depth, pocket_depth + 1.0)
-    # Rear jaw outer blind pockets (Y = -28.00 .. -26.50 mm):
-    pr_left = make_blind_teardrop_pocket(15.5, 3.8, 19.5, 4.8, Y_rear_out - 1.0, pocket_depth + 1.0)
-    pr_right = make_blind_teardrop_pocket(84.5, 3.8, 80.5, 4.8, Y_rear_out - 1.0, pocket_depth + 1.0)
-    base_solid = base_solid.cut(pf_left).cut(pf_right).cut(pr_left).cut(pr_right)
+    p_rd1 = App.Vector(87.00, -2.50, 0.0)
+    p_rd2 = App.Vector(75.50, -11.50, 0.0)
+    p_rd3 = App.Vector(87.00, -11.50, 0.0)
+    fd_right = make_filleted_polygon_2d([p_rd1, p_rd2, p_rd3], 1.60)
+
+    # Cut 1.80 mm deep pockets into Front Cheeks (outer face is Y = 35.30):
+    for f in [fu_left, fd_left, fu_right, fd_right]:
+        base_solid = base_solid.cut(extrude_face_xz(f, 33.50, 5.0))
+
+    # Cut 1.80 mm deep pockets into Rear Cheeks (outer face is Y = -28.00):
+    for f in [fu_left, fd_left, fu_right, fd_right]:
+        base_solid = base_solid.cut(extrude_face_xz(f, -30.00, 3.80))
+
+    # B. Central Flank Symmetrical 45-Degree A-Truss Pockets:
+    # Sculpted into the massive 9.65 mm outer walls flanking the ADS1115 chamber.
+    # Leaves a solid 3.35 mm inner chamber wall to keep the ADC chamber 100% sealed.
+    # 1. Central triangle (apex up at X = 50.00, Z = 3.80)
+    p_c1 = App.Vector(38.00, -8.50, 0.0)
+    p_c2 = App.Vector(62.00, -8.50, 0.0)
+    p_c3 = App.Vector(50.00, 3.80, 0.0)
+    fc_flank = make_filleted_polygon_2d([p_c1, p_c2, p_c3], 1.60)
+
+    # 2. Left corner triangle (hypotenuse at 45 deg, strut width = 3.20 mm)
+    p_l1 = App.Vector(34.50, -7.00, 0.0)
+    p_l2 = App.Vector(46.00, 5.00, 0.0)
+    p_l3 = App.Vector(34.50, 5.00, 0.0)
+    fl_flank = make_filleted_polygon_2d([p_l1, p_l2, p_l3], 1.60)
+
+    # 3. Right corner triangle (mirror across X = 50.0)
+    p_r1 = App.Vector(54.00, 5.00, 0.0)
+    p_r2 = App.Vector(65.50, -7.00, 0.0)
+    p_r3 = App.Vector(65.50, 5.00, 0.0)
+    fr_flank = make_filleted_polygon_2d([p_r1, p_r2, p_r3], 1.60)
+
+    # Cut Front Flank (pocket floor at Y = +20.50, inner chamber wall remains 3.35 mm solid):
+    for f in [fc_flank, fl_flank, fr_flank]:
+        base_solid = base_solid.cut(extrude_face_xz(f, 20.50, 20.00))
+
+    # Cut Rear Flank (pocket floor at Y = -13.20, inner chamber wall remains 3.35 mm solid):
+    for f in [fc_flank, fl_flank, fr_flank]:
+        base_solid = base_solid.cut(extrude_face_xz(f, -35.00, 21.80))
 
     # =========================================================================
     # 6. Pivot Hub Bores (2x Ø8.0 mm), Reinforced Horn Bosses & Bearing Seats
@@ -402,10 +507,9 @@ def build_femur_shapes():
         sh_head = Part.makeCylinder(2.10, 5.0, App.Vector(sx, sy, lid_z_floor + 2.80))
         cover_solid = cover_solid.cut(sh_through).cut(sh_csink).cut(sh_head)
 
-    # 3 subtle organic inspection / ventilation slots in the cover center:
+    # 3 subtle 45-degree chevron inspection / ventilation louvers in the cover center:
     for dx_slot in [-7.0, 0.0, 7.0]:
-        slot = make_rounded_rect_z(50.0 + dx_slot - 1.2, 50.0 + dx_slot + 1.2,
-                                   Y_mid - 6.0, Y_mid + 6.0, 1.1, lid_z_floor - 2.0, 20.0)
+        slot = make_chevron_slot(50.0 + dx_slot, Y_mid, 5.5, 2.0, 45.0, lid_z_floor - 2.0, 20.0)
         cover_solid = cover_solid.cut(slot)
 
     # =========================================================================
