@@ -236,6 +236,38 @@ def build_coxa_bracket_v2_shape():
     shape = shape.cut(extrude_face_xz(f_t_bot, -2.0, 8.0))
     shape = shape.cut(extrude_face_xz(f_t_top, -2.0, 8.0))
 
+    # C. Coxa Servo Compartment Top & Bottom Symmetrical 45-Degree A-Truss Windows
+    # Relieves the massive 4.15 mm solid top and bottom casing walls around the Coxa Servo (X in [67.0, 104.0], Y in [6.0, 26.0])
+    # 1. Central triangle (apex at X = 85.50, Y = 22.50)
+    p_c1_tb = App.Vector(73.0, 6.0, 0.0)
+    p_c2_tb = App.Vector(98.0, 6.0, 0.0)
+    p_c3_tb = App.Vector(85.5, 22.5, 0.0)
+    fc_tb = make_filleted_polygon_2d([p_c1_tb, p_c2_tb, p_c3_tb], 1.60)
+
+    # 2. Left triangle (hypotenuse at 45 deg, strut width = 3.20 mm)
+    p_l1_tb = App.Vector(67.5, 7.5, 0.0)
+    p_l2_tb = App.Vector(81.5, 26.0, 0.0)
+    p_l3_tb = App.Vector(67.5, 26.0, 0.0)
+    fl_tb = make_filleted_polygon_2d([p_l1_tb, p_l2_tb, p_l3_tb], 1.60)
+
+    # 3. Right triangle (mirror across X = 85.50)
+    p_r1_tb = App.Vector(89.5, 26.0, 0.0)
+    p_r2_tb = App.Vector(103.5, 7.5, 0.0)
+    p_r3_tb = App.Vector(103.5, 26.0, 0.0)
+    fr_tb = make_filleted_polygon_2d([p_r1_tb, p_r2_tb, p_r3_tb], 1.60)
+
+    # Cut Top Wall (Z in [18.0, 22.15]):
+    for f in [fc_tb, fl_tb, fr_tb]:
+        cut_top = f.extrude(App.Vector(0.0, 0.0, 10.0))
+        cut_top.translate(App.Vector(0.0, 0.0, 16.0))
+        shape = shape.cut(cut_top)
+
+    # Cut Bottom Wall (Z in [-4.15, 0.0]):
+    for f in [fc_tb, fl_tb, fr_tb]:
+        cut_bot = f.extrude(App.Vector(0.0, 0.0, 10.0))
+        cut_bot.translate(App.Vector(0.0, 0.0, -6.0))
+        shape = shape.cut(cut_bot)
+
     # -------------------------------------------------------------
     # 4. Bulkhead & Tail Block Weight-Relief Cavities
     # -------------------------------------------------------------
