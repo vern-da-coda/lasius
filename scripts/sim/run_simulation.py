@@ -1,19 +1,24 @@
 #!/usr/bin/env python3
 """
 Lasius Hexapod Physics Simulation Runner
-Supports PyBullet and MuJoCo simulation engines with 50 Hz OmniGait locomotion.
+Supports PyBullet and MuJoCo physics engines, 50 Hz OmniGait locomotion,
+and real-time WebSocket teleoperation for lasius-pilot and lasius-dashboard.
 
 Usage:
   python3 scripts/sim/run_simulation.py               # Headless physics sanity test (DIRECT mode)
-  python3 scripts/sim/run_simulation.py --gui         # Interactive 3D physics GUI with keyboard control
-  python3 scripts/sim/run_simulation.py --gui --walk  # Interactive 3D physics GUI walking forward
+  python3 scripts/sim/run_simulation.py --gui         # Interactive 3D GUI with keyboard control
+  python3 scripts/sim/run_simulation.py --gui --walk  # Interactive 3D GUI walking forward
+  python3 scripts/sim/run_simulation.py --gui --ws    # Interactive 3D GUI with WebSocket server for lasius-pilot
   python3 scripts/sim/run_simulation.py --engine mujoco # MuJoCo simulation
 """
 
 import argparse
+import asyncio
+import json
 import math
 import os
 import sys
+import threading
 import time
 
 REPO_ROOT = "/home/bjoern/Workspace/Hexapods/lasius"
@@ -23,7 +28,120 @@ URDF_PATH = f"{REPO_ROOT}/hardware/mechanics/export/urdf/lasius.urdf"
 sys.path.insert(0, os.path.join(REPO_ROOT, "software/lasius-core/src"))
 
 
-def run_pybullet(gui=False, steps=240, walk=False):
+class SimWebSocketServer:
+    """
+    Lightweight asynchronous WebSocket server bridging lasius-pilot teleoperation
+    and lasius-dashboard to the running PyBullet physics simulation.
+    """
+    def __init__(self, host="0.0.0.0", port=8765):
+        self.host = host
+        self.port = port
+        self.clients = set()
+        self.stop_event = None
+        self.loop = None
+        self.thread = None
+        self.is_running = False
+        self.state = {
+            "walk_x": 0.0,
+            "walk_y": 0.0,
+            "turn_z": 0.0,
+            "gait_type": "tripod",
+            "gait_speed": 1.0,
+            "body_height": -80.0,
+            "paused": False,
+            "emergency_stop": False,
+            "updated": False,
+        }
+
+    async def _handler(self, ws):
+        self.clients.add(ws)
+        print(f"✔ [WebSocket] lasius-pilot / Telemetrie-Client verbunden ({ws.remote_address})")
+        try:
+            await ws.send(json.dumps({"type": "layout", "data": {}}))
+            await ws.send(json.dumps({"type": "state", "data": {"status": "sim_active"}}))
+            async for raw in ws:
+                try:
+                    data = json.loads(raw)
+                    act = data.get("action")
+                    if act == "set_velocity":
+                        self.state["walk_x"] = float(data.get("walk_x", 0.0))
+                        self.state["walk_y"] = float(data.get("walk_y", 0.0))
+                        self.state["turn_z"] = float(data.get("turn_z", 0.0))
+                        self.state["updated"] = True
+                    elif act == "set_gait_type":
+                        self.state["gait_type"] = data.get("value", "tripod")
+                        self.state["updated"] = True
+                        print(f"⚙️ [WebSocket] Gangart gewechselt zu: {self.state['gait_type'].upper()}")
+                    elif act == "set_speed":
+                        self.state["gait_speed"] = float(data.get("value", 1.0))
+                        self.state["updated"] = True
+                    elif act == "set_height":
+                        delta = float(data.get("value", 0.0))
+                        self.state["body_height"] = max(-130.0, min(-50.0, self.state["body_height"] + delta))
+                        self.state["updated"] = True
+                    elif act == "emergency_stop":
+                        self.state["walk_x"] = 0.0
+                        self.state["walk_y"] = 0.0
+                        self.state["turn_z"] = 0.0
+                        self.state["emergency_stop"] = True
+                        self.state["updated"] = True
+                        print("🚨 [WebSocket] Not-Aus (E-Stop) empfangen!")
+                    elif act == "reset_pose":
+                        self.state["walk_x"] = 0.0
+                        self.state["walk_y"] = 0.0
+                        self.state["turn_z"] = 0.0
+                        self.state["body_height"] = -80.0
+                        self.state["updated"] = True
+                        print("↺ [WebSocket] Pose auf Neutral zurückgesetzt.")
+                    elif act == "toggle_pause":
+                        self.state["paused"] = not self.state["paused"]
+                        self.state["updated"] = True
+                except Exception as e:
+                    pass
+        finally:
+            self.clients.discard(ws)
+            print("ℹ️ [WebSocket] Client getrennt.")
+
+    async def _serve(self):
+        import websockets
+        self.stop_event = asyncio.Event()
+        try:
+            async with websockets.serve(self._handler, self.host, self.port):
+                self.is_running = True
+                await self.stop_event.wait()
+        except OSError as e:
+            print(f"⚠️ [WebSocket] Port {self.port} konnte nicht gebunden werden ({e}). Verwende ggf. --ws-port.")
+            self.is_running = False
+
+    def start(self):
+        def run_thread():
+            self.loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(self.loop)
+            self.loop.run_until_complete(self._serve())
+
+        self.thread = threading.Thread(target=run_thread, daemon=True)
+        self.thread.start()
+        # Give server a moment to bind
+        time.sleep(0.15)
+        if self.is_running:
+            print(f"✔ [WebSocket] Server aktiv auf ws://{self.host}:{self.port} (bereit für lasius-pilot)")
+
+    def broadcast(self, data_dict):
+        if not self.clients or not self.loop or not self.is_running:
+            return
+        msg = json.dumps(data_dict)
+        for client in self.clients.copy():
+            try:
+                asyncio.run_coroutine_threadsafe(client.send(msg), self.loop)
+            except Exception:
+                pass
+
+    def stop(self):
+        if self.loop and self.stop_event:
+            self.loop.call_soon_threadsafe(self.stop_event.set)
+
+
+def run_pybullet(gui=False, steps=240, walk=False, enable_ws=False, ws_port=8765):
     try:
         import pybullet as p
         import pybullet_data
@@ -37,6 +155,12 @@ def run_pybullet(gui=False, steps=240, walk=False):
     except ImportError as e:
         print(f"❌ Error importing lasius-core motion modules: {e}")
         return False
+
+    # Start WebSocket Server if requested
+    ws_server = None
+    if enable_ws:
+        ws_server = SimWebSocketServer(port=ws_port)
+        ws_server.start()
 
     mode = p.GUI if gui else p.DIRECT
     physics_client = p.connect(mode)
@@ -118,6 +242,11 @@ def run_pybullet(gui=False, steps=240, walk=False):
         print("  │  • Leertaste:        Stopp / Neutraler Stand           │")
         print("  │  • T / R / W:        Tripod / Ripple / Wave Gangart    │")
         print("  │                                                        │")
+        if enable_ws and ws_server and ws_server.is_running:
+            print(f"  │  🌐 Gamepad-Steuerung via lasius-pilot (WebSocket):    │")
+            print(f"  │  • Server aktiv auf ws://127.0.0.1:{ws_port}            │")
+            print(f"  │  • Befehl: uv run lasius-pilot --host 127.0.0.1        │")
+            print("  │                                                        │")
         print("  │  Maus-Kamerasteuerung:                                 │")
         print("  │  • Kamera drehen:    Strg + Linke Maustaste            │")
         print("  │  • Verschieben:      Strg + Mittlere Maustaste         │")
@@ -127,11 +256,26 @@ def run_pybullet(gui=False, steps=240, walk=False):
         if walk:
             print("🚀 Modus: Roboter läuft automatisch im Tripod-Gang vorwärts!\n")
         else:
-            print("ℹ️  Modus: Roboter steht bereit. Drücke Pfeil-Taste ↑ um vorwärts zu laufen.\n")
+            print("ℹ️  Modus: Roboter steht bereit. Drücke Pfeil-Taste ↑ oder bewege den Gamepad-Stick.\n")
 
+        tick_count = 0
         try:
             while p.getConnectionInfo().get("isConnected", 0):
-                # Process keyboard events
+                tick_count += 1
+
+                # 1. Process WebSocket commands from lasius-pilot
+                if ws_server and ws_server.state["updated"]:
+                    ws_server.state["updated"] = False
+                    gait.walk_x = ws_server.state["walk_x"]
+                    gait.walk_y = ws_server.state["walk_y"]
+                    gait.turn_z = ws_server.state["turn_z"]
+                    gait.gait_speed = ws_server.state["gait_speed"]
+                    gait.body_height = ws_server.state["body_height"]
+                    target_gait_str = ws_server.state["gait_type"]
+                    if target_gait_str in [g.value for g in GaitType]:
+                        gait.gait_type = GaitType(target_gait_str)
+
+                # 2. Process local keyboard events
                 keys = p.getKeyboardEvents()
                 if keys:
                     if p.B3G_UP_ARROW in keys and (keys[p.B3G_UP_ARROW] & p.KEY_WAS_TRIGGERED):
@@ -165,7 +309,7 @@ def run_pybullet(gui=False, steps=240, walk=False):
                         gait.gait_type = GaitType.WAVE
                         print("⚙️ Gangart: Wave Gait (statuarisch, 1 Bein gleichzeitig)")
 
-                # Compute next foot coordinates via Gait engine
+                # 3. Compute next foot coordinates via Gait engine
                 coords_dict = gait.tick()
                 for leg_id, (x, y, z) in coords_dict.items():
                     prefix = leg_map[leg_id]
@@ -177,17 +321,49 @@ def run_pybullet(gui=False, steps=240, walk=False):
                     except Exception:
                         pass
 
+                # 4. Broadcast live telemetry to connected WebSocket clients (10 Hz rate)
+                if ws_server and ws_server.clients and tick_count % 5 == 0:
+                    pos, orn = p.getBasePositionAndOrientation(robot_id)
+                    rpy = p.getEulerFromQuaternion(orn)
+                    telemetry = {
+                        "type": "state",
+                        "data": {
+                            "connected": True,
+                            "locomotion_active": bool(gait.walk_x or gait.walk_y or gait.turn_z),
+                            "gait_type": gait.gait_type.value,
+                            "speed": gait.gait_speed,
+                            "body_height": gait.body_height,
+                            "position": [round(val, 3) for val in pos],
+                            "rpy_deg": [round(math.degrees(a), 1) for a in rpy],
+                        }
+                    }
+                    ws_server.broadcast(telemetry)
+
                 for _ in range(physics_substeps):
                     p.stepSimulation()
                     time.sleep(1.0 / 240.0)
         except (KeyboardInterrupt, Exception):
             pass
+        finally:
+            if ws_server:
+                ws_server.stop()
     else:
         # Headless benchmark mode
         print(f"Stepping physics simulation ({steps} steps @ 240 Hz = {steps/240.0:.2f}s, walk={walk})...")
         t0 = time.time()
         ticks = steps // physics_substeps
-        for _ in range(ticks):
+        for tick_idx in range(ticks):
+            if ws_server and ws_server.state["updated"]:
+                ws_server.state["updated"] = False
+                gait.walk_x = ws_server.state["walk_x"]
+                gait.walk_y = ws_server.state["walk_y"]
+                gait.turn_z = ws_server.state["turn_z"]
+                gait.gait_speed = ws_server.state["gait_speed"]
+                gait.body_height = ws_server.state["body_height"]
+                target_gait_str = ws_server.state["gait_type"]
+                if target_gait_str in [g.value for g in GaitType]:
+                    gait.gait_type = GaitType(target_gait_str)
+
             coords_dict = gait.tick()
             for leg_id, (x, y, z) in coords_dict.items():
                 prefix = leg_map[leg_id]
@@ -198,6 +374,24 @@ def run_pybullet(gui=False, steps=240, walk=False):
                     p.setJointMotorControl2(robot_id, joint_indices[f"{prefix}_tibia"], p.POSITION_CONTROL, targetPosition=math.radians(t_deg), force=8.0)
                 except Exception:
                     pass
+
+            if ws_server and ws_server.clients and tick_idx % 5 == 0:
+                pos, orn = p.getBasePositionAndOrientation(robot_id)
+                rpy = p.getEulerFromQuaternion(orn)
+                telemetry = {
+                    "type": "state",
+                    "data": {
+                        "connected": True,
+                        "locomotion_active": bool(gait.walk_x or gait.walk_y or gait.turn_z),
+                        "gait_type": gait.gait_type.value,
+                        "speed": gait.gait_speed,
+                        "body_height": gait.body_height,
+                        "position": [round(val, 3) for val in pos],
+                        "rpy_deg": [round(math.degrees(a), 1) for a in rpy],
+                    }
+                }
+                ws_server.broadcast(telemetry)
+
             for _ in range(physics_substeps):
                 p.stepSimulation()
 
@@ -238,14 +432,19 @@ def main():
     parser = argparse.ArgumentParser(description="Lasius Hexapod Physics Simulation")
     parser.add_argument("--gui", action="store_true", help="Launch interactive PyBullet GUI")
     parser.add_argument("--walk", action="store_true", help="Start simulation with active walking gait")
+    parser.add_argument("--ws", action="store_true", help="Start WebSocket server for lasius-pilot teleoperation")
+    parser.add_argument("--ws-port", type=int, default=8765, help="WebSocket port (default: 8765)")
     parser.add_argument("--steps", type=int, default=240, help="Number of simulation steps")
     parser.add_argument("--engine", choices=["pybullet", "mujoco"], default="pybullet", help="Physics engine")
     args = parser.parse_args()
 
+    # Automatically enable WebSocket server in GUI mode if requested or if --ws is set
+    enable_ws = args.ws or args.gui
+
     if args.engine == "mujoco":
         run_mujoco()
     else:
-        run_pybullet(gui=args.gui, steps=args.steps, walk=args.walk)
+        run_pybullet(gui=args.gui, steps=args.steps, walk=args.walk, enable_ws=enable_ws, ws_port=args.ws_port)
 
 
 if __name__ == "__main__":
