@@ -18,7 +18,7 @@ models_dir = "/home/bjoern/Workspace/Hexapods/lasius/hardware/mechanics/models"
 v1_parts_dir = f"{models_dir}/custom/v1/parts"
 v2_parts_dir = f"{models_dir}/custom/v2/parts"
 v2_asm_dir = f"{models_dir}/custom/v2"
-hw_dir = f"{models_dir}/hardware"
+hw_dir = f"{models_dir}/cots"
 fcstd_path = f"{v2_asm_dir}/leg_assembly.FCStd"
 step_path = "/home/bjoern/Workspace/Hexapods/lasius/hardware/mechanics/export/step/custom/v2/leg_assembly.step"
 stl_path = "/home/bjoern/Workspace/Hexapods/lasius/hardware/mechanics/export/stl/custom/v2/leg_assembly.stl"
@@ -45,6 +45,7 @@ doc_servo = App.openDocument(f"{hw_dir}/servo_nr645.FCStd")
 doc_b = App.openDocument(f"{hw_dir}/bearing_684_6x3.FCStd")
 doc_w = App.openDocument(f"{hw_dir}/washer_m4_shim.FCStd")
 doc_n = App.openDocument(f"{hw_dir}/nut_m4_hex.FCStd")
+doc_n_low = App.openDocument(f"{hw_dir}/nut_m4_din439.FCStd")
 doc_s = App.openDocument(f"{hw_dir}/screw_m4_countersunk.FCStd")
 
 # Main Assembly Container
@@ -130,11 +131,11 @@ make_link("Chassis_Bearing", "Chassis Ball Bearing (D8 H3)",    doc_b.Kugellager
 make_link("Chassis_Nut",     "Chassis M4 Hex Nut (SW7)",         doc_n.M4_Mutter,           App.Placement(App.Vector(0, 2.50, -15.25), rot_down_posz))
 make_link("Chassis_Screw",   "Chassis M4 Countersunk Screw",     doc_s.M4_Senkkopfschraube, App.Placement(App.Vector(0, 2.50, -9.25),  rot_down_negz))
 
-# B. Femur Pivot Bearing Set (Horizontal axis at X=56.50, Z=0.00 along -Y; Option A: internal M4 nut, external M4 screw)
-make_link("Femur_Washer",  "Femur Shim Washer (s0.3)",      doc_w.Passscheibe_M4,      App.Placement(App.Vector(56.50, -21.00, 0.00), rot_negy_posz))
-make_link("Femur_Bearing", "Femur Ball Bearing (D8 H3)",    doc_b.Kugellager_6x3x4,    App.Placement(App.Vector(56.50, -21.65, 0.00), rot_negy_posz))
-make_link("Femur_Nut",     "Femur M4 Hex Nut (SW7)",         doc_n.M4_Mutter,           App.Placement(App.Vector(56.50, -18.00, 0.00), rot_negy_posz))
-make_link("Femur_Screw",   "Femur M4 Countersunk Screw",     doc_s.M4_Senkkopfschraube, App.Placement(App.Vector(56.50, -27.20, 0.00), rot_negy_posz))
+# B. Femur Pivot Bearing Set (Horizontal axis at X=56.50, Z=0.00 along -Y; Option A: internal M4 DIN 439 nut, external M4 screw)
+make_link("Femur_Washer",  "Femur Shim Washer (s0.3)",            doc_w.Passscheibe_M4,           App.Placement(App.Vector(56.50, -21.00, 0.00), rot_negy_posz))
+make_link("Femur_Bearing", "Femur Ball Bearing (D8 H3)",          doc_b.Kugellager_6x3x4,         App.Placement(App.Vector(56.50, -21.65, 0.00), rot_negy_posz))
+make_link("Femur_Nut",     "Femur M4 Low-Profile Nut (DIN 439)", doc_n_low.M4_Mutter_DIN439,     App.Placement(App.Vector(56.50, -20.40, 0.00), rot_negy_negz))
+make_link("Femur_Screw",   "Femur M4 Countersunk Screw",           doc_s.M4_Senkkopfschraube,      App.Placement(App.Vector(56.50, -27.20, 0.00), rot_negy_posz))
 
 # C. Knee Pivot Bearing Set (Horizontal axis at X=156.50, Z=0.00 along -Y; Option A: internal M4 nut, external M4 screw)
 make_link("Knee_Washer",  "Knee Shim Washer (s0.3)",      doc_w.Passscheibe_M4,      App.Placement(App.Vector(156.50, -21.00, 0.00), rot_negy_posz))

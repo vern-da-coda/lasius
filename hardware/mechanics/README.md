@@ -11,9 +11,9 @@ CAD engineering, digital fabrication exports, and assembly models for the **Lasi
 
 ## Parametric 3D CAD Models (`models/`)
 
-### 1. COTS & Standard Hardware (`models/hardware/`)
-- **Servo Actuator ([`servo_nr645.FCStd`](models/hardware/servo_nr645.FCStd)):** Torcster / Reely NR-645 MG BB standard actuator with output horn and mounting tabs.
-- **Fasteners & Bearings:** [`bearing_684_6x3.FCStd`](models/hardware/bearing_684_6x3.FCStd), [`screw_m4_countersunk.FCStd`](models/hardware/screw_m4_countersunk.FCStd), [`nut_m4_hex.FCStd`](models/hardware/nut_m4_hex.FCStd), and [`washer_m4_shim.FCStd`](models/hardware/washer_m4_shim.FCStd).
+### 1. COTS & Standard Components (`models/cots/`)
+- **Servo Actuator ([`servo_nr645.FCStd`](models/cots/servo_nr645.FCStd)):** Torcster / Reely NR-645 MG BB standard actuator with output horn and mounting tabs.
+- **Fasteners & Bearings:** [`bearing_684_6x3.FCStd`](models/cots/bearing_684_6x3.FCStd), [`screw_m4_countersunk.FCStd`](models/cots/screw_m4_countersunk.FCStd), [`nut_m4_hex.FCStd`](models/cots/nut_m4_hex.FCStd), [`nut_m4_din439.FCStd`](models/cots/nut_m4_din439.FCStd), and [`washer_m4_shim.FCStd`](models/cots/washer_m4_shim.FCStd).
 
 ### 2. Custom Generation v1 (`models/custom/v1/` & `models/custom/v1/parts/`)
 - **Chassis Bottom Plate ([`body_bottom.FCStd`](models/custom/v1/parts/body_bottom.FCStd)):**
@@ -42,6 +42,9 @@ CAD engineering, digital fabrication exports, and assembly models for the **Lasi
   - Master full-robot assembly (142 components) linking bottom plate (`body_bottom`), top plate (`body_top`), 8× standoff pillars (`spacer_14x50`), and 6× modular leg assemblies (`leg_assembly`). Right-side legs (FR, MR, RR) are mirrored across the sagittal plane ($Y = 0$) so that all 6 servo horn outputs consistently face forward ($-X$).
 
 ### 3. Custom Generation v2 (`models/custom/v2/` & `models/custom/v2/parts/`)
+> [!NOTE]
+> Für anstehende Modelländerungen und Verifikationsschritte siehe die [**Generation v2 Todo-Liste**](models/custom/v2/TODO.md).
+
 - **Organic Monolithic Femur & ADC Housing ([`femur.FCStd`](models/custom/v2/parts/femur.FCStd)):**
   - Monolithic 3D-printed double-wrench femur ($L = 100.0\,\text{mm}$ pivot-to-pivot) replacing the 2-plate + 2-spacer v1 cage, featuring an internal chamber and flush curved lid (`Femur_Cover`) for the leg's encapsulated ADS1115 16-bit I²C ADC (`0x48`) and internal cable channels.
 - **Monolithic Tibia v2 ([`tibia.FCStd`](models/custom/v2/parts/tibia.FCStd)):**
@@ -58,15 +61,15 @@ CAD engineering, digital fabrication exports, and assembly models for the **Lasi
 ```text
 hardware/mechanics/
 ├── models/                  # FreeCAD CAD documents
-│   ├── hardware/            # COTS & standard parts (servo_nr645, bearings, screws, nuts, washers)
+│   ├── cots/                # COTS & standard parts (servo_nr645, bearings, screws, nuts, washers)
 │   └── custom/              # Custom-engineered robot assemblies & parts (canonical filenames)
 │       ├── v1/              # Generation 1 (leg_assembly, body_assembly + parts/)
 │       │   └── parts/       # Generation 1 single parts
 │       └── v2/              # Generation 2 (leg_assembly, body_assembly + parts/)
 │           └── parts/       # Generation 2 single parts
 ├── export/                  # Digital fabrication outputs (mirrors models/ structure)
-│   ├── step/                # ISO 10303 CAD exchange format (custom/{v1,v2}[/parts], hardware/)
-│   ├── stl/                 # High-resolution meshes for 3D printing (custom/{v1,v2}[/parts], hardware/)
+│   ├── step/                # ISO 10303 CAD exchange format (custom/{v1,v2}[/parts], cots/)
+│   ├── stl/                 # High-resolution meshes for 3D printing (custom/{v1,v2}[/parts], cots/)
 │   └── dxf/                 # 2D vector profiles for laser/CNC sheet cutting (custom/v1/parts/)
 ├── drawings/
 │   └── renders/             # High-resolution CAD 3D renders (.png)

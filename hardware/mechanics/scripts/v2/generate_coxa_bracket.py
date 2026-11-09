@@ -8,15 +8,20 @@ Generate Lasius Hexapod Coxa Bracket v2 (Organic Lightweight Truss & Reinforced 
      Internal anti-rotation M4 hex nut pocket (SW 7.10 mm, depth 2.40 mm) with a solid
      0.60 mm retaining shoulder and coaxial D = 4.10 mm bore at local (X = 18.20, Y = 15.25),
      allowing the Femur to slide radially into the bracket with zero rear screw protrusion.
-  2. 45-Degree Triangular Truss Gusset ("Versteifungs-Gusset"):
-     Connects the lower counter-bearing tab (X = 25.70, Z = -14.50) back to the main horizontal
-     bridge (X = 40.20, Z = 0.00), eliminating the cantilever notch and abrading bending
-     moments as pure tension/compression via a rounded triangular truss window.
-  3. Organic Weight-Relief Truss Windows & Cavities:
-     Symmetric dual-flange I-beam windows in the front and rear walls of the central bridge
-     (X in [28.5, 57.5]) and rear tail wall (X in [84.5, 106.0]) with G1-continuous R = 2.80 mm
-     fillet corners, plus vertical cavities in the massive central bulkhead and rear tail block.
-  4. Flowing, filleted design language harmonized with Femur v2 and Tibia v2.
+  2. 45-Degree Dual-Cheek Triangular Truss Gusset ("Versteifungs-Gusset"):
+     Connects the lower counter-bearing tab base (X = 23.70, Z = -14.50) smoothly to the
+     bridge cheeks (X = 38.20, Z = 0.00) exclusively on the front (Y in [0.0, 5.0]) and
+     rear (Y in [25.5, 31.7]) side walls at an exact 45.0-degree angle, with fully-enclosed
+     filleted triangular weight-relief windows and leaving the interior servo chamber
+     (Y in [5.0, 25.5]) 100% open with zero hardware collisions.
+  3. Organic 45-Degree Weight-Relief Truss Windows & Cavities:
+     - Front & rear cheek flank 45-degree Warren truss windows under the Femur servo ears
+       (X in [9.0, 24.0], Z in [2.5, 15.5]), eliminating all solid flat cheek plates.
+     - Symmetrical 45-degree A-truss (chevron) windows in the central bridge (X in [28.5, 57.5]).
+     - Rear tail 45-degree diagonal truss windows (X in [84.5, 106.0], Z in [2.0, 16.0]).
+     - Symmetrical 45-degree A-truss windows in top and bottom Coxa servo casing walls.
+     - Option A through-tunnel in rear tail block (X in [105.0, 116.0]).
+  4. 100% Solid Femur Servo Mounting Shelf (Z = 15.50 mm) with all 4 screw bores intact.
 """
 
 import math
@@ -24,7 +29,7 @@ import os
 import FreeCAD as App
 import Part
 
-print("--- Generating Lasius Coxa Bracket v2 (Organic Truss + 45-deg Gusset + Inverted M4 Seat) ---")
+print("--- Generating Lasius Coxa Bracket v2 (Truss Gussets + Healed Flanges + Option A) ---")
 
 models_dir = "/home/bjoern/Workspace/Hexapods/lasius/hardware/mechanics/models"
 v1_coxa_path = f"{models_dir}/custom/v1/parts/coxa_bracket.FCStd"
@@ -34,6 +39,12 @@ export_step_dir = "/home/bjoern/Workspace/Hexapods/lasius/hardware/mechanics/exp
 export_stl_dir = "/home/bjoern/Workspace/Hexapods/lasius/hardware/mechanics/export/stl/custom/v2/parts"
 step_coxa_path = f"{export_step_dir}/coxa_bracket.step"
 stl_coxa_path = f"{export_stl_dir}/coxa_bracket.stl"
+
+
+# Tibia-Standard Strut Parameters (from generate_tibia.py servo cage):
+W_STRUT = 2.50    # mm (uniform perpendicular 45-deg strut width across all Coxa trusses)
+R_FILLET = 1.40   # mm (fillet radius at all truss corners)
+DX_45 = W_STRUT * math.sqrt(2.0)  # 3.5355 mm (delta along X/Z for exact 45-deg parallel lines)
 
 
 def make_filleted_polygon_2d(pts, r_list):
@@ -143,6 +154,20 @@ def build_coxa_bracket_v2_shape():
     App.closeDocument(doc_v1.Name)
 
     # -------------------------------------------------------------
+    # 0. Solidify Femur Mounting Flange & Cable Channel
+    # -------------------------------------------------------------
+    # The Femur servo mounting flange (Z = 15.50, X in [49.80, 57.40],
+    # Y in [5.00, 25.50]) is 100% solid, fully planar, and un-notched.
+    # The cable channel wall is kept clean on the level of the entire plane (Y = 3.95)
+    # without artificial steps or protrusions.
+    plug_shelf_top = Part.makeBox(57.40 - 52.40, 12.45 - 5.00, 15.50 - 11.50, App.Vector(52.40, 5.00, 11.50))
+    shape = shape.fuse(plug_shelf_top)
+
+    # Re-bore front screw hole on right shelf to ensure clean cylindrical hole
+    bore_f1 = Part.makeCylinder(1.10, 20.00, App.Vector(53.15, 10.25, 0.00))
+    shape = shape.cut(bore_f1)
+
+    # -------------------------------------------------------------
     # 1. Option A Inverted M4 Counter-Bearing Seat (X = 18.20, Y = 15.25)
     # -------------------------------------------------------------
     cx, cy = 18.20, 15.25
@@ -150,111 +175,176 @@ def build_coxa_bracket_v2_shape():
     shape = shape.fuse(heal_plug)
 
     screw_bore = Part.makeCylinder(2.05, 5.00, App.Vector(cx, cy, -15.50))
-    nut_pocket = make_hex_nut_pocket_z(cx, cy, -13.90, -11.00, sw=7.10)
+    nut_pocket = make_hex_nut_pocket_z(cx, cy, -13.90, -11.50, sw=7.10)
     shape = shape.cut(screw_bore).cut(nut_pocket)
 
     # -------------------------------------------------------------
-    # 2. 45-Degree Triangular Truss Gusset for the Lower Bearing Tab
+    # 2. Organic Upper Cheek Crest (Inspired by Femur Waist Contour)
     # -------------------------------------------------------------
-    # Connects (X = 25.70, Z = -14.50) to (X = 40.20, Z = 0.00) across full width Y in [0.00, 31.70]
-    pts_g = [
-        App.Vector(25.70, 0.00, -14.50),
-        App.Vector(40.20, 0.00, 0.00),
-        App.Vector(25.70, 0.00, 0.00),
-        App.Vector(25.70, 0.00, -14.50),
-    ]
-    gusset_solid = Part.Face(Part.makePolygon(pts_g)).extrude(App.Vector(0.0, 31.70, 0.0))
-    shape = shape.fuse(gusset_solid)
+    # Extends the side cheeks smoothly from Z = 18.00 mm up to the Femur servo horn
+    # level at Z = 27.30 mm, peaking at the pivot axis (X = 18.20 mm) and cascading
+    # symmetrically via G1 tangent circular S-curves down to Z = 18.00 mm at X = 0.00 mm
+    # (front edge) and X = 36.00 mm (bridge junction).
+    def make_upper_crest_face():
+        dx1, dz1 = 18.20, 9.30
+        dx1_h, dz1_h = 0.5 * dx1, 0.5 * dz1
+        r1 = (dx1_h**2 + dz1_h**2) / (2.0 * dz1_h)
+        dx2, dz2 = 17.80, 9.30
+        dx2_h, dz2_h = 0.5 * dx2, 0.5 * dz2
+        r2 = (dx2_h**2 + dz2_h**2) / (2.0 * dz2_h)
+        p0 = App.Vector(0.00, 0.0, 18.00)
+        p_inf1 = App.Vector(9.10, 0.0, 22.65)
+        p_peak = App.Vector(18.20, 0.0, 27.30)
+        p_inf2 = App.Vector(27.10, 0.0, 22.65)
+        p_end = App.Vector(36.00, 0.0, 18.00)
+        ang1 = math.atan2(r1 - dz1_h, dx1_h)
+        pm1 = App.Vector(r1 * math.sin(0.5 * (math.pi / 2 - ang1)), 0.0, 18.0 + r1 - r1 * math.cos(0.5 * (math.pi / 2 - ang1)))
+        pm2 = App.Vector(18.2 - r1 * math.sin(0.5 * (math.pi / 2 - ang1)), 0.0, 27.3 - r1 + r1 * math.cos(0.5 * (math.pi / 2 - ang1)))
+        ang2 = math.atan2(r2 - dz2_h, dx2_h)
+        pm3 = App.Vector(18.2 + r2 * math.sin(0.5 * (math.pi / 2 - ang2)), 0.0, 27.3 - r2 + r2 * math.cos(0.5 * (math.pi / 2 - ang2)))
+        pm4 = App.Vector(36.0 - r2 * math.sin(0.5 * (math.pi / 2 - ang2)), 0.0, 18.0 + r2 - r2 * math.cos(0.5 * (math.pi / 2 - ang2)))
+        e1 = Part.Edge(Part.Arc(p0, pm1, p_inf1))
+        e2 = Part.Edge(Part.Arc(p_inf1, pm2, p_peak))
+        e3 = Part.Edge(Part.Arc(p_peak, pm3, p_inf2))
+        e4 = Part.Edge(Part.Arc(p_inf2, pm4, p_end))
+        e_bot = Part.makeLine(p_end, p0)
+        return Part.Face(Part.Wire([e1, e2, e3, e4, e_bot]))
 
-    # Cut filleted triangular weight-relief window through the gusset web:
-    r_gt = 1.60
-    e_gt = [
-        Part.makeLine(App.Vector(28.0, -2.0, -11.0 + r_gt), App.Vector(28.0, -2.0, -2.5 - r_gt)),
-        Part.Arc(
-            App.Vector(28.0, -2.0, -2.5 - r_gt),
-            App.Vector(28.0 + r_gt * (1 - 1 / math.sqrt(2)), -2.0, -2.5 - r_gt * (1 - 1 / math.sqrt(2))),
-            App.Vector(28.0 + r_gt, -2.0, -2.5),
-        ).toShape(),
-        Part.makeLine(App.Vector(28.0 + r_gt, -2.0, -2.5), App.Vector(36.5 - 2 * r_gt, -2.0, -2.5)),
-        Part.Arc(
-            App.Vector(36.5 - 2 * r_gt, -2.0, -2.5),
-            App.Vector(36.5 - r_gt, -2.0, -2.5 - 0.5 * r_gt),
-            App.Vector(36.5 - 0.7 * r_gt, -2.0, -2.5 - 1.4 * r_gt),
-        ).toShape(),
-        Part.makeLine(
-            App.Vector(36.5 - 0.7 * r_gt, -2.0, -2.5 - 1.4 * r_gt),
-            App.Vector(28.0 + 1.4 * r_gt, -2.0, -11.0 + 0.7 * r_gt),
-        ),
-        Part.Arc(
-            App.Vector(28.0 + 1.4 * r_gt, -2.0, -11.0 + 0.7 * r_gt),
-            App.Vector(28.0 + 0.5 * r_gt, -2.0, -11.0),
-            App.Vector(28.0, -2.0, -11.0 + r_gt),
-        ).toShape(),
-    ]
-    cut_gw = Part.Face(Part.Wire(e_gt)).extrude(App.Vector(0.0, 36.0, 0.0))
-    shape = shape.cut(cut_gw)
+    f_crest = make_upper_crest_face()
+    # Cheeks match full Hauptträger wall thickness: Front Y in [0.00, 5.00] (5.00 mm), Rear Y in [25.50, 31.70] (6.20 mm)
+    s_crest_f = f_crest.extrude(App.Vector(0.0, 5.00, 0.0))
+    s_crest_r = f_crest.extrude(App.Vector(0.0, 6.20, 0.0))
+    s_crest_r.translate(App.Vector(0.0, 25.50, 0.0))
+    shape = shape.fuse(s_crest_f).fuse(s_crest_r)
 
     # -------------------------------------------------------------
-    # 3. 45-Degree Symmetrical A-Truss (Chevron) Windows in Bridge & Tail
+    # 3. Organic Lower Cheek Ribs (Inspired by Femur Waist Contour)
     # -------------------------------------------------------------
-    # A. Central Bridge Symmetrical A-Truss (X in [28.5, 57.5], Z in [2.5, 15.5])
-    # 45-degree diagonal struts (w_strut = 3.50 mm) meeting at top apex (X = 43.00, Z = 12.50)
-    # 1. Central triangle (apex up)
-    p_c1 = App.Vector(33.00, 2.50, 0.0)
-    p_c2 = App.Vector(53.00, 2.50, 0.0)
-    p_c3 = App.Vector(43.00, 12.50, 0.0)
-    fc = make_filleted_polygon_2d([p_c1, p_c2, p_c3], 1.60)
+    # Extends the lower side cheeks continuously from the counter-bearing base level
+    # (Z = -14.50 mm) up to the central bridge at Z = 0.00 mm (X = 36.00 mm) via a G1 S-curve,
+    # and forward to the front face (X = 0.00 mm) with a smooth R = 4.00 mm rounding.
+    # Fully matched to Hauptträger wall thickness: front cheek (Y in [0.00, 5.00]) and rear cheek (Y in [25.50, 31.70]).
+    def make_lower_cheek_face():
+        # 1. Front vertical line along front face: from (0.00, 0.00) down to (0.00, -10.50)
+        p_front_top = App.Vector(0.00, 0.0, 0.00)
+        p_front_arc_start = App.Vector(0.00, 0.0, -10.50)
+        e_front_vert = Part.makeLine(p_front_top, p_front_arc_start)
 
-    # 2. Left corner triangle (hypotenuse at 45 deg, strut width = 3.50 mm)
-    p_l1 = App.Vector(28.50, 3.00, 0.0)
-    p_l2 = App.Vector(41.00, 15.50, 0.0)
-    p_l3 = App.Vector(28.50, 15.50, 0.0)
-    fl = make_filleted_polygon_2d([p_l1, p_l2, p_l3], 1.60)
+        # 2. Front lower corner rounding: R = 4.00 mm circular arc down to (4.00, -14.50)
+        p_arc_mid = App.Vector(4.0 - 4.0 * math.cos(math.pi / 4), 0.0, -10.5 - 4.0 * math.sin(math.pi / 4))
+        p_bot_flat_start = App.Vector(4.00, 0.0, -14.50)
+        e_front_arc = Part.Edge(Part.Arc(p_front_arc_start, p_arc_mid, p_bot_flat_start))
 
-    # 3. Right corner triangle (mirror of left across X = 43.0)
-    p_r1 = App.Vector(45.00, 15.50, 0.0)
-    p_r2 = App.Vector(57.50, 3.00, 0.0)
-    p_r3 = App.Vector(57.50, 15.50, 0.0)
-    fr = make_filleted_polygon_2d([p_r1, p_r2, p_r3], 1.60)
+        # 3. Solid baseline at Z = -14.50 mm: from X = 4.00 mm to X = 23.70 mm
+        p_bot_flat_end = App.Vector(23.70, 0.0, -14.50)
+        e_bot_flat = Part.makeLine(p_bot_flat_start, p_bot_flat_end)
 
-    # Cut A-truss into Bridge Front Wall (Y in [0.0, 5.0]):
+        # 4. Rear G1 S-curve transition: from (23.70, -14.50) up to bridge at (36.00, 0.00)
+        # Matches upper crest S-curve termination station X = 36.00 mm
+        dx, dz = 36.00 - 23.70, 14.50
+        dx_h, dz_h = 0.5 * dx, 0.5 * dz
+        r = (dx_h**2 + dz_h**2) / (2.0 * dz_h)
+        p_inf = App.Vector(23.70 + dx_h, 0.0, -14.50 + dz_h)
+        p_end = App.Vector(36.00, 0.0, 0.00)
+        ang = math.atan2(r - dz_h, dx_h)
+        pm1 = App.Vector(23.70 + r * math.sin(0.5 * (math.pi / 2 - ang)), 0.0, -14.50 + r - r * math.cos(0.5 * (math.pi / 2 - ang)))
+        pm2 = App.Vector(36.00 - r * math.sin(0.5 * (math.pi / 2 - ang)), 0.0, -r + r * math.cos(0.5 * (math.pi / 2 - ang)))
+        e_rear_arc1 = Part.Edge(Part.Arc(p_bot_flat_end, pm1, p_inf))
+        e_rear_arc2 = Part.Edge(Part.Arc(p_inf, pm2, p_end))
+
+        # 5. Top closing line along bridge bottom (Z = 0.00 mm)
+        e_top = Part.makeLine(p_end, p_front_top)
+
+        return Part.Face(Part.Wire([e_front_vert, e_front_arc, e_bot_flat, e_rear_arc1, e_rear_arc2, e_top]))
+
+    f_lower = make_lower_cheek_face()
+    s_lower_f = f_lower.extrude(App.Vector(0.0, 5.00, 0.0))
+    s_lower_r = f_lower.extrude(App.Vector(0.0, 6.20, 0.0))
+    s_lower_r.translate(App.Vector(0.0, 25.50, 0.0))
+    shape = shape.fuse(s_lower_f).fuse(s_lower_r)
+
+    # -------------------------------------------------------------
+    # 4. 45-Degree Front & Rear Cheek Flank Warren Truss Windows (Tibia Standard w = 2.50 mm)
+    # -------------------------------------------------------------
+    # Relieves the cheek flank under the Femur Servo ears (X in [11.5, 23.0])
+    # Exact 45.0-deg diagonal struts with uniform width w = 2.50 mm (DX_45 = 3.536 mm)
+    # Lower right triangle:
+    p_flk1 = [App.Vector(11.50, 2.50, 0.0), App.Vector(21.50, 2.50, 0.0), App.Vector(11.50, 12.50, 0.0)]
+    f_flk1 = make_filleted_polygon_2d(p_flk1, R_FILLET)
+
+    # Upper right triangle:
+    p_flk2 = [App.Vector(12.04, 15.50, 0.0), App.Vector(22.50, 5.04, 0.0), App.Vector(22.50, 15.50, 0.0)]
+    f_flk2 = make_filleted_polygon_2d(p_flk2, R_FILLET)
+
+    # Cut through Front Cheek (Y in [0.0, 5.0]):
+    shape = shape.cut(extrude_face_xz(f_flk1, -1.0, 7.0)).cut(extrude_face_xz(f_flk2, -1.0, 7.0))
+    # Cut through Rear Cheek (Y in [25.5, 31.7]):
+    shape = shape.cut(extrude_face_xz(f_flk1, 24.5, 8.5)).cut(extrude_face_xz(f_flk2, 24.5, 8.5))
+
+    # -------------------------------------------------------------
+    # 5. Central Bridge Symmetrical 45-Degree A-Truss Windows (Tibia Standard w = 2.50 mm)
+    # -------------------------------------------------------------
+    # Center chevron: apex at (38.00, 10.50), base at Z = 2.50, span dx = 8.00 mm (exact 45 deg)
+    p_c1 = App.Vector(30.00, 2.50, 0.0)
+    p_c2 = App.Vector(46.00, 2.50, 0.0)
+    p_c3 = App.Vector(38.00, 10.50, 0.0)
+    fc = make_filleted_polygon_2d([p_c1, p_c2, p_c3], R_FILLET)
+
+    # Left wing: hypotenuse parallel to left chevron slope with exact strut width w = 2.50 mm
+    p_l1 = App.Vector(27.50, 3.54, 0.0)
+    p_l2 = App.Vector(39.46, 15.50, 0.0)
+    p_l3 = App.Vector(27.50, 15.50, 0.0)
+    fl = make_filleted_polygon_2d([p_l1, p_l2, p_l3], R_FILLET)
+
+    # Right wing: hypotenuse parallel to right chevron slope with exact strut width w = 2.50 mm
+    p_r1 = App.Vector(36.54, 15.50, 0.0)
+    p_r2 = App.Vector(48.50, 3.54, 0.0)
+    p_r3 = App.Vector(48.50, 15.50, 0.0)
+    fr = make_filleted_polygon_2d([p_r1, p_r2, p_r3], R_FILLET)
+
+    # Front Wall (Y in [0.0, 5.0]):
     for f in [fc, fl, fr]:
-        shape = shape.cut(extrude_face_xz(f, -2.0, 8.0))
-
-    # Cut matching A-truss into Bridge Rear Wall (Y in [25.5, 31.7]):
+        shape = shape.cut(extrude_face_xz(f, -1.0, 7.0))
+    # Rear Wall (Y in [25.5, 31.7]):
     for f in [fc, fl, fr]:
-        shape = shape.cut(extrude_face_xz(f, 26.0, 8.0))
+        shape = shape.cut(extrude_face_xz(f, 24.5, 8.5))
 
-    # B. Rear Tail Diagonal Truss Window (X in [84.5, 106.0], Z in [2.0, 16.0])
-    # Diagonal strut connecting (84.5, 2.0) to (106.0, 16.0)
-    p_t_bot = [App.Vector(87.5, 2.0, 0.0), App.Vector(106.0, 2.0, 0.0), App.Vector(106.0, 13.0, 0.0)]
-    f_t_bot = make_filleted_polygon_2d(p_t_bot, 1.60)
+    # -------------------------------------------------------------
+    # 6. Front Wall Central Bulkhead Weight-Relief Window - REMOVED
+    # -------------------------------------------------------------
+    # Kept completely solid so the Coxa servo screw block (X = 66.30, Y in [3.95, 5.00])
+    # is 100% solid, un-notched, and robust for screw threads.
 
-    p_t_top = [App.Vector(84.5, 5.0, 0.0), App.Vector(103.0, 16.0, 0.0), App.Vector(84.5, 16.0, 0.0)]
-    f_t_top = make_filleted_polygon_2d(p_t_top, 1.60)
+    # -------------------------------------------------------------
+    # 7. Rear Tail 45-Degree Diagonal Truss Windows (Tibia Standard w = 2.50 mm)
+    # -------------------------------------------------------------
+    # Exact 45.0-deg diagonal struts with uniform width w = 2.50 mm (DX_45 = 3.536 mm)
+    p_t_bot = [App.Vector(90.50, 2.50, 0.0), App.Vector(103.50, 2.50, 0.0), App.Vector(103.50, 15.50, 0.0)]
+    f_t_bot = make_filleted_polygon_2d(p_t_bot, R_FILLET)
 
-    shape = shape.cut(extrude_face_xz(f_t_bot, -2.0, 8.0))
-    shape = shape.cut(extrude_face_xz(f_t_top, -2.0, 8.0))
+    p_t_top = [App.Vector(87.00, 6.04, 0.0), App.Vector(99.96, 15.50, 0.0), App.Vector(87.00, 15.50, 0.0)]
+    f_t_top = make_filleted_polygon_2d(p_t_top, R_FILLET)
 
-    # C. Coxa Servo Compartment Top & Bottom Symmetrical 45-Degree A-Truss Windows
-    # Relieves the massive 4.15 mm solid top and bottom casing walls around the Coxa Servo (X in [67.0, 104.0], Y in [6.0, 26.0])
-    # 1. Central triangle (apex at X = 85.50, Y = 22.50)
-    p_c1_tb = App.Vector(73.0, 6.0, 0.0)
-    p_c2_tb = App.Vector(98.0, 6.0, 0.0)
-    p_c3_tb = App.Vector(85.5, 22.5, 0.0)
-    fc_tb = make_filleted_polygon_2d([p_c1_tb, p_c2_tb, p_c3_tb], 1.60)
+    shape = shape.cut(extrude_face_xz(f_t_bot, -1.0, 6.0))
+    shape = shape.cut(extrude_face_xz(f_t_top, -1.0, 6.0))
 
-    # 2. Left triangle (hypotenuse at 45 deg, strut width = 3.20 mm)
-    p_l1_tb = App.Vector(67.5, 7.5, 0.0)
-    p_l2_tb = App.Vector(81.5, 26.0, 0.0)
-    p_l3_tb = App.Vector(67.5, 26.0, 0.0)
-    fl_tb = make_filleted_polygon_2d([p_l1_tb, p_l2_tb, p_l3_tb], 1.60)
+    # -------------------------------------------------------------
+    # 8. Coxa Servo Compartment Top & Bottom Symmetrical 45-Degree A-Truss (w = 2.50 mm)
+    # -------------------------------------------------------------
+    p_c1_tb = App.Vector(69.50, 6.00, 0.0)
+    p_c2_tb = App.Vector(101.50, 6.00, 0.0)
+    p_c3_tb = App.Vector(85.50, 22.00, 0.0)
+    fc_tb = make_filleted_polygon_2d([p_c1_tb, p_c2_tb, p_c3_tb], R_FILLET)
 
-    # 3. Right triangle (mirror across X = 85.50)
-    p_r1_tb = App.Vector(89.5, 26.0, 0.0)
-    p_r2_tb = App.Vector(103.5, 7.5, 0.0)
-    p_r3_tb = App.Vector(103.5, 26.0, 0.0)
-    fr_tb = make_filleted_polygon_2d([p_r1_tb, p_r2_tb, p_r3_tb], 1.60)
+    p_l1_tb = App.Vector(67.50, 7.54, 0.0)
+    p_l2_tb = App.Vector(81.96, 22.00, 0.0)
+    p_l3_tb = App.Vector(67.50, 22.00, 0.0)
+    fl_tb = make_filleted_polygon_2d([p_l1_tb, p_l2_tb, p_l3_tb], R_FILLET)
+
+    p_r1_tb = App.Vector(89.04, 22.00, 0.0)
+    p_r2_tb = App.Vector(103.50, 7.54, 0.0)
+    p_r3_tb = App.Vector(103.50, 22.00, 0.0)
+    fr_tb = make_filleted_polygon_2d([p_r1_tb, p_r2_tb, p_r3_tb], R_FILLET)
 
     # Cut Top Wall (Z in [18.0, 22.15]):
     for f in [fc_tb, fl_tb, fr_tb]:
@@ -269,32 +359,21 @@ def build_coxa_bracket_v2_shape():
         shape = shape.cut(cut_bot)
 
     # -------------------------------------------------------------
-    # 4. Bulkhead & Tail Block Weight-Relief Cavities
+    # 9. Rear Tail Block Weight-Relief Through-Cut (Option A)
     # -------------------------------------------------------------
-    # A. Central Bulkhead Pocket (X in [55.0, 61.5], Y in [7.5, 28.5], Z in [2.0, 16.0]):
-    f_bulk = make_rounded_rect_face_2d(7.50, 28.50, 2.00, 16.00, 2.00)
-    edges_bulk = []
-    for e in f_bulk.OuterWire.Edges:
-        pts = [App.Vector(55.0, v.Point.x, v.Point.y) for v in e.Vertexes]
-        if "Line" in str(type(e.Curve)):
-            edges_bulk.append(Part.makeLine(pts[0], pts[1]))
-        else:
-            pm = e.valueAt(0.5 * (e.FirstParameter + e.LastParameter))
-            edges_bulk.append(Part.Arc(pts[0], App.Vector(55.0, pm.x, pm.y), pts[1]).toShape())
-    cut_bulk = Part.Face(Part.Wire(edges_bulk)).extrude(App.Vector(6.5, 0.0, 0.0))
-    shape = shape.cut(cut_bulk)
-
-    # B. Rear Tail End-Block Pocket (X in [111.0, 116.0], Y in [7.0, 25.0], Z in [2.0, 16.0]):
+    # Extends through the rear bulkhead (X in [105.0, 116.0]), completely eliminating
+    # Face124 and making the rear tail cavity a continuous through-tunnel opening directly
+    # into the Coxa servo compartment.
     f_tail = make_rounded_rect_face_2d(7.00, 25.00, 2.00, 16.00, 2.00)
     edges_tail = []
     for e in f_tail.OuterWire.Edges:
-        pts = [App.Vector(111.0, v.Point.x, v.Point.y) for v in e.Vertexes]
+        pts = [App.Vector(105.0, v.Point.x, v.Point.y) for v in e.Vertexes]
         if "Line" in str(type(e.Curve)):
             edges_tail.append(Part.makeLine(pts[0], pts[1]))
         else:
             pm = e.valueAt(0.5 * (e.FirstParameter + e.LastParameter))
-            edges_tail.append(Part.Arc(pts[0], App.Vector(111.0, pm.x, pm.y), pts[1]).toShape())
-    cut_tail = Part.Face(Part.Wire(edges_tail)).extrude(App.Vector(5.0, 0.0, 0.0))
+            edges_tail.append(Part.Arc(pts[0], App.Vector(105.0, pm.x, pm.y), pts[1]).toShape())
+    cut_tail = Part.Face(Part.Wire(edges_tail)).extrude(App.Vector(11.0, 0.0, 0.0))
     shape = shape.cut(cut_tail)
 
     shape = shape.removeSplitter()

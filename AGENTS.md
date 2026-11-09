@@ -8,8 +8,8 @@
 ## 2. CAD- & Mechanik-Architektur (`hardware/mechanics/`)
 Alle Modelle unter `hardware/mechanics/models/` und Fertigungsexporte unter `hardware/mechanics/export/{step,stl,dxf}/` folgen dem 3-Ebenen-Prinzip (*Hardware-as-Code*):
 
-1. **Ebene 1 — Veränderlichkeit (`hardware/` vs. `custom/`):**
-   - `hardware/`: Unveränderliche Kauf- und Normteile (Servos wie `servo_nr645.FCStd`, Kugellager, Schrauben, Muttern, Passscheiben).
+1. **Ebene 1 — Veränderlichkeit (`cots/` vs. `custom/`):**
+   - `cots/`: Unveränderliche Kauf- und Normteile (Commercial Off-The-Shelf: Servos wie `servo_nr645.FCStd`, Kugellager, Schrauben, Muttern, Passscheiben).
    - `custom/`: Eigenkonstruktionen, die iterativ weiterentwickelt und gefertigt werden.
 2. **Ebene 2 — Konstruktive Generationen (`custom/v1/`, `custom/v2/`, ...):**
    - Jede Generation kapselt eine konsistente Evolutionsstufe (z. B. `v1` = Platten-/Spacer-Baseline, `v2` = monolithischer 3D-Druck mit gekapselter Sensorik).
