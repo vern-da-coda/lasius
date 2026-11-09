@@ -600,8 +600,8 @@ def run_pybullet(gui=False, steps=240, walk=False, enable_ws=False, ws_port=8765
     plane_id = p.loadURDF("plane.urdf")
     p.changeDynamics(plane_id, -1, lateralFriction=1.2)
     
-    # Load Lasius URDF with initial drop height z = 0.16 m (160 mm)
-    start_pos = [0, 0, 0.16]
+    # Load Lasius URDF with initial drop height z = 0.12 m (120 mm)
+    start_pos = [0, 0, 0.12]
     start_orientation = p.getQuaternionFromEuler([0, 0, 0])
     
     print(f"Loading URDF: {URDF_PATH}")
@@ -651,9 +651,9 @@ def run_pybullet(gui=False, steps=240, walk=False, enable_ws=False, ws_port=8765
     for leg_id, (x, y, z) in coords_dict.items():
         prefix = leg_map[leg_id]
         c_deg, f_deg, t_deg = calculate_leg_ik(x, y, z, coxa_len=56.5, femur_len=100.0, tibia_len=130.0)
-        p.resetJointState(robot_id, joint_indices[f"{prefix}_coxa"], math.radians(c_deg))
-        p.resetJointState(robot_id, joint_indices[f"{prefix}_femur"], math.radians(f_deg))
-        p.resetJointState(robot_id, joint_indices[f"{prefix}_tibia"], math.radians(t_deg))
+        p.resetJointState(robot_id, joint_indices[f"{prefix}_coxa"], math.radians(-c_deg))
+        p.resetJointState(robot_id, joint_indices[f"{prefix}_femur"], math.radians(-f_deg))
+        p.resetJointState(robot_id, joint_indices[f"{prefix}_tibia"], math.radians(t_deg + 90.0))
 
     # Simulation loop timing: 50 Hz gait ticks, 240 Hz physics (approx. 5 substeps per tick)
     physics_substeps = 240 // 50
@@ -755,7 +755,13 @@ def run_pybullet(gui=False, steps=240, walk=False, enable_ws=False, ws_port=8765
                                 # Relaxed joint: 0 motor torque (limp under gravity)
                                 p.setJointMotorControl2(robot_id, j_idx, p.VELOCITY_CONTROL, targetVelocity=0, force=0.0)
                                 actual_rad = p.getJointState(robot_id, j_idx)[0]
-                                angles_dict[servo_key] = round(math.degrees(actual_rad), 2)
+                                if j_name == "coxa":
+                                    actual_deg = -round(math.degrees(actual_rad), 2)
+                                elif j_name == "femur":
+                                    actual_deg = -round(math.degrees(actual_rad), 2)
+                                else:
+                                    actual_deg = round(math.degrees(actual_rad) - 90.0, 2)
+                                angles_dict[servo_key] = actual_deg
                             else:
                                 # Controlled joint: check direct override from Leg Control or default gait stance
                                 if ws_server and servo_key in ws_server.joint_overrides:
@@ -763,7 +769,14 @@ def run_pybullet(gui=False, steps=240, walk=False, enable_ws=False, ws_port=8765
                                 else:
                                     target_deg = base_deg
 
-                                p.setJointMotorControl2(robot_id, j_idx, p.POSITION_CONTROL, targetPosition=math.radians(target_deg), force=8.0)
+                                if j_name == "coxa":
+                                    pybullet_rad = math.radians(-target_deg)
+                                elif j_name == "femur":
+                                    pybullet_rad = math.radians(-target_deg)
+                                else:
+                                    pybullet_rad = math.radians(target_deg + 90.0)
+
+                                p.setJointMotorControl2(robot_id, j_idx, p.POSITION_CONTROL, targetPosition=pybullet_rad, force=8.0)
                                 angles_dict[servo_key] = round(target_deg, 2)
                     except Exception:
                         pass
@@ -840,14 +853,27 @@ def run_pybullet(gui=False, steps=240, walk=False, enable_ws=False, ws_port=8765
                         if ws_server and servo_key in ws_server.relaxed_servos:
                             p.setJointMotorControl2(robot_id, j_idx, p.VELOCITY_CONTROL, targetVelocity=0, force=0.0)
                             actual_rad = p.getJointState(robot_id, j_idx)[0]
-                            angles_dict[servo_key] = round(math.degrees(actual_rad), 2)
+                            if j_name == "coxa":
+                                actual_deg = -round(math.degrees(actual_rad), 2)
+                            elif j_name == "femur":
+                                actual_deg = -round(math.degrees(actual_rad), 2)
+                            else:
+                                actual_deg = round(math.degrees(actual_rad) - 90.0, 2)
+                            angles_dict[servo_key] = actual_deg
                         else:
                             if ws_server and servo_key in ws_server.joint_overrides:
                                 target_deg = ws_server.joint_overrides[servo_key]
                             else:
                                 target_deg = base_deg
 
-                            p.setJointMotorControl2(robot_id, j_idx, p.POSITION_CONTROL, targetPosition=math.radians(target_deg), force=8.0)
+                            if j_name == "coxa":
+                                pybullet_rad = math.radians(-target_deg)
+                            elif j_name == "femur":
+                                pybullet_rad = math.radians(-target_deg)
+                            else:
+                                pybullet_rad = math.radians(target_deg + 90.0)
+
+                            p.setJointMotorControl2(robot_id, j_idx, p.POSITION_CONTROL, targetPosition=pybullet_rad, force=8.0)
                             angles_dict[servo_key] = round(target_deg, 2)
                 except Exception:
                     pass

@@ -172,7 +172,7 @@ class LasiusGymEnv(gym.Env):
         )
 
         # Robot URDF
-        start_pos = [0, 0, 0.161]
+        start_pos = [0, 0, 0.120]
         start_orn = p.getQuaternionFromEuler([0, 0, 0], physicsClientId=self.client_id)
         self.robot_id = p.loadURDF(
             self.urdf_path,
@@ -207,9 +207,9 @@ class LasiusGymEnv(gym.Env):
             c_deg, f_deg, t_deg = calculate_leg_ik(
                 x, y, z, coxa_len=56.5, femur_len=100.0, tibia_len=130.0
             )
-            self.nominal_standing_angles[idx] = math.radians(c_deg)
-            self.nominal_standing_angles[idx + 1] = math.radians(f_deg)
-            self.nominal_standing_angles[idx + 2] = math.radians(t_deg)
+            self.nominal_standing_angles[idx] = math.radians(-c_deg)
+            self.nominal_standing_angles[idx + 1] = math.radians(-f_deg)
+            self.nominal_standing_angles[idx + 2] = math.radians(t_deg + 90.0)
             idx += 3
 
     def reset(
@@ -286,9 +286,9 @@ class LasiusGymEnv(gym.Env):
                 c_deg, f_deg, t_deg = calculate_leg_ik(
                     x, y, z, coxa_len=56.5, femur_len=100.0, tibia_len=130.0
                 )
-                nominal_angles[idx] = math.radians(c_deg)
-                nominal_angles[idx + 1] = math.radians(f_deg)
-                nominal_angles[idx + 2] = math.radians(t_deg)
+                nominal_angles[idx] = math.radians(-c_deg)
+                nominal_angles[idx + 1] = math.radians(-f_deg)
+                nominal_angles[idx + 2] = math.radians(t_deg + 90.0)
                 idx += 3
 
             # Add scaled residual offsets
