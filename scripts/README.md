@@ -21,6 +21,7 @@ Automation, simulation, deployment, testing, and benchmark tools for the **Lasiu
 | **Deploy** | [`deploy/backup_calibration.sh`](deploy/backup_calibration.sh) | Downloads and validates `calibration.json` with a timestamp into `data/calibration_backups/`. | `./scripts/deploy/backup_calibration.sh [PI_IP]` |
 | **Bench** | [`bench/pot_calibration_wizard.py`](bench/pot_calibration_wizard.py) | Interactive CLI wizard for closed-loop potentiometer calibration & regression curves. | `uv run scripts/bench/pot_calibration_wizard.py` |
 | **Bench** | [`bench/servo_pot_sweep.py`](bench/servo_pot_sweep.py) | Hardware servo sweep and live potentiometer voltage measurement tool. | `uv run scripts/bench/servo_pot_sweep.py` |
+| **Simulation** | [`sim/sim_pilot.sh`](sim/sim_pilot.sh) | Orchestrates PyBullet 3D physics simulation and `lasius-pilot` gamepad teleoperation. | `./scripts/sim/sim_pilot.sh` |
 | **Simulation** | [`sim/export_urdf.py`](sim/export_urdf.py) | Generates Lasius URDF model from `config.yaml`, CAD STL meshes, and inertias. | `python3 scripts/sim/export_urdf.py` |
 | **Simulation** | [`sim/validate_urdf.py`](sim/validate_urdf.py) | Validates URDF kinematic tree connectivity, 18-DOF revolute joints, and mesh links. | `python3 scripts/sim/validate_urdf.py` |
 | **Simulation** | [`sim/run_simulation.py`](sim/run_simulation.py) | Executes headless or interactive 3D physics verification in PyBullet or MuJoCo. | `python3 scripts/sim/run_simulation.py [--gui]` |
@@ -59,6 +60,15 @@ Automation, simulation, deployment, testing, and benchmark tools for the **Lasiu
    ```
    - REST API & 3D Web Dashboard: `http://127.0.0.1:8000`
    - WebSocket Telemetry Stream: `ws://127.0.0.1:8765`
+
+5. **Launch 3D Physics Digital Twin & Gamepad Teleoperation (PyBullet + lasius-pilot):**
+   ```bash
+   # Start with Sony PlayStation 5 DualSense (default) or Google Stadia / Xbox
+   ./scripts/sim/sim_pilot.sh
+   # Or with explicit controller profile:
+   ./scripts/sim/sim_pilot.sh --profile ps5
+   ```
+
 
 ---
 
