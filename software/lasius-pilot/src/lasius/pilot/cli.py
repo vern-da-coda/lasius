@@ -58,7 +58,7 @@ async def run_teleop(host: str, port: int, device: str, profile: str = "auto"):
     print(f"Connecting to Lasius-Server at {uri}...")
 
     try:
-        async with websockets.connect(uri) as ws:
+        async with websockets.connect(uri, ping_interval=None) as ws:
             labels = controller.active_profile_config.labels
             print("✔ Connected to Lasius Telemetry & Command API!")
             print("-" * 68)
@@ -71,28 +71,43 @@ async def run_teleop(host: str, port: int, device: str, profile: str = "auto"):
             print(f"  {labels.cli_pose_hint}")
             print("-" * 68)
 
+            # Consume incoming server telemetry asynchronously to prevent socket buffer stall
+            async def _drain_telemetry():
+                try:
+                    async for _ in ws:
+                        pass
+                except asyncio.CancelledError:
+                    pass
+                except Exception:
+                    pass
+
+            drain_task = asyncio.create_task(_drain_telemetry())
+
             last_cmd = {}
-            while True:
-                events = controller.read_events()
+            try:
+                while True:
+                    events = controller.read_events()
 
-                # 1. Dispatch discrete button / D-Pad actions immediately
-                for action_msg in controller.translate_events_to_actions(events):
-                    await ws.send(json.dumps(action_msg))
+                    # 1. Dispatch discrete button / D-Pad actions immediately
+                    for action_msg in controller.translate_events_to_actions(events):
+                        await ws.send(json.dumps(action_msg))
 
-                # 2. Dispatch continuous stick velocity on change
-                cmd = controller.get_locomotion_command()
-                if cmd != last_cmd:
-                    last_cmd = cmd.copy()
-                    msg = {
-                        "type": "command",
-                        "action": "set_velocity",
-                        "walk_x": cmd["walk_x"],
-                        "walk_y": cmd["walk_y"],
-                        "turn_z": cmd["turn_z"],
-                    }
-                    await ws.send(json.dumps(msg))
+                    # 2. Dispatch continuous stick velocity on change
+                    cmd = controller.get_locomotion_command()
+                    if cmd != last_cmd:
+                        last_cmd = cmd.copy()
+                        msg = {
+                            "type": "command",
+                            "action": "set_velocity",
+                            "walk_x": cmd["walk_x"],
+                            "walk_y": cmd["walk_y"],
+                            "turn_z": cmd["turn_z"],
+                        }
+                        await ws.send(json.dumps(msg))
 
-                await asyncio.sleep(0.030)  # ~33 Hz update rate
+                    await asyncio.sleep(0.030)  # ~33 Hz update rate
+            finally:
+                drain_task.cancel()
     except Exception as e:
         print(f"[ERROR] Connection to Lasius-Server failed: {e}")
     finally:

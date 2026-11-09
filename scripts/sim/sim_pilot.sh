@@ -21,6 +21,8 @@ cd "$ROOT_DIR"
 PROFILE="ps5"
 JOYSTICK_DEV="/dev/input/js0"
 WS_PORT=8765
+HTTP_PORT=8000
+DASHBOARD=1
 SIM_ONLY=0
 START_WALK=""
 
@@ -28,12 +30,15 @@ usage() {
     cat << 'EOF'
 Verwendung: ./scripts/sim/sim_pilot.sh [OPTIONEN]
 
-Orchestriert die PyBullet 3D-Physiksimulation und das Lasius-Pilot Gamepad-Teleoperations-Tool.
+Orchestriert die PyBullet 3D-Physiksimulation, das Lasius-Pilot Gamepad-Teleoperations-Tool
+und das 3D Three.js Web-Dashboard.
 
 Optionen:
   -p, --profile <name>     Gamepad-Profil (Standard: ps5; Auswahl: ps5, stadia, xbox, auto)
   -d, --device <dev>       Linux Joystick Device (Standard: /dev/input/js0)
   --port <port>            WebSocket-Port (Standard: 8765)
+  --http-port <port>       HTTP-Port für Web-Dashboard (Standard: 8000)
+  --no-dashboard           Deaktiviert das integrierte HTTP Web-Dashboard
   -w, --walk               Startet die Simulation mit sofort aktivem Gehzyklus
   --sim-only               Startet nur die 3D-Simulation ohne lasius-pilot
   -h, --help               Zeigt diese Hilfe an
@@ -73,6 +78,14 @@ while [[ $# -gt 0 ]]; do
         --port)
             WS_PORT="$2"
             shift 2
+            ;;
+        --http-port)
+            HTTP_PORT="$2"
+            shift 2
+            ;;
+        --no-dashboard)
+            DASHBOARD=0
+            shift
             ;;
         -w|--walk)
             START_WALK="--walk"
@@ -176,6 +189,11 @@ trap cleanup INT TERM EXIT
 echo ""
 echo "🚀 Starte PyBullet 3D-Simulation mit WebSocket-Server..."
 SIM_ARGS=(--gui --ws --ws-port "$WS_PORT")
+if [ "$DASHBOARD" -eq 1 ]; then
+    SIM_ARGS+=(--dashboard --http-port "$HTTP_PORT")
+else
+    SIM_ARGS+=(--no-dashboard)
+fi
 if [ -n "$START_WALK" ]; then
     SIM_ARGS+=("$START_WALK")
 fi
@@ -228,6 +246,9 @@ if [ "$SIM_ONLY" -eq 0 ]; then
 
     echo "=========================================================="
     echo "✨ Simulation und Teleoperation laufen aktiv!"
+    if [ "$DASHBOARD" -eq 1 ]; then
+        echo "🌐 3D Web-Dashboard:    http://localhost:$HTTP_PORT"
+    fi
     echo "Drücke Strg+C (oder schließe das PyBullet-Fenster), um beide zu beenden."
     echo "=========================================================="
 
