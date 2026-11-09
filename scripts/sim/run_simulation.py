@@ -84,25 +84,37 @@ def run_pybullet(gui=False, steps=240, connect_ws=False):
         )
 
     # Step simulation
-    print(f"Stepping physics simulation ({steps} steps @ 240 Hz = {steps/240.0:.2f}s)...")
-    t0 = time.time()
-    for step in range(steps):
-        p.stepSimulation()
-        if gui:
-            time.sleep(1.0 / 240.0)
+    if gui:
+        print("\n🎮 Interactive PyBullet 3D Window opened:")
+        print("  - Kamera drehen: Strg + Linke Maustaste gedrückt halten & ziehen")
+        print("  - Kamera verschieben: Strg + Mittlere Maustaste (Mausrad) gedrückt halten & ziehen")
+        print("  - Zoom: Mausrad scrollen")
+        print("  - Physik-Interaktion: Mit linker Maustaste auf den Roboter klicken & ziehen (virtuelle Feder)")
+        print("  - Beenden: Fenster schließen oder Strg+C im Terminal\n")
+        try:
+            while p.getConnectionInfo().get("isConnected", 0):
+                p.stepSimulation()
+                time.sleep(1.0 / 240.0)
+        except (KeyboardInterrupt, Exception):
+            pass
+    else:
+        print(f"Stepping physics simulation ({steps} steps @ 240 Hz = {steps/240.0:.2f}s)...")
+        t0 = time.time()
+        for step in range(steps):
+            p.stepSimulation()
+        elapsed = time.time() - t0
+        print(f"Simulation completed in {elapsed:.3f}s ({steps / elapsed:.1f} steps/s).")
 
-    elapsed = time.time() - t0
-    pos, orn = p.getBasePositionAndOrientation(robot_id)
-    rpy = p.getEulerFromQuaternion(orn)
-    print(f"Simulation completed in {elapsed:.3f}s ({steps / elapsed:.1f} steps/s).")
-    print(f"Final Chassis Position: [X={pos[0]:.3f}, Y={pos[1]:.3f}, Z={pos[2]:.3f}] m")
-    print(f"Final Chassis Orientation (RPY): [R={math.degrees(rpy[0]):.1f}°, P={math.degrees(rpy[1]):.1f}°, Y={math.degrees(rpy[2]):.1f}°]")
+    if p.isConnected():
+        pos, orn = p.getBasePositionAndOrientation(robot_id)
+        rpy = p.getEulerFromQuaternion(orn)
+        print(f"Final Chassis Position: [X={pos[0]:.3f}, Y={pos[1]:.3f}, Z={pos[2]:.3f}] m")
+        print(f"Final Chassis Orientation (RPY): [R={math.degrees(rpy[0]):.1f}°, P={math.degrees(rpy[1]):.1f}°, Y={math.degrees(rpy[2]):.1f}°]")
 
-    # Check foot contacts with ground plane
-    contacts = p.getContactPoints(robot_id, plane_id)
-    print(f"Detected {len(contacts)} active contact points with ground plane.")
-
-    p.disconnect()
+        # Check foot contacts with ground plane
+        contacts = p.getContactPoints(robot_id, plane_id)
+        print(f"Detected {len(contacts)} active contact points with ground plane.")
+        p.disconnect()
     print("✅ PyBullet simulation verification finished successfully.")
     return True
 
