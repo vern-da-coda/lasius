@@ -70,6 +70,7 @@ Direct links to all distributed technical documentation, specifications, hardwar
 
 ### System Documentation & Specifications (`docs/`)
 - [**`docs/README.md`**](docs/README.md) – Documentation overview and navigation guide
+- [**`docs/domain_architecture.md`**](docs/domain_architecture.md) – Comprehensive system & domain architecture specification (6 Domains, C4 map & sequence workflows)
 - [**`docs/roadmap.md`**](docs/roadmap.md) – Project roadmap, milestone progress (M1–M6), and backlog
 - [**`docs/hardware/decisions.md`**](docs/hardware/decisions.md) – Hardware decisions, power architecture (LiPo/UBEC), sensor bus & 3D print specs
 - [**`docs/hardware/closed_loop_plan.md`**](docs/hardware/closed_loop_plan.md) – 18-DOF closed-loop feedback plan, ADS1115 ADC pinout & CircuitPython drivers

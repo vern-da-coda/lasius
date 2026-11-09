@@ -3,7 +3,7 @@
 ---
 
 [Index](../README.md) | [Software](../software/README.md) | [Hardware](../hardware/README.md) | [Docs](../docs/README.md) | [Data](../data/README.md) | [Scripts](../scripts/README.md) |<br>
-[Decisions](hardware/decisions.md) | [Closed Loop](hardware/closed_loop_plan.md) | [Wiring](hardware/wiring_plan.md) | [Gamepad](pilot/gamepad_stadia.md) | [Roadmap](roadmap.md) |
+[Domain Architecture](domain_architecture.md) | [Decisions](hardware/decisions.md) | [Closed Loop](hardware/closed_loop_plan.md) | [Wiring](hardware/wiring_plan.md) | [Gamepad](pilot/gamepad_stadia.md) | [Roadmap](roadmap.md) |
 
 ---
 
@@ -12,6 +12,10 @@ Specifications, architectural decisions, wiring schematics, and development road
 **Interactive 3D Digital Twin Demo:** [**https://dashboard.lasius.kaemmereit.de/**](https://dashboard.lasius.kaemmereit.de/) – Experience the browser-based simulation directly.
 
 ## Documentation Index
+
+### System & Architecture
+- [**System & Domain Architecture Specification**](domain_architecture.md):
+  End-to-end domain map covering Mechanics (3-Level Hardware-as-Code), Power & Sensor Electronics, 50 Hz Harmonic Locomotion Core, 3D Digital Twin, Gamepad Teleoperation, PyBullet Physics, and Gymnasium Reinforcement Learning.
 
 ### Hardware & Electronics
 - [**Hardware Decisions & 3D Printing Specifications**](hardware/decisions.md):
