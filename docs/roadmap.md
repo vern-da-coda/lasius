@@ -47,6 +47,7 @@ flowchart TD
     A --> D["3. Dashboard & Teleoperation"]
     A --> E["4. Motion & Choreographies"]
     A --> F["5. STEMMA QT Sensors & Autonomy"]
+    A --> G["6. Biomimetic Ganglia & Cruse Rules [Backlog]"]
 
     B --> B1["Central Scripts & Banner: dev_sim, deploy_pi, run_tests, backup, status"]
     C --> C1["3D Scans in hardware/mechanics/scans/, 4 perimeters, 40% gyroid, PETG, R 2-3mm"]
@@ -113,3 +114,10 @@ flowchart TD
 * **Calibration Findings ([`data/bench/`](../data/bench/)):** Empirically verified on Channel 15 ($R^2 = 0.9996$, sensitivity $7.59\,\text{mV}/^\circ$, zero point $1.5633\,\text{V}$ at $0^\circ$, max error $\pm 1.45^\circ$).
 * **Closed-Loop Formula:** $\theta(V) = (V - 1.5633) \cdot 131.77^\circ$.
 * **Hardware Integration:** 6× ADS1115 ADCs over TCA9548A multiplexer with 100 nF low-pass RC filters (see [`docs/hardware/closed_loop_plan.md`](hardware/closed_loop_plan.md)).
+
+### Milestone 7: Biomimetic Locomotion & Decentralized Ganglia Architecture [Backlog]
+* **Biological Principle:** Insects lack a centralized high-capacity brain; high-level cognition commands only locomotion intentions (`direction`, `speed`, `gait_intent`), delegating phase coordination to thoracic ganglia and local reflex loops.
+* **Detailed Specification:** Tracked in [`software/TODO.md`](../software/TODO.md):
+  * **Decentralized Leg Controllers (`Walknet` / Cruse Rules 1–6):** Emergent coordination via peer leg coupling and stance-load triggers instead of static global cosine timing.
+  * **Local Sensory Reflex Loops:** In-flight elevator reflex (obstacle hopping via ADC lag) and landing search reflex (tactile microswitches).
+  * **Top-Level Cognitive Decoupling:** Subsumption behavior tree where all joint angles and inverse kinematics are strictly encapsulated away from application/pilot layers.
