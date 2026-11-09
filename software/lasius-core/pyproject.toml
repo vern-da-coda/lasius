@@ -13,6 +13,10 @@ dependencies = [
 dev = [
     "pytest>=8.0",
 ]
+sim = [
+    "pybullet>=3.2.5",
+    "gymnasium>=1.0.0",
+]
 
 [project.scripts]
 lasius-server = "lasius.core.server.app:main"
