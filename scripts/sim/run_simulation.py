@@ -37,8 +37,8 @@ def run_pybullet(gui=False, steps=240, connect_ws=False):
     # Load plane
     plane_id = p.loadURDF("plane.urdf")
     
-    # Load Lasius URDF with initial drop height z = 0.12 m (120 mm)
-    start_pos = [0, 0, 0.12]
+    # Load Lasius URDF with initial drop height z = 0.135 m (135 mm)
+    start_pos = [0, 0, 0.135]
     start_orientation = p.getQuaternionFromEuler([0, 0, 0])
     
     print(f"Loading URDF: {URDF_PATH}")
@@ -63,9 +63,9 @@ def run_pybullet(gui=False, steps=240, connect_ws=False):
     print(f"Found {len(joint_indices)} revolute joints: {list(joint_indices.keys())}")
 
     # Set initial standing stance joint targets
-    # Coxa = 0, Femur = 15 deg, Tibia = -45 deg
+    # Coxa = 0 deg, Femur = +15 deg (pitch down), Tibia = +50 deg (pitch down to ground)
     femur_init = math.radians(15.0)
-    tibia_init = math.radians(-45.0)
+    tibia_init = math.radians(50.0)
     
     for j_name, j_idx in joint_indices.items():
         target = 0.0
@@ -73,13 +73,16 @@ def run_pybullet(gui=False, steps=240, connect_ws=False):
             target = femur_init
         elif "tibia" in j_name:
             target = tibia_init
+
+        # Initialize joint state to standing posture
+        p.resetJointState(robot_id, j_idx, target)
             
         p.setJointMotorControl2(
             robot_id,
             j_idx,
             p.POSITION_CONTROL,
             targetPosition=target,
-            force=2.5,
+            force=5.0,
             maxVelocity=6.0
         )
 

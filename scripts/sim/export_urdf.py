@@ -53,11 +53,11 @@ def create_inertial(parent_elem, mass_kg, com_m, inertia_dict):
     )
 
 
-def create_mesh_visual(parent_elem, mesh_path, origin_xyz, origin_rpy, material_name):
+def create_mesh_visual(parent_elem, mesh_path, origin_xyz, origin_rpy, scale_xyz, material_name):
     visual = ET.SubElement(parent_elem, "visual")
     ET.SubElement(visual, "origin", xyz=format_vec3(origin_xyz), rpy=format_rpy(*origin_rpy))
     geom = ET.SubElement(visual, "geometry")
-    ET.SubElement(geom, "mesh", filename=mesh_path, scale="0.001 0.001 0.001")
+    ET.SubElement(geom, "mesh", filename=mesh_path, scale=format_vec3(scale_xyz))
     ET.SubElement(visual, "material", name=material_name)
 
 
@@ -82,9 +82,9 @@ def build_urdf():
         config = yaml.safe_load(f)
     geom_cfg = config.get("geometry", {})
     limbs = geom_cfg.get("limbs", {})
-    coxa_len = limbs.get("coxa", 60.0) * 1e-3     # m
-    femur_len = limbs.get("femur", 100.0) * 1e-3   # m
-    tibia_len = limbs.get("tibia", 130.0) * 1e-3   # m
+    coxa_len = 0.056500                            # Exact FreeCAD axis distance: 56.50 mm (nominal 60.0 mm)
+    femur_len = limbs.get("femur", 100.0) * 1e-3   # 100.00 mm
+    tibia_len = limbs.get("tibia", 130.0) * 1e-3   # 130.00 mm
     
     with open(INERTIAS_PATH, "r") as f:
         inertias = json.load(f)
@@ -127,6 +127,7 @@ def build_urdf():
         f"{MESH_REL_DIR}/custom/v1/parts/body_bottom.stl",
         [0.0, 0.0, 0.0],
         [0.0, 0.0, 0.0],
+        [0.001, 0.001, 0.001],
         "carbon_dark"
     )
     # Visual: Top plate (at Z = 53.3 mm)
@@ -135,8 +136,24 @@ def build_urdf():
         f"{MESH_REL_DIR}/custom/v1/parts/body_top.stl",
         [0.0, 0.0, 0.0533],
         [0.0, 0.0, 0.0],
+        [0.001, 0.001, 0.001],
         "carbon_dark"
     )
+    
+    # Visual: 8x Aluminum Standoff Pillars (Spacers D14 x 51.3 mm, spanning Z = 2.0 .. 53.3 mm)
+    spacers = [
+        (0.045, 0.030), (0.045, -0.030), (-0.045, 0.030), (-0.045, -0.030),
+        (0.128, 0.012), (0.128, -0.012), (-0.090, 0.0), (-0.120, 0.0)
+    ]
+    for sp_x, sp_y in spacers:
+        create_mesh_visual(
+            base_link,
+            f"{MESH_REL_DIR}/custom/v1/parts/spacer_14x50.stl",
+            [sp_x, sp_y, 0.002],
+            [0.0, 0.0, 0.0],
+            [0.001, 0.001, 0.001],
+            "servo_metal"
+        )
     
     # Collision: Chassis box bounding volume (267 x 177 x 55 mm)
     create_collision_box(
@@ -207,16 +224,22 @@ def build_urdf():
         ET.SubElement(j_coxa, "limit", lower=f"{math.radians(-45.0):.6f}", upper=f"{math.radians(45.0):.6f}", effort="2.5", velocity="6.0")
         ET.SubElement(j_coxa, "dynamics", damping="0.1", friction="0.05")
 
+        # Relative transform definitions derived directly from FreeCAD leg_assembly.FCStd:
+        scale_mesh = [0.001, -0.001 if is_right else 0.001, 0.001]
+
+        # 1. Coxa Bracket mesh relative to Coxa pivot axis (X=0, Y=0, Z=0 in link frame):
+        # In FreeCAD: trans = (74.70, +/-9.00, -15.25) mm, rot = Yaw +/-180°, Roll +/-90°
+        coxa_pos = [0.074700, 0.009000 if is_right else -0.009000, -0.015250]
+        coxa_rpy = [-math.pi / 2.0 if is_right else math.pi / 2.0, 0.0, -math.pi if is_right else math.pi]
+
         link_coxa = ET.SubElement(robot, "link", name=coxa_link_name)
         create_inertial(link_coxa, coxa_mass, coxa_com, coxa_inertia)
-        
-        # Visual Coxa Bracket Mesh
-        mesh_yaw = math.pi if is_right else 0.0
         create_mesh_visual(
             link_coxa,
             f"{MESH_REL_DIR}/custom/v2/parts/coxa_bracket.stl",
-            [0.0, 0.0, 0.0],
-            [0.0, 0.0, mesh_yaw],
+            coxa_pos,
+            coxa_rpy,
+            scale_mesh,
             "coxa_teal"
         )
         create_collision_box(
@@ -231,11 +254,12 @@ def build_urdf():
         # ---------------------------------------------------------
         femur_joint_name = f"{leg_name}_femur"
         femur_link_name = f"link_{leg_id}_femur"
+        femur_offset_y = 0.002500 if is_right else -0.002500
         
         j_femur = ET.SubElement(robot, "joint", name=femur_joint_name, type="revolute")
         ET.SubElement(j_femur, "parent", link=coxa_link_name)
         ET.SubElement(j_femur, "child", link=femur_link_name)
-        ET.SubElement(j_femur, "origin", xyz=f"{coxa_len:.6f} 0.000000 0.000000", rpy="0 0 0")
+        ET.SubElement(j_femur, "origin", xyz=f"{coxa_len:.6f} {femur_offset_y:.6f} 0.000000", rpy="0 0 0")
         ET.SubElement(j_femur, "axis", xyz="0 1 0")
         ET.SubElement(j_femur, "limit", lower=f"{math.radians(-90.0):.6f}", upper=f"{math.radians(90.0):.6f}", effort="3.0", velocity="6.0")
         ET.SubElement(j_femur, "dynamics", damping="0.1", friction="0.05")
@@ -243,19 +267,23 @@ def build_urdf():
         link_femur = ET.SubElement(robot, "link", name=femur_link_name)
         create_inertial(link_femur, femur_mass, femur_com, femur_inertia)
         
-        # Visual Femur Mesh + Cover
+        # 2. Femur mesh sits directly at the hip joint axis (X=56.5 mm), identity rotation
+        femur_pos = [0.0, 0.0, 0.0]
+        femur_rpy = [0.0, 0.0, 0.0]
         create_mesh_visual(
             link_femur,
             f"{MESH_REL_DIR}/custom/v2/parts/femur.stl",
-            [0.0, 0.0, 0.0],
-            [0.0, 0.0, 0.0],
+            femur_pos,
+            femur_rpy,
+            scale_mesh,
             "femur_blue"
         )
         create_mesh_visual(
             link_femur,
             f"{MESH_REL_DIR}/custom/v2/parts/femur_cover.stl",
-            [0.0, 0.0, 0.0],
-            [0.0, 0.0, 0.0],
+            femur_pos,
+            femur_rpy,
+            scale_mesh,
             "carbon_dark"
         )
         create_collision_box(
@@ -282,11 +310,16 @@ def build_urdf():
         link_tibia = ET.SubElement(robot, "link", name=tibia_link_name)
         create_inertial(link_tibia, tibia_mass, tibia_com, tibia_inertia)
         
+        # 3. Tibia mesh relative to Knee joint axis at theta=0:
+        # In FreeCAD leg_assembly: base = (0.0, +/-2.0, 0.0) mm, rot = Yaw +/-180°, Roll +/-90°
+        tibia_pos = [0.0, -0.002000 if is_right else 0.002000, 0.0]
+        tibia_rpy = [-math.pi / 2.0 if is_right else math.pi / 2.0, 0.0, -math.pi if is_right else math.pi]
         create_mesh_visual(
             link_tibia,
             f"{MESH_REL_DIR}/custom/v2/parts/tibia.stl",
-            [0.0, 0.0, 0.0],
-            [0.0, 0.0, 0.0],
+            tibia_pos,
+            tibia_rpy,
+            scale_mesh,
             "lasius_orange"
         )
         create_collision_box(
@@ -302,14 +335,13 @@ def build_urdf():
         foot_joint_name = f"{leg_name}_foot_joint"
         foot_link_name = f"link_{leg_id}_foot"
         
-        # Foot tip relative to knee joint (from tibia geometry):
-        foot_tip_x = tibia_len * math.cos(math.radians(-60.0))
-        foot_tip_z = tibia_len * math.sin(math.radians(-60.0))
+        # Exact claw tip position relative to knee joint at theta=0:
+        foot_pos = [0.123555, -0.002000 if is_right else 0.002000, -0.014602]
         
         j_foot = ET.SubElement(robot, "joint", name=foot_joint_name, type="fixed")
         ET.SubElement(j_foot, "parent", link=tibia_link_name)
         ET.SubElement(j_foot, "child", link=foot_link_name)
-        ET.SubElement(j_foot, "origin", xyz=f"{foot_tip_x:.6f} 0.000000 {foot_tip_z:.6f}", rpy="0 0 0")
+        ET.SubElement(j_foot, "origin", xyz=format_vec3(foot_pos), rpy="0 0 0")
 
         link_foot = ET.SubElement(robot, "link", name=foot_link_name)
         create_inertial(link_foot, 0.005, [0, 0, 0], {"ixx": 1e-6, "iyy": 1e-6, "izz": 1e-6})

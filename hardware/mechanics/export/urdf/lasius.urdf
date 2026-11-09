@@ -27,16 +27,72 @@
     <visual>
       <origin xyz="0.000000 0.000000 0.000000" rpy="0.000000 0.000000 0.000000"/>
       <geometry>
-        <mesh filename="../stl/custom/v1/parts/body_bottom.stl" scale="0.001 0.001 0.001"/>
+        <mesh filename="../stl/custom/v1/parts/body_bottom.stl" scale="0.001000 0.001000 0.001000"/>
       </geometry>
       <material name="carbon_dark"/>
     </visual>
     <visual>
       <origin xyz="0.000000 0.000000 0.053300" rpy="0.000000 0.000000 0.000000"/>
       <geometry>
-        <mesh filename="../stl/custom/v1/parts/body_top.stl" scale="0.001 0.001 0.001"/>
+        <mesh filename="../stl/custom/v1/parts/body_top.stl" scale="0.001000 0.001000 0.001000"/>
       </geometry>
       <material name="carbon_dark"/>
+    </visual>
+    <visual>
+      <origin xyz="0.045000 0.030000 0.002000" rpy="0.000000 0.000000 0.000000"/>
+      <geometry>
+        <mesh filename="../stl/custom/v1/parts/spacer_14x50.stl" scale="0.001000 0.001000 0.001000"/>
+      </geometry>
+      <material name="servo_metal"/>
+    </visual>
+    <visual>
+      <origin xyz="0.045000 -0.030000 0.002000" rpy="0.000000 0.000000 0.000000"/>
+      <geometry>
+        <mesh filename="../stl/custom/v1/parts/spacer_14x50.stl" scale="0.001000 0.001000 0.001000"/>
+      </geometry>
+      <material name="servo_metal"/>
+    </visual>
+    <visual>
+      <origin xyz="-0.045000 0.030000 0.002000" rpy="0.000000 0.000000 0.000000"/>
+      <geometry>
+        <mesh filename="../stl/custom/v1/parts/spacer_14x50.stl" scale="0.001000 0.001000 0.001000"/>
+      </geometry>
+      <material name="servo_metal"/>
+    </visual>
+    <visual>
+      <origin xyz="-0.045000 -0.030000 0.002000" rpy="0.000000 0.000000 0.000000"/>
+      <geometry>
+        <mesh filename="../stl/custom/v1/parts/spacer_14x50.stl" scale="0.001000 0.001000 0.001000"/>
+      </geometry>
+      <material name="servo_metal"/>
+    </visual>
+    <visual>
+      <origin xyz="0.128000 0.012000 0.002000" rpy="0.000000 0.000000 0.000000"/>
+      <geometry>
+        <mesh filename="../stl/custom/v1/parts/spacer_14x50.stl" scale="0.001000 0.001000 0.001000"/>
+      </geometry>
+      <material name="servo_metal"/>
+    </visual>
+    <visual>
+      <origin xyz="0.128000 -0.012000 0.002000" rpy="0.000000 0.000000 0.000000"/>
+      <geometry>
+        <mesh filename="../stl/custom/v1/parts/spacer_14x50.stl" scale="0.001000 0.001000 0.001000"/>
+      </geometry>
+      <material name="servo_metal"/>
+    </visual>
+    <visual>
+      <origin xyz="-0.090000 0.000000 0.002000" rpy="0.000000 0.000000 0.000000"/>
+      <geometry>
+        <mesh filename="../stl/custom/v1/parts/spacer_14x50.stl" scale="0.001000 0.001000 0.001000"/>
+      </geometry>
+      <material name="servo_metal"/>
+    </visual>
+    <visual>
+      <origin xyz="-0.120000 0.000000 0.002000" rpy="0.000000 0.000000 0.000000"/>
+      <geometry>
+        <mesh filename="../stl/custom/v1/parts/spacer_14x50.stl" scale="0.001000 0.001000 0.001000"/>
+      </geometry>
+      <material name="servo_metal"/>
     </visual>
     <collision>
       <origin xyz="0.000000 0.000000 0.027000" rpy="0.000000 0.000000 0.000000"/>
@@ -60,23 +116,23 @@
       <inertia ixx="3.09415715e-05" iyy="1.09842756e-04" izz="1.11261963e-04" ixy="0.00000000e+00" ixz="0.00000000e+00" iyz="0.00000000e+00"/>
     </inertial>
     <visual>
-      <origin xyz="0.000000 0.000000 0.000000" rpy="0.000000 0.000000 0.000000"/>
+      <origin xyz="0.074700 -0.009000 -0.015250" rpy="1.570796 0.000000 3.141593"/>
       <geometry>
-        <mesh filename="../stl/custom/v2/parts/coxa_bracket.stl" scale="0.001 0.001 0.001"/>
+        <mesh filename="../stl/custom/v2/parts/coxa_bracket.stl" scale="0.001000 0.001000 0.001000"/>
       </geometry>
       <material name="coxa_teal"/>
     </visual>
     <collision>
-      <origin xyz="0.030000 0.000000 0.000000" rpy="0.000000 0.000000 0.000000"/>
+      <origin xyz="0.028250 0.000000 0.000000" rpy="0.000000 0.000000 0.000000"/>
       <geometry>
-        <box size="0.060000 0.050000 0.045000"/>
+        <box size="0.056500 0.050000 0.045000"/>
       </geometry>
     </collision>
   </link>
   <joint name="left_front_femur" type="revolute">
     <parent link="link_lf_coxa"/>
     <child link="link_lf_femur"/>
-    <origin xyz="0.060000 0.000000 0.000000" rpy="0 0 0"/>
+    <origin xyz="0.056500 -0.002500 0.000000" rpy="0 0 0"/>
     <axis xyz="0 1 0"/>
     <limit lower="-1.570796" upper="1.570796" effort="3.0" velocity="6.0"/>
     <dynamics damping="0.1" friction="0.05"/>
@@ -90,14 +146,14 @@
     <visual>
       <origin xyz="0.000000 0.000000 0.000000" rpy="0.000000 0.000000 0.000000"/>
       <geometry>
-        <mesh filename="../stl/custom/v2/parts/femur.stl" scale="0.001 0.001 0.001"/>
+        <mesh filename="../stl/custom/v2/parts/femur.stl" scale="0.001000 0.001000 0.001000"/>
       </geometry>
       <material name="femur_blue"/>
     </visual>
     <visual>
       <origin xyz="0.000000 0.000000 0.000000" rpy="0.000000 0.000000 0.000000"/>
       <geometry>
-        <mesh filename="../stl/custom/v2/parts/femur_cover.stl" scale="0.001 0.001 0.001"/>
+        <mesh filename="../stl/custom/v2/parts/femur_cover.stl" scale="0.001000 0.001000 0.001000"/>
       </geometry>
       <material name="carbon_dark"/>
     </visual>
@@ -123,9 +179,9 @@
       <inertia ixx="4.02025811e-05" iyy="1.36139527e-04" izz="1.41938346e-04" ixy="0.00000000e+00" ixz="0.00000000e+00" iyz="0.00000000e+00"/>
     </inertial>
     <visual>
-      <origin xyz="0.000000 0.000000 0.000000" rpy="0.000000 0.000000 0.000000"/>
+      <origin xyz="0.000000 0.002000 0.000000" rpy="1.570796 0.000000 3.141593"/>
       <geometry>
-        <mesh filename="../stl/custom/v2/parts/tibia.stl" scale="0.001 0.001 0.001"/>
+        <mesh filename="../stl/custom/v2/parts/tibia.stl" scale="0.001000 0.001000 0.001000"/>
       </geometry>
       <material name="lasius_orange"/>
     </visual>
@@ -139,7 +195,7 @@
   <joint name="left_front_foot_joint" type="fixed">
     <parent link="link_lf_tibia"/>
     <child link="link_lf_foot"/>
-    <origin xyz="0.065000 0.000000 -0.112583" rpy="0 0 0"/>
+    <origin xyz="0.123555 0.002000 -0.014602" rpy="0 0 0"/>
   </joint>
   <link name="link_lf_foot">
     <inertial>
@@ -169,23 +225,23 @@
       <inertia ixx="3.09415715e-05" iyy="1.09842756e-04" izz="1.11261963e-04" ixy="0.00000000e+00" ixz="0.00000000e+00" iyz="0.00000000e+00"/>
     </inertial>
     <visual>
-      <origin xyz="0.000000 0.000000 0.000000" rpy="0.000000 0.000000 0.000000"/>
+      <origin xyz="0.074700 -0.009000 -0.015250" rpy="1.570796 0.000000 3.141593"/>
       <geometry>
-        <mesh filename="../stl/custom/v2/parts/coxa_bracket.stl" scale="0.001 0.001 0.001"/>
+        <mesh filename="../stl/custom/v2/parts/coxa_bracket.stl" scale="0.001000 0.001000 0.001000"/>
       </geometry>
       <material name="coxa_teal"/>
     </visual>
     <collision>
-      <origin xyz="0.030000 0.000000 0.000000" rpy="0.000000 0.000000 0.000000"/>
+      <origin xyz="0.028250 0.000000 0.000000" rpy="0.000000 0.000000 0.000000"/>
       <geometry>
-        <box size="0.060000 0.050000 0.045000"/>
+        <box size="0.056500 0.050000 0.045000"/>
       </geometry>
     </collision>
   </link>
   <joint name="left_middle_femur" type="revolute">
     <parent link="link_lm_coxa"/>
     <child link="link_lm_femur"/>
-    <origin xyz="0.060000 0.000000 0.000000" rpy="0 0 0"/>
+    <origin xyz="0.056500 -0.002500 0.000000" rpy="0 0 0"/>
     <axis xyz="0 1 0"/>
     <limit lower="-1.570796" upper="1.570796" effort="3.0" velocity="6.0"/>
     <dynamics damping="0.1" friction="0.05"/>
@@ -199,14 +255,14 @@
     <visual>
       <origin xyz="0.000000 0.000000 0.000000" rpy="0.000000 0.000000 0.000000"/>
       <geometry>
-        <mesh filename="../stl/custom/v2/parts/femur.stl" scale="0.001 0.001 0.001"/>
+        <mesh filename="../stl/custom/v2/parts/femur.stl" scale="0.001000 0.001000 0.001000"/>
       </geometry>
       <material name="femur_blue"/>
     </visual>
     <visual>
       <origin xyz="0.000000 0.000000 0.000000" rpy="0.000000 0.000000 0.000000"/>
       <geometry>
-        <mesh filename="../stl/custom/v2/parts/femur_cover.stl" scale="0.001 0.001 0.001"/>
+        <mesh filename="../stl/custom/v2/parts/femur_cover.stl" scale="0.001000 0.001000 0.001000"/>
       </geometry>
       <material name="carbon_dark"/>
     </visual>
@@ -232,9 +288,9 @@
       <inertia ixx="4.02025811e-05" iyy="1.36139527e-04" izz="1.41938346e-04" ixy="0.00000000e+00" ixz="0.00000000e+00" iyz="0.00000000e+00"/>
     </inertial>
     <visual>
-      <origin xyz="0.000000 0.000000 0.000000" rpy="0.000000 0.000000 0.000000"/>
+      <origin xyz="0.000000 0.002000 0.000000" rpy="1.570796 0.000000 3.141593"/>
       <geometry>
-        <mesh filename="../stl/custom/v2/parts/tibia.stl" scale="0.001 0.001 0.001"/>
+        <mesh filename="../stl/custom/v2/parts/tibia.stl" scale="0.001000 0.001000 0.001000"/>
       </geometry>
       <material name="lasius_orange"/>
     </visual>
@@ -248,7 +304,7 @@
   <joint name="left_middle_foot_joint" type="fixed">
     <parent link="link_lm_tibia"/>
     <child link="link_lm_foot"/>
-    <origin xyz="0.065000 0.000000 -0.112583" rpy="0 0 0"/>
+    <origin xyz="0.123555 0.002000 -0.014602" rpy="0 0 0"/>
   </joint>
   <link name="link_lm_foot">
     <inertial>
@@ -278,23 +334,23 @@
       <inertia ixx="3.09415715e-05" iyy="1.09842756e-04" izz="1.11261963e-04" ixy="0.00000000e+00" ixz="0.00000000e+00" iyz="0.00000000e+00"/>
     </inertial>
     <visual>
-      <origin xyz="0.000000 0.000000 0.000000" rpy="0.000000 0.000000 0.000000"/>
+      <origin xyz="0.074700 -0.009000 -0.015250" rpy="1.570796 0.000000 3.141593"/>
       <geometry>
-        <mesh filename="../stl/custom/v2/parts/coxa_bracket.stl" scale="0.001 0.001 0.001"/>
+        <mesh filename="../stl/custom/v2/parts/coxa_bracket.stl" scale="0.001000 0.001000 0.001000"/>
       </geometry>
       <material name="coxa_teal"/>
     </visual>
     <collision>
-      <origin xyz="0.030000 0.000000 0.000000" rpy="0.000000 0.000000 0.000000"/>
+      <origin xyz="0.028250 0.000000 0.000000" rpy="0.000000 0.000000 0.000000"/>
       <geometry>
-        <box size="0.060000 0.050000 0.045000"/>
+        <box size="0.056500 0.050000 0.045000"/>
       </geometry>
     </collision>
   </link>
   <joint name="left_rear_femur" type="revolute">
     <parent link="link_lr_coxa"/>
     <child link="link_lr_femur"/>
-    <origin xyz="0.060000 0.000000 0.000000" rpy="0 0 0"/>
+    <origin xyz="0.056500 -0.002500 0.000000" rpy="0 0 0"/>
     <axis xyz="0 1 0"/>
     <limit lower="-1.570796" upper="1.570796" effort="3.0" velocity="6.0"/>
     <dynamics damping="0.1" friction="0.05"/>
@@ -308,14 +364,14 @@
     <visual>
       <origin xyz="0.000000 0.000000 0.000000" rpy="0.000000 0.000000 0.000000"/>
       <geometry>
-        <mesh filename="../stl/custom/v2/parts/femur.stl" scale="0.001 0.001 0.001"/>
+        <mesh filename="../stl/custom/v2/parts/femur.stl" scale="0.001000 0.001000 0.001000"/>
       </geometry>
       <material name="femur_blue"/>
     </visual>
     <visual>
       <origin xyz="0.000000 0.000000 0.000000" rpy="0.000000 0.000000 0.000000"/>
       <geometry>
-        <mesh filename="../stl/custom/v2/parts/femur_cover.stl" scale="0.001 0.001 0.001"/>
+        <mesh filename="../stl/custom/v2/parts/femur_cover.stl" scale="0.001000 0.001000 0.001000"/>
       </geometry>
       <material name="carbon_dark"/>
     </visual>
@@ -341,9 +397,9 @@
       <inertia ixx="4.02025811e-05" iyy="1.36139527e-04" izz="1.41938346e-04" ixy="0.00000000e+00" ixz="0.00000000e+00" iyz="0.00000000e+00"/>
     </inertial>
     <visual>
-      <origin xyz="0.000000 0.000000 0.000000" rpy="0.000000 0.000000 0.000000"/>
+      <origin xyz="0.000000 0.002000 0.000000" rpy="1.570796 0.000000 3.141593"/>
       <geometry>
-        <mesh filename="../stl/custom/v2/parts/tibia.stl" scale="0.001 0.001 0.001"/>
+        <mesh filename="../stl/custom/v2/parts/tibia.stl" scale="0.001000 0.001000 0.001000"/>
       </geometry>
       <material name="lasius_orange"/>
     </visual>
@@ -357,7 +413,7 @@
   <joint name="left_rear_foot_joint" type="fixed">
     <parent link="link_lr_tibia"/>
     <child link="link_lr_foot"/>
-    <origin xyz="0.065000 0.000000 -0.112583" rpy="0 0 0"/>
+    <origin xyz="0.123555 0.002000 -0.014602" rpy="0 0 0"/>
   </joint>
   <link name="link_lr_foot">
     <inertial>
@@ -387,23 +443,23 @@
       <inertia ixx="3.09415715e-05" iyy="1.09842756e-04" izz="1.11261963e-04" ixy="0.00000000e+00" ixz="0.00000000e+00" iyz="0.00000000e+00"/>
     </inertial>
     <visual>
-      <origin xyz="0.000000 0.000000 0.000000" rpy="0.000000 0.000000 3.141593"/>
+      <origin xyz="0.074700 0.009000 -0.015250" rpy="-1.570796 0.000000 -3.141593"/>
       <geometry>
-        <mesh filename="../stl/custom/v2/parts/coxa_bracket.stl" scale="0.001 0.001 0.001"/>
+        <mesh filename="../stl/custom/v2/parts/coxa_bracket.stl" scale="0.001000 -0.001000 0.001000"/>
       </geometry>
       <material name="coxa_teal"/>
     </visual>
     <collision>
-      <origin xyz="0.030000 0.000000 0.000000" rpy="0.000000 0.000000 0.000000"/>
+      <origin xyz="0.028250 0.000000 0.000000" rpy="0.000000 0.000000 0.000000"/>
       <geometry>
-        <box size="0.060000 0.050000 0.045000"/>
+        <box size="0.056500 0.050000 0.045000"/>
       </geometry>
     </collision>
   </link>
   <joint name="right_front_femur" type="revolute">
     <parent link="link_rf_coxa"/>
     <child link="link_rf_femur"/>
-    <origin xyz="0.060000 0.000000 0.000000" rpy="0 0 0"/>
+    <origin xyz="0.056500 0.002500 0.000000" rpy="0 0 0"/>
     <axis xyz="0 1 0"/>
     <limit lower="-1.570796" upper="1.570796" effort="3.0" velocity="6.0"/>
     <dynamics damping="0.1" friction="0.05"/>
@@ -417,14 +473,14 @@
     <visual>
       <origin xyz="0.000000 0.000000 0.000000" rpy="0.000000 0.000000 0.000000"/>
       <geometry>
-        <mesh filename="../stl/custom/v2/parts/femur.stl" scale="0.001 0.001 0.001"/>
+        <mesh filename="../stl/custom/v2/parts/femur.stl" scale="0.001000 -0.001000 0.001000"/>
       </geometry>
       <material name="femur_blue"/>
     </visual>
     <visual>
       <origin xyz="0.000000 0.000000 0.000000" rpy="0.000000 0.000000 0.000000"/>
       <geometry>
-        <mesh filename="../stl/custom/v2/parts/femur_cover.stl" scale="0.001 0.001 0.001"/>
+        <mesh filename="../stl/custom/v2/parts/femur_cover.stl" scale="0.001000 -0.001000 0.001000"/>
       </geometry>
       <material name="carbon_dark"/>
     </visual>
@@ -450,9 +506,9 @@
       <inertia ixx="4.02025811e-05" iyy="1.36139527e-04" izz="1.41938346e-04" ixy="0.00000000e+00" ixz="0.00000000e+00" iyz="0.00000000e+00"/>
     </inertial>
     <visual>
-      <origin xyz="0.000000 0.000000 0.000000" rpy="0.000000 0.000000 0.000000"/>
+      <origin xyz="0.000000 -0.002000 0.000000" rpy="-1.570796 0.000000 -3.141593"/>
       <geometry>
-        <mesh filename="../stl/custom/v2/parts/tibia.stl" scale="0.001 0.001 0.001"/>
+        <mesh filename="../stl/custom/v2/parts/tibia.stl" scale="0.001000 -0.001000 0.001000"/>
       </geometry>
       <material name="lasius_orange"/>
     </visual>
@@ -466,7 +522,7 @@
   <joint name="right_front_foot_joint" type="fixed">
     <parent link="link_rf_tibia"/>
     <child link="link_rf_foot"/>
-    <origin xyz="0.065000 0.000000 -0.112583" rpy="0 0 0"/>
+    <origin xyz="0.123555 -0.002000 -0.014602" rpy="0 0 0"/>
   </joint>
   <link name="link_rf_foot">
     <inertial>
@@ -496,23 +552,23 @@
       <inertia ixx="3.09415715e-05" iyy="1.09842756e-04" izz="1.11261963e-04" ixy="0.00000000e+00" ixz="0.00000000e+00" iyz="0.00000000e+00"/>
     </inertial>
     <visual>
-      <origin xyz="0.000000 0.000000 0.000000" rpy="0.000000 0.000000 3.141593"/>
+      <origin xyz="0.074700 0.009000 -0.015250" rpy="-1.570796 0.000000 -3.141593"/>
       <geometry>
-        <mesh filename="../stl/custom/v2/parts/coxa_bracket.stl" scale="0.001 0.001 0.001"/>
+        <mesh filename="../stl/custom/v2/parts/coxa_bracket.stl" scale="0.001000 -0.001000 0.001000"/>
       </geometry>
       <material name="coxa_teal"/>
     </visual>
     <collision>
-      <origin xyz="0.030000 0.000000 0.000000" rpy="0.000000 0.000000 0.000000"/>
+      <origin xyz="0.028250 0.000000 0.000000" rpy="0.000000 0.000000 0.000000"/>
       <geometry>
-        <box size="0.060000 0.050000 0.045000"/>
+        <box size="0.056500 0.050000 0.045000"/>
       </geometry>
     </collision>
   </link>
   <joint name="right_middle_femur" type="revolute">
     <parent link="link_rm_coxa"/>
     <child link="link_rm_femur"/>
-    <origin xyz="0.060000 0.000000 0.000000" rpy="0 0 0"/>
+    <origin xyz="0.056500 0.002500 0.000000" rpy="0 0 0"/>
     <axis xyz="0 1 0"/>
     <limit lower="-1.570796" upper="1.570796" effort="3.0" velocity="6.0"/>
     <dynamics damping="0.1" friction="0.05"/>
@@ -526,14 +582,14 @@
     <visual>
       <origin xyz="0.000000 0.000000 0.000000" rpy="0.000000 0.000000 0.000000"/>
       <geometry>
-        <mesh filename="../stl/custom/v2/parts/femur.stl" scale="0.001 0.001 0.001"/>
+        <mesh filename="../stl/custom/v2/parts/femur.stl" scale="0.001000 -0.001000 0.001000"/>
       </geometry>
       <material name="femur_blue"/>
     </visual>
     <visual>
       <origin xyz="0.000000 0.000000 0.000000" rpy="0.000000 0.000000 0.000000"/>
       <geometry>
-        <mesh filename="../stl/custom/v2/parts/femur_cover.stl" scale="0.001 0.001 0.001"/>
+        <mesh filename="../stl/custom/v2/parts/femur_cover.stl" scale="0.001000 -0.001000 0.001000"/>
       </geometry>
       <material name="carbon_dark"/>
     </visual>
@@ -559,9 +615,9 @@
       <inertia ixx="4.02025811e-05" iyy="1.36139527e-04" izz="1.41938346e-04" ixy="0.00000000e+00" ixz="0.00000000e+00" iyz="0.00000000e+00"/>
     </inertial>
     <visual>
-      <origin xyz="0.000000 0.000000 0.000000" rpy="0.000000 0.000000 0.000000"/>
+      <origin xyz="0.000000 -0.002000 0.000000" rpy="-1.570796 0.000000 -3.141593"/>
       <geometry>
-        <mesh filename="../stl/custom/v2/parts/tibia.stl" scale="0.001 0.001 0.001"/>
+        <mesh filename="../stl/custom/v2/parts/tibia.stl" scale="0.001000 -0.001000 0.001000"/>
       </geometry>
       <material name="lasius_orange"/>
     </visual>
@@ -575,7 +631,7 @@
   <joint name="right_middle_foot_joint" type="fixed">
     <parent link="link_rm_tibia"/>
     <child link="link_rm_foot"/>
-    <origin xyz="0.065000 0.000000 -0.112583" rpy="0 0 0"/>
+    <origin xyz="0.123555 -0.002000 -0.014602" rpy="0 0 0"/>
   </joint>
   <link name="link_rm_foot">
     <inertial>
@@ -605,23 +661,23 @@
       <inertia ixx="3.09415715e-05" iyy="1.09842756e-04" izz="1.11261963e-04" ixy="0.00000000e+00" ixz="0.00000000e+00" iyz="0.00000000e+00"/>
     </inertial>
     <visual>
-      <origin xyz="0.000000 0.000000 0.000000" rpy="0.000000 0.000000 3.141593"/>
+      <origin xyz="0.074700 0.009000 -0.015250" rpy="-1.570796 0.000000 -3.141593"/>
       <geometry>
-        <mesh filename="../stl/custom/v2/parts/coxa_bracket.stl" scale="0.001 0.001 0.001"/>
+        <mesh filename="../stl/custom/v2/parts/coxa_bracket.stl" scale="0.001000 -0.001000 0.001000"/>
       </geometry>
       <material name="coxa_teal"/>
     </visual>
     <collision>
-      <origin xyz="0.030000 0.000000 0.000000" rpy="0.000000 0.000000 0.000000"/>
+      <origin xyz="0.028250 0.000000 0.000000" rpy="0.000000 0.000000 0.000000"/>
       <geometry>
-        <box size="0.060000 0.050000 0.045000"/>
+        <box size="0.056500 0.050000 0.045000"/>
       </geometry>
     </collision>
   </link>
   <joint name="right_rear_femur" type="revolute">
     <parent link="link_rr_coxa"/>
     <child link="link_rr_femur"/>
-    <origin xyz="0.060000 0.000000 0.000000" rpy="0 0 0"/>
+    <origin xyz="0.056500 0.002500 0.000000" rpy="0 0 0"/>
     <axis xyz="0 1 0"/>
     <limit lower="-1.570796" upper="1.570796" effort="3.0" velocity="6.0"/>
     <dynamics damping="0.1" friction="0.05"/>
@@ -635,14 +691,14 @@
     <visual>
       <origin xyz="0.000000 0.000000 0.000000" rpy="0.000000 0.000000 0.000000"/>
       <geometry>
-        <mesh filename="../stl/custom/v2/parts/femur.stl" scale="0.001 0.001 0.001"/>
+        <mesh filename="../stl/custom/v2/parts/femur.stl" scale="0.001000 -0.001000 0.001000"/>
       </geometry>
       <material name="femur_blue"/>
     </visual>
     <visual>
       <origin xyz="0.000000 0.000000 0.000000" rpy="0.000000 0.000000 0.000000"/>
       <geometry>
-        <mesh filename="../stl/custom/v2/parts/femur_cover.stl" scale="0.001 0.001 0.001"/>
+        <mesh filename="../stl/custom/v2/parts/femur_cover.stl" scale="0.001000 -0.001000 0.001000"/>
       </geometry>
       <material name="carbon_dark"/>
     </visual>
@@ -668,9 +724,9 @@
       <inertia ixx="4.02025811e-05" iyy="1.36139527e-04" izz="1.41938346e-04" ixy="0.00000000e+00" ixz="0.00000000e+00" iyz="0.00000000e+00"/>
     </inertial>
     <visual>
-      <origin xyz="0.000000 0.000000 0.000000" rpy="0.000000 0.000000 0.000000"/>
+      <origin xyz="0.000000 -0.002000 0.000000" rpy="-1.570796 0.000000 -3.141593"/>
       <geometry>
-        <mesh filename="../stl/custom/v2/parts/tibia.stl" scale="0.001 0.001 0.001"/>
+        <mesh filename="../stl/custom/v2/parts/tibia.stl" scale="0.001000 -0.001000 0.001000"/>
       </geometry>
       <material name="lasius_orange"/>
     </visual>
@@ -684,7 +740,7 @@
   <joint name="right_rear_foot_joint" type="fixed">
     <parent link="link_rr_tibia"/>
     <child link="link_rr_foot"/>
-    <origin xyz="0.065000 0.000000 -0.112583" rpy="0 0 0"/>
+    <origin xyz="0.123555 -0.002000 -0.014602" rpy="0 0 0"/>
   </joint>
   <link name="link_rr_foot">
     <inertial>
