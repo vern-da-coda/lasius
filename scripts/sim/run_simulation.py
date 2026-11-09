@@ -54,10 +54,22 @@ DEFAULT_ROBOT_LAYOUT = {
 }
 
 
+class SimOrderDispatcher:
+    """Lightweight order dispatcher bridging REST and WebSocket orders directly to the simulation."""
+    def __init__(self, server):
+        self.server = server
+        self.active_order = None
+        self.order_history = []
+
+    def dispatch(self, order):
+        return self.server.handle_order(order)
+
+
 class SimWebSocketServer:
     """
     Asynchronous WebSocket server bridging lasius-pilot teleoperation
-    and lasius-dashboard (Three.js Digital Twin) to the running PyBullet simulation.
+    and lasius-dashboard (Three.js Digital Twin & Single-Leg Direct Drive)
+    to the running PyBullet simulation.
     """
     def __init__(self, host="0.0.0.0", port=8765):
         self.host = host
@@ -82,15 +94,15 @@ class SimWebSocketServer:
         self.emergency_stop = False
         self.updated = False
 
+        # Direct Single-Leg Control and Relaxation Overrides
+        self.joint_overrides = {}    # servo_name -> angle_deg
+        self.relaxed_servos = set()  # set of relaxed servo_names (force=0 in PyBullet)
+        self._cancel_seq = threading.Event()
+        self._seq_thread = None
+
         self.hexapod_layout = DEFAULT_ROBOT_LAYOUT
         self.hexapod = None
-
-        # Optional OrderDispatcher integration
-        try:
-            from lasius.core.control.dispatcher import OrderDispatcher
-            self.dispatcher = OrderDispatcher(server=self)
-        except Exception:
-            self.dispatcher = None
+        self.dispatcher = SimOrderDispatcher(server=self)
 
     @property
     def state(self):
@@ -136,6 +148,310 @@ class SimWebSocketServer:
         status_val = status.value if hasattr(status, "value") else str(status)
         self.broadcast({"type": "order_status", "data": {"order_id": order_id, "action": action, "status": status_val}})
 
+    def handle_order(self, order):
+        from lasius.core.control.orders import OrderResult, OrderStatus
+        action_name = order.action.value if hasattr(order.action, "value") else str(order.action)
+        data = {
+            "action": action_name,
+            "order_id": getattr(order, "order_id", "sim_order"),
+            "params": getattr(order, "params", {}) or {},
+        }
+        res_data = self.handle_command(data)
+        msg = res_data.get("message", "Executed in simulation.") if isinstance(res_data, dict) else "Executed in simulation."
+        return OrderResult(
+            order_id=data["order_id"],
+            action=action_name,
+            status=OrderStatus.COMPLETED,
+            message=msg
+        )
+
+    def handle_command(self, data):
+        act = data.get("action")
+        if not act and "action" in data.get("params", {}):
+            act = data["params"]["action"]
+        params = data.get("params") or {}
+
+        def get_p(key, default=None):
+            if key in data and data[key] is not None:
+                return data[key]
+            return params.get(key, default)
+
+        # 1. Single Joint / Servo Angle Direct Drive
+        if act in ("set_joint_angle", "set_servo_angle"):
+            servo = get_p("servo")
+            val = get_p("angle")
+            if servo and val is not None:
+                angle = float(val)
+                self.joint_overrides[str(servo)] = angle
+                self.relaxed_servos.discard(str(servo))
+                self.walk_x = 0.0
+                self.walk_y = 0.0
+                self.turn_z = 0.0
+                self.updated = True
+                print(f"🦵 [LegControl] {servo} = {angle:.1f}°")
+                return {"status": "ok", "message": f"{servo} = {angle:.1f}°"}
+
+        # 2. Whole Leg Direct Reference (e.g. Align Ref 0°)
+        elif act == "set_leg_joints":
+            leg = get_p("leg")
+            if leg:
+                c = float(get_p("coxa", 0.0))
+                f = float(get_p("femur", 0.0))
+                t = float(get_p("tibia", 0.0))
+                self.joint_overrides[f"{leg}_coxa"] = c
+                self.joint_overrides[f"{leg}_femur"] = f
+                self.joint_overrides[f"{leg}_tibia"] = t
+                self.relaxed_servos.discard(f"{leg}_coxa")
+                self.relaxed_servos.discard(f"{leg}_femur")
+                self.relaxed_servos.discard(f"{leg}_tibia")
+                self.walk_x = 0.0
+                self.walk_y = 0.0
+                self.turn_z = 0.0
+                self.updated = True
+                print(f"🦵 [LegControl] Leg {leg} -> [{c:.1f}°, {f:.1f}°, {t:.1f}°]")
+                return {"status": "ok", "message": f"Leg {leg} joints updated."}
+
+        # 3. Stance Leg (Return single leg to neutral ground stance)
+        elif act == "stance_leg":
+            leg = get_p("leg")
+            if leg:
+                self.joint_overrides.pop(f"{leg}_coxa", None)
+                self.joint_overrides.pop(f"{leg}_femur", None)
+                self.joint_overrides.pop(f"{leg}_tibia", None)
+                self.relaxed_servos.discard(f"{leg}_coxa")
+                self.relaxed_servos.discard(f"{leg}_femur")
+                self.relaxed_servos.discard(f"{leg}_tibia")
+                self.updated = True
+                print(f"🦵 [LegControl] Leg {leg} zurück in Stance.")
+                return {"status": "ok", "message": f"Leg {leg} in stance."}
+
+        # 4. Relax Leg (Disable motor torque on single leg -> limp)
+        elif act == "relax_leg":
+            leg = get_p("leg")
+            if leg:
+                for j in ("coxa", "femur", "tibia"):
+                    s = f"{leg}_{j}"
+                    self.joint_overrides.pop(s, None)
+                    self.relaxed_servos.add(s)
+                self.updated = True
+                print(f"💤 [LegControl] Leg {leg} entspannt (force=0).")
+                return {"status": "ok", "message": f"Leg {leg} relaxed."}
+
+        # 5. Relax All Servos (Entire robot limp)
+        elif act == "relax_all":
+            self.joint_overrides.clear()
+            for l_name in ["left_front", "left_middle", "left_rear", "right_front", "right_middle", "right_rear"]:
+                for j in ("coxa", "femur", "tibia"):
+                    self.relaxed_servos.add(f"{l_name}_{j}")
+            self.walk_x = 0.0
+            self.walk_y = 0.0
+            self.turn_z = 0.0
+            self.updated = True
+            print("💤 [LegControl] Alle 18 Servos entspannt.")
+            return {"status": "ok", "message": "All servos relaxed."}
+
+        # 6. Neutral Stance / Reset Pose (Restore all legs to neutral ground stance)
+        elif act in ("all_stance", "reset_pose"):
+            self._cancel_seq.set()
+            self.joint_overrides.clear()
+            self.relaxed_servos.clear()
+            self.walk_x = 0.0
+            self.walk_y = 0.0
+            self.turn_z = 0.0
+            self.body_height = -80.0
+            self.body_roll = 0.0
+            self.body_pitch = 0.0
+            self.updated = True
+            print("↺ [LegControl] Alle Beine in Neutral-Stance zurückgesetzt.")
+            return {"status": "ok", "message": "All legs in stance."}
+
+        # 7. Collision Sweeps
+        elif act == "sweep_joint":
+            servo = get_p("servo")
+            if not servo and get_p("leg") and get_p("joint"):
+                servo = f"{get_p('leg')}_{get_p('joint')}"
+            if servo:
+                min_a = float(get_p("min_angle", -45.0))
+                max_a = float(get_p("max_angle", 45.0))
+                self._start_sweep(str(servo), min_a, max_a, order_id=data.get("order_id", "sweep"))
+                return {"status": "ok", "message": f"Sweep {servo} gestartet."}
+
+        # 8. Step Test Cycle
+        elif act == "test_leg":
+            leg = get_p("leg", "left_front")
+            cycles = int(get_p("cycles", 3))
+            stride = float(get_p("stride", 36.0))
+            lift = float(get_p("lift", 30.0))
+            self._start_test_leg(str(leg), cycles, stride, lift, order_id=data.get("order_id", "test_leg"))
+            return {"status": "ok", "message": f"Step Test {leg} gestartet."}
+
+        # 9. Calibration Live Trim
+        elif act in ("calibrate_trim", "calibrate_save"):
+            servo = get_p("servo")
+            offset = float(get_p("offset", 0.0))
+            deg_offset = offset / 10.0
+            if servo:
+                self.joint_overrides[str(servo)] = round(deg_offset, 2)
+                self.relaxed_servos.discard(str(servo))
+                self.updated = True
+                print(f"🔧 [Calibrate] {servo} Trim: {offset:+.0f} µs ({deg_offset:+.1f}°)")
+                return {"status": "ok", "message": f"{servo} trimmed."}
+
+        # 10. Locomotion / Velocity Control
+        elif act == "set_velocity":
+            wx = float(get_p("walk_x", 0.0))
+            wy = float(get_p("walk_y", 0.0))
+            tz = float(get_p("turn_z", 0.0))
+            # If user begins walking via stick/keyboard, clear single-leg direct drive overrides
+            if wx != 0.0 or wy != 0.0 or tz != 0.0:
+                if self.joint_overrides or self.relaxed_servos:
+                    self.joint_overrides.clear()
+                    self.relaxed_servos.clear()
+                    self._cancel_seq.set()
+            self.walk_x = wx
+            self.walk_y = wy
+            self.turn_z = tz
+            self.updated = True
+            return {"status": "ok"}
+
+        # 11. Gait Type
+        elif act in ("set_gait", "set_gait_type"):
+            self.gait_type = str(get_p("value") or get_p("gait", "tripod")).lower()
+            self.updated = True
+            print(f"⚙️ [WebSocket] Gangart gewechselt zu: {self.gait_type.upper()}")
+            return {"status": "ok"}
+
+        # 12. Stop Motion
+        elif act == "stop_motion":
+            self.walk_x = 0.0
+            self.walk_y = 0.0
+            self.turn_z = 0.0
+            self.updated = True
+            print("⏹ [WebSocket] Stopp empfangen.")
+            return {"status": "ok"}
+
+        # 13. Speed / Height / Pose
+        elif act == "set_speed":
+            self.gait_speed = float(get_p("value", 1.0))
+            self.updated = True
+            return {"status": "ok"}
+        elif act == "set_step_height":
+            self.step_height = float(get_p("value", 20.0))
+            self.updated = True
+            return {"status": "ok"}
+        elif act == "set_step_length":
+            self.step_length = float(get_p("value", 35.0))
+            self.updated = True
+            return {"status": "ok"}
+        elif act == "set_height":
+            val = float(get_p("value", -80.0))
+            self.body_height = max(-130.0, min(-40.0, val if val < 0 else -val))
+            self.updated = True
+            return {"status": "ok"}
+        elif act == "set_roll":
+            self.body_roll = float(get_p("value", 0.0))
+            self.updated = True
+            return {"status": "ok"}
+        elif act == "set_pitch":
+            self.body_pitch = float(get_p("value", 0.0))
+            self.updated = True
+            return {"status": "ok"}
+        elif act == "emergency_stop":
+            self._cancel_seq.set()
+            self.walk_x = 0.0
+            self.walk_y = 0.0
+            self.turn_z = 0.0
+            self.emergency_stop = True
+            self.updated = True
+            print("🚨 [WebSocket] Not-Aus (E-Stop) empfangen!")
+            return {"status": "ok"}
+        elif act == "toggle_pause":
+            self.is_paused = not self.is_paused
+            self.updated = True
+            print(f"⏸ [WebSocket] Pause umgeschaltet: {self.is_paused}")
+            return {"status": "ok"}
+
+        return {"status": "ignored", "action": act}
+
+    def _start_sweep(self, servo_name, min_a, max_a, order_id="sweep"):
+        self._cancel_seq.set()
+        time.sleep(0.02)
+        self._cancel_seq.clear()
+        self.broadcast_order_status(order_id, "sweep_joint", "running")
+
+        def run_sweep():
+            steps = 25
+            dt = 0.030
+            start_a = self.joint_overrides.get(servo_name, 0.0)
+            try:
+                # 1. Sweep to min_a
+                for s in range(steps + 1):
+                    if self._cancel_seq.is_set(): return
+                    a = start_a + (s / steps) * (min_a - start_a)
+                    self.joint_overrides[servo_name] = round(a, 2)
+                    self.updated = True
+                    time.sleep(dt)
+                # 2. Sweep to max_a
+                for s in range(steps * 2 + 1):
+                    if self._cancel_seq.is_set(): return
+                    a = min_a + (s / (steps * 2)) * (max_a - min_a)
+                    self.joint_overrides[servo_name] = round(a, 2)
+                    self.updated = True
+                    time.sleep(dt)
+                # 3. Sweep back to neutral 0.0
+                for s in range(steps + 1):
+                    if self._cancel_seq.is_set(): return
+                    a = max_a + (s / steps) * (0.0 - max_a)
+                    self.joint_overrides[servo_name] = round(a, 2)
+                    self.updated = True
+                    time.sleep(dt)
+                self.joint_overrides.pop(servo_name, None)
+                self.updated = True
+                self.broadcast_order_result({"status": "completed", "action": "sweep_joint", "order_id": order_id, "message": f"Sweep {servo_name} abgeschlossen"})
+            except Exception as e:
+                self.broadcast_order_result({"status": "failed", "action": "sweep_joint", "order_id": order_id, "error": str(e)})
+
+        self._seq_thread = threading.Thread(target=run_sweep, name=f"Sweep-{servo_name}", daemon=True)
+        self._seq_thread.start()
+
+    def _start_test_leg(self, leg_name, cycles=3, stride=36.0, lift=30.0, order_id="test_leg"):
+        self._cancel_seq.set()
+        time.sleep(0.02)
+        self._cancel_seq.clear()
+        self.broadcast_order_status(order_id, "test_leg", "running")
+
+        from lasius.core.motion.kinematics import calculate_leg_ik
+
+        def run_test():
+            steps_per_cycle = 35
+            dt = 0.030
+            stride_half = stride / 2.0
+            try:
+                for _ in range(cycles):
+                    if self._cancel_seq.is_set(): return
+                    for s in range(steps_per_cycle):
+                        if self._cancel_seq.is_set(): return
+                        phi = 2.0 * math.pi * (s / steps_per_cycle)
+                        y = -stride_half * math.cos(phi)
+                        z = -80.0 + (lift * math.sin(phi) if math.sin(phi) > 0 else 0.0)
+                        x = 150.0
+                        c_deg, f_deg, t_deg = calculate_leg_ik(x, y, z, coxa_len=56.5, femur_len=100.0, tibia_len=130.0)
+                        self.joint_overrides[f"{leg_name}_coxa"] = round(c_deg, 2)
+                        self.joint_overrides[f"{leg_name}_femur"] = round(f_deg, 2)
+                        self.joint_overrides[f"{leg_name}_tibia"] = round(t_deg, 2)
+                        self.updated = True
+                        time.sleep(dt)
+                self.joint_overrides.pop(f"{leg_name}_coxa", None)
+                self.joint_overrides.pop(f"{leg_name}_femur", None)
+                self.joint_overrides.pop(f"{leg_name}_tibia", None)
+                self.updated = True
+                self.broadcast_order_result({"status": "completed", "action": "test_leg", "order_id": order_id, "message": f"Step Cycle {leg_name} ({cycles}x) abgeschlossen"})
+            except Exception as e:
+                self.broadcast_order_result({"status": "failed", "action": "test_leg", "order_id": order_id, "error": str(e)})
+
+        self._seq_thread = threading.Thread(target=run_test, name=f"TestLeg-{leg_name}", daemon=True)
+        self._seq_thread.start()
+
     async def _handler(self, ws):
         self.clients.add(ws)
         print(f"✔ [WebSocket] Client verbunden: {ws.remote_address}")
@@ -158,73 +474,8 @@ class SimWebSocketServer:
                             pass
                         continue
 
-                    # Dispatch via OrderDispatcher if available
-                    act = data.get("action")
-                    if self.dispatcher and (msg_type in ("command", "order") or act):
-                        try:
-                            from lasius.core.control.orders import Order
-                            order = Order.from_dict(data, default_source="ws")
-                            self.dispatcher.dispatch(order)
-                            self.updated = True
-                            continue
-                        except Exception:
-                            pass
-
-                    # Direct fallback processing
-                    if act == "set_velocity":
-                        self.walk_x = float(data.get("walk_x", 0.0))
-                        self.walk_y = float(data.get("walk_y", 0.0))
-                        self.turn_z = float(data.get("turn_z", 0.0))
-                        self.updated = True
-                    elif act in ("set_gait", "set_gait_type"):
-                        self.gait_type = str(data.get("value") or data.get("gait", "tripod")).lower()
-                        self.updated = True
-                        print(f"⚙️ [WebSocket] Gangart gewechselt zu: {self.gait_type.upper()}")
-                    elif act == "stop_motion":
-                        self.walk_x = 0.0
-                        self.walk_y = 0.0
-                        self.turn_z = 0.0
-                        self.updated = True
-                        print("⏹ [WebSocket] Stopp empfangen.")
-                    elif act == "set_speed":
-                        self.gait_speed = float(data.get("value", 1.0))
-                        self.updated = True
-                    elif act == "set_step_height":
-                        self.step_height = float(data.get("value", 20.0))
-                        self.updated = True
-                    elif act == "set_step_length":
-                        self.step_length = float(data.get("value", 35.0))
-                        self.updated = True
-                    elif act == "set_height":
-                        val = float(data.get("value", -80.0))
-                        self.body_height = max(-130.0, min(-40.0, val if val < 0 else -val))
-                        self.updated = True
-                    elif act == "set_roll":
-                        self.body_roll = float(data.get("value", 0.0))
-                        self.updated = True
-                    elif act == "set_pitch":
-                        self.body_pitch = float(data.get("value", 0.0))
-                        self.updated = True
-                    elif act == "emergency_stop":
-                        self.walk_x = 0.0
-                        self.walk_y = 0.0
-                        self.turn_z = 0.0
-                        self.emergency_stop = True
-                        self.updated = True
-                        print("🚨 [WebSocket] Not-Aus (E-Stop) empfangen!")
-                    elif act == "reset_pose":
-                        self.walk_x = 0.0
-                        self.walk_y = 0.0
-                        self.turn_z = 0.0
-                        self.body_height = -80.0
-                        self.body_roll = 0.0
-                        self.body_pitch = 0.0
-                        self.updated = True
-                        print("↺ [WebSocket] Pose auf Neutral zurückgesetzt.")
-                    elif act == "toggle_pause":
-                        self.is_paused = not self.is_paused
-                        self.updated = True
-                        print(f"⏸ [WebSocket] Pause umgeschaltet: {self.is_paused}")
+                    # Execute command directly in simulation
+                    self.handle_command(data)
                 except Exception:
                     pass
         finally:
@@ -496,12 +747,24 @@ def run_pybullet(gui=False, steps=240, walk=False, enable_ws=False, ws_port=8765
                     prefix = leg_map[leg_id]
                     try:
                         c_deg, f_deg, t_deg = calculate_leg_ik(x, y, z, coxa_len=56.5, femur_len=100.0, tibia_len=130.0)
-                        p.setJointMotorControl2(robot_id, joint_indices[f"{prefix}_coxa"], p.POSITION_CONTROL, targetPosition=math.radians(c_deg), force=8.0)
-                        p.setJointMotorControl2(robot_id, joint_indices[f"{prefix}_femur"], p.POSITION_CONTROL, targetPosition=math.radians(f_deg), force=8.0)
-                        p.setJointMotorControl2(robot_id, joint_indices[f"{prefix}_tibia"], p.POSITION_CONTROL, targetPosition=math.radians(t_deg), force=8.0)
-                        angles_dict[f"{prefix}_coxa"] = round(c_deg, 2)
-                        angles_dict[f"{prefix}_femur"] = round(f_deg, 2)
-                        angles_dict[f"{prefix}_tibia"] = round(t_deg, 2)
+                        for j_name, base_deg in [("coxa", c_deg), ("femur", f_deg), ("tibia", t_deg)]:
+                            servo_key = f"{prefix}_{j_name}"
+                            j_idx = joint_indices[servo_key]
+
+                            if ws_server and servo_key in ws_server.relaxed_servos:
+                                # Relaxed joint: 0 motor torque (limp under gravity)
+                                p.setJointMotorControl2(robot_id, j_idx, p.VELOCITY_CONTROL, targetVelocity=0, force=0.0)
+                                actual_rad = p.getJointState(robot_id, j_idx)[0]
+                                angles_dict[servo_key] = round(math.degrees(actual_rad), 2)
+                            else:
+                                # Controlled joint: check direct override from Leg Control or default gait stance
+                                if ws_server and servo_key in ws_server.joint_overrides:
+                                    target_deg = ws_server.joint_overrides[servo_key]
+                                else:
+                                    target_deg = base_deg
+
+                                p.setJointMotorControl2(robot_id, j_idx, p.POSITION_CONTROL, targetPosition=math.radians(target_deg), force=8.0)
+                                angles_dict[servo_key] = round(target_deg, 2)
                     except Exception:
                         pass
 
@@ -570,12 +833,22 @@ def run_pybullet(gui=False, steps=240, walk=False, enable_ws=False, ws_port=8765
                 prefix = leg_map[leg_id]
                 try:
                     c_deg, f_deg, t_deg = calculate_leg_ik(x, y, z, coxa_len=56.5, femur_len=100.0, tibia_len=130.0)
-                    p.setJointMotorControl2(robot_id, joint_indices[f"{prefix}_coxa"], p.POSITION_CONTROL, targetPosition=math.radians(c_deg), force=8.0)
-                    p.setJointMotorControl2(robot_id, joint_indices[f"{prefix}_femur"], p.POSITION_CONTROL, targetPosition=math.radians(f_deg), force=8.0)
-                    p.setJointMotorControl2(robot_id, joint_indices[f"{prefix}_tibia"], p.POSITION_CONTROL, targetPosition=math.radians(t_deg), force=8.0)
-                    angles_dict[f"{prefix}_coxa"] = round(c_deg, 2)
-                    angles_dict[f"{prefix}_femur"] = round(f_deg, 2)
-                    angles_dict[f"{prefix}_tibia"] = round(t_deg, 2)
+                    for j_name, base_deg in [("coxa", c_deg), ("femur", f_deg), ("tibia", t_deg)]:
+                        servo_key = f"{prefix}_{j_name}"
+                        j_idx = joint_indices[servo_key]
+
+                        if ws_server and servo_key in ws_server.relaxed_servos:
+                            p.setJointMotorControl2(robot_id, j_idx, p.VELOCITY_CONTROL, targetVelocity=0, force=0.0)
+                            actual_rad = p.getJointState(robot_id, j_idx)[0]
+                            angles_dict[servo_key] = round(math.degrees(actual_rad), 2)
+                        else:
+                            if ws_server and servo_key in ws_server.joint_overrides:
+                                target_deg = ws_server.joint_overrides[servo_key]
+                            else:
+                                target_deg = base_deg
+
+                            p.setJointMotorControl2(robot_id, j_idx, p.POSITION_CONTROL, targetPosition=math.radians(target_deg), force=8.0)
+                            angles_dict[servo_key] = round(target_deg, 2)
                 except Exception:
                     pass
 
