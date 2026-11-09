@@ -19,6 +19,7 @@ Automation, simulation, deployment, testing, and benchmark tools for the **Lasiu
 | **Deploy** | [`deploy/deploy_pi.sh`](deploy/deploy_pi.sh) | Builds Vite dashboard, syncs files via `rsync` to the Raspberry Pi, and reloads daemon. | `./scripts/deploy/deploy_pi.sh [PI_IP]` |
 | **Deploy** | [`deploy/status_pi.sh`](deploy/status_pi.sh) | Queries live telemetry, Raspberry Pi KPIs, SoC temperature, power health, and gaits. | `./scripts/deploy/status_pi.sh [PI_IP]` |
 | **Deploy** | [`deploy/backup_calibration.sh`](deploy/backup_calibration.sh) | Downloads and validates `calibration.json` with a timestamp into `data/calibration_backups/`. | `./scripts/deploy/backup_calibration.sh [PI_IP]` |
+| **Bench** | [`bench/test_electronics.py`](bench/test_electronics.py) | Comprehensive I2C bus, TCA9548A multiplexer and ADS1115 ADC diagnostic tool. | `python3 scripts/bench/test_electronics.py [--scan]` |
 | **Bench** | [`bench/pot_calibration_wizard.py`](bench/pot_calibration_wizard.py) | Interactive CLI wizard for closed-loop potentiometer calibration & regression curves. | `uv run scripts/bench/pot_calibration_wizard.py` |
 | **Bench** | [`bench/servo_pot_sweep.py`](bench/servo_pot_sweep.py) | Hardware servo sweep and live potentiometer voltage measurement tool. | `uv run scripts/bench/servo_pot_sweep.py` |
 | **Simulation** | [`sim/sim_pilot.sh`](sim/sim_pilot.sh) | Orchestrates PyBullet 3D physics simulation and `lasius-pilot` gamepad teleoperation. | `./scripts/sim/sim_pilot.sh` |

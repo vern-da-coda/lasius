@@ -10,6 +10,13 @@ Dieses Dokument enthält das Software-Backlog sowie die architektonischen Leitli
 
 Im Fokus steht die **biomimetische Übertragung von Insekten-Steuerungsprinzipien** (dezentrale Ganglien, Subsumption-Architektur, lokale Reflexschleifen) auf die Software.
 
+> [!IMPORTANT]
+> **Aktueller Hardware-Fokus (Testbench Bring-Up):**
+> * **Status:** Schritt 1 abgeschlossen (`A0` Brücke auf `0x71`).
+> * **Nächste Session:** **Schritt 2 von 6** (TCA9548A an Raspberry Pi 4 anschließen).
+> * **Detaillierter Handover-Leitfaden:** [`docs/hardware/testbench_bringup_status.md`](../docs/hardware/testbench_bringup_status.md)
+> * **Diagnose-Tool:** `python3 scripts/bench/test_electronics.py --step 2`
+
 ---
 
 ## 1. Biomimetisches Leitprinzip: Insekten-Neurologie
