@@ -16,8 +16,14 @@ Specifications, architectural decisions, wiring schematics, and development road
 ### System & Architecture
 - [**System & Domain Architecture Specification**](domain_architecture.md):
   End-to-end domain map covering Mechanics (3-Level Hardware-as-Code), Power & Sensor Electronics, 50 Hz Harmonic Locomotion Core, 3D Digital Twin, Gamepad Teleoperation, PyBullet Physics, and Gymnasium Reinforcement Learning.
+- [**Audio Podcast Architecture Briefing**](audio_briefing_domain.md):
+  Audio learning script covering physical CAD modeling, PyBullet simulation, kinematics, and software architecture.
 
 ### Hardware & Electronics
+- [**Electronics Testbench Bring-Up Status & Handover**](hardware/testbench_bringup_status.md):
+  **Active Focus:** Status of the 6-step bench Bring-Up for the TCA9548A I2C multiplexer and ADS1115 16-bit ADCs.
+- [**Electronics Testbench Reference Guide**](hardware/electronics_testbench_guide.md):
+  Technical guide with exact wiring tables, 3.3V logic protection, I2C address topology, and diagnostic procedures.
 - [**Hardware Decisions & 3D Printing Specifications**](hardware/decisions.md):
   Comprehensive documentation of the physical architecture: 2S LiPo battery, 20A UBEC (6.0V servo bus), 5V/3A buck converter for Raspberry Pi, Adafruit STEMMA QT / Qwiic I2C sensor bus topology, BNO085 9-DOF IMU, INA228 power monitors, VL53L4CD ToF distance sensors, MCP23017 foot switch expander, and slicer/material settings for PETG limb parts.
 - [**18-DOF Closed-Loop Feedback Plan**](hardware/closed_loop_plan.md):
