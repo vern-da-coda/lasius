@@ -49,6 +49,8 @@ CAD engineering, digital fabrication exports, and assembly models for the **Lasi
   - Monolithic 3D-printed double-wrench femur ($L = 100.0\,\text{mm}$ pivot-to-pivot) replacing the 2-plate + 2-spacer v1 cage, featuring an internal chamber and flush curved lid (`Femur_Cover`) for the leg's encapsulated ADS1115 16-bit I²C ADC (`0x48`) and internal cable channels.
 - **Monolithic Tibia v2 ([`tibia.FCStd`](models/custom/v2/parts/tibia.FCStd)):**
   - Merges the sickle claw (`tibia`) and counter-bearing foot (`tibia_servo_foot`) into a single 3D-printed component connected via 4 organic hourglass-waisted corner struts (*Eckstege*).
+- **Chassis Exoskeleton Top Cover v2 ([`chassis_top_cover.FCStd`](models/custom/v2/parts/chassis_top_cover.FCStd)):**
+  - Aerodynamic chitinous canopy mounted to the upper chassis surface ($Z \ge 55.3\,\text{mm}$) featuring an internal electronics dome ($13.6\,\text{mm}$ height clearance), 5x thermal convection chevron louvers over the Raspberry Pi 4 SoC, and a front CSI camera ribbon pass-through slot.
 - **Chassis Belly Pan & Skid Plate v2 ([`chassis_belly_pan.FCStd`](models/custom/v2/parts/chassis_belly_pan.FCStd)):**
   - Contoured boat-hull skid plate mounted to the chassis underside ($Z \le 0.0\,\text{mm}$) with approach ramps, internal wiring cavity, and integrated mounting recess with a $45^\circ$-chamfered optical aperture for the downward-facing 9-zone ToF terrain distance sensor (VL53L5CX).
 - **Electronics Mounting Tray v2 ([`electronics_tray.FCStd`](models/custom/v2/parts/electronics_tray.FCStd)):**
@@ -96,11 +98,12 @@ Parametric geometry and assembly exports can be generated headlessly using FreeC
 /snap/bin/freecad.cmd hardware/mechanics/scripts/v1/generate_leg_assembly.py
 /snap/bin/freecad.cmd hardware/mechanics/scripts/v1/generate_body_assembly.py
 
-# Generate v2 monolithic femur, tibia, electronics tray, belly pan, and v2 leg & body assemblies:
+# Generate v2 monolithic femur, tibia, tray, belly pan, top cover, and v2 assemblies:
 /snap/bin/freecad.cmd -c hardware/mechanics/scripts/v2/generate_femur.py
 /snap/bin/freecad.cmd -c hardware/mechanics/scripts/v2/generate_tibia.py
 /snap/bin/freecad.cmd -c hardware/mechanics/scripts/v2/generate_electronics_tray.py
 /snap/bin/freecad.cmd -c hardware/mechanics/scripts/v2/generate_chassis_belly_pan.py
+/snap/bin/freecad.cmd -c hardware/mechanics/scripts/v2/generate_chassis_top_cover.py
 /snap/bin/freecad.cmd -c hardware/mechanics/scripts/v2/generate_leg_assembly.py
 /snap/bin/freecad.cmd -c hardware/mechanics/scripts/v2/generate_body_assembly.py
 ```

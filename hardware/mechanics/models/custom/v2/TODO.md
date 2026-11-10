@@ -131,12 +131,14 @@ Dieser Backlog führt alle offenen Aufgaben, konstruktiven Erweiterungen und Ver
     * 1× TCA9548A 8-Kanal I2C-Multiplexer ($26\,\text{mm}$ Lochbild auf der Mittelachse bei $X = -45, Y = 0$).
     * 4× Kabeldurchführungskämme und 6× Kabelbinder-Ösen für vibrationsfeste Leitungsfixierung.
     * Vollständig eingebunden in Master-Assembly [`body_assembly.FCStd`](body_assembly.FCStd).
-- [ ] **Chassis-Abdeckung / Exoskelett-Haube (Top Cover):**  
-  * **Status:** Schutz- und Designelement über der Basisplatte.
-  * **Funktion:**
-    * Mechanischer Schutz der Platinen und Flachbandkabel vor Staub, Stürzen und Berührung.
-    * Prägendes Design- und Stilelement der Lasius v2 (organische Insektenpanzerung / Chitinpanzer-Ästhetik).
-    * Belüftungsschlitze / Chevron-Louvers für passive Kühlung von Pi 4 SoC und Spannungsreglern.
+- [x] ~~**Chassis-Abdeckung / Exoskelett-Haube (Top Cover):**~~ **[ERLEDIGT]**  
+  * **Modell & Generator:** [`chassis_top_cover.FCStd`](parts/chassis_top_cover.FCStd) generiert via [`generate_chassis_top_cover.py`](../../../scripts/v2/generate_chassis_top_cover.py).
+  * **Status:** Aerodynamische Chitinpanzer-Haube auf der oberen Carbonplatte ($Z = 55{,}3\,\text{mm}$ bis $71{,}3\,\text{mm}$, Gesamthöhe $16{,}0\,\text{mm}$), verschraubt über die 4 zentralen M3-Standoff-Pfeiler bei $X = \pm 45, Y = \pm 30$ mit gesenkten Taschen.
+  * **Funktion & Konstruktion:**
+    * Mechanischer Schutz für Raspberry Pi 4, GPIO-Leitungen und interne Elektronik mit $13{,}6\,\text{mm}$ Innenraum-Überhöhung über der oberen Platte.
+    * **Chevron-Louvers:** 5× $45^\circ$ nach vorn gepfeilte Lüftungsschlitze direkt über dem Pi 4 SoC zur passiven Kamin-Konvektionskühlung.
+    * **Kamera-Kabeldurchbruch:** $20 \times 3\,\text{mm}$ Frontschlitz an der Schnauze ($X = 85\,\text{mm}$) zur direkten Durchführung des CSI-Kamerakabels zum Kopfmodul.
+    * Vollständig eingebunden in Master-Assembly [`body_assembly.FCStd`](body_assembly.FCStd).
 - [x] ~~**Unterboden-Abdeckung (Chassis Belly Pan / Skid Plate):**~~ **[ERLEDIGT]**  
   * **Modell & Generator:** [`chassis_belly_pan.FCStd`](parts/chassis_belly_pan.FCStd) generiert via [`generate_chassis_belly_pan.py`](../../../scripts/v2/generate_chassis_belly_pan.py).
   * **Status:** Schutz- und Gleitwanne an der Chassis-Unterseite ($Z \le 0{,}0\,\text{mm}$), verschraubt über die 4 zentralen M3-Standoff-Pfeiler bei $X = \pm 45, Y = \pm 30$ mit 90°-Senkungen nach DIN 7991.

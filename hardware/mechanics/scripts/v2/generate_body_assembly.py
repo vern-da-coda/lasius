@@ -48,6 +48,7 @@ doc_spacer = App.openDocument(f"{v1_parts_dir}/spacer_14x50.FCStd")
 doc_leg = App.openDocument(f"{v2_asm_dir}/leg_assembly.FCStd")
 doc_tray = App.openDocument(f"{models_base}/custom/v2/parts/electronics_tray.FCStd")
 doc_belly = App.openDocument(f"{models_base}/custom/v2/parts/chassis_belly_pan.FCStd")
+doc_cover = App.openDocument(f"{models_base}/custom/v2/parts/chassis_top_cover.FCStd")
 
 # Main Assembly Container
 asm_part = doc.addObject("App::Part", "Body_Assembly_v2")
@@ -82,6 +83,7 @@ COLOR_CARBON = (0.16, 0.16, 0.18)      # Dark graphite / carbon fiber plates
 COLOR_ALU_SPACER = (0.75, 0.77, 0.82)  # Anodized aluminum spacers
 COLOR_TRAY = (0.22, 0.42, 0.65)        # Technical blue PETG 3D print
 COLOR_BELLY_PAN = (0.26, 0.26, 0.30)   # Rugged anthracite PETG skid plate
+COLOR_CHASSIS_COVER = (0.20, 0.20, 0.23) # Dark chitinous exoskeleton canopy
 
 # -------------------------------------------------------------
 # 1. Chassis Plates (Inherited from v1)
@@ -101,6 +103,10 @@ make_link("Electronics_Tray", "3. Electronics Mounting Tray (v2)", doc_tray.Elec
 # Chassis Belly Pan (Skid Plate) at Z = 0.00 mm (mounted to underside of bottom plate)
 p_belly = App.Placement(App.Vector(0.0, 0.0, 0.00), App.Rotation())
 make_link("Chassis_Belly_Pan", "4. Chassis Belly Pan & ToF Sensor (v2)", doc_belly.Chassis_Belly_Pan, p_belly, COLOR_BELLY_PAN)
+
+# Chassis Top Cover (Carapace) at Z = 0.00 mm (mounted to top surface of top plate)
+p_cover = App.Placement(App.Vector(0.0, 0.0, 0.00), App.Rotation())
+make_link("Chassis_Top_Cover", "5. Chassis Exoskeleton Top Cover (v2)", doc_cover.Chassis_Top_Cover, p_cover, COLOR_CHASSIS_COVER)
 
 # -------------------------------------------------------------
 # 2. Chassis Standoff Spacers (8x at small M3 screw holes, inherited from v1)
@@ -175,7 +181,7 @@ try:
 except Exception as e:
     print(f"STEP export error: {e}")
 
-for d in [doc_bottom, doc_top, doc_spacer, doc_leg, doc_tray, doc_belly]:
+for d in [doc_bottom, doc_top, doc_spacer, doc_leg, doc_tray, doc_belly, doc_cover]:
     try:
         App.closeDocument(d.Name)
     except Exception:
