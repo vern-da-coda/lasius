@@ -137,14 +137,17 @@ Dieser Backlog führt alle offenen Aufgaben, konstruktiven Erweiterungen und Ver
     * Mechanischer Schutz der Platinen und Flachbandkabel vor Staub, Stürzen und Berührung.
     * Prägendes Design- und Stilelement der Lasius v2 (organische Insektenpanzerung / Chitinpanzer-Ästhetik).
     * Belüftungsschlitze / Chevron-Louvers für passive Kühlung von Pi 4 SoC und Spannungsreglern.
-- [ ] **Unterboden-Abdeckung (Chassis Belly Pan / Skid Plate):**  
-  * **Status:** Mechanischer Schutz der Chassis-Unterseite.
+- [x] ~~**Unterboden-Abdeckung (Chassis Belly Pan / Skid Plate):**~~ **[ERLEDIGT]**  
+  * **Modell & Generator:** [`chassis_belly_pan.FCStd`](parts/chassis_belly_pan.FCStd) generiert via [`generate_chassis_belly_pan.py`](../../../scripts/v2/generate_chassis_belly_pan.py).
+  * **Status:** Schutz- und Gleitwanne an der Chassis-Unterseite ($Z \le 0{,}0\,\text{mm}$), verschraubt über die 4 zentralen M3-Standoff-Pfeiler bei $X = \pm 45, Y = \pm 30$ mit 90°-Senkungen nach DIN 7991.
   * **Funktion & Konstruktion:**
-    * Glatter Unterbodenschutz gegen Aufsitzen und Hängenbleiben im unebenen Gelände.
-    * Schutz der unteren Servoverkabelung, Akkuhalterung und Durchführungen gegen mechanische Beschädigung von unten.
+    * Glatte Bootsrumpf-Kontur mit 30°-Anlaufschrägen an Front und Heck sowie Längskufen für widerstandsloses Gleiten über Hindernisse.
+    * $7{,}6\,\text{mm}$ tiefe Innenwanne zur Aufnahme von Akkuleitungen und Sensorverkabelung unterhalb der unteren Carbonplatte.
     * **Integrierte Aufnahme für 9-Feld-Bodenscanning-Sensor:**
-      * Dedizierte Montageaufnahme und optischer Durchbruch (Sichtfenster) für den nach unten gerichteten Multi-Zonen-Sensor ($3 \times 3$ / 9-Zonen-Matrix, z. B. VL53L5CX/VL53L7CX) zur Höhenprofilerfassung des Geländes direkt unter dem Chassis.
-      * Schutzkragen / versenkte Optikblende, um die Sensorlinsen bei Bodenkontakt vor Zerkratzen und Verschmutzung zu bewahren.
+      * Dedizierte Montageaufnahme und $10 \times 8\,\text{mm}$ optischer Durchbruch mit $45^\circ$-FoV-Fase für den nach unten blickenden Multi-Zonen-Sensor ($3 \times 3$ ToF, VL53L5CX/VL53L7CX) bei $X = 0, Y = 0$.
+      * $1{,}5\,\text{mm}$ tiefer Schutzkragen an der Unterseite gegen Verkratzen der Optik.
+      * 4× M2 Schraubsockel ($21 \times 13\,\text{mm}$ Lochbild) und Kabeldurchführungsschacht ins Chassis.
+    * Vollständig eingebunden in Master-Assembly [`body_assembly.FCStd`](body_assembly.FCStd).
 
 
 
