@@ -85,7 +85,7 @@ class SimWebSocketServer:
         self.turn_z = 0.0
         self.gait_type = "tripod"
         self.gait_speed = 1.0
-        self.step_height = 20.0
+        self.step_height = 30.0
         self.step_length = 35.0
         self.body_height = -80.0
         self.body_roll = 0.0
@@ -619,11 +619,14 @@ def run_pybullet(gui=False, steps=240, walk=False, enable_ws=False, ws_port=8765
     for i in range(num_joints):
         info = p.getJointInfo(robot_id, i)
         j_name = info[1].decode("utf-8")
+        link_name = info[12].decode("utf-8")
         j_type = info[2]
         if j_type == p.JOINT_REVOLUTE:
             joint_indices[j_name] = i
-        # High friction on foot tips
+        # Friction & compliant contact dynamics on foot tips
         p.changeDynamics(robot_id, i, lateralFriction=1.5)
+        if "foot" in link_name:
+            p.changeDynamics(robot_id, i, lateralFriction=1.8, contactStiffness=30000, contactDamping=1000)
 
     print(f"Found {len(joint_indices)} revolute joints: {list(joint_indices.keys())}")
 
@@ -633,7 +636,7 @@ def run_pybullet(gui=False, steps=240, walk=False, enable_ws=False, ws_port=8765
         gait_type=GaitType.TRIPOD,
         walk_y=init_walk_y,
         step_length=35.0,
-        step_height=20.0,
+        step_height=30.0,
         gait_speed=1.0
     )
 

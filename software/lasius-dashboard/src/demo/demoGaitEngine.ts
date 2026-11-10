@@ -56,12 +56,24 @@ export const DEFAULT_MOUNT_POINTS: Record<LegKey, MountPoint> = {
  * Tailored for 60 mm Coxa, 100 mm Femur, 130 mm Tibia at -80 mm ground clearance.
  */
 export const DEFAULT_NEUTRAL_STANCES: Record<LegKey, LegStance> = {
-  left_front: { x: 140.0, y: 70.0, z: -80.0 },
+  left_front: { x: 160.0, y: 0.0, z: -80.0 },
   left_middle: { x: 160.0, y: 0.0, z: -80.0 },
   left_rear: { x: 160.0, y: 0.0, z: -80.0 },
-  right_front: { x: 140.0, y: -70.0, z: -80.0 },
+  right_front: { x: 160.0, y: 0.0, z: -80.0 },
   right_middle: { x: 160.0, y: 0.0, z: -80.0 },
   right_rear: { x: 160.0, y: 0.0, z: -80.0 }
+};
+
+/**
+ * Mechanical Coxa yaw mounting angle (rad) relative to robot body forward (+X):
+ */
+export const DEFAULT_MOUNT_ANGLES: Record<LegKey, number> = {
+  left_front: Math.PI / 4.0,       // +45°
+  left_middle: Math.PI / 2.0,      // +90°
+  left_rear: 3.0 * Math.PI / 4.0,  // +135°
+  right_front: -Math.PI / 4.0,     // -45°
+  right_middle: -Math.PI / 2.0,    // -90°
+  right_rear: -3.0 * Math.PI / 4.0 // -135°
 };
 
 interface GaitTimingConfig {
@@ -415,20 +427,6 @@ export class DemoGaitEngine {
         rawY = neutral.y;
         rawZ = stanceZ;
       } else {
-        const mp = this.mountPoints[legKey] || DEFAULT_MOUNT_POINTS[legKey];
-        const dxTurnW = this.currTurnZ * turnStride * (mp.y / 100.0);
-        const dyTurnW = -this.currTurnZ * turnStride * (mp.x / 100.0);
-
-        const totalDxW = dxWalkW + dxTurnW;
-        const totalDyW = dyWalkW + dyTurnW;
-
-        const isLeft = legKey.startsWith('left');
-        const strideXLeg = isLeft ? -totalDxW : totalDxW;
-        const strideYLeg = isLeft ? -totalDyW : totalDyW;
-
-        const offset = phaseOffsets[legKey] ?? 0.0;
-        const legPhase = (this.phase + offset) % 1.0;
-
         let strideNorm: number;
         if (legPhase < swingFrac) {
           const norm = legPhase / swingFrac; // 0.0 to 1.0
@@ -444,8 +442,27 @@ export class DemoGaitEngine {
           rawZ = stanceZ;
         }
 
-        rawX = neutral.x + strideNorm * strideXLeg;
-        rawY = neutral.y + strideNorm * strideYLeg;
+        // Translation components in body frame (+X forward, +Y left)
+        const dxTrans = (this.currWalkY * this.stepLength) * strideNorm;
+        const dyTrans = (-this.currWalkX * this.stepLength) * strideNorm;
+
+        // Rotation components around body center (turnZ > 0 turns counter-clockwise)
+        const mp = this.mountPoints[legKey] || DEFAULT_MOUNT_POINTS[legKey];
+        const bx = -mp.y;
+        const by = -mp.x;
+        const dxTurn = -(by / 100.0) * turnStride * this.currTurnZ * strideNorm;
+        const dyTurn = (bx / 100.0) * turnStride * this.currTurnZ * strideNorm;
+
+        const dxTotal = dxTrans + dxTurn;
+        const dyTotal = dyTrans + dyTurn;
+
+        // Project into leg local coordinate frame using mechanical mount angle psi
+        const psi = DEFAULT_MOUNT_ANGLES[legKey];
+        const dr = dxTotal * Math.cos(psi) + dyTotal * Math.sin(psi);
+        const dy = dxTotal * Math.sin(psi) - dyTotal * Math.cos(psi);
+
+        rawX = neutral.x + dr;
+        rawY = neutral.y + dy;
       }
 
       // Slew-rate limiting: cap maximal coordinate jump per tick to ensure smooth visual rendering

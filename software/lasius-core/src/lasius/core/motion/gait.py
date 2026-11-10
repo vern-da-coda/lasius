@@ -83,12 +83,22 @@ class OmniGait(GaitProtocol):
         LegIdentifier.RIGHT_REAR: (65.0, 90.0),
     }
 
+    # Mechanical Coxa yaw mounting angle (rad) relative to robot body forward (+X in URDF):
+    MOUNT_ANGLES: Dict[LegIdentifier, float] = {
+        LegIdentifier.LEFT_FRONT: math.pi / 4.0,       # +45°
+        LegIdentifier.LEFT_MIDDLE: math.pi / 2.0,      # +90°
+        LegIdentifier.LEFT_REAR: 3.0 * math.pi / 4.0,  # +135°
+        LegIdentifier.RIGHT_FRONT: -math.pi / 4.0,     # -45°
+        LegIdentifier.RIGHT_MIDDLE: -math.pi / 2.0,    # -90°
+        LegIdentifier.RIGHT_REAR: -3.0 * math.pi / 4.0,# -135°
+    }
+
     # Natural neutral stances tailored to 6cm Coxa, 10cm Femur, 13cm Tibia
     NEUTRAL_STANCES: Dict[LegIdentifier, Tuple[float, float, float]] = {
-        LegIdentifier.LEFT_FRONT: (140.0, 70.0, -80.0),
+        LegIdentifier.LEFT_FRONT: (160.0, 0.0, -80.0),
         LegIdentifier.LEFT_MIDDLE: (160.0, 0.0, -80.0),
         LegIdentifier.LEFT_REAR: (160.0, 0.0, -80.0),
-        LegIdentifier.RIGHT_FRONT: (140.0, -70.0, -80.0),
+        LegIdentifier.RIGHT_FRONT: (160.0, 0.0, -80.0),
         LegIdentifier.RIGHT_MIDDLE: (160.0, 0.0, -80.0),
         LegIdentifier.RIGHT_REAR: (160.0, 0.0, -80.0),
     }
@@ -176,6 +186,7 @@ class OmniGait(GaitProtocol):
 
         # Dynamic physical geometry mapping
         self.mount_points: Dict[LegIdentifier, Tuple[float, float]] = dict(self.MOUNT_POINTS)
+        self.mount_angles: Dict[LegIdentifier, float] = dict(self.MOUNT_ANGLES)
         self.neutral_stances: Dict[LegIdentifier, Tuple[float, float, float]] = (
             dict(neutral_stances) if neutral_stances is not None else dict(self.NEUTRAL_STANCES)
         )
@@ -366,9 +377,7 @@ class OmniGait(GaitProtocol):
         if is_moving:
             self.phase = (self.phase + 0.02 * self.gait_speed) % 1.0
 
-        # World displacement components
-        dx_walk_w = self._curr_walk_x * self.step_length
-        dy_walk_w = -self._curr_walk_y * self.step_length
+        # Locomotion parameters
         turn_stride = self.step_length * 0.75
 
         new_positions = {}
@@ -383,17 +392,6 @@ class OmniGait(GaitProtocol):
                 # Stationary pose: feet firmly on the ground with body attitude
                 raw_x, raw_y, raw_z = neutral_x, neutral_y, stance_z
             else:
-                mx, my = self.mount_points[leg_id]
-                dx_turn_w = self._curr_turn_z * turn_stride * (my / 100.0)
-                dy_turn_w = -self._curr_turn_z * turn_stride * (mx / 100.0)
-
-                total_dx_w = dx_walk_w + dx_turn_w
-                total_dy_w = dy_walk_w + dy_turn_w
-
-                is_left = (leg_id.value[0] == BodySide.LEFT)
-                stride_x_leg = -total_dx_w if is_left else total_dx_w
-                stride_y_leg = -total_dy_w if is_left else total_dy_w
-
                 offset = phase_offsets[leg_id]
                 leg_phase = (self.phase + offset) % 1.0
 
@@ -410,8 +408,29 @@ class OmniGait(GaitProtocol):
                         stride_norm = 0.5 - norm
                     raw_z = stance_z
 
-                raw_x = neutral_x + stride_norm * stride_x_leg
-                raw_y = neutral_y + stride_norm * stride_y_leg
+                # Translation components in body frame (+X forward, +Y left)
+                dx_trans = (self._curr_walk_y * self.step_length) * stride_norm
+                dy_trans = (-self._curr_walk_x * self.step_length) * stride_norm
+
+                # Rotation components around body center (turn_z > 0 turns counter-clockwise)
+                # mx is lateral (-65 left, +65 right) -> body Y = -mx
+                # my is longitudinal (-90 front, +90 rear) -> body X = -my
+                mx, my = self.mount_points[leg_id]
+                bx = -my
+                by = -mx
+                dx_turn = -(by / 100.0) * turn_stride * self._curr_turn_z * stride_norm
+                dy_turn = (bx / 100.0) * turn_stride * self._curr_turn_z * stride_norm
+
+                dx_total = dx_trans + dx_turn
+                dy_total = dy_trans + dy_turn
+
+                # Project into leg local coordinate frame using mechanical mount angle psi
+                psi = self.mount_angles[leg_id]
+                dr = dx_total * math.cos(psi) + dy_total * math.sin(psi)
+                dy = dx_total * math.sin(psi) - dy_total * math.cos(psi)
+
+                raw_x = neutral_x + dr
+                raw_y = neutral_y + dy
 
             # Slew-rate limiting: cap maximal coordinate jump per tick to ensure butter-smooth motion
             if self.smooth_transitions and leg_id in self._current_positions:

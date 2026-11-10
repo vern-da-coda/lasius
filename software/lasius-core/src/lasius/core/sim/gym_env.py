@@ -126,7 +126,7 @@ class LasiusGymEnv(gym.Env):
             gait_type=GaitType.TRIPOD,
             walk_y=0.0,
             step_length=35.0,
-            step_height=20.0,
+            step_height=30.0,
             gait_speed=1.0,
         )
 
@@ -182,16 +182,26 @@ class LasiusGymEnv(gym.Env):
             physicsClientId=self.client_id,
         )
 
-        # Map revolute joints
+        # Map revolute joints and configure contact dynamics
         num_joints = p.getNumJoints(self.robot_id, physicsClientId=self.client_id)
         for i in range(num_joints):
             info = p.getJointInfo(self.robot_id, i, physicsClientId=self.client_id)
             j_name = info[1].decode("utf-8")
+            link_name = info[12].decode("utf-8")
             if j_name in JOINT_NAMES:
                 self.joint_indices[j_name] = i
                 # Set joint friction & dynamics
                 p.changeDynamics(
                     self.robot_id, i, lateralFriction=self.lateral_friction, physicsClientId=self.client_id
+                )
+            if "foot" in link_name:
+                p.changeDynamics(
+                    self.robot_id,
+                    i,
+                    lateralFriction=1.8,
+                    contactStiffness=30000,
+                    contactDamping=1000,
+                    physicsClientId=self.client_id,
                 )
 
     def _compute_standing_posture(self):
