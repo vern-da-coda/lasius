@@ -99,16 +99,16 @@ def make_chevron_slot(x_center, y_center, arm_len, slot_width, z_min, z_max):
 def build_chassis_top_cover():
     # Z coordinate convention:
     # Lower mating flange sits on body_top top surface at Z = 55.30 mm.
-    # Cover rises upward to Z = 71.30 mm (total height 16.0 mm).
+    # Cover rises upward to Z = 76.00 mm (total height 20.7 mm, internal clearance 18.5 mm).
     z_base = 55.30
-    z_peak = 71.30
-    z_tier2 = 64.00
+    z_peak = 76.00
+    z_tier2 = 66.00
     wall_thick = 2.20
 
     # -------------------------------------------------------------------------
-    # 1. Base Mounting Flange (X in [-88, 92], Y in [-34, 34], Z in [55.30, 58.50])
+    # 1. Base Mounting Flange (X in [-88, 94], Y in [-36, 36], Z in [55.30, 58.50])
     # -------------------------------------------------------------------------
-    flange_solid = make_rounded_rect_solid(-88.0, 92.0, -34.0, 34.0, 7.0, z_base, z_base + 3.20)
+    flange_solid = make_rounded_rect_solid(-88.0, 94.0, -36.0, 36.0, 7.0, z_base, z_base + 3.20)
 
     # 4x Standoff Ears (X = ±45.0, Y = ±30.0)
     for sx in [-45.0, 45.0]:
@@ -119,19 +119,19 @@ def build_chassis_top_cover():
     # -------------------------------------------------------------------------
     # 2. Stepped Domed Carapace Vault (Organic Chitin Shell)
     # -------------------------------------------------------------------------
-    # Mid-tier vault (X in [-82, 86], Y in [-30, 30], Z in [58.50, 64.00])
-    tier2_solid = make_rounded_rect_solid(-82.0, 86.0, -30.0, 30.0, 6.0, z_base + 3.20, z_tier2)
+    # Mid-tier vault (X in [-84, 88], Y in [-33, 33], Z in [58.50, 66.00])
+    tier2_solid = make_rounded_rect_solid(-84.0, 88.0, -33.0, 33.0, 6.0, z_base + 3.20, z_tier2)
 
-    # Top-tier apex dome (X in [-74, 78], Y in [-24, 24], Z in [64.00, 71.30])
-    tier3_solid = make_rounded_rect_solid(-74.0, 78.0, -24.0, 24.0, 5.0, z_tier2, z_peak)
+    # Top-tier apex dome (X in [-76, 83], Y in [-30, 30], Z in [66.00, 76.00])
+    tier3_solid = make_rounded_rect_solid(-76.0, 83.0, -30.0, 30.0, 5.0, z_tier2, z_peak)
 
     cover_solid = flange_solid.fuse(tier2_solid).fuse(tier3_solid)
 
     # -------------------------------------------------------------------------
-    # 3. Hollow Internal Cavity (13.6 mm clearance above top plate)
+    # 3. Hollow Internal Cavity (18.5 mm clearance above top plate, fits RPi 4)
     # -------------------------------------------------------------------------
-    # Inner cavity ceiling at Z = 68.90 mm (leaves 2.4 mm solid ceiling at peak)
-    cavity = make_rounded_rect_solid(-78.0, 82.0, -26.0, 26.0, 4.0, z_base - 2.0, z_peak - wall_thick)
+    # Inner cavity ceiling at Z = 73.80 mm (leaves 2.2 mm solid ceiling at peak)
+    cavity = make_rounded_rect_solid(-80.0, 81.0, -28.5, 28.5, 4.0, z_base - 2.0, z_peak - wall_thick)
     cover_solid = cover_solid.cut(cavity)
 
     # -------------------------------------------------------------------------
@@ -142,7 +142,7 @@ def build_chassis_top_cover():
             # M3 through hole (Ø3.4 mm)
             thru_hole = Part.makeCylinder(1.70, 20.0, App.Vector(sx, sy, z_base - 2.0), App.Vector(0, 0, 1))
             # Deepened counterbored pocket (Ø6.6 mm, depth down to Z = 58.50 mm)
-            cb_pocket = Part.makeCylinder(3.30, 15.0, App.Vector(sx, sy, z_base + 3.20), App.Vector(0, 0, 1))
+            cb_pocket = Part.makeCylinder(3.30, 25.0, App.Vector(sx, sy, z_base + 3.20), App.Vector(0, 0, 1))
             cover_solid = cover_solid.cut(thru_hole).cut(cb_pocket)
 
     # -------------------------------------------------------------------------

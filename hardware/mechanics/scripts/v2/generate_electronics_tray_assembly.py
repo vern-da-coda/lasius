@@ -43,7 +43,6 @@ doc.saveAs(fcstd_path)
 
 # Open source master documents
 doc_tray = App.openDocument(f"{parts_dir}/electronics_tray.FCStd")
-doc_rpi = App.openDocument(f"{cots_dir}/rpi4_model_b.FCStd")
 doc_pca = App.openDocument(f"{cots_dir}/pca9685_board.FCStd")
 doc_tca = App.openDocument(f"{cots_dir}/tca9548a_board.FCStd")
 doc_bat = App.openDocument(f"{cots_dir}/battery_lipo_2s.FCStd")
@@ -78,9 +77,8 @@ def make_link(name, label, target_obj, placement, color=None, parent=asm_part):
 
 # High-contrast distinctive colors for structural parts vs electronics vs power
 COLOR_TRAY = (0.22, 0.42, 0.65)         # Technical blue PETG 3D print
-COLOR_PCB_GREEN = (0.08, 0.55, 0.22)    # Raspberry Pi 4 Model B (Solder mask green)
-COLOR_PCB_BLUE = (0.08, 0.35, 0.85)     # PCA9685 PWM Servo Drivers (Adafruit blue)
-COLOR_PCB_PURPLE = (0.55, 0.15, 0.75)   # TCA9548A I2C Multiplexer (Purple PCB)
+COLOR_ADAFRUIT_BLUE = (0.04, 0.38, 0.88)# PCA9685 PWM Servo Drivers (Adafruit typical blue)
+COLOR_MUX_PURPLE = (0.58, 0.15, 0.75)   # TCA9548A I2C Multiplexer (Purple PCB)
 COLOR_BATTERY_LIPO = (0.95, 0.75, 0.10) # 2S LiPo Battery Pack (Vivid LiPo Yellow / Gold)
 
 # -------------------------------------------------------------
@@ -90,36 +88,32 @@ p_tray = App.Placement(App.Vector(0.0, 0.0, 0.0), App.Rotation())
 make_link("Electronics_Tray", "1. Electronics Mounting Tray (v2)", doc_tray.Electronics_Tray, p_tray, COLOR_TRAY)
 
 # -------------------------------------------------------------
-# 2. Raspberry Pi 4 Model B (Front Compartment on 3.6 mm Bosses)
+# 2. Dual PCA9685 16-Channel PWM Servo Controllers (Central Bay on 3.0 mm Bosses)
 # -------------------------------------------------------------
-# Tray Deck (2.40 mm) + Boss (3.60 mm) -> Z = 6.00 mm
-p_rpi = App.Placement(App.Vector(39.0, 0.0, 6.00), App.Rotation())
-make_link("Board_RPi4", "2. Raspberry Pi 4 Model B (COTS)", doc_rpi.Raspberry_Pi_4, p_rpi, COLOR_PCB_GREEN)
+# Left Board: Y = +14.5 mm, 90° Servo Headers facing +Y (left legs: FL, ML, RL)
+# Lateral plug insertion from the left flank with 2.0 mm clearance to ML Coxa Servo.
+p_pca_l = App.Placement(App.Vector(0.0, 14.50, 5.40), App.Rotation(App.Vector(0, 0, 1), 0.0))
+make_link("Board_PCA9685_Left", "2. PCA9685 PWM Controller Left (COTS)", doc_pca.PCA9685_Board, p_pca_l, COLOR_ADAFRUIT_BLUE)
+
+# Right Board: Y = -14.5 mm, 90° Servo Headers facing -Y (right legs: FR, MR, RR)
+# Rotated 180° so servo headers face lateral right flank with 2.0 mm clearance to MR Coxa Servo.
+p_pca_r = App.Placement(App.Vector(0.0, -14.50, 5.40), App.Rotation(App.Vector(0, 0, 1), 180.0))
+make_link("Board_PCA9685_Right", "3. PCA9685 PWM Controller Right (COTS)", doc_pca.PCA9685_Board, p_pca_r, COLOR_ADAFRUIT_BLUE)
 
 # -------------------------------------------------------------
-# 3. Dual PCA9685 16-Channel PWM Servo Controllers (Rear Compartment on 3.0 mm Bosses)
+# 3. TCA9548A 8-Channel I2C Multiplexer Breakout (Rear Centerline Spine on 3.0 mm Bosses)
 # -------------------------------------------------------------
-# Left Board: Y = +19.0 mm, Servo Headers facing +Y (left legs)
-p_pca_l = App.Placement(App.Vector(-45.0, 19.0, 5.40), App.Rotation())
-make_link("Board_PCA9685_Left", "3. PCA9685 PWM Controller Left (COTS)", doc_pca.PCA9685_Board, p_pca_l, COLOR_PCB_BLUE)
-
-# Right Board: Y = -19.0 mm, Servo Headers facing -Y (right legs), rotated 180° around Z
-p_pca_r = App.Placement(App.Vector(-45.0, -19.0, 5.40), App.Rotation(App.Vector(0, 0, 1), 180.0))
-make_link("Board_PCA9685_Right", "4. PCA9685 PWM Controller Right (COTS)", doc_pca.PCA9685_Board, p_pca_r, COLOR_PCB_BLUE)
+# Situated cleanly between the two rear spacers at X = -52.0, Y = 0.0 mm
+p_tca = App.Placement(App.Vector(-52.0, 0.0, 5.40), App.Rotation())
+make_link("Board_TCA9548A", "4. TCA9548A I2C Multiplexer (COTS)", doc_tca.TCA9548A_Board, p_tca, COLOR_MUX_PURPLE)
 
 # -------------------------------------------------------------
-# 4. TCA9548A 8-Channel I2C Multiplexer Breakout (Rear Central Spine on 3.0 mm Bosses)
-# -------------------------------------------------------------
-p_tca = App.Placement(App.Vector(-45.0, 0.0, 5.40), App.Rotation())
-make_link("Board_TCA9548A", "5. TCA9548A I2C Multiplexer (COTS)", doc_tca.TCA9548A_Board, p_tca, COLOR_PCB_PURPLE)
-
-# -------------------------------------------------------------
-# 5. 2S 7.4V LiPo Battery Pack (Under Tray Deck: Z = -15.00 .. -1.00 mm)
+# 4. 2S 7.4V LiPo Battery Pack (Under Tray Deck: Z = -15.00 .. -1.00 mm)
 # -------------------------------------------------------------
 # Situated in the lower chassis chamber between bottom plate and tray deck.
 # XT60 power leads exit in -X direction towards rear chassis XT60BE-M inlet.
 p_bat = App.Placement(App.Vector(5.0, 0.0, -15.00), App.Rotation())
-make_link("Battery_LiPo_2S", "6. 2S 7.4V LiPo Battery Pack (COTS)", doc_bat.Battery_LiPo_2S, p_bat, COLOR_BATTERY_LIPO)
+make_link("Battery_LiPo_2S", "5. 2S 7.4V LiPo Battery Pack (COTS)", doc_bat.Battery_LiPo_2S, p_bat, COLOR_BATTERY_LIPO)
 
 # -------------------------------------------------------------
 # 6. Recompute, Save & Export

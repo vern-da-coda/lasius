@@ -138,9 +138,20 @@ def build_rpi4():
 
 
 # =============================================================================
-# 2. PCA9685 16-Channel PWM Servo Driver Board
+# 2. PCA9685 16-Channel PWM Servo Driver Board (COTS)
 # =============================================================================
 def build_pca9685():
+    """
+    Constructs high-fidelity PCA9685 16-Channel 12-Bit PWM Driver Board (Adafruit).
+    Reflects physical reference photo PXL_20261110_220915159.jpg:
+      - 62.5 x 25.4 x 1.6 mm blue PCB with 4x M2.5 mounting holes (56.0 x 19.0 mm pattern).
+      - 16x 3-pin right-angle servo headers (90-degree bend) extending horizontally
+        in +Y direction past the PCB edge for lateral servo connector insertion.
+      - Dual 6-pin I2C headers pointing vertically (+Z) on short edges (-X and +X).
+      - 2-pin screw terminal block on -Y edge with wire entry facing outward (-Y).
+      - Cylindrical electrolytic power capacitor (Ø8.0 x 12.5 mm) at corner.
+      - PCA9685 TSSOP-28 chip centered on PCB.
+    """
     doc_name = "pca9685_board"
     try:
         App.closeDocument(doc_name)
@@ -160,18 +171,26 @@ def build_pca9685():
     # PCA9685 TSSOP-28 IC Chip (9.7 x 4.4 x 1.1 mm)
     ic = Part.makeBox(9.7, 4.4, 1.1, App.Vector(-4.85, -2.2, 1.6))
 
-    # Power Capacitor (Ø8.0 x 11.5 mm cylinder)
-    cap = Part.makeCylinder(4.0, 11.5, App.Vector(-22.0, -5.0, 1.6), App.Vector(0, 0, 1))
+    # Power Capacitor (Ø8.0 x 12.5 mm cylinder at -X / -Y corner)
+    cap = Part.makeCylinder(4.0, 12.5, App.Vector(-21.0, -7.5, 1.6), App.Vector(0, 0, 1))
 
-    # Screw Terminal Block (10.0 x 8.0 x 10.0 mm)
-    term = Part.makeBox(10.0, 8.0, 10.0, App.Vector(-23.0, 3.5, 1.6))
+    # Blue 2-Pin Screw Terminal Block (10.0 x 8.0 x 10.0 mm on -Y edge)
+    # Wire entrances face in -Y direction, clamping screws on top face (+Z)
+    term_body = Part.makeBox(10.0, 8.0, 10.0, App.Vector(-14.0, -12.5, 1.6))
+    term_cav1 = Part.makeBox(3.0, 4.0, 4.0, App.Vector(-13.0, -13.0, 3.5))
+    term_cav2 = Part.makeBox(3.0, 4.0, 4.0, App.Vector(-8.0, -13.0, 3.5))
+    term = term_body.cut(term_cav1).cut(term_cav2)
 
-    # 16x 3-Pin Servo Pin Headers (3 rows of 16 pins, width 7.62 mm, length 40.64 mm, height 11.5 mm)
-    headers = Part.makeBox(40.64, 7.62, 11.5, App.Vector(-12.0, -3.81, 1.6))
+    # 16x 3-Pin Servo Pin Headers (90° Right Angle pointing horizontally in +Y direction)
+    # Plastic base sits on PCB along +Y edge: 40.64 x 4.5 x 3.0 mm
+    hdr_base = Part.makeBox(40.64, 4.5, 3.0, App.Vector(-20.32, 7.5, 1.6))
+    # 90° Right-angle pins extending horizontally past PCB edge (Y reaches 19.5 mm)
+    hdr_pins = Part.makeBox(40.64, 8.0, 6.0, App.Vector(-20.32, 11.5, 2.5))
+    headers = hdr_base.fuse(hdr_pins)
 
-    # I2C Input Header (6-pin on -X edge) & Cascade Header (6-pin on +X edge)
-    i2c_in = Part.makeBox(2.54, 15.24, 8.5, App.Vector(-30.0, -7.62, 1.6))
-    i2c_out = Part.makeBox(2.54, 15.24, 8.5, App.Vector(27.46, -7.62, 1.6))
+    # Dual 6-Pin I2C Headers (Straight pins pointing vertically +Z on -X and +X edges)
+    i2c_in = Part.makeBox(2.54, 15.24, 8.5, App.Vector(-29.27, -7.62, 1.6))
+    i2c_out = Part.makeBox(2.54, 15.24, 8.5, App.Vector(26.73, -7.62, 1.6))
 
     pca_solid = pcb.fuse(ic).fuse(cap).fuse(term).fuse(headers).fuse(i2c_in).fuse(i2c_out)
 
@@ -317,12 +336,53 @@ def build_battery_lipo_2s():
     print(f"✔ Generated 2S LiPo Battery Pack -> {fcstd_path}")
 
 
+# =============================================================================
+# 6. ADS1115 16-Bit 4-Channel I2C ADC Breakout (Adafruit Blue)
+# =============================================================================
+def build_ads1115():
+    doc_name = "ads1115_board"
+    try:
+        App.closeDocument(doc_name)
+    except Exception:
+        pass
+    doc = App.newDocument(doc_name)
+
+    # 28.0 x 17.0 x 1.6 mm blue PCB with 2x M2.5 mounting holes
+    pcb = make_rounded_rect_solid(-14.0, 14.0, -8.5, 8.5, 2.0, 0.0, 1.6)
+
+    # 2x M2.5 mounting holes at X = ±10.1 mm, Y = 5.3 mm
+    for hx in [-10.1, 10.1]:
+        hole = Part.makeCylinder(1.25, 5.0, App.Vector(hx, 5.3, -1.0), App.Vector(0, 0, 1))
+        pcb = pcb.cut(hole)
+
+    # ADS1115 MSOP-10 IC Chip (3.0 x 3.0 x 1.1 mm)
+    ic = Part.makeBox(3.0, 3.0, 1.1, App.Vector(-1.5, -1.5, 1.6))
+
+    # 10-Pin Header along bottom edge (25.4 x 2.54 x 8.5 mm)
+    hdr = Part.makeBox(25.4, 2.54, 8.5, App.Vector(-12.7, -7.62, 1.6))
+
+    ads_solid = pcb.fuse(ic).fuse(hdr)
+
+    obj = doc.addObject("Part::Feature", "ADS1115_Board")
+    obj.Label = "ADS1115 16-Bit 4-Channel ADC (COTS)"
+    obj.Shape = ads_solid
+    doc.recompute()
+
+    fcstd_path = f"{cots_models_dir}/ads1115_board.FCStd"
+    doc.saveAs(fcstd_path)
+    ads_solid.exportStep(f"{cots_step_dir}/ads1115_board.step")
+    ads_solid.exportStl(f"{cots_stl_dir}/ads1115_board.stl")
+    App.closeDocument(doc_name)
+    print(f"✔ Generated ADS1115 16-Bit ADC Breakout -> {fcstd_path}")
+
+
 # Execute all builds
 build_rpi4()
 build_pca9685()
 build_tca9548a()
 build_vl53l5cx()
 build_battery_lipo_2s()
+build_ads1115()
 
 print("--- All Electronics & Power COTS Models Generated Successfully ---")
 import sys

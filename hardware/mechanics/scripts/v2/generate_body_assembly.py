@@ -51,6 +51,7 @@ doc_tray_asm = App.openDocument(f"{v2_asm_dir}/electronics_tray_assembly.FCStd")
 doc_belly = App.openDocument(f"{models_base}/custom/v2/parts/chassis_belly_pan.FCStd")
 doc_cover = App.openDocument(f"{models_base}/custom/v2/parts/chassis_top_cover.FCStd")
 doc_tof = App.openDocument(f"{cots_dir}/vl53l5cx_board.FCStd")
+doc_rpi = App.openDocument(f"{cots_dir}/rpi4_model_b.FCStd")
 
 # Main Assembly Container
 asm_part = doc.addObject("App::Part", "Body_Assembly_v2")
@@ -86,6 +87,7 @@ COLOR_ALU_SPACER = (0.75, 0.77, 0.82)    # Anodized aluminum spacers
 COLOR_BELLY_PAN = (0.26, 0.26, 0.30)     # Rugged anthracite PETG skid plate
 COLOR_CHASSIS_COVER = (0.20, 0.20, 0.23) # Dark chitinous exoskeleton canopy
 COLOR_PCB_RED = (0.75, 0.15, 0.15)       # VL53L5CX ToF Distance Sensor (SparkFun red)
+COLOR_RPI_GREEN = (0.08, 0.52, 0.24)     # Raspberry Pi 4 Model B (Raspberry Green PCB)
 
 # -------------------------------------------------------------
 # 1. Chassis Plates & Modular Assemblies
@@ -99,7 +101,7 @@ p_top = App.Placement(App.Vector(0.0, 0.0, 53.30), App.Rotation())
 make_link("Body_Top", "2. Chassis Top Plate (2mm)", doc_top.BodyTop, p_top, COLOR_CARBON)
 
 # Electronics Tray & Power Assembly at Z = 18.00 mm (held by 4 central standoff collars)
-# Encapsulates Tray Deck, Pi 4, dual PCA9685, TCA9548A, and 2S LiPo Battery
+# Encapsulates Tray Deck, dual PCA9685, TCA9548A, and 2S LiPo Battery
 p_tray_asm = App.Placement(App.Vector(0.0, 0.0, 18.00), App.Rotation())
 make_link("Electronics_Tray_Assembly", "3. Electronics Tray & Power Assembly (v2)", doc_tray_asm.Electronics_Tray_Assembly, p_tray_asm)
 
@@ -111,9 +113,14 @@ make_link("Chassis_Belly_Pan", "4. Chassis Belly Pan (v2)", doc_belly.Chassis_Be
 p_tof = App.Placement(App.Vector(0.0, 0.0, -4.40), App.Rotation(App.Vector(0, 1, 0), 180.0))
 make_link("Sensor_VL53L5CX_ToF", "5. VL53L5CX 9-Zone ToF Distance Sensor (COTS)", doc_tof.VL53L5CX_Board, p_tof, COLOR_PCB_RED)
 
+# Raspberry Pi 4 Model B mounted on top surface of Body_Top at X = 35.0, Y = 0.0, Z = 55.30 mm
+# Direct convective chimney cooling through chassis top cover chevron louvers
+p_rpi = App.Placement(App.Vector(35.0, 0.0, 55.30), App.Rotation())
+make_link("Board_RPi4", "6. Raspberry Pi 4 Model B (Top Deck, COTS)", doc_rpi.Raspberry_Pi_4, p_rpi, COLOR_RPI_GREEN)
+
 # Chassis Top Cover (Carapace) at Z = 0.00 mm (mounted to top surface of top plate)
 p_cover = App.Placement(App.Vector(0.0, 0.0, 0.00), App.Rotation())
-make_link("Chassis_Top_Cover", "6. Chassis Exoskeleton Top Cover (v2)", doc_cover.Chassis_Top_Cover, p_cover, COLOR_CHASSIS_COVER)
+make_link("Chassis_Top_Cover", "7. Chassis Exoskeleton Top Cover (v2)", doc_cover.Chassis_Top_Cover, p_cover, COLOR_CHASSIS_COVER)
 
 # -------------------------------------------------------------
 # 2. Chassis Standoff Spacers (8x at small M3 screw holes, inherited from v1)

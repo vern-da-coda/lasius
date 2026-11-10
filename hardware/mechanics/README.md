@@ -19,6 +19,7 @@ CAD engineering, digital fabrication exports, and assembly models for the **Lasi
   - **PCA9685 16-Channel PWM Servo Controller ([`pca9685_board.FCStd`](models/cots/pca9685_board.FCStd)):** Dual I²C servo drivers (left and right chassis banks) with 16× 3-pin servo headers and high-current power terminal.
   - **TCA9548A 8-Channel I²C Multiplexer ([`tca9548a_board.FCStd`](models/cots/tca9548a_board.FCStd)):** Central I²C bus multiplexer breakout with dual 12-pin header rows.
   - **VL53L5CX 9-Zone Time-of-Flight Distance Sensor ([`vl53l5cx_board.FCStd`](models/cots/vl53l5cx_board.FCStd)):** Downward-facing $3 \times 3$ multizone laser distance sensor for dynamic ground clearance and terrain mapping.
+  - **ADS1115 16-Bit 4-Channel ADC Breakout ([`ads1115_board.FCStd`](models/cots/ads1115_board.FCStd)):** Precision I²C ADC breakout (Adafruit Blue) for closed-loop potentiometer feedback.
   - **2S 7.4V LiPo Battery Pack ([`battery_lipo_2s.FCStd`](models/cots/battery_lipo_2s.FCStd)):** Slim 2S flat pack ($88.0 \times 35.0 \times 14.0\,\text{mm}$) with 12AWG silicone leads, Amass XT60 connector, and JST-XH balance lead.
 
 ### 2. Custom Generation v1 (`models/custom/v1/` & `models/custom/v1/parts/`)
@@ -70,7 +71,8 @@ CAD engineering, digital fabrication exports, and assembly models for the **Lasi
     - Chassis structural plates ([`body_bottom.FCStd`](models/custom/v1/parts/body_bottom.FCStd), [`body_top.FCStd`](models/custom/v1/parts/body_top.FCStd)) and 8× standoff pillars ([`spacer_14x50.FCStd`](models/custom/v1/parts/spacer_14x50.FCStd)).
     - 6× modular v2 leg assemblies ([`leg_assembly.FCStd`](models/custom/v2/leg_assembly.FCStd)).
     - 3D-printed body parts: [`chassis_belly_pan.FCStd`](models/custom/v2/parts/chassis_belly_pan.FCStd) (with downward-facing VL53L5CX ToF terrain distance sensor) and [`chassis_top_cover.FCStd`](models/custom/v2/parts/chassis_top_cover.FCStd).
-    - Modular interior: [`electronics_tray_assembly.FCStd`](models/custom/v2/electronics_tray_assembly.FCStd) (tray + Pi 4 + dual PCA9685 + TCA9548A + 2S LiPo battery).
+    - Modular interior: [`electronics_tray_assembly.FCStd`](models/custom/v2/electronics_tray_assembly.FCStd) (tray + dual PCA9685 + TCA9548A + 2S LiPo battery).
+    - Top deck processing: Raspberry Pi 4 Model B mounted on the upper chassis deck directly under the ventilated carapace cover ([`chassis_top_cover.FCStd`](models/custom/v2/parts/chassis_top_cover.FCStd)).
 
 ---
 

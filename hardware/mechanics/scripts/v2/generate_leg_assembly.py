@@ -87,7 +87,7 @@ make_link("Coxa_Bracket", "1. Coxa Bracket (3D Printed)", doc_coxa.Coxa_Bracket,
 p_femur = App.Placement(App.Vector(56.50, 0.00, 0.00), App.Rotation())
 make_link("Femur_Body", "4a. Femur Housing (Organic Double-Wrench, PETG)", doc_femur.Femur_Body, p_femur, (0.10, 0.45, 0.85))
 make_link("Femur_Cover", "4b. Femur ADC Chamber Cover (PETG)", doc_femur.Femur_Cover, p_femur, (0.18, 0.22, 0.30))
-make_link("Femur_ADS1115", "5. Encapsulated Leg ADC (ADS1115 0x48)", doc_femur.ADS1115_Board, p_femur, (0.88, 0.38, 0.10))
+make_link("Femur_ADS1115", "5. Encapsulated Leg ADC (ADS1115 0x48)", doc_femur.ADS1115_Board, p_femur, (0.04, 0.38, 0.88))
 
 # Monolithic Tibia v2 (Claw + Integrated 30 mm Servo Cage & Counter-Bearing Seat, links to tibia_v2.FCStd)
 theta = math.radians(50.0)

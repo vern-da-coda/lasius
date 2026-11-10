@@ -126,18 +126,18 @@ Dieser Backlog führt alle offenen Aufgaben, konstruktiven Erweiterungen und Ver
   * **Modell & Generator:** [`electronics_tray.FCStd`](parts/electronics_tray.FCStd) generiert via [`generate_electronics_tray.py`](../../../scripts/v2/generate_electronics_tray.py).
   * **Status:** Zentrales Trägerdeck im Chassis-Kern auf $Z = 18{,}0\,\text{mm}$ (gehalten von 4 Standoff-Kragenbuchsen $\varnothing 14{,}2\,\text{mm}$ an den Spacern bei $X = \pm 45, Y = \pm 30$).
   * **Funktion & Integration:**
-    * 1× Raspberry Pi 4 Model B (M2.5 Lochbild $58 \times 49\,\text{mm}$ auf $3{,}6\,\text{mm}$ Sockeln mit SoC-Kühlausbruch).
-    * 2× PCA9685 16-Kanal Servo-Controller ($56 \times 19\,\text{mm}$ Lochbild links bei $Y = +19\,\text{mm}$, rechts bei $Y = -19\,\text{mm}$ mit direktem Kabelabgang zu den Coxa-Servos).
-    * 1× TCA9548A 8-Kanal I2C-Multiplexer ($26\,\text{mm}$ Lochbild auf der Mittelachse bei $X = -45, Y = 0$).
-    * 4× Kabeldurchführungskämme und 6× Kabelbinder-Ösen für vibrationsfeste Leitungsfixierung.
-    * Vollständig eingebunden in Master-Assembly [`body_assembly.FCStd`](body_assembly.FCStd).
+    * 2× PCA9685 16-Kanal Servo-Controller ($56 \times 19\,\text{mm}$ Lochbild links bei $Y = +14{,}5\,\text{mm}$, rechts bei $Y = -14{,}5\,\text{mm}$ auf $3{,}0\,\text{mm}$ Sockeln; 90°-Stiftleisten zeigen seitlich nach außen zu den Beinen mit $2{,}0\,\text{mm}$ Sicherheitsabstand zu den Coxa-Servos).
+    * 1× TCA9548A 8-Kanal I2C-Multiplexer ($26\,\text{mm}$ Lochbild auf der Mittelachse bei $X = -52, Y = 0$).
+    * 4× Kabelbinder-Ösen und frontseitiges Verkabelungs- und Akkufenster.
+    * Vollständig kollisionsfrei mit Spacern, Beinen und Coxa-Servos.
+    * Eingebunden in Subassembly [`electronics_tray_assembly.FCStd`](electronics_tray_assembly.FCStd) und Master-Assembly [`body_assembly.FCStd`](body_assembly.FCStd).
 - [x] ~~**Chassis-Abdeckung / Exoskelett-Haube (Top Cover):**~~ **[ERLEDIGT]**  
   * **Modell & Generator:** [`chassis_top_cover.FCStd`](parts/chassis_top_cover.FCStd) generiert via [`generate_chassis_top_cover.py`](../../../scripts/v2/generate_chassis_top_cover.py).
-  * **Status:** Aerodynamische Chitinpanzer-Haube auf der oberen Carbonplatte ($Z = 55{,}3\,\text{mm}$ bis $71{,}3\,\text{mm}$, Gesamthöhe $16{,}0\,\text{mm}$), verschraubt über die 4 zentralen M3-Standoff-Pfeiler bei $X = \pm 45, Y = \pm 30$ mit gesenkten Taschen.
+  * **Status:** Aerodynamische Chitinpanzer-Haube auf der oberen Carbonplatte ($Z = 55{,}3\,\text{mm}$ bis $76{,}0\,\text{mm}$, Gesamthöhe $20{,}7\,\text{mm}$ mit $18{,}5\,\text{mm}$ Innenraum-Freiraum), verschraubt über die 4 zentralen M3-Standoff-Pfeiler bei $X = \pm 45, Y = \pm 30$ mit gesenkten Taschen.
   * **Funktion & Konstruktion:**
-    * Mechanischer Schutz für Raspberry Pi 4, GPIO-Leitungen und interne Elektronik mit $13{,}6\,\text{mm}$ Innenraum-Überhöhung über der oberen Platte.
-    * **Chevron-Louvers:** 5× $45^\circ$ nach vorn gepfeilte Lüftungsschlitze direkt über dem Pi 4 SoC zur passiven Kamin-Konvektionskühlung.
-    * **Kamera-Kabeldurchbruch:** $20 \times 3\,\text{mm}$ Frontschlitz an der Schnauze ($X = 85\,\text{mm}$) zur direkten Durchführung des CSI-Kamerakabels zum Kopfmodul.
+    * Mechanischer Schutz für den auf der oberen Chassis-Platte montierten Raspberry Pi 4 Model B, GPIO-Leitungen und interne Elektronik mit vollständiger Kollisionsfreiheit.
+    * **Chevron-Louvers:** 5× $45^\circ$ nach vorn gepfeilte Lüftungsschlitze bei $X \in [25{,}0\dots 55{,}0\,\text{mm}]$ direkt über dem Pi 4 SoC zur passiven Kamin-Konvektionskühlung.
+    * **Kamera-Kabeldurchbruch:** $20 \times 3{,}2\,\text{mm}$ Frontschlitz an der Schnauze ($X \in [82\dots 94\,\text{mm}]$) zur direkten Durchführung des CSI-Kamerakabels zum Kopfmodul.
     * Vollständig eingebunden in Master-Assembly [`body_assembly.FCStd`](body_assembly.FCStd).
 - [x] ~~**Unterboden-Abdeckung (Chassis Belly Pan / Skid Plate):**~~ **[ERLEDIGT]**  
   * **Modell & Generator:** [`chassis_belly_pan.FCStd`](parts/chassis_belly_pan.FCStd) generiert via [`generate_chassis_belly_pan.py`](../../../scripts/v2/generate_chassis_belly_pan.py).
@@ -152,22 +152,22 @@ Dieser Backlog führt alle offenen Aufgaben, konstruktiven Erweiterungen und Ver
     * Vollständig eingebunden in Master-Assembly [`body_assembly.FCStd`](body_assembly.FCStd).
 - [x] ~~**COTS Elektronik- & Platinenmodelle (Solid-CAD in `models/cots/`):**~~ **[ERLEDIGT]**  
   * **Modelle & Generator:** Parametrische B-Rep Modelle generiert via [`generate_electronics_cots.py`](../../../scripts/cots/generate_electronics_cots.py):
-    * [`rpi4_model_b.FCStd`](../../cots/rpi4_model_b.FCStd): Raspberry Pi 4 Model B mit BCM2711 SoC, USB/Ethernet-Ports, 40-Pin GPIO-Leiste und MicroSD-Slot.
-    * [`pca9685_board.FCStd`](../../cots/pca9685_board.FCStd): 16-Kanal PWM Servo-Controller mit Klemmenblock, Elko und 3×16 Servo-Stiftleisten.
-    * [`tca9548a_board.FCStd`](../../cots/tca9548a_board.FCStd): TCA9548A 8-Kanal I2C-Multiplexer Breakout mit Dual-Stiftleisten.
-    * [`vl53l5cx_board.FCStd`](../../cots/vl53l5cx_board.FCStd): VL53L5CX 9-Zonen ToF Distanzsensor mit optischem Linsengehäuse und I2C-Header.
-    * [`battery_lipo_2s.FCStd`](../../cots/battery_lipo_2s.FCStd): 2S 7.4V LiPo Flat-Pack ($88 \times 35 \times 14\,\text{mm}$) mit 12AWG Silikonleitungen, XT60-Stecker und JST-XH Balancer-Stecker.
+    * [`rpi4_model_b.FCStd`](../../cots/rpi4_model_b.FCStd): Raspberry Pi 4 Model B mit BCM2711 SoC, USB/Ethernet-Ports, 40-Pin GPIO-Leiste und MicroSD-Slot (Signalgrün).
+    * [`pca9685_board.FCStd`](../../cots/pca9685_board.FCStd): 16-Kanal PWM Servo-Controller mit Klemmenblock, Elko, aufrechten I2C-Headern und $90^\circ$-gewinkelten 3×16 Servo-Stiftleisten nach Referenzfoto (Adafruit-Blau).
+    * [`tca9548a_board.FCStd`](../../cots/tca9548a_board.FCStd): TCA9548A 8-Kanal I2C-Multiplexer Breakout mit Dual-Stiftleisten (Signalviolett).
+    * [`vl53l5cx_board.FCStd`](../../cots/vl53l5cx_board.FCStd): VL53L5CX 9-Zonen ToF Distanzsensor mit optischem Linsengehäuse und I2C-Header (SparkFun-Rot).
+    * [`battery_lipo_2s.FCStd`](../../cots/battery_lipo_2s.FCStd): 2S 7.4V LiPo Flat-Pack ($88 \times 35 \times 14\,\text{mm}$) mit 12AWG Silikonleitungen, XT60-Stecker und JST-XH Balancer-Stecker (Signalgold/Gelb).
+    * [`ads1115_board.FCStd`](../../cots/ads1115_board.FCStd): ADS1115 16-Bit 4-Kanal I2C AD-Wandler Breakout (Adafruit-Blau).
   * **Digital Fabrication Exporte:** Synchronisierte STEP- und STL-Dateien in `hardware/mechanics/export/{step,stl}/cots/`.
 - [x] ~~**Elektronik- & Akku-Zwischenbaugruppe (Subassembly `electronics_tray_assembly.FCStd`):**~~ **[ERLEDIGT]**  
   * **Modell & Generator:** [`electronics_tray_assembly.FCStd`](electronics_tray_assembly.FCStd) generiert via [`generate_electronics_tray_assembly.py`](../../../scripts/v2/generate_electronics_tray_assembly.py).
   * **Status:** Modulare Innenraum-Baugruppe auf $Z = 18{,}0\,\text{mm}$ zur Entlastung des Master Body Assemblys.
   * **Farbkodierung zur visuellen Unterscheidbarkeit:**
-    * **Tray-Grundkörper:** Technisches Blau `(0.22, 0.42, 0.65)`
-    * **Raspberry Pi 4:** Signalgrün `(0.08, 0.55, 0.22)`
-    * **PCA9685 PWM Controller (links & rechts):** Signalblau `(0.08, 0.35, 0.85)`
-    * **TCA9548A I2C-Multiplexer:** Signalviolett `(0.55, 0.15, 0.75)`
+    * **Tray-Grundkörper:** Technisches Blau `(0.12, 0.35, 0.65)`
+    * **PCA9685 PWM Controller (links & rechts):** Signalblau `(0.04, 0.38, 0.88)`
+    * **TCA9548A I2C-Multiplexer:** Signalviolett `(0.58, 0.15, 0.75)`
     * **2S LiPo-Akku:** Signalgold / Gelb `(0.95, 0.75, 0.10)` im Untergeschoss unter dem Tray-Deck ($Z = 3{,}0\dots 17{,}0\,\text{mm}$ World).
-  * **Integration in Master Body Assembly v2:** Als einheitliche Baugruppe via `App::Link` in [`body_assembly.FCStd`](body_assembly.FCStd) referenziert. STEP- und STL-Exporte synchronisiert.
+  * **Integration in Master Body Assembly v2:** Als einheitliche Baugruppe via `App::Link` in [`body_assembly.FCStd`](body_assembly.FCStd) referenziert. Raspberry Pi 4 sitzt auf dem Oberdeck bei $Z = 55{,}3\,\text{mm}$ unter der Chitin-Haube. STEP- und STL-Exporte synchronisiert.
 
 
 
