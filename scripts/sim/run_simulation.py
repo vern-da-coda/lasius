@@ -471,24 +471,27 @@ class SimWebSocketServer:
             await ws.send(json.dumps({"type": "layout", "data": self.hexapod_layout}))
             await ws.send(json.dumps({"type": "state", "data": self.get_control_state()}))
 
-            async for raw in ws:
-                try:
-                    data = json.loads(raw)
-                    msg_type = data.get("type")
+            try:
+                async for raw in ws:
+                    try:
+                        data = json.loads(raw)
+                        msg_type = data.get("type")
 
-                    if msg_type == "get_system_stats":
-                        try:
-                            from lasius.core.server.system_stats import get_system_stats
-                            stats = get_system_stats(connected_clients=len(self.clients))
-                            await ws.send(json.dumps({"type": "system_stats", "data": stats}))
-                        except Exception:
-                            pass
-                        continue
+                        if msg_type == "get_system_stats":
+                            try:
+                                from lasius.core.server.system_stats import get_system_stats
+                                stats = get_system_stats(connected_clients=len(self.clients))
+                                await ws.send(json.dumps({"type": "system_stats", "data": stats}))
+                            except Exception:
+                                pass
+                            continue
 
-                    # Execute command directly in simulation
-                    self.handle_command(data)
-                except Exception:
-                    pass
+                        # Execute command directly in simulation
+                        self.handle_command(data)
+                    except Exception:
+                        pass
+            except Exception:
+                pass
         finally:
             self.clients.discard(ws)
             print("ℹ️ [WebSocket] Client getrennt.")
