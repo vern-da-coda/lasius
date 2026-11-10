@@ -47,12 +47,9 @@ doc_bottom = App.openDocument(f"{v1_parts_dir}/body_bottom.FCStd")
 doc_top = App.openDocument(f"{v1_parts_dir}/body_top.FCStd")
 doc_spacer = App.openDocument(f"{v1_parts_dir}/spacer_14x50.FCStd")
 doc_leg = App.openDocument(f"{v2_asm_dir}/leg_assembly.FCStd")
-doc_tray = App.openDocument(f"{models_base}/custom/v2/parts/electronics_tray.FCStd")
+doc_tray_asm = App.openDocument(f"{v2_asm_dir}/electronics_tray_assembly.FCStd")
 doc_belly = App.openDocument(f"{models_base}/custom/v2/parts/chassis_belly_pan.FCStd")
 doc_cover = App.openDocument(f"{models_base}/custom/v2/parts/chassis_top_cover.FCStd")
-doc_rpi = App.openDocument(f"{cots_dir}/rpi4_model_b.FCStd")
-doc_pca = App.openDocument(f"{cots_dir}/pca9685_board.FCStd")
-doc_tca = App.openDocument(f"{cots_dir}/tca9548a_board.FCStd")
 doc_tof = App.openDocument(f"{cots_dir}/vl53l5cx_board.FCStd")
 
 # Main Assembly Container
@@ -84,18 +81,14 @@ def make_link(name, label, target_obj, placement, color=None, parent=asm_part):
 
 
 # Colors
-COLOR_CARBON = (0.16, 0.16, 0.18)      # Dark graphite / carbon fiber plates
-COLOR_ALU_SPACER = (0.75, 0.77, 0.82)  # Anodized aluminum spacers
-COLOR_TRAY = (0.22, 0.42, 0.65)        # Technical blue PETG 3D print
-COLOR_BELLY_PAN = (0.26, 0.26, 0.30)   # Rugged anthracite PETG skid plate
+COLOR_CARBON = (0.16, 0.16, 0.18)        # Dark graphite / carbon fiber plates
+COLOR_ALU_SPACER = (0.75, 0.77, 0.82)    # Anodized aluminum spacers
+COLOR_BELLY_PAN = (0.26, 0.26, 0.30)     # Rugged anthracite PETG skid plate
 COLOR_CHASSIS_COVER = (0.20, 0.20, 0.23) # Dark chitinous exoskeleton canopy
-COLOR_PCB_GREEN = (0.08, 0.45, 0.22)   # Raspberry Pi 4 Model B (Solder mask green)
-COLOR_PCB_BLUE = (0.06, 0.28, 0.68)    # PCA9685 PWM Servo Drivers (Adafruit blue)
-COLOR_PCB_PURPLE = (0.38, 0.14, 0.58)  # TCA9548A I2C Multiplexer (Purple PCB)
-COLOR_PCB_RED = (0.75, 0.15, 0.15)     # VL53L5CX ToF Distance Sensor (SparkFun red)
+COLOR_PCB_RED = (0.75, 0.15, 0.15)       # VL53L5CX ToF Distance Sensor (SparkFun red)
 
 # -------------------------------------------------------------
-# 1. Chassis Plates (Inherited from v1)
+# 1. Chassis Plates & Modular Assemblies
 # -------------------------------------------------------------
 # Bottom plate at Z = 0.00 .. 2.00 mm
 p_bottom = App.Placement(App.Vector(0.0, 0.0, 0.0), App.Rotation())
@@ -105,17 +98,22 @@ make_link("Body_Bottom", "1. Chassis Bottom Plate (2mm)", doc_bottom.BodyBottom,
 p_top = App.Placement(App.Vector(0.0, 0.0, 53.30), App.Rotation())
 make_link("Body_Top", "2. Chassis Top Plate (2mm)", doc_top.BodyTop, p_top, COLOR_CARBON)
 
-# Electronics Tray at Z = 18.00 mm (held by 4 central standoff collars)
-p_tray = App.Placement(App.Vector(0.0, 0.0, 18.00), App.Rotation())
-make_link("Electronics_Tray", "3. Electronics Mounting Tray (v2)", doc_tray.Electronics_Tray, p_tray, COLOR_TRAY)
+# Electronics Tray & Power Assembly at Z = 18.00 mm (held by 4 central standoff collars)
+# Encapsulates Tray Deck, Pi 4, dual PCA9685, TCA9548A, and 2S LiPo Battery
+p_tray_asm = App.Placement(App.Vector(0.0, 0.0, 18.00), App.Rotation())
+make_link("Electronics_Tray_Assembly", "3. Electronics Tray & Power Assembly (v2)", doc_tray_asm.Electronics_Tray_Assembly, p_tray_asm)
 
 # Chassis Belly Pan (Skid Plate) at Z = 0.00 mm (mounted to underside of bottom plate)
 p_belly = App.Placement(App.Vector(0.0, 0.0, 0.00), App.Rotation())
-make_link("Chassis_Belly_Pan", "4. Chassis Belly Pan & ToF Sensor (v2)", doc_belly.Chassis_Belly_Pan, p_belly, COLOR_BELLY_PAN)
+make_link("Chassis_Belly_Pan", "4. Chassis Belly Pan (v2)", doc_belly.Chassis_Belly_Pan, p_belly, COLOR_BELLY_PAN)
+
+# VL53L5CX 9-Zone ToF Terrain Distance Sensor inside Belly Pan at X = 0.0, Y = 0.0, Z = -4.40 mm, facing downward
+p_tof = App.Placement(App.Vector(0.0, 0.0, -4.40), App.Rotation(App.Vector(0, 1, 0), 180.0))
+make_link("Sensor_VL53L5CX_ToF", "5. VL53L5CX 9-Zone ToF Distance Sensor (COTS)", doc_tof.VL53L5CX_Board, p_tof, COLOR_PCB_RED)
 
 # Chassis Top Cover (Carapace) at Z = 0.00 mm (mounted to top surface of top plate)
 p_cover = App.Placement(App.Vector(0.0, 0.0, 0.00), App.Rotation())
-make_link("Chassis_Top_Cover", "5. Chassis Exoskeleton Top Cover (v2)", doc_cover.Chassis_Top_Cover, p_cover, COLOR_CHASSIS_COVER)
+make_link("Chassis_Top_Cover", "6. Chassis Exoskeleton Top Cover (v2)", doc_cover.Chassis_Top_Cover, p_cover, COLOR_CHASSIS_COVER)
 
 # -------------------------------------------------------------
 # 2. Chassis Standoff Spacers (8x at small M3 screw holes, inherited from v1)
@@ -173,30 +171,7 @@ for l_name, l_label, lx, ly, l_yaw, l_mirrored in leg_mounts:
         lnk.ScaleVector = App.Vector(1.0, -1.0, 1.0)
 
 # -------------------------------------------------------------
-# 4. Integrated Electronics & COTS Controller Boards
-# -------------------------------------------------------------
-# Raspberry Pi 4 Model B on Tray Deck (X = 39.0, Y = 0.0, Z = 24.00 mm)
-p_rpi = App.Placement(App.Vector(39.0, 0.0, 24.00), App.Rotation())
-make_link("Board_RPi4", "6. Raspberry Pi 4 Model B (COTS)", doc_rpi.Raspberry_Pi_4, p_rpi, COLOR_PCB_GREEN)
-
-# PCA9685 Servo Controller Left (FL, ML, RL legs) at X = -45.0, Y = 19.0, Z = 23.40 mm
-p_pca_left = App.Placement(App.Vector(-45.0, 19.0, 23.40), App.Rotation())
-make_link("Board_PCA9685_Left", "7. PCA9685 PWM Controller Left (COTS)", doc_pca.PCA9685_Board, p_pca_left, COLOR_PCB_BLUE)
-
-# PCA9685 Servo Controller Right (FR, MR, RR legs) at X = -45.0, Y = -19.0, Z = 23.40 mm, rotated 180° around Z
-p_pca_right = App.Placement(App.Vector(-45.0, -19.0, 23.40), App.Rotation(App.Vector(0, 0, 1), 180.0))
-make_link("Board_PCA9685_Right", "8. PCA9685 PWM Controller Right (COTS)", doc_pca.PCA9685_Board, p_pca_right, COLOR_PCB_BLUE)
-
-# TCA9548A 8-Channel I2C Multiplexer at X = -45.0, Y = 0.0, Z = 23.40 mm
-p_tca = App.Placement(App.Vector(-45.0, 0.0, 23.40), App.Rotation())
-make_link("Board_TCA9548A", "9. TCA9548A I2C Multiplexer (COTS)", doc_tca.TCA9548A_Board, p_tca, COLOR_PCB_PURPLE)
-
-# VL53L5CX 9-Zone ToF Terrain Distance Sensor inside Belly Pan at X = 0.0, Y = 0.0, Z = -4.40 mm, facing downward
-p_tof = App.Placement(App.Vector(0.0, 0.0, -4.40), App.Rotation(App.Vector(0, 1, 0), 180.0))
-make_link("Sensor_VL53L5CX_ToF", "10. VL53L5CX 9-Zone ToF Distance Sensor (COTS)", doc_tof.VL53L5CX_Board, p_tof, COLOR_PCB_RED)
-
-# -------------------------------------------------------------
-# 5. Recompute, Save & Export
+# 4. Recompute, Save & Export
 # -------------------------------------------------------------
 doc.recompute()
 doc.save()

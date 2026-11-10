@@ -274,12 +274,56 @@ def build_vl53l5cx():
     print(f"✔ Generated VL53L5CX ToF Sensor -> {fcstd_path}")
 
 
+# =============================================================================
+# 5. 2S 7.4V LiPo Battery Pack (Slim Flat-Pack)
+# =============================================================================
+def build_battery_lipo_2s():
+    doc_name = "battery_lipo_2s"
+    try:
+        App.closeDocument(doc_name)
+    except Exception:
+        pass
+    doc = App.newDocument(doc_name)
+
+    # Battery main pack centered at (0, 0) in X/Y, Z in [0.0, 14.0 mm].
+    # Dimensions: 88.0 x 35.0 x 14.0 mm with filleted corners (R = 3.5 mm)
+    pack = make_rounded_rect_solid(-44.0, 44.0, -17.5, 17.5, 3.5, 0.0, 14.0)
+
+    # Output Lead Cable Exit Strain Relief Collar (-X end, centered in Y)
+    collar = Part.makeBox(4.0, 12.0, 7.0, App.Vector(-48.0, -6.0, 3.5))
+
+    # 12AWG Silicone Main Leads (Pair of D = 3.5 mm cables extending in -X direction)
+    cable_pos = Part.makeCylinder(1.75, 20.0, App.Vector(-48.0, 3.0, 7.0), App.Vector(-1, 0, 0))
+    cable_neg = Part.makeCylinder(1.75, 20.0, App.Vector(-48.0, -3.0, 7.0), App.Vector(-1, 0, 0))
+
+    # Amass XT60 Connector Body (15.5 x 16.0 x 8.0 mm) at the end of the cables
+    xt60 = Part.makeBox(15.5, 16.0, 8.0, App.Vector(-83.5, -8.0, 3.0))
+
+    # JST-XH 3-Pin Balance Lead (5.5 x 9.8 x 6.0 mm) exiting beside main leads
+    jst_xh = Part.makeBox(5.5, 9.8, 6.0, App.Vector(-55.0, 8.0, 4.0))
+
+    bat_solid = pack.fuse(collar).fuse(cable_pos).fuse(cable_neg).fuse(xt60).fuse(jst_xh)
+
+    obj = doc.addObject("Part::Feature", "Battery_LiPo_2S")
+    obj.Label = "2S 7.4V LiPo Battery Pack (COTS)"
+    obj.Shape = bat_solid
+    doc.recompute()
+
+    fcstd_path = f"{cots_models_dir}/battery_lipo_2s.FCStd"
+    doc.saveAs(fcstd_path)
+    bat_solid.exportStep(f"{cots_step_dir}/battery_lipo_2s.step")
+    bat_solid.exportStl(f"{cots_stl_dir}/battery_lipo_2s.stl")
+    App.closeDocument(doc_name)
+    print(f"✔ Generated 2S LiPo Battery Pack -> {fcstd_path}")
+
+
 # Execute all builds
 build_rpi4()
 build_pca9685()
 build_tca9548a()
 build_vl53l5cx()
+build_battery_lipo_2s()
 
-print("--- All Electronics COTS Models Generated Successfully ---")
+print("--- All Electronics & Power COTS Models Generated Successfully ---")
 import sys
 sys.exit(0)

@@ -14,11 +14,12 @@ CAD engineering, digital fabrication exports, and assembly models for the **Lasi
 ### 1. COTS & Standard Components (`models/cots/`)
 - **Servo Actuator ([`servo_nr645.FCStd`](models/cots/servo_nr645.FCStd)):** Torcster / Reely NR-645 MG BB standard actuator with output horn and mounting tabs.
 - **Fasteners & Bearings:** [`bearing_684_6x3.FCStd`](models/cots/bearing_684_6x3.FCStd), [`screw_m4_countersunk.FCStd`](models/cots/screw_m4_countersunk.FCStd), [`nut_m4_hex.FCStd`](models/cots/nut_m4_hex.FCStd), [`nut_m4_din439.FCStd`](models/cots/nut_m4_din439.FCStd), and [`washer_m4_shim.FCStd`](models/cots/washer_m4_shim.FCStd).
-- **Electronics & Computing:**
+- **Electronics & Power:**
   - **Raspberry Pi 4 Model B ([`rpi4_model_b.FCStd`](models/cots/rpi4_model_b.FCStd)):** Main SBC with BCM2711 SoC, dual USB 3.0/2.0 ports, Gigabit Ethernet, 40-pin GPIO header, USB-C, dual Micro-HDMI, and MicroSD slot.
   - **PCA9685 16-Channel PWM Servo Controller ([`pca9685_board.FCStd`](models/cots/pca9685_board.FCStd)):** Dual I²C servo drivers (left and right chassis banks) with 16× 3-pin servo headers and high-current power terminal.
   - **TCA9548A 8-Channel I²C Multiplexer ([`tca9548a_board.FCStd`](models/cots/tca9548a_board.FCStd)):** Central I²C bus multiplexer breakout with dual 12-pin header rows.
   - **VL53L5CX 9-Zone Time-of-Flight Distance Sensor ([`vl53l5cx_board.FCStd`](models/cots/vl53l5cx_board.FCStd)):** Downward-facing $3 \times 3$ multizone laser distance sensor for dynamic ground clearance and terrain mapping.
+  - **2S 7.4V LiPo Battery Pack ([`battery_lipo_2s.FCStd`](models/cots/battery_lipo_2s.FCStd)):** Slim 2S flat pack ($88.0 \times 35.0 \times 14.0\,\text{mm}$) with 12AWG silicone leads, Amass XT60 connector, and JST-XH balance lead.
 
 ### 2. Custom Generation v1 (`models/custom/v1/` & `models/custom/v1/parts/`)
 - **Chassis Bottom Plate ([`body_bottom.FCStd`](models/custom/v1/parts/body_bottom.FCStd)):**
@@ -60,14 +61,16 @@ CAD engineering, digital fabrication exports, and assembly models for the **Lasi
   - Contoured boat-hull skid plate mounted to the chassis underside ($Z \le 0.0\,\text{mm}$) with approach ramps, internal wiring cavity, and integrated mounting recess with a $45^\circ$-chamfered optical aperture for the downward-facing 9-zone ToF terrain distance sensor (VL53L5CX).
 - **Electronics Mounting Tray v2 ([`electronics_tray.FCStd`](models/custom/v2/parts/electronics_tray.FCStd)):**
   - Central 3D-printed mounting deck ($Z = 18.0\,\text{mm}$) held by 4 standoff collar mounts ($\varnothing 14.2\,\text{mm}$), hosting the Raspberry Pi 4 Model B, 2× PCA9685 16-channel servo drivers, and TCA9548A I²C multiplexer with integrated cable comb channels and zip-tie anchor bridges.
+- **Electronics Tray & Power Subassembly v2 ([`electronics_tray_assembly.FCStd`](models/custom/v2/electronics_tray_assembly.FCStd)):**
+  - Modular interior subassembly integrating the 3D-printed mounting tray with Raspberry Pi 4 Model B (green), 2× PCA9685 PWM drivers (blue), TCA9548A I²C multiplexer (purple), and the 2S LiPo battery pack (vivid gold) suspended underneath the deck.
 - **Complete Modular Leg Assembly v2 ([`leg_assembly.FCStd`](models/custom/v2/leg_assembly.FCStd)):**
   - Modular leg subassembly combining the v1 [`coxa_bracket.FCStd`](models/custom/v1/parts/coxa_bracket.FCStd) with the v2 [`femur.FCStd`](models/custom/v2/parts/femur.FCStd) and [`tibia.FCStd`](models/custom/v2/parts/tibia.FCStd).
 - **Complete Full-Body Assembly v2 ([`body_assembly.FCStd`](models/custom/v2/body_assembly.FCStd)):**
   - Master full-robot assembly (v2) integrating:
     - Chassis structural plates ([`body_bottom.FCStd`](models/custom/v1/parts/body_bottom.FCStd), [`body_top.FCStd`](models/custom/v1/parts/body_top.FCStd)) and 8× standoff pillars ([`spacer_14x50.FCStd`](models/custom/v1/parts/spacer_14x50.FCStd)).
     - 6× modular v2 leg assemblies ([`leg_assembly.FCStd`](models/custom/v2/leg_assembly.FCStd)).
-    - 3D-printed body parts: [`electronics_tray.FCStd`](models/custom/v2/parts/electronics_tray.FCStd), [`chassis_belly_pan.FCStd`](models/custom/v2/parts/chassis_belly_pan.FCStd), and [`chassis_top_cover.FCStd`](models/custom/v2/parts/chassis_top_cover.FCStd).
-    - COTS electronics: Raspberry Pi 4 Model B, 2× PCA9685 PWM drivers, TCA9548A multiplexer, and downward-facing VL53L5CX ToF terrain distance sensor.
+    - 3D-printed body parts: [`chassis_belly_pan.FCStd`](models/custom/v2/parts/chassis_belly_pan.FCStd) (with downward-facing VL53L5CX ToF terrain distance sensor) and [`chassis_top_cover.FCStd`](models/custom/v2/parts/chassis_top_cover.FCStd).
+    - Modular interior: [`electronics_tray_assembly.FCStd`](models/custom/v2/electronics_tray_assembly.FCStd) (tray + Pi 4 + dual PCA9685 + TCA9548A + 2S LiPo battery).
 
 ---
 
@@ -76,11 +79,11 @@ CAD engineering, digital fabrication exports, and assembly models for the **Lasi
 ```text
 hardware/mechanics/
 ├── models/                  # FreeCAD CAD documents
-│   ├── cots/                # COTS parts (servo_nr645, bearings, screws, nuts, washers, rpi4, pca9685, tca9548a, vl53l5cx)
+│   ├── cots/                # COTS parts (servo_nr645, bearings, screws, nuts, washers, rpi4, pca9685, tca9548a, vl53l5cx, battery_lipo_2s)
 │   └── custom/              # Custom-engineered robot assemblies & parts (canonical filenames)
 │       ├── v1/              # Generation 1 (leg_assembly, body_assembly + parts/)
 │       │   └── parts/       # Generation 1 single parts
-│       └── v2/              # Generation 2 (leg_assembly, body_assembly + parts/)
+│       └── v2/              # Generation 2 (leg_assembly, electronics_tray_assembly, body_assembly + parts/)
 │           └── parts/       # Generation 2 single parts
 ├── export/                  # Digital fabrication outputs (mirrors models/ structure)
 │   ├── step/                # ISO 10303 CAD exchange format (custom/{v1,v2}[/parts], cots/)
@@ -115,6 +118,7 @@ Parametric geometry and assembly exports can be generated headlessly using FreeC
 /snap/bin/freecad.cmd -c hardware/mechanics/scripts/v2/generate_femur.py
 /snap/bin/freecad.cmd -c hardware/mechanics/scripts/v2/generate_tibia.py
 /snap/bin/freecad.cmd -c hardware/mechanics/scripts/v2/generate_electronics_tray.py
+/snap/bin/freecad.cmd -c hardware/mechanics/scripts/v2/generate_electronics_tray_assembly.py
 /snap/bin/freecad.cmd -c hardware/mechanics/scripts/v2/generate_chassis_belly_pan.py
 /snap/bin/freecad.cmd -c hardware/mechanics/scripts/v2/generate_chassis_top_cover.py
 /snap/bin/freecad.cmd -c hardware/mechanics/scripts/v2/generate_leg_assembly.py

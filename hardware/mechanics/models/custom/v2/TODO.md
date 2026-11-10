@@ -156,8 +156,18 @@ Dieser Backlog führt alle offenen Aufgaben, konstruktiven Erweiterungen und Ver
     * [`pca9685_board.FCStd`](../../cots/pca9685_board.FCStd): 16-Kanal PWM Servo-Controller mit Klemmenblock, Elko und 3×16 Servo-Stiftleisten.
     * [`tca9548a_board.FCStd`](../../cots/tca9548a_board.FCStd): TCA9548A 8-Kanal I2C-Multiplexer Breakout mit Dual-Stiftleisten.
     * [`vl53l5cx_board.FCStd`](../../cots/vl53l5cx_board.FCStd): VL53L5CX 9-Zonen ToF Distanzsensor mit optischem Linsengehäuse und I2C-Header.
+    * [`battery_lipo_2s.FCStd`](../../cots/battery_lipo_2s.FCStd): 2S 7.4V LiPo Flat-Pack ($88 \times 35 \times 14\,\text{mm}$) mit 12AWG Silikonleitungen, XT60-Stecker und JST-XH Balancer-Stecker.
   * **Digital Fabrication Exporte:** Synchronisierte STEP- und STL-Dateien in `hardware/mechanics/export/{step,stl}/cots/`.
-  * **Integration in Master Body Assembly v2:** Alle 5 Platinen-Instanzen (1× RPi 4, 2× PCA9685, 1× TCA9548A, 1× VL53L5CX ToF Sensor) via parametrischer `App::Link`-Bezüge in [`body_assembly.FCStd`](body_assembly.FCStd) auf Tray und Belly Pan platziert und verifiziert.
+- [x] ~~**Elektronik- & Akku-Zwischenbaugruppe (Subassembly `electronics_tray_assembly.FCStd`):**~~ **[ERLEDIGT]**  
+  * **Modell & Generator:** [`electronics_tray_assembly.FCStd`](electronics_tray_assembly.FCStd) generiert via [`generate_electronics_tray_assembly.py`](../../../scripts/v2/generate_electronics_tray_assembly.py).
+  * **Status:** Modulare Innenraum-Baugruppe auf $Z = 18{,}0\,\text{mm}$ zur Entlastung des Master Body Assemblys.
+  * **Farbkodierung zur visuellen Unterscheidbarkeit:**
+    * **Tray-Grundkörper:** Technisches Blau `(0.22, 0.42, 0.65)`
+    * **Raspberry Pi 4:** Signalgrün `(0.08, 0.55, 0.22)`
+    * **PCA9685 PWM Controller (links & rechts):** Signalblau `(0.08, 0.35, 0.85)`
+    * **TCA9548A I2C-Multiplexer:** Signalviolett `(0.55, 0.15, 0.75)`
+    * **2S LiPo-Akku:** Signalgold / Gelb `(0.95, 0.75, 0.10)` im Untergeschoss unter dem Tray-Deck ($Z = 3{,}0\dots 17{,}0\,\text{mm}$ World).
+  * **Integration in Master Body Assembly v2:** Als einheitliche Baugruppe via `App::Link` in [`body_assembly.FCStd`](body_assembly.FCStd) referenziert. STEP- und STL-Exporte synchronisiert.
 
 
 
