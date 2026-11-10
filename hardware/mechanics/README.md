@@ -49,6 +49,8 @@ CAD engineering, digital fabrication exports, and assembly models for the **Lasi
   - Monolithic 3D-printed double-wrench femur ($L = 100.0\,\text{mm}$ pivot-to-pivot) replacing the 2-plate + 2-spacer v1 cage, featuring an internal chamber and flush curved lid (`Femur_Cover`) for the leg's encapsulated ADS1115 16-bit I²C ADC (`0x48`) and internal cable channels.
 - **Monolithic Tibia v2 ([`tibia.FCStd`](models/custom/v2/parts/tibia.FCStd)):**
   - Merges the sickle claw (`tibia`) and counter-bearing foot (`tibia_servo_foot`) into a single 3D-printed component connected via 4 organic hourglass-waisted corner struts (*Eckstege*).
+- **Electronics Mounting Tray v2 ([`electronics_tray.FCStd`](models/custom/v2/parts/electronics_tray.FCStd)):**
+  - Central 3D-printed mounting deck ($Z = 18.0\,\text{mm}$) held by 4 standoff collar mounts ($\varnothing 14.2\,\text{mm}$), hosting the Raspberry Pi 4 Model B, 2× PCA9685 16-channel servo drivers, and TCA9548A I²C multiplexer with integrated cable comb channels and zip-tie anchor bridges.
 - **Complete Modular Leg Assembly v2 ([`leg_assembly.FCStd`](models/custom/v2/leg_assembly.FCStd)):**
   - Modular leg subassembly combining the v1 [`coxa_bracket.FCStd`](models/custom/v1/parts/coxa_bracket.FCStd) with the v2 [`femur.FCStd`](models/custom/v2/parts/femur.FCStd) and [`tibia.FCStd`](models/custom/v2/parts/tibia.FCStd).
 - **Complete Full-Body Assembly v2 ([`body_assembly.FCStd`](models/custom/v2/body_assembly.FCStd)):**
@@ -92,9 +94,10 @@ Parametric geometry and assembly exports can be generated headlessly using FreeC
 /snap/bin/freecad.cmd hardware/mechanics/scripts/v1/generate_leg_assembly.py
 /snap/bin/freecad.cmd hardware/mechanics/scripts/v1/generate_body_assembly.py
 
-# Generate v2 monolithic femur, tibia, and v2 leg & body assemblies:
-/snap/bin/freecad.cmd hardware/mechanics/scripts/v2/generate_femur.py
-/snap/bin/freecad.cmd hardware/mechanics/scripts/v2/generate_tibia.py
-/snap/bin/freecad.cmd hardware/mechanics/scripts/v2/generate_leg_assembly.py
-/snap/bin/freecad.cmd hardware/mechanics/scripts/v2/generate_body_assembly.py
+# Generate v2 monolithic femur, tibia, electronics tray, and v2 leg & body assemblies:
+/snap/bin/freecad.cmd -c hardware/mechanics/scripts/v2/generate_femur.py
+/snap/bin/freecad.cmd -c hardware/mechanics/scripts/v2/generate_tibia.py
+/snap/bin/freecad.cmd -c hardware/mechanics/scripts/v2/generate_electronics_tray.py
+/snap/bin/freecad.cmd -c hardware/mechanics/scripts/v2/generate_leg_assembly.py
+/snap/bin/freecad.cmd -c hardware/mechanics/scripts/v2/generate_body_assembly.py
 ```

@@ -122,13 +122,15 @@ Dieser Backlog führt alle offenen Aufgaben, konstruktiven Erweiterungen und Ver
 
 ## 7. Chassis & Elektronik-Integration
 
-- [ ] **Elektronik-Basisplatte (Zentrales Montage-Deck / Tray):**  
-  * **Status:** Zentrales Trägerdeck im Chassis-Kern.
-  * **Funktion:** Aufgeräumte, vibrationsgedämpfte Aufnahme aller Kern-Elektronik-Komponenten:
-    * 1× Raspberry Pi 4 (Montagebohrungen M2.5)
-    * 2× PCA9685 16-Kanal Servo-Controller (`0x40` Links, `0x42` Rechts)
-    * 1× TCA9548A 8-Kanal I2C-Multiplexer (`0x71`)
-    * Integrierte Kabelführungsschächte zwischen oberem und unterem Chassis-Deck.
+- [x] ~~**Elektronik-Basisplatte (Zentrales Montage-Deck / Tray):**~~ **[ERLEDIGT]**  
+  * **Modell & Generator:** [`electronics_tray.FCStd`](parts/electronics_tray.FCStd) generiert via [`generate_electronics_tray.py`](../../../scripts/v2/generate_electronics_tray.py).
+  * **Status:** Zentrales Trägerdeck im Chassis-Kern auf $Z = 18{,}0\,\text{mm}$ (gehalten von 4 Standoff-Kragenbuchsen $\varnothing 14{,}2\,\text{mm}$ an den Spacern bei $X = \pm 45, Y = \pm 30$).
+  * **Funktion & Integration:**
+    * 1× Raspberry Pi 4 Model B (M2.5 Lochbild $58 \times 49\,\text{mm}$ auf $3{,}6\,\text{mm}$ Sockeln mit SoC-Kühlausbruch).
+    * 2× PCA9685 16-Kanal Servo-Controller ($56 \times 19\,\text{mm}$ Lochbild links bei $Y = +19\,\text{mm}$, rechts bei $Y = -19\,\text{mm}$ mit direktem Kabelabgang zu den Coxa-Servos).
+    * 1× TCA9548A 8-Kanal I2C-Multiplexer ($26\,\text{mm}$ Lochbild auf der Mittelachse bei $X = -45, Y = 0$).
+    * 4× Kabeldurchführungskämme und 6× Kabelbinder-Ösen für vibrationsfeste Leitungsfixierung.
+    * Vollständig eingebunden in Master-Assembly [`body_assembly.FCStd`](body_assembly.FCStd).
 - [ ] **Chassis-Abdeckung / Exoskelett-Haube (Top Cover):**  
   * **Status:** Schutz- und Designelement über der Basisplatte.
   * **Funktion:**

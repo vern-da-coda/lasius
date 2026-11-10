@@ -46,6 +46,7 @@ doc_bottom = App.openDocument(f"{v1_parts_dir}/body_bottom.FCStd")
 doc_top = App.openDocument(f"{v1_parts_dir}/body_top.FCStd")
 doc_spacer = App.openDocument(f"{v1_parts_dir}/spacer_14x50.FCStd")
 doc_leg = App.openDocument(f"{v2_asm_dir}/leg_assembly.FCStd")
+doc_tray = App.openDocument(f"{models_base}/custom/v2/parts/electronics_tray.FCStd")
 
 # Main Assembly Container
 asm_part = doc.addObject("App::Part", "Body_Assembly_v2")
@@ -78,6 +79,7 @@ def make_link(name, label, target_obj, placement, color=None, parent=asm_part):
 # Colors
 COLOR_CARBON = (0.16, 0.16, 0.18)      # Dark graphite / carbon fiber plates
 COLOR_ALU_SPACER = (0.75, 0.77, 0.82)  # Anodized aluminum spacers
+COLOR_TRAY = (0.22, 0.42, 0.65)        # Technical blue PETG 3D print
 
 # -------------------------------------------------------------
 # 1. Chassis Plates (Inherited from v1)
@@ -89,6 +91,10 @@ make_link("Body_Bottom", "1. Chassis Bottom Plate (2mm)", doc_bottom.BodyBottom,
 # Top plate at Z = 53.30 .. 55.30 mm (gap 51.30 mm spanned by spacers)
 p_top = App.Placement(App.Vector(0.0, 0.0, 53.30), App.Rotation())
 make_link("Body_Top", "2. Chassis Top Plate (2mm)", doc_top.BodyTop, p_top, COLOR_CARBON)
+
+# Electronics Tray at Z = 18.00 mm (held by 4 central standoff collars)
+p_tray = App.Placement(App.Vector(0.0, 0.0, 18.00), App.Rotation())
+make_link("Electronics_Tray", "3. Electronics Mounting Tray (v2)", doc_tray.Electronics_Tray, p_tray, COLOR_TRAY)
 
 # -------------------------------------------------------------
 # 2. Chassis Standoff Spacers (8x at small M3 screw holes, inherited from v1)
@@ -163,10 +169,12 @@ try:
 except Exception as e:
     print(f"STEP export error: {e}")
 
-if __name__ == "__main__":
-    for d in [doc_bottom, doc_top, doc_spacer, doc_leg]:
-        try:
-            App.closeDocument(d.Name)
-        except Exception:
-            pass
-    print("--- Done ---")
+for d in [doc_bottom, doc_top, doc_spacer, doc_leg, doc_tray]:
+    try:
+        App.closeDocument(d.Name)
+    except Exception:
+        pass
+print("--- Done ---")
+import sys
+sys.exit(0)
+
