@@ -19,7 +19,7 @@ Mounts and organizes:
   2. 1x TCA9548A 8-Channel I2C Multiplexer (Rear Centerline Spine, X = -52.0, Y = 0.0):
      - Sits on the rear centerline between the rear spacers (12.5 mm lateral clearance).
   3. 4x Chassis Standoff Collar Mounts (X = ±45.0 mm, Y = ±30.0 mm):
-     - Slides onto the 4 central Ø14.0 mm aluminum standoffs (spacer_14x50.FCStd) with
+     - Slides onto the 4 central Ø14.0 mm plastic standoffs (spacer_14x50.FCStd) with
        anti-vibration snap-collars holding the tray rigidly at Z = 18.0 mm.
   4. 2S LiPo Battery Cradle (Underside at X = 5.0, Y = 0.0, Z in [-15.0, 0.0] mm):
      - Integrated retention strap slots for the 2S 7.4V battery pack.

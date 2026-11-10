@@ -111,12 +111,24 @@ Dieser Backlog führt alle offenen Aufgaben, konstruktiven Erweiterungen und Ver
   * **Überlegung Artikulation / Beweglichkeit:**
     * *Sollte sich der Gaster bewegen können?*
     * 1- bis 2-Achs-Gelenk (Servo am Petiolus / Stielchenglied) ermöglicht aktive dynamische Schwerpunktverlagerung (*Center of Gravity Shifting*) beim Klettern oder Laufen auf Steigungen sowie lebensechte biomimetische Gesten.
+  * **Strukturelles Petiolus-/Heck-Element als Ersatz der 2 Heck-Spacer:**
+    * *Idee & Befestigung:* Die beiden hinteren Kunststoff-Distanzbolzen (`Spacer_Rear_1` bei $X = -90{,}0\,\text{mm}, Y = 0{,}0\,\text{mm}$ und `Spacer_Rear_2` bei $X = -120{,}0\,\text{mm}, Y = 0{,}0\,\text{mm}$) werden durch ein einziges strukturelles 3D-Druck-Formteil ("Petiolus-" bzw. "Heck-Interface-Modul") ersetzt.
+    * *Bohrungskompatibilität:* Nutzt exakt die bestehenden M3-Bohrungen auf der Heck-Mittellinie der oberen und unteren Carbonplatte und stützt die $51{,}3\,\text{mm}$ Distanz ab.
+    * *Integrierte Gelenk-Aktorik:* Direkte Aufnahme für das Schwenkgelenk des Gaster sowie Unterbringung des Gelenkservos im Heckbereich zwischen den Platten.
+    * *Kabeldurchführung:* Integrierter Kabeldurchlass für Leitungen zum Gaster (Zusatzakku, Stromverteilung, Sensorik/Beleuchtung).
+    * *Bionischer Formschluss:* Fließender, anatomischer Übergang von der Thorax-Carapace zum Petiolus und Abdomen.
   * **Konstruktion:** Organisch geschwungener Hinterleib, passend zur Designsprache der Lasius-Beinsegmente.
 - [ ] **Integrierte Kopf-Baugruppe (`head_assembly.FCStd` – Mandibeln & Kameraturm vereinen):**  
   * **Konzept:** Zusammenfassung von Mandibeln und Kamerasystem zu einem einheitlichen Kopfmodul an der Roboterfront:
     * *Augen / Sensorik:* Kameraturm (2-Achs Pan/Tilt Kopf mit 2× Micro-Servos und Pi Camera Module 3).
     * *Mundwerkzeuge:* Aktive Mandibeln (Greifzangen) darunter, gesteuert über einen Servo mit Kniehebel-/Zahnradgetriebe.
     * *Vorteil der Zusammenführung:* Biologisch stimmige Anatomie, geteilter Bauraum und gemeinsame Leitungsführung durch den "Hals" ins Chassis.
+  * **Strukturelles Hals-/Nacken-Element als Ersatz der 2 Front-Spacer:**
+    * *Idee & Befestigung:* Die beiden vorderen Kunststoff-Distanzbolzen (`Spacer_Front_L` und `Spacer_Front_R` bei $X = 128{,}0\,\text{mm}, Y = \pm 12{,}0\,\text{mm}$) werden durch ein einziges strukturelles 3D-Druck-Formteil ("Hals-" bzw. "Nacken-Modul") ersetzt.
+    * *Bohrungskompatibilität:* Nutzt exakt die bestehenden M3-Bohrungen der beiden Carbonplatten und stützt die $51{,}3\,\text{mm}$ Distanz formstabil ab.
+    * *Integrierte Aktorik & Mechanik:* Das Nackenelement nimmt die Mandibeln und deren Antriebsservos direkt im Zwischenraum der Platten auf.
+    * *Kabeldurchführung:* Integrierter, geschützter Kabelkanal für das CSI-Kamerakabel und die Kopf-Servoleitungen direkt ins Chassis-Innere.
+    * *Bionischer Formschluss:* Bildet den fließenden anatomischen Übergang von der Thorax-Oberdeck-Haube zur Kopfkapsel.
 
 ---
 
@@ -168,6 +180,32 @@ Dieser Backlog führt alle offenen Aufgaben, konstruktiven Erweiterungen und Ver
     * **TCA9548A I2C-Multiplexer:** Signalviolett `(0.58, 0.15, 0.75)`
     * **2S LiPo-Akku:** Signalgold / Gelb `(0.95, 0.75, 0.10)` im Untergeschoss unter dem Tray-Deck ($Z = 3{,}0\dots 17{,}0\,\text{mm}$ World).
   * **Integration in Master Body Assembly v2:** Als einheitliche Baugruppe via `App::Link` in [`body_assembly.FCStd`](body_assembly.FCStd) referenziert. Raspberry Pi 4 sitzt auf dem Oberdeck bei $Z = 55{,}3\,\text{mm}$ unter der Chitin-Haube. STEP- und STL-Exporte synchronisiert.
+- [ ] **Organische Neugestaltung der oberen Chassis-Abdeckung (`parts/chassis_top_cover.FCStd`):**  
+  * **Status:** Offenes Konstruktions-Todo zur bionischen Weiterentwicklung der Oberdeck-Haube.
+  * **Designphilosophie & Ästhetik:**
+    * Signifikant weniger technisch/kantig, deutlich organischer gestalten (Bionik / Ameisen-Thorax-Carapace).
+    * Formen und Schwingung der bestehenden Bauteile (insb. Femur-Wangen und Coxa-Brackets) harmonisch aufgreifen und fortführen.
+  * **Geometrische Ausdehnung & Linienführung:**
+    * Die Abdeckung soll über alle 6 Coxa-Servoachsen hinweg gespannt werden und fließend/organisch über den Raspberry Pi 4 verlaufen.
+    * Optische und funktionale Schutzhaube, die die Drehachsen und den SBC in einer durchgehenden Skulptur vereint.
+  * **Befestigung des Raspberry Pi 4:**
+    * Evaluierung und Konstruktion einer dedizierten Befestigungslösung:
+      * *Option 1:* Eigene Montage-/Adapterplatte auf der oberen Carbonplatte (`Body_Top`), auf die der Pi 4 geschraubt wird.
+      * *Option 2:* Direkte Verschraubung in der Abdeckung selbst (integrierte Schraubdome / Zentrierzapfen an der Hauben-Innenseite).
+- [ ] **Konzeptstudie: Monolithischer Chassis-Kern / Kapselung als Ersatz der 4 mittleren Spacer:**  
+  * **Idee & Fragestellung:** Prüfen, ob die 4 mittleren Kunststoff-Distanzbolzen (`Spacer_Window_FL/FR/RL/RR` bei $X = \pm 45{,}0, Y = \pm 30{,}0\,\text{mm}$) durch ein einziges strukturelles 3D-Druck-Formteil (Chassis-Kernmodul / Sandwich-Core) ersetzt werden sollten.
+  * **Erhalt der Carbon-Sandwich-Bauweise (Primäre Tragstruktur):**
+    * Die beiden $2{,}0\,\text{mm}$ dicken Carbonfaser-Platten ([`body_bottom.FCStd`](../../custom/v1/parts/body_bottom.FCStd) als Untergurt und [`body_top.FCStd`](../../custom/v1/parts/body_top.FCStd) als Obergurt) bleiben als primäre tragende Außenhaut erhalten, da sie eine enorme Biegesteifigkeit und Zug-/Druckfestigkeit bieten.
+    * Das 3D-Formteil fungiert als strukturierter **Stützkern (*Sandwich-Core / Schubsteg*)** zwischen den beiden Platten:
+      * Es stützt die $51{,}3\,\text{mm}$ Distanz formstabil ab und nimmt die Druck- und Torsionskräfte auf.
+      * Ersetzt die punktuelle Krafteinleitung der 4 diskreten Spacer durch eine großflächige, schwingungsdämpfende und verwindungssteife Verbindung.
+  * **Direkte Platinen- und Akku-Kapselung:**
+    * Die beiden PCA9685 Servo-Controller, der TCA9548A Multiplexer und der 2S LiPo-Akku werden direkt in integrierte Führungsschienen, Montagefächer und Steckplätze im Kern-Formteil eingeschoben/verschraubt (macht ein separates Zwischen-Tray überflüssig).
+    * **Abgeschlossenes Gehäusedesign:** Vollständige seitliche Staub-, Spritz- und Berührungskapselung aller Innenraum-Platinen und Leitungen.
+    * **Wartungszugang:** Wartungs- und Steckzugriff ausschließlich von **oben** (durch das obere Plattenfenster nach Abnehmen der Haube) oder von **unten** (durch das untere Plattenfenster nach Lösen der Belly Pan).
+  * **Dynamischer Coxa-Freigang:**
+    * Die Außenflanken des 3D-Kerns müssen unter Berücksichtigung der maximalen Coxa-Ausschläge (insb. der mittleren Servos ML/MR sowie der inneren Schwenkradien von FL/FR/RL/RR) tailliert und freigestellt werden, um Kollisionen beim Schwenken der Beine absolut auszuschließen.
+    * Definierte, geschützte Durchführungsöffnungen bzw. Tüllen für die Servokabel zu den Beinen.
 
 
 

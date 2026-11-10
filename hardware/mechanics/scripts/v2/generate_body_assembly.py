@@ -83,7 +83,7 @@ def make_link(name, label, target_obj, placement, color=None, parent=asm_part):
 
 # Colors
 COLOR_CARBON = (0.16, 0.16, 0.18)        # Dark graphite / carbon fiber plates
-COLOR_ALU_SPACER = (0.75, 0.77, 0.82)    # Anodized aluminum spacers
+COLOR_SPACER = (0.78, 0.78, 0.80)        # Technical plastic standoff spacers (POM/PA / Nylon)
 COLOR_BELLY_PAN = (0.26, 0.26, 0.30)     # Rugged anthracite PETG skid plate
 COLOR_CHASSIS_COVER = (0.20, 0.20, 0.23) # Dark chitinous exoskeleton canopy
 COLOR_PCB_RED = (0.75, 0.15, 0.15)       # VL53L5CX ToF Distance Sensor (SparkFun red)
@@ -141,7 +141,7 @@ spacer_positions = [
 
 for s_name, s_label, sx, sy in spacer_positions:
     p_sp = App.Placement(App.Vector(sx, sy, 2.00), App.Rotation())
-    make_link(s_name, s_label, doc_spacer.SpacerRod, p_sp, COLOR_ALU_SPACER)
+    make_link(s_name, s_label, doc_spacer.SpacerRod, p_sp, COLOR_SPACER)
 
 # -------------------------------------------------------------
 # 3. Six Modular v2 Legs (All Servo Horns Forward towards Front -X)
