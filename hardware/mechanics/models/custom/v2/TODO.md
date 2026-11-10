@@ -150,6 +150,14 @@ Dieser Backlog führt alle offenen Aufgaben, konstruktiven Erweiterungen und Ver
       * $1{,}5\,\text{mm}$ tiefer Schutzkragen an der Unterseite gegen Verkratzen der Optik.
       * 4× M2 Schraubsockel ($21 \times 13\,\text{mm}$ Lochbild) und Kabeldurchführungsschacht ins Chassis.
     * Vollständig eingebunden in Master-Assembly [`body_assembly.FCStd`](body_assembly.FCStd).
+- [x] ~~**COTS Elektronik- & Platinenmodelle (Solid-CAD in `models/cots/`):**~~ **[ERLEDIGT]**  
+  * **Modelle & Generator:** Parametrische B-Rep Modelle generiert via [`generate_electronics_cots.py`](../../../scripts/cots/generate_electronics_cots.py):
+    * [`rpi4_model_b.FCStd`](../../cots/rpi4_model_b.FCStd): Raspberry Pi 4 Model B mit BCM2711 SoC, USB/Ethernet-Ports, 40-Pin GPIO-Leiste und MicroSD-Slot.
+    * [`pca9685_board.FCStd`](../../cots/pca9685_board.FCStd): 16-Kanal PWM Servo-Controller mit Klemmenblock, Elko und 3×16 Servo-Stiftleisten.
+    * [`tca9548a_board.FCStd`](../../cots/tca9548a_board.FCStd): TCA9548A 8-Kanal I2C-Multiplexer Breakout mit Dual-Stiftleisten.
+    * [`vl53l5cx_board.FCStd`](../../cots/vl53l5cx_board.FCStd): VL53L5CX 9-Zonen ToF Distanzsensor mit optischem Linsengehäuse und I2C-Header.
+  * **Digital Fabrication Exporte:** Synchronisierte STEP- und STL-Dateien in `hardware/mechanics/export/{step,stl}/cots/`.
+  * **Integration in Master Body Assembly v2:** Alle 5 Platinen-Instanzen (1× RPi 4, 2× PCA9685, 1× TCA9548A, 1× VL53L5CX ToF Sensor) via parametrischer `App::Link`-Bezüge in [`body_assembly.FCStd`](body_assembly.FCStd) auf Tray und Belly Pan platziert und verifiziert.
 
 
 
