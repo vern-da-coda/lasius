@@ -183,10 +183,10 @@ export function calculateLegIK(
  * 50 Hz Client-Side Simulation Gait Engine.
  */
 export class DemoGaitEngine {
-  public stepLength = 50.0;
-  public stepHeight = 30.0;
+  public stepLength = 40.0;
+  public stepHeight = 28.0;
   public gaitSpeed = 1.0;
-  public harmonicStance = true;
+  public harmonicStance = false;
   public smoothTransitions = true;
 
   // Locomotion command inputs (-1.0 to +1.0)
@@ -431,7 +431,8 @@ export class DemoGaitEngine {
         if (legPhase < swingFrac) {
           const norm = legPhase / swingFrac; // 0.0 to 1.0
           strideNorm = -0.5 * Math.cos(norm * Math.PI);
-          rawZ = stanceZ + this.stepHeight * Math.sin(norm * Math.PI);
+          // C1-continuous soft liftoff and zero-velocity touchdown (cycloidal sin^2 trajectory)
+          rawZ = stanceZ + this.stepHeight * Math.pow(Math.sin(norm * Math.PI), 2);
         } else {
           const norm = (legPhase - swingFrac) / (1.0 - swingFrac); // 0.0 to 1.0
           if (this.harmonicStance) {

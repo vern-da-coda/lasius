@@ -85,8 +85,8 @@ class SimWebSocketServer:
         self.turn_z = 0.0
         self.gait_type = "tripod"
         self.gait_speed = 1.0
-        self.step_height = 30.0
-        self.step_length = 35.0
+        self.step_height = 28.0
+        self.step_length = 40.0
         self.body_height = -80.0
         self.body_roll = 0.0
         self.body_pitch = 0.0
@@ -649,9 +649,10 @@ def run_pybullet(gui=False, steps=240, walk=False, enable_ws=False, ws_port=8765
     gait = OmniGait(
         gait_type=GaitType.TRIPOD,
         walk_y=init_walk_y,
-        step_length=35.0,
-        step_height=30.0,
-        gait_speed=1.0
+        step_length=40.0,
+        step_height=28.0,
+        gait_speed=1.0,
+        harmonic_stance=False,
     )
 
     leg_map = {

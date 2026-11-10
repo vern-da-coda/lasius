@@ -15,14 +15,15 @@ class TestOmniGait:
     def test_default_tripod_initialization(self):
         gait = OmniGait()
         assert gait.gait_type == GaitType.TRIPOD
-        assert gait.step_length == 50.0
-        assert gait.step_height == 30.0
+        assert gait.step_length == 40.0
+        assert gait.step_height == 28.0
         assert gait.walk_y == 1.0
         assert gait.walk_x == 0.0
         assert gait.turn_z == 0.0
         assert gait.body_height == -80.0
         assert gait.body_roll == 0.0
         assert gait.body_pitch == 0.0
+        assert gait.harmonic_stance is False
 
     def test_tick_returns_all_six_legs(self):
         gait = OmniGait()
@@ -139,14 +140,14 @@ class TestOmniGait:
         assert tg.gait_type == GaitType.TRIPOD
         assert rg.gait_type == GaitType.RIPPLE
         assert wg.gait_type == GaitType.WAVE
-        assert tg.harmonic_stance is True
-        assert rg.harmonic_stance is True
-        assert wg.harmonic_stance is True
+        assert tg.harmonic_stance is False
+        assert rg.harmonic_stance is False
+        assert wg.harmonic_stance is False
 
     def test_harmonic_stance_smoothness(self):
         """Verifies that harmonic stance produces continuous smooth velocity with no large acceleration spikes."""
-        gait_h = OmniGait(walk_y=1.0, walk_x=0.0, harmonic_stance=True, smooth_transitions=False)
-        gait_l = OmniGait(walk_y=1.0, walk_x=0.0, harmonic_stance=False, smooth_transitions=False)
+        gait_h = OmniGait(walk_y=1.0, walk_x=0.0, step_length=50.0, harmonic_stance=True, smooth_transitions=False)
+        gait_l = OmniGait(walk_y=1.0, walk_x=0.0, step_length=50.0, harmonic_stance=False, smooth_transitions=False)
 
         # Record Y trajectory over 50 ticks (1 full walking cycle at 50 Hz)
         y_h = [gait_h.tick()[LegIdentifier.LEFT_FRONT][1] for _ in range(50)]

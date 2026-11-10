@@ -143,8 +143,8 @@ class OmniGait(GaitProtocol):
     def __init__(
         self,
         gait_type: Union[GaitType, str] = GaitType.TRIPOD,
-        step_length: float = 50.0,
-        step_height: float = 30.0,
+        step_length: float = 40.0,
+        step_height: float = 28.0,
         gait_speed: float = 1.0,
         walk_x: float = 0.0,
         walk_y: float = 1.0,
@@ -153,7 +153,7 @@ class OmniGait(GaitProtocol):
         body_roll: float = 0.0,
         body_pitch: float = 0.0,
         smooth_transitions: bool = True,
-        harmonic_stance: bool = True,
+        harmonic_stance: bool = False,
         neutral_stances: Optional[Dict[LegIdentifier, Tuple[float, float, float]]] = None,
         geometry: Optional[Any] = None,
     ):
@@ -398,13 +398,15 @@ class OmniGait(GaitProtocol):
                 if leg_phase < swing_frac:
                     norm = leg_phase / swing_frac  # 0.0 to 1.0
                     stride_norm = -0.5 * math.cos(norm * math.pi)
-                    raw_z = stance_z + self.step_height * math.sin(norm * math.pi)
+                    # C1-continuous soft liftoff and zero-velocity touchdown (cycloidal sin^2 trajectory)
+                    raw_z = stance_z + self.step_height * (math.sin(norm * math.pi) ** 2)
                 else:
                     norm = (leg_phase - swing_frac) / (1.0 - swing_frac)  # 0.0 to 1.0
                     if self.harmonic_stance:
-                        # Ultra-smooth harmonic cosine stance: zero velocity at touchdown and liftoff (C1 continuous)
+                        # Harmonic cosine stance: zero velocity at boundaries
                         stride_norm = 0.5 * math.cos(norm * math.pi)
                     else:
+                        # Synchronized constant-velocity linear stance across all legs (prevents fighting / dragging)
                         stride_norm = 0.5 - norm
                     raw_z = stance_z
 
@@ -460,10 +462,10 @@ class TripodGait(OmniGait):
     """Convenience class for Tripod Gait (backward compatible)."""
     def __init__(
         self,
-        step_length: float = 50.0,
-        step_height: float = 30.0,
+        step_length: float = 40.0,
+        step_height: float = 28.0,
         gait_speed: float = 1.0,
-        harmonic_stance: bool = True,
+        harmonic_stance: bool = False,
         geometry: Optional[Any] = None
     ):
         super().__init__(
@@ -482,10 +484,10 @@ class RippleGait(OmniGait):
     """Convenience class for Ripple Gait."""
     def __init__(
         self,
-        step_length: float = 50.0,
-        step_height: float = 30.0,
+        step_length: float = 40.0,
+        step_height: float = 28.0,
         gait_speed: float = 1.0,
-        harmonic_stance: bool = True,
+        harmonic_stance: bool = False,
         geometry: Optional[Any] = None
     ):
         super().__init__(
@@ -505,10 +507,10 @@ class WaveGait(OmniGait):
     """Convenience class for Wave Gait."""
     def __init__(
         self,
-        step_length: float = 50.0,
-        step_height: float = 30.0,
+        step_length: float = 40.0,
+        step_height: float = 28.0,
         gait_speed: float = 1.0,
-        harmonic_stance: bool = True,
+        harmonic_stance: bool = False,
         geometry: Optional[Any] = None
     ):
         super().__init__(
