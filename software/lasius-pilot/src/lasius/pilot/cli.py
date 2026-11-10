@@ -29,7 +29,7 @@ except ImportError:
     from .gamepad import GamepadController, load_all_gamepad_profiles
 
 
-async def run_teleop(host: str, port: int, device: str, profile: str = "auto"):
+async def run_teleop(host: str, port: int, device: str, profile: str = "auto", enable_imu: bool = True, imu_device: Optional[str] = None):
     print(
         r"""
  _              _                      
@@ -43,7 +43,7 @@ async def run_teleop(host: str, port: int, device: str, profile: str = "auto"):
 |_| |_|\___/_/\_\__,_|_|   \___/ \__,_|
 """
     )
-    controller = GamepadController(device_path=device, profile=profile)
+    controller = GamepadController(device_path=device, profile=profile, enable_imu=enable_imu, imu_device=imu_device)
     if not controller.connect():
         print(f"[ERROR] Could not open joystick device at '{device}'. Is the controller connected?")
         print("Tip (Google Stadia Bluetooth): Hold [Y + Stadia] for 2s to pair via 'bluetoothctl'.")
@@ -54,6 +54,12 @@ async def run_teleop(host: str, port: int, device: str, profile: str = "auto"):
         f"✔ Controller connected at {device}: {controller.device_name} "
         f"(Profile: {controller.active_profile_config.name} [{controller.active_profile}])"
     )
+    if controller.imu and controller.imu.fd is not None:
+        print(f"✔ Motion Sensors active at {controller.imu.device_path}: {controller.imu.device_name}")
+        print("  [Tilt Controller] : Dynamic Body Roll (Left/Right) & Pitch (Nose Up/Down)")
+    else:
+        print("ℹ Motion Sensors: None detected (tilt control disabled)")
+
     uri = f"ws://{host}:{port}"
     print(f"Connecting to Lasius-Server at {uri}...")
 
@@ -64,6 +70,8 @@ async def run_teleop(host: str, port: int, device: str, profile: str = "auto"):
             print("-" * 68)
             print("  [Left Stick]  : Walk Forward/Back & Strafe Left/Right")
             print("  [Right Stick] : Turn Left/Right in place")
+            if controller.imu and controller.imu.fd is not None:
+                print("  [Tilt IMU]    : Tilt DualSense -> Body Roll & Pitch (Tare: Options)")
             print(f"  {labels.cli_gait_hint}")
             print(f"  {labels.cli_estop_hint}")
             print("  [L1 / R1]     : Speed -0.25x / +0.25x")
@@ -84,12 +92,16 @@ async def run_teleop(host: str, port: int, device: str, profile: str = "auto"):
             drain_task = asyncio.create_task(_drain_telemetry())
 
             last_cmd = {}
+            last_roll = 0.0
+            last_pitch = 0.0
             try:
                 while True:
                     events = controller.read_events()
 
                     # 1. Dispatch discrete button / D-Pad actions immediately
                     for action_msg in controller.translate_events_to_actions(events):
+                        if action_msg.get("action") == "reset_pose":
+                            controller.tare_imu()
                         await ws.send(json.dumps(action_msg))
 
                     # 2. Dispatch continuous stick velocity on change
@@ -104,6 +116,23 @@ async def run_teleop(host: str, port: int, device: str, profile: str = "auto"):
                             "turn_z": cmd["turn_z"],
                         }
                         await ws.send(json.dumps(msg))
+
+                    # 3. Dispatch IMU tilt attitude (body roll & pitch)
+                    tilt = controller.get_tilt()
+                    if tilt is not None:
+                        roll, pitch = tilt
+                        if abs(roll - last_roll) >= 0.3 or abs(pitch - last_pitch) >= 0.3:
+                            last_roll = roll
+                            last_pitch = pitch
+                            pose_msg = {
+                                "type": "command",
+                                "action": "set_pose",
+                                "params": {
+                                    "roll": roll,
+                                    "pitch": pitch,
+                                }
+                            }
+                            await ws.send(json.dumps(pose_msg))
 
                     await asyncio.sleep(0.030)  # ~33 Hz update rate
             finally:
@@ -127,6 +156,8 @@ def main():
         default="auto",
         help=f"Controller YAML profile from lasius.pilot/profiles/*.yaml ({', '.join(available_profiles)}).",
     )
+    parser.add_argument("--no-imu", action="store_true", help="Disable DualSense IMU motion sensor tilt control.")
+    parser.add_argument("--imu-device", type=str, default=None, help="Explicit IMU motion sensor device path (e.g. /dev/input/js1).")
     args = parser.parse_args()
 
     if websockets is None:
@@ -134,7 +165,16 @@ def main():
         sys.exit(1)
 
     try:
-        asyncio.run(run_teleop(args.host, args.port, args.device, args.profile))
+        asyncio.run(
+            run_teleop(
+                args.host,
+                args.port,
+                args.device,
+                args.profile,
+                enable_imu=not args.no_imu,
+                imu_device=args.imu_device,
+            )
+        )
     except KeyboardInterrupt:
         print("\nGamepad teleoperation stopped.")
 

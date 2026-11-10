@@ -9,6 +9,7 @@ Purpose & Role:
 
 from lasius.pilot.gamepad import (
     GamepadController,
+    GamepadIMU,
     load_all_gamepad_profiles,
     STADIA_BTN_A,
     STADIA_BTN_B,
@@ -143,3 +144,44 @@ def test_ps5_dualsense_profile_and_buttons():
     assert {"type": "command", "action": "emergency_stop"} in actions
     assert {"type": "command", "action": "reset_pose"} in actions
     assert {"type": "command", "action": "toggle_pause"} in actions
+
+
+def test_dualsense_imu_filtering_and_tare():
+    imu = GamepadIMU(device_path="/dev/null", deadband_deg=1.5, max_tilt_deg=20.0, alpha=0.5)
+    assert imu.deadband_deg == 1.5
+    assert imu.max_tilt_deg == 20.0
+    assert not imu.has_tare
+
+    # Set mock neutral accelerometer reading (controller level on desk)
+    imu.axes = {0: 0, 1: 8192, 2: 0}
+    imu.tare()
+    assert imu.has_tare
+    assert imu.tare_roll == 0.0
+    assert imu.tare_pitch == 0.0
+
+    # Simulate fake file descriptor for read_tilt calculation
+    imu.fd = 999
+    # Monkey-patch os.read to simulate EOF
+    import os
+    orig_read = os.read
+    os.read = lambda fd, sz: b""
+    try:
+        # Tilt right within deadband (e.g. 1.0 deg: ax = 143)
+        imu.axes = {0: 143, 1: 8192, 2: 0}
+        tilt = imu.read_tilt()
+        assert tilt == (0.0, 0.0)  # deadband applied
+
+        # Tilt right significantly (10 deg: ax ~ 1445)
+        imu.axes = {0: 1445, 1: 8192, 2: 0}
+        tilt = imu.read_tilt()
+        assert tilt is not None
+        assert tilt[0] > 0.0  # roll right positive
+        assert tilt[1] == 0.0
+
+        # Tare at current tilted position
+        imu.tare()
+        assert imu.filtered_roll == 0.0
+        tilt2 = imu.read_tilt()
+        assert tilt2 == (0.0, 0.0)  # now 0.0 relative to new tare baseline
+    finally:
+        os.read = orig_read

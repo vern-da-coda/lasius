@@ -356,6 +356,17 @@ class SimWebSocketServer:
             self.body_pitch = float(get_p("value", 0.0))
             self.updated = True
             return {"status": "ok"}
+        elif act == "set_pose":
+            p_dict = data.get("params", {}) or {}
+            if "roll" in p_dict or "roll" in data:
+                self.body_roll = float(p_dict.get("roll", data.get("roll", self.body_roll)))
+            if "pitch" in p_dict or "pitch" in data:
+                self.body_pitch = float(p_dict.get("pitch", data.get("pitch", self.body_pitch)))
+            if "height" in p_dict or "height" in data:
+                val = float(p_dict.get("height", data.get("height", self.body_height)))
+                self.body_height = max(-130.0, min(-40.0, val if val < 0 else -val))
+            self.updated = True
+            return {"status": "ok"}
         elif act == "emergency_stop":
             self._cancel_seq.set()
             self.walk_x = 0.0
@@ -662,6 +673,13 @@ def run_pybullet(gui=False, steps=240, walk=False, enable_ws=False, ws_port=8765
     physics_substeps = 240 // 50
 
     if gui:
+        p.configureDebugVisualizer(p.COV_ENABLE_SHADOWS, 0)
+        p.resetDebugVisualizerCamera(
+            cameraDistance=0.75,
+            cameraYaw=45,
+            cameraPitch=-25,
+            cameraTargetPosition=[0, 0, 0.10],
+        )
         print("\n🎮 Interactive PyBullet 3D Locomotion Simulation:")
         print("  ┌────────────────────────────────────────────────────────┐")
         print("  │  Tastatur-Steuerung:                                   │")
@@ -693,6 +711,7 @@ def run_pybullet(gui=False, steps=240, walk=False, enable_ws=False, ws_port=8765
         tick_count = 0
         try:
             while p.getConnectionInfo().get("isConnected", 0):
+                t_tick_start = time.perf_counter()
                 tick_count += 1
 
                 # 1. Process WebSocket commands from lasius-pilot / lasius-dashboard
@@ -705,6 +724,8 @@ def run_pybullet(gui=False, steps=240, walk=False, enable_ws=False, ws_port=8765
                     gait.step_height = ws_server.step_height
                     gait.step_length = ws_server.step_length
                     gait.body_height = ws_server.body_height
+                    gait.body_roll = ws_server.body_roll
+                    gait.body_pitch = ws_server.body_pitch
                     target_gait_str = ws_server.gait_type
                     if target_gait_str in [g.value for g in GaitType]:
                         gait.gait_type = GaitType(target_gait_str)
@@ -816,7 +837,12 @@ def run_pybullet(gui=False, steps=240, walk=False, enable_ws=False, ws_port=8765
 
                 for _ in range(physics_substeps):
                     p.stepSimulation()
-                    time.sleep(1.0 / 240.0)
+
+                # Dynamic 50 Hz wall-clock pacing (prevents CPU/GPU event starvation)
+                elapsed = time.perf_counter() - t_tick_start
+                sleep_time = (1.0 / 50.0) - elapsed
+                if sleep_time > 0:
+                    time.sleep(sleep_time)
         except (KeyboardInterrupt, Exception):
             pass
         finally:

@@ -22,10 +22,11 @@ Classes:
 """
 
 from dataclasses import dataclass, field
+import math
 import os
 from pathlib import Path
 import struct
-from typing import Dict, Any, Callable, Optional, List
+from typing import Dict, Any, Callable, Optional, List, Tuple
 import yaml
 
 
@@ -256,6 +257,141 @@ def load_all_gamepad_profiles(profiles_dir: Path = PROFILES_DIR) -> Dict[str, Ga
     return profiles
 
 
+class GamepadIMU:
+    """
+    Reads 6-axis IMU accelerometer events from motion sensor joystick device
+    (e.g. Sony DualSense / DualShock on Linux `hid-playstation` at `/dev/input/js1`).
+    Calculates body roll and pitch in degrees relative to tare baseline.
+    """
+    def __init__(
+        self,
+        device_path: Optional[str] = None,
+        deadband_deg: float = 1.5,
+        max_tilt_deg: float = 20.0,
+        alpha: float = 0.25,
+    ):
+        self.device_path: Optional[str] = device_path or self.autodetect_device()
+        self.deadband_deg = deadband_deg
+        self.max_tilt_deg = max_tilt_deg
+        self.alpha = alpha
+        self.fd: Optional[int] = None
+        self.device_name: str = "Unknown IMU"
+        self.axes: Dict[int, int] = {0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0}
+        self.tare_roll: float = 0.0
+        self.tare_pitch: float = 0.0
+        self.has_tare: bool = False
+        self.filtered_roll: float = 0.0
+        self.filtered_pitch: float = 0.0
+
+    @staticmethod
+    def autodetect_device() -> Optional[str]:
+        """Scans `/sys/class/input/js*` for devices with 'Motion Sensors' in their name."""
+        try:
+            for js in sorted(Path("/sys/class/input").glob("js*")):
+                name_file = js / "device" / "name"
+                if name_file.is_file():
+                    name = name_file.read_text(encoding="utf-8").strip()
+                    if "motion sensor" in name.lower():
+                        dev = f"/dev/input/{js.name}"
+                        if os.path.exists(dev):
+                            return dev
+        except Exception:
+            pass
+        return None
+
+    def connect(self) -> bool:
+        """Opens the IMU motion sensor device file in non-blocking mode."""
+        if not self.device_path or not os.path.exists(self.device_path):
+            return False
+        try:
+            self.fd = os.open(self.device_path, os.O_RDONLY | os.O_NONBLOCK)
+            js_name = Path(self.device_path).name
+            sysfs_path = Path(f"/sys/class/input/{js_name}/device/name")
+            if sysfs_path.is_file():
+                self.device_name = sysfs_path.read_text(encoding="utf-8").strip()
+            return True
+        except Exception:
+            self.fd = None
+            return False
+
+    def close(self) -> None:
+        """Closes the IMU file descriptor."""
+        if self.fd is not None:
+            try:
+                os.close(self.fd)
+            except Exception:
+                pass
+            self.fd = None
+
+    def tare(self) -> None:
+        """Sets the current controller orientation as the neutral (0°, 0°) baseline."""
+        ax = self.axes.get(0, 0)
+        ay = self.axes.get(1, 0)
+        az = self.axes.get(2, 0)
+        mag = math.sqrt(ax * ax + ay * ay + az * az)
+        if mag >= 3000:
+            self.tare_roll = math.degrees(math.atan2(ax, ay))
+            self.tare_pitch = math.degrees(math.atan2(az, ay))
+            self.filtered_roll = 0.0
+            self.filtered_pitch = 0.0
+            self.has_tare = True
+
+    def read_tilt(self) -> Optional[Tuple[float, float]]:
+        """
+        Polls pending accelerometer events and returns smoothed (roll_deg, pitch_deg),
+        or None if not connected or invalid data.
+        """
+        if self.fd is None:
+            return None
+
+        while True:
+            try:
+                data = os.read(self.fd, _EVENT_SIZE)
+                if len(data) < _EVENT_SIZE:
+                    break
+                _, val, ev_type, ev_num = struct.unpack(_EVENT_FORMAT, data)
+                if ev_type & _JS_EVENT_AXIS:
+                    self.axes[ev_num] = val
+            except BlockingIOError:
+                break
+            except Exception:
+                return None
+
+        ax = self.axes.get(0, 0)
+        ay = self.axes.get(1, 0)
+        az = self.axes.get(2, 0)
+        mag = math.sqrt(ax * ax + ay * ay + az * az)
+        if mag < 3000:
+            return None
+
+        raw_roll = math.degrees(math.atan2(ax, ay))
+        raw_pitch = math.degrees(math.atan2(az, ay))
+
+        if not self.has_tare:
+            self.tare_roll = raw_roll
+            self.tare_pitch = raw_pitch
+            self.has_tare = True
+
+        delta_roll = raw_roll - self.tare_roll
+        delta_pitch = raw_pitch - self.tare_pitch
+
+        # Apply deadband
+        if abs(delta_roll) < self.deadband_deg:
+            delta_roll = 0.0
+        if abs(delta_pitch) < self.deadband_deg:
+            delta_pitch = 0.0
+
+        # Clamp to safe physiological limits
+        clamped_roll = max(-self.max_tilt_deg, min(self.max_tilt_deg, delta_roll))
+        clamped_pitch = max(-self.max_tilt_deg, min(self.max_tilt_deg, delta_pitch))
+
+        # Low-pass filter (EWMA)
+        self.filtered_roll += (clamped_roll - self.filtered_roll) * self.alpha
+        self.filtered_pitch += (clamped_pitch - self.filtered_pitch) * self.alpha
+
+        return round(self.filtered_roll, 1), round(self.filtered_pitch, 1)
+
+
 class GamepadController:
     """
     Reads inputs from `/dev/input/js0` and maps them to Lasius walking, posing,
@@ -268,12 +404,16 @@ class GamepadController:
         profile: str = "auto",
         profiles_dir: Path = PROFILES_DIR,
         on_command: Optional[Callable[[Dict[str, Any]], None]] = None,
+        enable_imu: bool = True,
+        imu_device: Optional[str] = None,
     ):
         self.device_path = device_path
         self.profiles: Dict[str, GamepadProfileConfig] = load_all_gamepad_profiles(profiles_dir)
         self.profile = profile.lower()
         self.device_name: str = "Unknown Gamepad"
         self.on_command = on_command
+        self.enable_imu = enable_imu
+        self.imu: Optional[GamepadIMU] = GamepadIMU(device_path=imu_device) if enable_imu else None
 
         # Use explicit deadzone if passed, otherwise use profile default (0.12)
         default_dz = self.active_profile_config.deadzone if self.profiles else 0.12
@@ -330,6 +470,8 @@ class GamepadController:
         try:
             self.fd = os.open(self.device_path, os.O_RDONLY | os.O_NONBLOCK)
             self.device_name = self._detect_device_name()
+            if self.imu is not None:
+                self.imu.connect()
             return True
         except Exception:
             return False
@@ -342,6 +484,19 @@ class GamepadController:
             except Exception:
                 pass
             self.fd = None
+        if self.imu is not None:
+            self.imu.close()
+
+    def get_tilt(self) -> Optional[Tuple[float, float]]:
+        """Returns the current smoothed (roll_deg, pitch_deg) from IMU, or None."""
+        if self.imu is not None:
+            return self.imu.read_tilt()
+        return None
+
+    def tare_imu(self) -> None:
+        """Sets the current controller orientation as the neutral (0°, 0°) baseline."""
+        if self.imu is not None:
+            self.imu.tare()
 
     def apply_deadzone(self, raw_val: float) -> float:
         """Applies radial deadzone to analog axes and rescales smoothly to [-1.0, +1.0]."""
