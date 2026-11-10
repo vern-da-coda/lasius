@@ -147,10 +147,12 @@ def test_ps5_dualsense_profile_and_buttons():
 
 
 def test_dualsense_imu_filtering_and_tare():
-    imu = GamepadIMU(device_path="/dev/null", deadband_deg=1.5, max_tilt_deg=20.0, alpha=0.5)
+    imu = GamepadIMU(device_path="/dev/null", deadband_deg=1.5, max_tilt_deg=20.0, alpha=0.5, invert_pitch=True, invert_roll=True)
     assert imu.deadband_deg == 1.5
     assert imu.max_tilt_deg == 20.0
     assert not imu.has_tare
+    assert imu.invert_pitch is True
+    assert imu.invert_roll is True
 
     # Set mock neutral accelerometer reading (controller level on desk)
     imu.axes = {0: 0, 1: 8192, 2: 0}
@@ -166,21 +168,28 @@ def test_dualsense_imu_filtering_and_tare():
     orig_read = os.read
     os.read = lambda fd, sz: b""
     try:
-        # Tilt right within deadband (e.g. 1.0 deg: ax = 143)
-        imu.axes = {0: 143, 1: 8192, 2: 0}
+        # Tilt right within deadband (e.g. 1.0 deg: ax = -143)
+        imu.axes = {0: -143, 1: 8192, 2: 0}
         tilt = imu.read_tilt()
         assert tilt == (0.0, 0.0)  # deadband applied
 
-        # Tilt right significantly (10 deg: ax ~ 1445)
-        imu.axes = {0: 1445, 1: 8192, 2: 0}
+        # Tilt right significantly (10 deg: ax ~ -1445 -> with invert_roll=True => roll right positive)
+        imu.axes = {0: -1445, 1: 8192, 2: 0}
         tilt = imu.read_tilt()
         assert tilt is not None
         assert tilt[0] > 0.0  # roll right positive
         assert tilt[1] == 0.0
 
+        # Tilt forward significantly (10 deg: az ~ 1445 -> with invert_pitch=True => pitch forward negative)
+        imu.axes = {0: 0, 1: 8192, 2: 1445}
+        tilt = imu.read_tilt()
+        assert tilt is not None
+        assert tilt[1] < 0.0  # pitch forward negative
+
         # Tare at current tilted position
         imu.tare()
         assert imu.filtered_roll == 0.0
+        assert imu.filtered_pitch == 0.0
         tilt2 = imu.read_tilt()
         assert tilt2 == (0.0, 0.0)  # now 0.0 relative to new tare baseline
     finally:

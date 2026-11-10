@@ -269,11 +269,17 @@ class GamepadIMU:
         deadband_deg: float = 1.5,
         max_tilt_deg: float = 20.0,
         alpha: float = 0.25,
+        invert_pitch: bool = True,
+        invert_roll: bool = True,
+        swap_axes: bool = False,
     ):
         self.device_path: Optional[str] = device_path or self.autodetect_device()
         self.deadband_deg = deadband_deg
         self.max_tilt_deg = max_tilt_deg
         self.alpha = alpha
+        self.invert_pitch = invert_pitch
+        self.invert_roll = invert_roll
+        self.swap_axes = swap_axes
         self.fd: Optional[int] = None
         self.device_name: str = "Unknown IMU"
         self.axes: Dict[int, int] = {0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0}
@@ -375,6 +381,15 @@ class GamepadIMU:
         delta_roll = raw_roll - self.tare_roll
         delta_pitch = raw_pitch - self.tare_pitch
 
+        # Invert axes according to configuration (by default DualSense tilt forward -> pitch forward, tilt right -> roll right)
+        if self.invert_roll:
+            delta_roll = -delta_roll
+        if self.invert_pitch:
+            delta_pitch = -delta_pitch
+
+        if self.swap_axes:
+            delta_roll, delta_pitch = delta_pitch, delta_roll
+
         # Apply deadband
         if abs(delta_roll) < self.deadband_deg:
             delta_roll = 0.0
@@ -406,6 +421,9 @@ class GamepadController:
         on_command: Optional[Callable[[Dict[str, Any]], None]] = None,
         enable_imu: bool = True,
         imu_device: Optional[str] = None,
+        invert_pitch: bool = True,
+        invert_roll: bool = True,
+        swap_imu_axes: bool = False,
     ):
         self.device_path = device_path
         self.profiles: Dict[str, GamepadProfileConfig] = load_all_gamepad_profiles(profiles_dir)
@@ -413,7 +431,16 @@ class GamepadController:
         self.device_name: str = "Unknown Gamepad"
         self.on_command = on_command
         self.enable_imu = enable_imu
-        self.imu: Optional[GamepadIMU] = GamepadIMU(device_path=imu_device) if enable_imu else None
+        self.imu: Optional[GamepadIMU] = (
+            GamepadIMU(
+                device_path=imu_device,
+                invert_pitch=invert_pitch,
+                invert_roll=invert_roll,
+                swap_axes=swap_imu_axes,
+            )
+            if enable_imu
+            else None
+        )
 
         # Use explicit deadzone if passed, otherwise use profile default (0.12)
         default_dz = self.active_profile_config.deadzone if self.profiles else 0.12

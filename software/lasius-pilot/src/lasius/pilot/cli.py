@@ -29,7 +29,17 @@ except ImportError:
     from .gamepad import GamepadController, load_all_gamepad_profiles
 
 
-async def run_teleop(host: str, port: int, device: str, profile: str = "auto", enable_imu: bool = True, imu_device: Optional[str] = None):
+async def run_teleop(
+    host: str,
+    port: int,
+    device: str,
+    profile: str = "auto",
+    enable_imu: bool = True,
+    imu_device: Optional[str] = None,
+    invert_pitch: bool = True,
+    invert_roll: bool = True,
+    swap_imu_axes: bool = False,
+):
     print(
         r"""
  _              _                      
@@ -43,7 +53,15 @@ async def run_teleop(host: str, port: int, device: str, profile: str = "auto", e
 |_| |_|\___/_/\_\__,_|_|   \___/ \__,_|
 """
     )
-    controller = GamepadController(device_path=device, profile=profile, enable_imu=enable_imu, imu_device=imu_device)
+    controller = GamepadController(
+        device_path=device,
+        profile=profile,
+        enable_imu=enable_imu,
+        imu_device=imu_device,
+        invert_pitch=invert_pitch,
+        invert_roll=invert_roll,
+        swap_imu_axes=swap_imu_axes,
+    )
     if not controller.connect():
         print(f"[ERROR] Could not open joystick device at '{device}'. Is the controller connected?")
         print("Tip (Google Stadia Bluetooth): Hold [Y + Stadia] for 2s to pair via 'bluetoothctl'.")
@@ -158,6 +176,9 @@ def main():
     )
     parser.add_argument("--no-imu", action="store_true", help="Disable DualSense IMU motion sensor tilt control.")
     parser.add_argument("--imu-device", type=str, default=None, help="Explicit IMU motion sensor device path (e.g. /dev/input/js1).")
+    parser.add_argument("--no-invert-pitch", action="store_true", help="Do not invert IMU pitch axis.")
+    parser.add_argument("--no-invert-roll", action="store_true", help="Do not invert IMU roll axis.")
+    parser.add_argument("--swap-imu-axes", action="store_true", help="Swap IMU roll and pitch axes.")
     args = parser.parse_args()
 
     if websockets is None:
@@ -173,6 +194,9 @@ def main():
                 args.profile,
                 enable_imu=not args.no_imu,
                 imu_device=args.imu_device,
+                invert_pitch=not args.no_invert_pitch,
+                invert_roll=not args.no_invert_roll,
+                swap_imu_axes=args.swap_imu_axes,
             )
         )
     except KeyboardInterrupt:
