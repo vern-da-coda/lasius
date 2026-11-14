@@ -33,7 +33,7 @@ import Part
 print("--- Generating Lasius Service Cover v2 (FreeCAD 1.1+) ---")
 
 repo_root = "/home/bjoern/Workspace/Hexapods/lasius"
-models_dir = f"{repo_root}/hardware/mechanics/models/custom/v2/parts"
+models_dir = f"{repo_root}/hardware/mechanics/models/custom/v2/parts/chassis"
 fcstd_cover_path = f"{models_dir}/chassis_service_cover.FCStd"
 
 os.makedirs(models_dir, exist_ok=True)

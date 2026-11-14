@@ -44,7 +44,7 @@ Standardized wire color allocation across all WireViz harnesses and bench wiring
 | **`SCL` / `SCx` I2C Clock** | **Yellow** (`YE`) | Primary bus `SCL1` and every Multiplexer sub-channel clock `SC0–SC7` |
 | **Main Bus `SDA` & `CH0 (LF)` `SD0`** | **Blue** (`BU`) | `Pi SDA1` daisy-chained through `Controller Left` / `Controller Right` to `Multiplexer`, plus `CH0 (LF)` data |
 | **Multiplexer Sub-Channels `SD1–SD6`** | `GN` / `VT` / `OG` / `WH` / `GY` / `BN` | `CH1 (LM)` **Green**, `CH2 (LR)` **Violet**, `CH3 (RF)` **Orange**, `CH4 (RM)` **White**, `CH5 (RR)` **Grey**, `CH6 (INA228)` **Brown** |
-| **Analog Inputs `A0–A3` (Per Leg)** | `WH` / `GN` / `VT` / `OG` | `A0` Coxa **White**, `A1` Femur **Green**, `A2` Tibia **Violet**, `A3` Foot Switch `NO` **Orange** |
+| **Analog Inputs `A0–A3` (Per Leg)** | `WH` / `OG` | `A0` Coxa **White**, `A1` Femur **White**, `A2` Tibia **White** *(Poti-Leitung aus den Servos immer Weiß)*, `A3` Foot Switch `NO` **Orange** |
 
 ---
 
@@ -68,8 +68,8 @@ Standardized wire color allocation across all WireViz harnesses and bench wiring
 * **Purpose:** Detailed wiring harness for an individual 3-DOF leg combining the split uplink (`Dist_3V3_GND_Rail` + `Multiplexer CHx SCx/SDx`), Master Color Scheme analog lines, onboard RC filtering, `ADDR -> GND` strap (`0x48`), and foot switch pull-up.
 * **Signals & Filters (Soldered Directly on `Wandler_Leg_Board` `V280` Header — `SCL` before `SDA`):**
   * `A0` (**White**): Coxa servo potentiometer wiper + `100 nF` to `GND` *(verified on `bkhexapod`: $R^2 = 0.999876$, $+7.530\,\text{mV}/^\circ$)*
-  * `A1` (**Green**): Femur servo potentiometer wiper + `100 nF` to `GND`
-  * `A2` (**Violet**): Tibia servo potentiometer wiper + `100 nF` to `GND`
+  * `A1` (**White**): Femur servo potentiometer wiper + `100 nF` to `GND` *(Poti-Leitung aus dem Servo immer Weiß)*
+  * `A2` (**White**): Tibia servo potentiometer wiper + `100 nF` to `GND` *(Poti-Leitung aus dem Servo immer Weiß)*
   * `A3` (**Orange** `NO` / **Black** `COM`): Omron D2F-L foot contact switch + `10 kΩ` pull-up to `VDD_3V3` + `100 nF` to `GND`
   * 3-pin PWM power and signal leads (Orange/Red/Brown) to `Controller_Leg_Block` 4-channel block (4th slot left free)
 * **Filter Cutoff Frequency:**

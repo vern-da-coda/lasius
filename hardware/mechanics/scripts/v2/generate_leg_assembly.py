@@ -9,6 +9,7 @@ import math
 import os
 import shutil
 import sys
+import zipfile
 import FreeCAD as App
 import Part
 
@@ -37,9 +38,9 @@ doc = App.newDocument(doc_name)
 doc.saveAs(fcstd_path)
 
 # Open all master part documents
-doc_coxa = App.openDocument(f"{v2_parts_dir}/coxa_bracket.FCStd")
-doc_femur = App.openDocument(f"{v2_parts_dir}/femur.FCStd")
-doc_tibia = App.openDocument(f"{v2_parts_dir}/tibia.FCStd")
+doc_coxa = App.openDocument(f"{v2_parts_dir}/coxa/coxa.FCStd")
+doc_femur_asm = App.openDocument(f"{v2_asm_dir}/femur_assembly.FCStd")
+doc_tibia = App.openDocument(f"{v2_parts_dir}/tibia/tibia.FCStd")
 doc_servo = App.openDocument(f"{hw_dir}/servo_nr645.FCStd")
 
 # Open hardware library documents
@@ -59,36 +60,37 @@ asm_part.Origin.Visibility = False
 asm_part.Visibility = True
 
 
-def make_link(name, label, target_obj, placement, color=None, parent=asm_part):
+def make_link(name, label, target_obj, placement, color=None, transparency=0, parent=asm_part):
     lnk = doc.addObject("App::Link", name)
     lnk.setLink(target_obj)
     lnk.Label = label
     lnk.Placement = placement
     parent.addObject(lnk)
-    if color is not None and hasattr(lnk, "ViewObject") and lnk.ViewObject is not None:
+    if hasattr(lnk, "ViewObject") and lnk.ViewObject is not None:
         vo = lnk.ViewObject
         vo.Visibility = True
-        vo.OverrideMaterial = True
-        mat = vo.ShapeMaterial
-        mat.DiffuseColor = color
-        vo.ShapeMaterial = mat
+        if color is not None:
+            vo.OverrideMaterial = True
+            mat = vo.ShapeMaterial
+            mat.DiffuseColor = color
+            vo.ShapeMaterial = mat
+        if transparency > 0:
+            vo.Transparency = transparency
     return lnk
 
 
 # -------------------------------------------------------------
 # 1. Structural Parts
 # -------------------------------------------------------------
-# Coxa Bracket:
+# Coxa Segment:
 rot_c = App.Rotation(App.Vector(0, 0, 1), 180.0).multiply(App.Rotation(App.Vector(1, 0, 0), 90.0))
 trans_coxa = App.Vector(74.70, -6.50, -15.25)
 p_coxa = App.Placement(trans_coxa, rot_c)
-make_link("Coxa_Bracket", "1. Coxa Bracket (3D Printed)", doc_coxa.Coxa_Bracket, p_coxa, (0.15, 0.65, 0.45))
+make_link("Coxa", "1. Coxa (Monolithic Joint Segment, PETG)", doc_coxa.Coxa, p_coxa, (0.15, 0.65, 0.45))
 
-# Organic Monolithic Femur with Encapsulated ADS1115 ADC & Cover (Links to femur.FCStd)
+# Organic Monolithic Femur Subassembly with Encapsulated ADS1115 ADC & Translucent Mini-Canopy
 p_femur = App.Placement(App.Vector(56.50, 0.00, 0.00), App.Rotation())
-make_link("Femur_Body", "4a. Femur Housing (Organic Double-Wrench, PETG)", doc_femur.Femur_Body, p_femur, (0.10, 0.45, 0.85))
-make_link("Femur_Cover", "4b. Femur ADC Chamber Cover (PETG)", doc_femur.Femur_Cover, p_femur, (0.18, 0.22, 0.30))
-make_link("Femur_ADS1115", "5. Encapsulated Leg ADC (ADS1115 0x48)", doc_femur.ADS1115_Board, p_femur, (0.04, 0.38, 0.88))
+make_link("Femur_Assembly", "4. Femur Subassembly v2 (Monolithic Bone + Encapsulated ADC & Canopy)", doc_femur_asm.Femur_Assembly_v2, p_femur)
 
 # Monolithic Tibia v2 (Claw + Integrated 30 mm Servo Cage & Counter-Bearing Seat, links to tibia_v2.FCStd)
 theta = math.radians(50.0)
@@ -158,5 +160,32 @@ print("Updated STEP and STL files for custom/v2/leg_assembly!")
 for d in list(App.listDocuments().values()):
     App.closeDocument(d.Name)
 
+
+def patch_leg_assembly_view(filepath):
+    temp_zip = filepath + ".tmp"
+    with zipfile.ZipFile(filepath, "r") as zin:
+        with zipfile.ZipFile(temp_zip, "w", compression=zipfile.ZIP_DEFLATED) as zout:
+            for item in zin.infolist():
+                data = zin.read(item.filename)
+                if item.filename == "GuiDocument.xml":
+                    xml_str = data.decode("utf-8")
+                    pos_canopy = xml_str.find('<ViewProvider name="Femur_Canopy"')
+                    if pos_canopy != -1:
+                        end_vp = xml_str.find("</ViewProvider>", pos_canopy)
+                        vp_chunk = xml_str[pos_canopy:end_vp]
+                        if 'name="Transparency"' not in vp_chunk:
+                            ins_pos = vp_chunk.find("</Properties>")
+                            if ins_pos != -1:
+                                transp_prop = '                <Property name="Transparency" type="App::PropertyPercent"><Integer value="55"/></Property>\n'
+                                diffuse_prop = '                <Property name="ShapeColor" type="App::PropertyColor"><PropertyColor value="4042322175"/></Property>\n'
+                                vp_chunk = vp_chunk[:ins_pos] + transp_prop + diffuse_prop + vp_chunk[ins_pos:]
+                                xml_str = xml_str[:pos_canopy] + vp_chunk + xml_str[end_vp:]
+                    data = xml_str.encode("utf-8")
+                zout.writestr(item, data)
+    os.replace(temp_zip, filepath)
+
+
+patch_leg_assembly_view(fcstd_path)
+print("✔ Patched leg_assembly GuiDocument.xml with transparent Plexiglas appearance")
+
 print("--- Leg Assembly v2 Completed Successfully ---")
-sys.exit(0)

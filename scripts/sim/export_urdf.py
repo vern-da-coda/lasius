@@ -179,13 +179,14 @@ def build_urdf():
     ]
 
     # Segment masses & inertias from FreeCAD extraction + Servo masses:
-    # Coxa: Bracket (49g) + Coxa Servo (56g) = 105g
-    coxa_mass = (inertias["coxa_bracket"]["mass_g"] + 56.0) * 1e-3
+    # Coxa: Segment (53.7g) + Coxa Servo (56g) = 109.7g
+    coxa_key = "coxa" if "coxa" in inertias else "coxa_bracket"
+    coxa_mass = (inertias[coxa_key]["mass_g"] + 56.0) * 1e-3
     coxa_com = [0.030, 0.0, 0.0]
     coxa_inertia = {
-        "ixx": inertias["coxa_bracket"]["inertia_kg_m2"]["ixx"] + 2e-5,
-        "iyy": inertias["coxa_bracket"]["inertia_kg_m2"]["iyy"] + 4e-5,
-        "izz": inertias["coxa_bracket"]["inertia_kg_m2"]["izz"] + 4e-5,
+        "ixx": inertias[coxa_key]["inertia_kg_m2"]["ixx"] + 2e-5,
+        "iyy": inertias[coxa_key]["inertia_kg_m2"]["iyy"] + 4e-5,
+        "izz": inertias[coxa_key]["inertia_kg_m2"]["izz"] + 4e-5,
         "ixy": 0.0, "ixz": 0.0, "iyz": 0.0
     }
 
@@ -236,7 +237,7 @@ def build_urdf():
         create_inertial(link_coxa, coxa_mass, coxa_com, coxa_inertia)
         create_mesh_visual(
             link_coxa,
-            f"{MESH_REL_DIR}/custom/v2/parts/coxa_bracket.stl",
+            f"{MESH_REL_DIR}/custom/v2/parts/coxa/coxa.stl",
             coxa_pos,
             coxa_rpy,
             scale_mesh,
@@ -272,7 +273,7 @@ def build_urdf():
         femur_rpy = [0.0, 0.0, 0.0]
         create_mesh_visual(
             link_femur,
-            f"{MESH_REL_DIR}/custom/v2/parts/femur.stl",
+            f"{MESH_REL_DIR}/custom/v2/parts/femur/femur.stl",
             femur_pos,
             femur_rpy,
             scale_mesh,
@@ -280,7 +281,7 @@ def build_urdf():
         )
         create_mesh_visual(
             link_femur,
-            f"{MESH_REL_DIR}/custom/v2/parts/femur_cover.stl",
+            f"{MESH_REL_DIR}/custom/v2/parts/femur/femur_cover.stl",
             femur_pos,
             femur_rpy,
             scale_mesh,
@@ -316,7 +317,7 @@ def build_urdf():
         tibia_rpy = [-math.pi / 2.0 if is_right else math.pi / 2.0, 0.0, -math.pi if is_right else math.pi]
         create_mesh_visual(
             link_tibia,
-            f"{MESH_REL_DIR}/custom/v2/parts/tibia.stl",
+            f"{MESH_REL_DIR}/custom/v2/parts/tibia/tibia.stl",
             tibia_pos,
             tibia_rpy,
             scale_mesh,

@@ -353,7 +353,7 @@ export class LasiusGraphicsEngine {
   }
 
   private initLegGeometries() {
-    // 1. Coxa 3D-printed bracket (from FreeCAD coxa_bracket.FCStd & coxa_bracket.scad):
+    // 1. Coxa 3D-printed monolithic segment (from FreeCAD coxa.FCStd / coxa_bracket.FCStd):
     // Length: 115.0 mm [x = -40.3 mm inner reach to x = +74.7 mm outer end],
     // Width: 31.7 mm, main height 18.0 mm (y = -9.0 .. +9.0),
     // Body-to-coxa stabilization cheeks: height 26.3 mm (y = -13.15 .. +13.15 mm) spanning x = -40.3 .. +17.3 mm,

@@ -30,7 +30,7 @@ import Part
 print("--- Generating Raspberry Pi 4 Mounting Plate v2 (FreeCAD 1.1+) ---")
 
 repo_root = "/home/bjoern/Workspace/Hexapods/lasius"
-models_dir = f"{repo_root}/hardware/mechanics/models/custom/v2/parts"
+models_dir = f"{repo_root}/hardware/mechanics/models/custom/v2/parts/chassis"
 fcstd_plate_path = f"{models_dir}/chassis_rpi_mount.FCStd"
 
 os.makedirs(models_dir, exist_ok=True)

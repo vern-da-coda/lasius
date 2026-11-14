@@ -3,7 +3,7 @@
 ---
 
 [Project Index](../../../../../README.md) | [Mechanics Documentation](../../../README.md) | [Closed Loop Plan](../../../../../docs/hardware/closed_loop_plan.md) |<br>
-[Femur Script](../../../scripts/v2/generate_femur.py) | [Coxa Bracket Script](../../../scripts/v2/generate_coxa_bracket.py) | [Tibia Script](../../../scripts/v2/generate_tibia.py)
+[Femur Script](../../../scripts/v2/generate_femur.py) | [Coxa Script](../../../scripts/v2/generate_coxa.py) | [Tibia Script](../../../scripts/v2/generate_tibia.py)
 
 ---
 
@@ -11,22 +11,21 @@ Dieser Backlog führt alle offenen Aufgaben, konstruktiven Erweiterungen und Ver
 
 ---
 
-## 1. Femur (`parts/femur.FCStd`)
+## 1. Femur (`parts/femur/femur.FCStd`)
 
-- [ ] **Befestigung des AD-Wandlers (ADS1115) via Option C (Zentrierstifte + Deckel-Niederhalter):**  
-  * **Status:** Beschlossenes Befestigungskonzept für die Femur-Kammer.
+- [x] **Befestigung des AD-Wandlers (ADS1115) via Option C (Zentrierstifte + Deckel-Niederhalter):**  
+  * **Status:** Erfolgreich implementiert in [`generate_femur.py`](../../../scripts/v2/generate_femur.py).
   * **Konstruktion:**
-    * Auf den beiden Stand-off-Sockeln am Kammerboden ($Z = -4.80\,\text{mm}$) werden zwei vertikale **Zentrierstifte ($\varnothing 2.15\,\text{mm}$)** angedruckt, die formschlüssig in die beiden $\varnothing 2.35\,\text{mm}$ Bohrungen der Platine greifen und sie in $X$- und $Y$-Richtung spielfrei arretieren.
-    * An der Unterseite des Deckels ([`Femur_Cover`](../../../scripts/v2/generate_femur.py)) werden zwei korrespondierende **Niederhalter-Rippen** (oder ein elastisches EPDM-/Moosgummi-Pad) integriert.
-    * Beim Verschrauben des Deckels (4× M2 Senkkopf) wird die Platine von oben formschlüssig und vibrationsgedämpft auf die Sockel geklemmt.
-  * **Vorteile:** Keine zusätzlichen M2-Schrauben in der engen Kammer, keine thermischen Gewindeeinsätze nötig, keine abbrechenden FDM-Schnappclips, werkzeuglose Platinenentnahme nach Abnehmen des Deckels.
-  * **Verifizierte Koordinaten (anhand [`ads1115_reference.jpg`](../../../drawings/references/ads1115_reference.jpg)):**
-    * Platinenabmessung: $28.0 \times 17.2\,\text{mm}$
-    * Zentrierstift 1 (links): $X = 39.90\,\text{mm},\; Y = Y_{\text{mid}} + 5.30\,\text{mm}$
-    * Zentrierstift 2 (rechts): $X = 60.10\,\text{mm},\; Y = Y_{\text{mid}} + 5.30\,\text{mm}$
-    * Sockel-Auflageebene: $Z = -4.80\,\text{mm}$ (3.0 mm über Kammerboden $Z = -7.80\,\text{mm}$)
-    * Stiftleiste liegt vorne im Freiraum-Kanal ($Y = Y_{\text{mid}} - 7.2\,\text{mm}$).
-  * **Betroffener Code:** [`generate_femur.py`](../../../scripts/v2/generate_femur.py) (Abschnitte `Inner Hollow ADS1115 Chamber Pocket` & `Femur_Cover`).
+    * Auf den beiden Stand-off-Sockeln am Kammerboden ($Z = -4.80\,\text{mm}$) sind zwei vertikale **Zentrierstifte ($\varnothing 2.15\,\text{mm}$)** mit Konus-Fase integriert, die formschlüssig in die beiden $\varnothing 2.35\,\text{mm}$ Bohrungen der Platine greifen ($X = 39.90 / 60.10\,\text{mm},\; Y = Y_{\text{mid}} + 5.30\,\text{mm}$).
+    * An der Unterseite der transluzenten Haube ([`Femur_Canopy`](../../../scripts/v2/generate_femur.py)) steigen zwei integrierte **Niederhalter-Hülsen mit Pin-Bohrung** bis auf $Z = -3.05\,\text{mm}$ herab.
+    * Beim Verschrauben des Rahmens ([`Femur_Cover_Frame`](../../../scripts/v2/generate_femur.py)) wird die ADS1115-Platine vibrationsfrei und schraubenlos auf die Sockel geklemmt.
+- [x] **Transluzenter Mini-Canopy Servicedeckel (Vorschlag 2):**  
+  * **Status:** Erfolgreich implementiert und in allen Assemblies synchronisiert.
+  * **Architektur:**
+    * Zweiteiliger Aufbau:
+      1. `Femur_Cover_Frame`: Graphitschwarz PETG, bündig zur Oberschalen-Taillierung, 4× M2-Senkkopfverschraubung, $1.5\,\text{mm}$ Dichtlippen-Ring, zentrale Haltefassung.
+      2. `Femur_Canopy`: Eisblau-Transluzent (55 % Alpha) Acryl-/Plexiglas-Optik, aerodynamisch doppelt gekrümmter Loft analog [`chassis_canopy.FCStd`](parts/chassis/chassis_canopy.FCStd), 3 bionische $45^\circ$-Chevron-Kühlschlitze (`>>>`).
+    * Fertigungsexporte: `femur_cover_frame.stl`, `femur_canopy.stl`, `femur_cover.stl`, `femur.step`.
 - [ ] **Kantenverrundung an den Kabeldurchführungen:**  
   * Ein- und Auslässe der beiden horizontalen Kabeltunnels ($14 \times 7\,\text{mm}$) zu den Hüft- und Knie-U-Mäulern mit vergrößerten Einlauffasen/Fillets ($R \ge 1.0\,\text{mm}$) versehen, um Scheuern der Servolitzen im Dauerbetrieb zu verhindern.
 - [ ] **Servohorn-Integration / Einlassen in die Femur-Wange:**  
@@ -41,16 +40,16 @@ Dieser Backlog führt alle offenen Aufgaben, konstruktiven Erweiterungen und Ver
 
 ---
 
-## 2. Coxa Bracket (`parts/coxa_bracket.FCStd`)
+## 2. Coxa (`parts/coxa/coxa.FCStd`)
 
-- [ ] **Überarbeitung Seitenwangen & 45°-Stege nach Entwurfsvorgabe (Grüne Skizze):**  
-  * **Status:** Die bisherigen Iterationen wichen stark von der Designvorgabe ab.
-  * **Designreferenz:** [`femur_servo_wangen.svg`](../../../drawings/sketches/femur_servo_wangen.svg) (Grünes Designlayer `#55d400` über Femur-/Coxa-Zusammenbau; gerenderte Vorschau: [`femur_servo_wangen.png`](../../../drawings/sketches/femur_servo_wangen.png)).
-  * **To-Do:** Vollständiger Neuentwurf der Seitenwangen und 45°-Fachwerkstreben:
-    * Organischer, fließender Konturverlauf der Wangen zwischen Coxa-Servogehäuse und Femur-Gegenlager.
-    * Saubere 45°-Fachwerkfenster (Truss-Windows) mit konsistenten Stegbreiten und verrundeten Ecken exakt gemäß der Vektorgeometrie der grünen Skizze.
-    * Beseitigung aller unharmonischen Knicke und Kanten auf den Außenflächen.
-  * **Betroffener Code:** [`generate_coxa_bracket.py`](../../../scripts/v2/generate_coxa_bracket.py).
+- [x] **Monolithisches Coxa-Gelenksegment & 45°-A-Truss-Fachwerk (Konzept 1):**  
+  * **Status:** Erfolgreich implementiert gemäß [`STYLE_GUIDE.md`](../../../STYLE_GUIDE.md).
+  * **Umsetzung:**
+    * Monolithische Wangen mit $G^1$-stetigen S-Kurven und 100 % spiegelbildlichem Profil um $Z = 9{,}00\,\text{mm}$.
+    * 45°-Flankenfenster über Servohorn und Gegenlager sowie 45°-A-Truss (Chevron-Fachwerk) in der Zentralbrücke mit durchgehendem Firststeg ($w = 2{,}50\,\text{mm}$, $R = 1{,}40\,\text{mm}$).
+    * Reine $\varnothing 3{,}20\,\text{mm}$ Durchgangsbohrung für die M3-Schraubenachse (Kugellager sitzt in der Bodenplatte).
+    * Gewichtsersparnis: $42{,}3\,\text{cm}^3$ / $53{,}7\,\text{g}$ PETG ($-9{,}6\,\text{g}$ Delta).
+  * **Betroffener Code:** [`generate_coxa.py`](../../../scripts/v2/generate_coxa.py).
 - [ ] **DIN 439 M4 Flachmutter-Sitz (Gegenlager Femur-Achse):**  
   * Maßhaltigkeit der verpressten M4-Sechskanttasche für die flache DIN 439 Mutter nach Testdruck prüfen (Sitz $SW = 7.10\,\text{mm}$, Tiefe $2.40\,\text{mm}$).
 - [ ] **Kabelauslass-Führung:**  
@@ -58,7 +57,7 @@ Dieser Backlog führt alle offenen Aufgaben, konstruktiven Erweiterungen und Ver
 
 ---
 
-## 3. Tibia (`parts/tibia.FCStd`)
+## 3. Tibia (`parts/tibia/tibia.FCStd`)
 
 - [ ] **Fußsensor-Integration (Omron D2F-L Mikroschalter):**  
   * Aufnahme und Anschlaggeometrie in der Tibia-Fußspitze für den taktilen Schalter präzisieren.
@@ -104,22 +103,22 @@ Dieser Backlog führt alle offenen Aufgaben, konstruktiven Erweiterungen und Ver
 ## 6. Biomimetische Module & Aktuatoren (Kopf & Hinterleib – Lynxmotion A-Pod Adaption)
 
 - [x] ~~**A-Pod Gaster modellieren (Platten-Sandwich-Hinterleib & 2-DoF Gimbal):**~~ **[ERLEDIGT]**  
-  * **Modelle & Generatoren:** [`apod_tail_mount.FCStd`](parts/apod_tail_mount.FCStd), [`apod_tail_bracket.FCStd`](parts/apod_tail_bracket.FCStd), [`apod_gaster.FCStd`](parts/apod_gaster.FCStd) und [`gaster_assembly.FCStd`](gaster_assembly.FCStd) generiert via [`generate_gaster_assembly.py`](../../../scripts/v2/generate_gaster_assembly.py).
+  * **Modelle & Generatoren:** [`apod_tail_mount.FCStd`](parts/gaster/apod_tail_mount.FCStd), [`apod_tail_bracket.FCStd`](parts/gaster/apod_tail_bracket.FCStd), [`apod_gaster.FCStd`](parts/gaster/apod_gaster.FCStd) und [`gaster_assembly.FCStd`](gaster_assembly.FCStd) generiert via [`generate_gaster_assembly.py`](../../../scripts/v2/generate_gaster_assembly.py).
   * **Status:** Vollständig umgesetzt im originalgetreuen Lynxmotion A-Pod Kit-Design (Kåre Halvorsen / *Zenta*) als 2-DoF Platten-Sandwich-Hinterleib (Länge $117{,}0\,\text{mm}$, Breite $96{,}0\,\text{mm}$, $X \in [-148{,}0, -265{,}0\,\text{mm}]$).
   * **Chassis-Interface über Spacer-Bohrungen:**
-    * Montageblock ([`apod_tail_mount.FCStd`](parts/apod_tail_mount.FCStd)) überbrückt den $51{,}30\,\text{mm}$ Chassis-Spalt und verankert starr über die beiden hinteren M3-Bohrungen auf der Längsachse ($X = -90{,}0\,\text{mm}$ und $X = -120{,}0\,\text{mm}$).
-    * 2-DoF SES-Gimbal ([`apod_tail_bracket.FCStd`](parts/apod_tail_bracket.FCStd)) mit Standard-Servos (Hitec HS-645MG / Torcster NR-645): Pan (Gieren links/rechts $\pm 45^\circ$) und Tilt (Nicken heben/senken $\pm 35^\circ$).
+    * Montageblock ([`apod_tail_mount.FCStd`](parts/gaster/apod_tail_mount.FCStd)) überbrückt den $51{,}30\,\text{mm}$ Chassis-Spalt und verankert starr über die beiden hinteren M3-Bohrungen auf der Längsachse ($X = -90{,}0\,\text{mm}$ und $X = -120{,}0\,\text{mm}$).
+    * 2-DoF SES-Gimbal ([`apod_tail_bracket.FCStd`](parts/gaster/apod_tail_bracket.FCStd)) mit Standard-Servos (Hitec HS-645MG / Torcster NR-645): Pan (Gieren links/rechts $\pm 45^\circ$) und Tilt (Nicken heben/senken $\pm 35^\circ$).
     * Konturierte Ober- und Unterplatten ($2{,}5\,\text{mm}$ Carbon) mit 4× Distanzbolzen und T-Schubstegen (großzügiger Innenraum für Zusatzakku oder Telemetrie).
   * **Integration:** Eingebunden in die erweiterte Master-Assembly [`body_gaster_assembly.FCStd`](body_gaster_assembly.FCStd).
 
 - [x] ~~**A-Pod Kopf- & Mandibeln-Baugruppe (5-DoF Bionik-Kopf & massive 3D-Sandwich-Mandibeln):**~~ **[ERLEDIGT]**  
-  * **Modelle & Generatoren:** [`apod_head_mount.FCStd`](parts/apod_head_mount.FCStd), [`apod_neck_bracket.FCStd`](parts/apod_neck_bracket.FCStd), [`apod_head_platform.FCStd`](parts/apod_head_platform.FCStd), [`apod_mandible_left.FCStd`](parts/apod_mandible_left.FCStd), [`apod_mandible_right.FCStd`](parts/apod_mandible_right.FCStd) und [`head_assembly.FCStd`](head_assembly.FCStd) generiert via [`generate_head_assembly.py`](../../../scripts/v2/generate_head_assembly.py).
+  * **Modelle & Generatoren:** [`apod_head_mount.FCStd`](parts/head/apod_head_mount.FCStd), [`apod_neck_bracket.FCStd`](parts/head/apod_neck_bracket.FCStd), [`apod_head_platform.FCStd`](parts/head/apod_head_platform.FCStd), [`apod_mandible_left.FCStd`](parts/head/apod_mandible_left.FCStd), [`apod_mandible_right.FCStd`](parts/head/apod_mandible_right.FCStd) und [`head_assembly.FCStd`](head_assembly.FCStd) generiert via [`generate_head_assembly.py`](../../../scripts/v2/generate_head_assembly.py).
   * **Status:** Vollständig umgesetzt in der originalgetreuen Lynxmotion/Zenta A-Pod 5-DoF Architektur mit 5 Standard-Servos (HS-645MG):
     * 3-DoF Hals: Pan (Gieren Z), Tilt (Nicken Y) und Roll (Rollen X).
-    * Kopf-Plattform ([`apod_head_platform.FCStd`](parts/apod_head_platform.FCStd)): Bionisches Kopfchassis mit getrennter Aufnahme für linkes und rechtes Mandibel-Servo (`cMandLeftPin`, `cMandRightPin`) sowie Facettenaugen-Ports.
-    * Massive 3D-Sandwich-Mandibeln ([`apod_mandible_left.FCStd`](parts/apod_mandible_left.FCStd), [`apod_mandible_right.FCStd`](parts/apod_mandible_right.FCStd)): $134\,\text{mm}$ Länge, $120\,\text{mm}$ Ausladung vor Drehpunkt, $Y = \pm 68\,\text{mm}$ Spannweite, 4 gezahnte Greifspitzen, Carbon-Doppelplatten mit 4 Distanzbolzen und Weather-Stripping-Führung.
+    * Kopf-Plattform ([`apod_head_platform.FCStd`](parts/head/apod_head_platform.FCStd)): Bionisches Kopfchassis mit getrennter Aufnahme für linkes und rechtes Mandibel-Servo (`cMandLeftPin`, `cMandRightPin`) sowie Facettenaugen-Ports.
+    * Massive 3D-Sandwich-Mandibeln ([`apod_mandible_left.FCStd`](parts/head/apod_mandible_left.FCStd), [`apod_mandible_right.FCStd`](parts/head/apod_mandible_right.FCStd)): $134\,\text{mm}$ Länge, $120\,\text{mm}$ Ausladung vor Drehpunkt, $Y = \pm 68\,\text{mm}$ Spannweite, 4 gezahnte Greifspitzen, Carbon-Doppelplatten mit 4 Distanzbolzen und Weather-Stripping-Führung.
   * **Chassis-Interface über Spacer-Bohrungen:**
-    * Montageblock ([`apod_head_mount.FCStd`](parts/apod_head_mount.FCStd)) überbrückt den $51{,}30\,\text{mm}$ Spalt und verankert starr über die beiden vorderen M3-Bohrungen ($X = 128{,}0\,\text{mm}, Y = \pm 12{,}0\,\text{mm}$) mit Tasche für das Pan-Servo.
+    * Montageblock ([`apod_head_mount.FCStd`](parts/head/apod_head_mount.FCStd)) überbrückt den $51{,}30\,\text{mm}$ Spalt und verankert starr über die beiden vorderen M3-Bohrungen ($X = 128{,}0\,\text{mm}, Y = \pm 12{,}0\,\text{mm}$) mit Tasche für das Pan-Servo.
   * **Integration:** Eingebunden in die Master-Assembly [`body_gaster_assembly.FCStd`](body_gaster_assembly.FCStd).
 
 ---
@@ -127,7 +126,7 @@ Dieser Backlog führt alle offenen Aufgaben, konstruktiven Erweiterungen und Ver
 ## 7. Chassis & Elektronik-Integration
 
 - [x] ~~**Elektronik-Basisplatte (Zentrales Montage-Deck / Tray):**~~ **[ERLEDIGT]**  
-  * **Modell & Generator:** [`electronics_tray.FCStd`](parts/electronics_tray.FCStd) generiert via [`generate_electronics_tray.py`](../../../scripts/v2/generate_electronics_tray.py).
+  * **Modell & Generator:** [`electronics_tray.FCStd`](parts/electronics_tray/electronics_tray.FCStd) generiert via [`generate_electronics_tray.py`](../../../scripts/v2/generate_electronics_tray.py).
   * **Status:** Zentrales Trägerdeck im Chassis-Kern auf $Z = 18{,}0\,\text{mm}$ (gehalten von 4 Standoff-Kragenbuchsen $\varnothing 14{,}2\,\text{mm}$ an den Spacern bei $X = \pm 45, Y = \pm 30$).
   * **Funktion & Integration:**
     * 2× PCA9685 16-Kanal Servo-Controller ($56 \times 19\,\text{mm}$ Lochbild links bei $Y = +14{,}5\,\text{mm}$, rechts bei $Y = -14{,}5\,\text{mm}$ auf $3{,}0\,\text{mm}$ Sockeln; 90°-Stiftleisten zeigen seitlich nach außen zu den Beinen mit $2{,}0\,\text{mm}$ Sicherheitsabstand zu den Coxa-Servos).
@@ -136,7 +135,7 @@ Dieser Backlog führt alle offenen Aufgaben, konstruktiven Erweiterungen und Ver
     * Vollständig kollisionsfrei mit Spacern, Beinen und Coxa-Servos.
     * Eingebunden in Subassembly [`electronics_tray_assembly.FCStd`](electronics_tray_assembly.FCStd) und Master-Assembly [`body_assembly.FCStd`](body_assembly.FCStd).
 - [x] ~~**Chassis-Abdeckung / Exoskelett-Haube (Top Cover):**~~ **[ERLEDIGT]**  
-  * **Modell & Generator:** [`chassis_top_cover.FCStd`](parts/chassis_top_cover.FCStd) generiert via [`generate_chassis_top_cover.py`](../../../scripts/v2/generate_chassis_top_cover.py).
+  * **Modell & Generator:** [`chassis_top_cover.FCStd`](parts/chassis/chassis_top_cover.FCStd) generiert via [`generate_chassis_top_cover.py`](../../../scripts/v2/generate_chassis_top_cover.py).
   * **Status:** Aerodynamische Chitinpanzer-Haube auf der oberen Carbonplatte ($Z = 55{,}3\,\text{mm}$ bis $76{,}0\,\text{mm}$, Gesamthöhe $20{,}7\,\text{mm}$ mit $18{,}5\,\text{mm}$ Innenraum-Freiraum), verschraubt über die 4 zentralen M3-Standoff-Pfeiler bei $X = \pm 45, Y = \pm 30$ mit gesenkten Taschen.
   * **Funktion & Konstruktion:**
     * Mechanischer Schutz für den auf der oberen Chassis-Platte montierten Raspberry Pi 4 Model B, GPIO-Leitungen und interne Elektronik mit vollständiger Kollisionsfreiheit.
@@ -144,7 +143,7 @@ Dieser Backlog führt alle offenen Aufgaben, konstruktiven Erweiterungen und Ver
     * **Kamera-Kabeldurchbruch:** $20 \times 3{,}2\,\text{mm}$ Frontschlitz an der Schnauze ($X \in [82\dots 94\,\text{mm}]$) zur direkten Durchführung des CSI-Kamerakabels zum Kopfmodul.
     * Vollständig eingebunden in Master-Assembly [`body_assembly.FCStd`](body_assembly.FCStd).
 - [x] ~~**Unterboden-Abdeckung (Chassis Belly Pan / Skid Plate):**~~ **[ERLEDIGT]**  
-  * **Modell & Generator:** [`chassis_belly_pan.FCStd`](parts/chassis_belly_pan.FCStd) generiert via [`generate_chassis_belly_pan.py`](../../../scripts/v2/generate_chassis_belly_pan.py).
+  * **Modell & Generator:** [`chassis_belly_pan.FCStd`](parts/chassis/chassis_belly_pan.FCStd) generiert via [`generate_chassis_belly_pan.py`](../../../scripts/v2/generate_chassis_belly_pan.py).
   * **Status:** Schutz- und Gleitwanne an der Chassis-Unterseite ($Z \le 0{,}0\,\text{mm}$), verschraubt über die 4 zentralen M3-Standoff-Pfeiler bei $X = \pm 45, Y = \pm 30$ mit 90°-Senkungen nach DIN 7991.
   * **Funktion & Konstruktion:**
     * Glatte Bootsrumpf-Kontur mit 30°-Anlaufschrägen an Front und Heck sowie Längskufen für widerstandsloses Gleiten über Hindernisse.
@@ -174,9 +173,9 @@ Dieser Backlog führt alle offenen Aufgaben, konstruktiven Erweiterungen und Ver
   * **Integration in Master Body Assembly v2:** Als einheitliche Baugruppe via `App::Link` in [`body_assembly.FCStd`](body_assembly.FCStd) referenziert. Raspberry Pi 4 sitzt auf dem Oberdeck bei $Z = 55{,}3\,\text{mm}$ unter der Chitin-Haube. STEP- und STL-Exporte synchronisiert.
 - [x] ~~**Service-Abdeckung mit '>>>' Chevrons & Raspberry Pi 4 Montageplatte im Canopy:**~~ **[ERLEDIGT]**  
   * **Modelle & Generatoren:**
-    * Raspberry Pi 4 Montageplatte: [`chassis_rpi_mount.FCStd`](parts/chassis_rpi_mount.FCStd) generiert via [`generate_chassis_rpi_mount.py`](../../../scripts/v2/generate_chassis_rpi_mount.py).
-    * Service-Abdeckung: [`chassis_service_cover.FCStd`](parts/chassis_service_cover.FCStd) generiert via [`generate_chassis_service_cover.py`](../../../scripts/v2/generate_chassis_service_cover.py).
-    * Erhöhtes Plexiglas-Canopy mit Service-Ausschnitt: [`chassis_canopy.FCStd`](parts/chassis_canopy.FCStd) generiert via [`generate_chassis_canopy.py`](../../../scripts/v2/generate_chassis_canopy.py).
+    * Raspberry Pi 4 Montageplatte: [`chassis_rpi_mount.FCStd`](parts/chassis/chassis_rpi_mount.FCStd) generiert via [`generate_chassis_rpi_mount.py`](../../../scripts/v2/generate_chassis_rpi_mount.py).
+    * Service-Abdeckung: [`chassis_service_cover.FCStd`](parts/chassis/chassis_service_cover.FCStd) generiert via [`generate_chassis_service_cover.py`](../../../scripts/v2/generate_chassis_service_cover.py).
+    * Erhöhtes Plexiglas-Canopy mit Service-Ausschnitt: [`chassis_canopy.FCStd`](parts/chassis/chassis_canopy.FCStd) generiert via [`generate_chassis_canopy.py`](../../../scripts/v2/generate_chassis_canopy.py).
   * **Funktion & Konstruktion (Zentrierte Ausrichtung zwischen den 4 mittleren Bohrungen):**
     * **1. Raspberry Pi 4 Positionierung & Montageplatte (`chassis_rpi_mount.FCStd`):**
       * Der Raspberry Pi 4 Model B sitzt symmetrisch zentriert bei $X = 0{,}0\,\text{mm}, Y = 0{,}0\,\text{mm}, Z = 59{,}80\,\text{mm}$ exakt zwischen den 4 zentralen Chassis-Bohrungen bei $(\pm 45{,}0, \pm 30{,}0\,\text{mm})$.
@@ -196,8 +195,8 @@ Dieser Backlog führt alle offenen Aufgaben, konstruktiven Erweiterungen und Ver
 
 - [x] ~~**Organische Neugestaltung der oberen Chassis-Abdeckung & Plexiglas-Canopy:**~~ **[ERLEDIGT]**  
   * **Modelle & Generatoren:**
-    * Innere Elektronikhaube: [`chassis_top_cover.FCStd`](parts/chassis_top_cover.FCStd) generiert via [`generate_chassis_top_cover.py`](../../../scripts/v2/generate_chassis_top_cover.py).
-    * Drapierte Plexiglas-Haube (Revision 1): [`chassis_canopy.FCStd`](parts/chassis_canopy.FCStd) generiert via [`generate_chassis_canopy.py`](../../../scripts/v2/generate_chassis_canopy.py).
+    * Innere Elektronikhaube: [`chassis_top_cover.FCStd`](parts/chassis/chassis_top_cover.FCStd) generiert via [`generate_chassis_top_cover.py`](../../../scripts/v2/generate_chassis_top_cover.py).
+    * Drapierte Plexiglas-Haube (Revision 1): [`chassis_canopy.FCStd`](parts/chassis/chassis_canopy.FCStd) generiert via [`generate_chassis_canopy.py`](../../../scripts/v2/generate_chassis_canopy.py).
   * **Status:** 2-teilige Thorax-Abdeckung bestehend aus innerem Elektronikgehäuse und äußerer transparenter Tiefziehkappe (Revision 1):
   * **1. Chassis Canopy (`chassis_canopy.FCStd` – Drapierte Acrylhaube Revision 1):**
     * **Organische Doppelkrümmung:** Stufen- und knickfreie Loft-Oberfläche von $Z = 76{,}00\,\text{mm}$ (Apex) herab auf $Z = 55{,}30\,\text{mm}$, die sich wie eine warm geformte $1{,}50\,\text{mm}$ Plexiglasplatte harmonisch über das zentrale Top Cover schmiegt.
@@ -212,7 +211,7 @@ Dieser Backlog führt alle offenen Aufgaben, konstruktiven Erweiterungen und Ver
   * **Integration:** Beide Teile als separate Komponenten via `App::Link` in [`body_assembly.FCStd`](body_assembly.FCStd) und [`body_gaster_assembly.FCStd`](body_gaster_assembly.FCStd) eingebunden.
 
 - [x] ~~**Konzeptstudie & Realisierung: Monolithischer Chassis-Kern / Kapselung als Ersatz der 4 mittleren Spacer:**~~ **[ERLEDIGT]**  
-  * **Modelle & Generatoren:** [`chassis_core.FCStd`](parts/chassis_core.FCStd) und [`chassis_core_assembly.FCStd`](chassis_core_assembly.FCStd) generiert via [`generate_chassis_core.py`](../../../scripts/v2/generate_chassis_core.py).
+  * **Modelle & Generatoren:** [`chassis_core.FCStd`](parts/chassis/chassis_core.FCStd) und [`chassis_core_assembly.FCStd`](chassis_core_assembly.FCStd) generiert via [`generate_chassis_core.py`](../../../scripts/v2/generate_chassis_core.py).
   * **Status:** Vollständig umgesetzter 3D-Druck-Sandwich-Stützkern ($51{,}3\,\text{mm}$ Bauhöhe zwischen $Z = 2{,}0$ und $53{,}3\,\text{mm}$), der die 4 mittleren Kunststoff-Spacer bei $X = \pm 45, Y = \pm 30\,\text{mm}$ durch eine steife, vibrationsdämpfende Schubsteg-Monocoque-Struktur ersetzt.
   * **Integrierte Kapselung:**
     * Vertikale Führungsschienen für 2× PCA9685 PWM-Controller (Stiftleisten ragen kollisionsfrei nach oben $+Z$ in den Wartungsschacht).

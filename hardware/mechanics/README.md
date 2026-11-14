@@ -52,27 +52,29 @@ CAD engineering, digital fabrication exports, and assembly models for the **Lasi
 > [!NOTE]
 > Für anstehende Modelländerungen und Verifikationsschritte siehe die [**Generation v2 Todo-Liste**](models/custom/v2/TODO.md).
 
-- **Organic Monolithic Femur & ADC Housing ([`femur.FCStd`](models/custom/v2/parts/femur.FCStd)):**
-  - Monolithic 3D-printed double-wrench femur ($L = 100.0\,\text{mm}$ pivot-to-pivot) replacing the 2-plate + 2-spacer v1 cage, featuring an internal chamber and flush curved lid (`Femur_Cover`) for the leg's encapsulated ADS1115 16-bit I²C ADC (`0x48`) and internal cable channels.
-- **Monolithic Tibia v2 ([`tibia.FCStd`](models/custom/v2/parts/tibia.FCStd)):**
+- **Monolithic Coxa v2 ([`coxa.FCStd`](models/custom/v2/parts/coxa/coxa.FCStd)):**
+  - Monolithic 3D-printed Coxa joint segment replacing the v1 bracket plates, featuring bionic 45° A-truss and Warren lightweight windows, seamless $G^1$-continuous cheek profiles, an inverted M4 counter-bearing seat (Option A), and integrated Coxa servo mounting cage.
+- **Organic Monolithic Femur & ADC Housing ([`femur.FCStd`](models/custom/v2/parts/femur/femur.FCStd)):**
+  - Monolithic 3D-printed double-wrench femur ($L = 100.0\,\text{mm}$ pivot-to-pivot) replacing the 2-plate + 2-spacer v1 cage, featuring an internal chamber for the leg's encapsulated ADS1115 16-bit I²C ADC (`0x48`), internal cable channels, Option C vibration-free PCB clamping pins, and a modular two-piece service cover: `Femur_Cover_Frame` (Graphitschwarz PETG bezel) and `Femur_Canopy` (Eisblau-transluzente Haube mit bionischen 45°-Chevron-Kühlschlitzen).
+- **Monolithic Tibia v2 ([`tibia.FCStd`](models/custom/v2/parts/tibia/tibia.FCStd)):**
   - Merges the sickle claw (`tibia`) and counter-bearing foot (`tibia_servo_foot`) into a single 3D-printed component connected via 4 organic hourglass-waisted corner struts (*Eckstege*).
-- **Chassis Exoskeleton Top Cover v2 ([`chassis_top_cover.FCStd`](models/custom/v2/parts/chassis_top_cover.FCStd)):**
+- **Chassis Exoskeleton Top Cover v2 ([`chassis_top_cover.FCStd`](models/custom/v2/parts/chassis/chassis_top_cover.FCStd)):**
   - Aerodynamic chitinous canopy mounted to the upper chassis surface ($Z \ge 55.3\,\text{mm}$) featuring an internal electronics dome ($13.6\,\text{mm}$ height clearance), 5x thermal convection chevron louvers over the Raspberry Pi 4 SoC, and a front CSI camera ribbon pass-through slot.
-- **Chassis Belly Pan & Skid Plate v2 ([`chassis_belly_pan.FCStd`](models/custom/v2/parts/chassis_belly_pan.FCStd)):**
+- **Chassis Belly Pan & Skid Plate v2 ([`chassis_belly_pan.FCStd`](models/custom/v2/parts/chassis/chassis_belly_pan.FCStd)):**
   - Contoured boat-hull skid plate mounted to the chassis underside ($Z \le 0.0\,\text{mm}$) with approach ramps, internal wiring cavity, and integrated mounting recess with a $45^\circ$-chamfered optical aperture for the downward-facing 9-zone ToF terrain distance sensor (VL53L5CX).
-- **Electronics Mounting Tray v2 ([`electronics_tray.FCStd`](models/custom/v2/parts/electronics_tray.FCStd)):**
+- **Electronics Mounting Tray v2 ([`electronics_tray.FCStd`](models/custom/v2/parts/electronics_tray/electronics_tray.FCStd)):**
   - Central 3D-printed mounting deck ($Z = 18.0\,\text{mm}$) held by 4 standoff collar mounts ($\varnothing 14.2\,\text{mm}$), hosting the Raspberry Pi 4 Model B, 2× PCA9685 16-channel servo drivers, and TCA9548A I²C multiplexer with integrated cable comb channels and zip-tie anchor bridges.
 - **Electronics Tray & Power Subassembly v2 ([`electronics_tray_assembly.FCStd`](models/custom/v2/electronics_tray_assembly.FCStd)):**
   - Modular interior subassembly integrating the 3D-printed mounting tray with Raspberry Pi 4 Model B (green), 2× PCA9685 PWM drivers (blue), TCA9548A I²C multiplexer (purple), and the 2S LiPo battery pack (vivid gold) suspended underneath the deck.
 - **Complete Modular Leg Assembly v2 ([`leg_assembly.FCStd`](models/custom/v2/leg_assembly.FCStd)):**
-  - Modular leg subassembly combining the v1 [`coxa_bracket.FCStd`](models/custom/v1/parts/coxa_bracket.FCStd) with the v2 [`femur.FCStd`](models/custom/v2/parts/femur.FCStd) and [`tibia.FCStd`](models/custom/v2/parts/tibia.FCStd).
+  - Modular leg subassembly combining the monolithic v2 [`coxa.FCStd`](models/custom/v2/parts/coxa/coxa.FCStd) with the v2 [`femur.FCStd`](models/custom/v2/parts/femur/femur.FCStd) and [`tibia.FCStd`](models/custom/v2/parts/tibia/tibia.FCStd).
 - **Complete Full-Body Assembly v2 ([`body_assembly.FCStd`](models/custom/v2/body_assembly.FCStd)):**
   - Master full-robot assembly (v2) integrating:
     - Chassis structural plates ([`body_bottom.FCStd`](models/custom/v1/parts/body_bottom.FCStd), [`body_top.FCStd`](models/custom/v1/parts/body_top.FCStd)) and 8× standoff pillars ([`spacer_14x50.FCStd`](models/custom/v1/parts/spacer_14x50.FCStd)).
     - 6× modular v2 leg assemblies ([`leg_assembly.FCStd`](models/custom/v2/leg_assembly.FCStd)).
-    - 3D-printed body parts: [`chassis_belly_pan.FCStd`](models/custom/v2/parts/chassis_belly_pan.FCStd) (with downward-facing VL53L5CX ToF terrain distance sensor) and [`chassis_top_cover.FCStd`](models/custom/v2/parts/chassis_top_cover.FCStd).
+    - 3D-printed body parts: [`chassis_belly_pan.FCStd`](models/custom/v2/parts/chassis/chassis_belly_pan.FCStd) (with downward-facing VL53L5CX ToF terrain distance sensor) and [`chassis_top_cover.FCStd`](models/custom/v2/parts/chassis/chassis_top_cover.FCStd).
     - Modular interior: [`electronics_tray_assembly.FCStd`](models/custom/v2/electronics_tray_assembly.FCStd) (tray + dual PCA9685 + TCA9548A + 2S LiPo battery).
-    - Top deck processing: Raspberry Pi 4 Model B mounted on the upper chassis deck directly under the ventilated carapace cover ([`chassis_top_cover.FCStd`](models/custom/v2/parts/chassis_top_cover.FCStd)).
+    - Top deck processing: Raspberry Pi 4 Model B mounted on the upper chassis deck directly under the ventilated carapace cover ([`chassis_top_cover.FCStd`](models/custom/v2/parts/chassis/chassis_top_cover.FCStd)).
 
 ---
 
@@ -86,10 +88,10 @@ hardware/mechanics/
 │       ├── v1/              # Generation 1 (leg_assembly, body_assembly + parts/)
 │       │   └── parts/       # Generation 1 single parts
 │       └── v2/              # Generation 2 (leg_assembly, electronics_tray_assembly, body_assembly + parts/)
-│           └── parts/       # Generation 2 single parts
+│           └── parts/       # Generation 2 components grouped by subsystem (coxa, femur, tibia, chassis, electronics_tray, head, gaster)
 ├── export/                  # Digital fabrication outputs (mirrors models/ structure)
-│   ├── step/                # ISO 10303 CAD exchange format (custom/{v1,v2}[/parts], cots/)
-│   ├── stl/                 # High-resolution meshes for 3D printing (custom/{v1,v2}[/parts], cots/)
+│   ├── step/                # ISO 10303 CAD exchange format (custom/{v1,v2}[/parts/...], cots/)
+│   ├── stl/                 # High-resolution meshes for 3D printing (custom/{v1,v2}[/parts/...], cots/)
 │   └── dxf/                 # 2D vector profiles for laser/CNC sheet cutting (custom/v1/parts/)
 ├── drawings/
 │   └── renders/             # High-resolution CAD 3D renders (.png)

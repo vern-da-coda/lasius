@@ -27,7 +27,7 @@ Master `I2C1` daisy-chain from Raspberry Pi 4 through **Controller Left (`0x40`)
 
 ## 2. Single Leg Feedback Harness (3-DOF + Contact Switch)
 
-Modular wiring harness per leg following the Master Color Scheme (`A0` Coxa **White**, `A1` Femur **Green**, `A2` Tibia **Violet**, `A3` Omron D2F-L foot switch **Orange** + `COM -> GND` **Black**) feeding the leg **Wandler** (`ADS1115 V280`, `SCL` before `SDA`) via split `3.3V / GND` + `SCx / SDx` uplink, with onboard `4× 100 nF` RC low-pass filters, `10 kΩ` pull-up on `A3`, and `ADDR -> GND` strap (`0x48`):
+Modular wiring harness per leg following the Master Color Scheme (`A0` Coxa **White**, `A1` Femur **White**, `A2` Tibia **White** [servo pot lines are always white], `A3` Omron D2F-L foot switch **Orange** + `COM -> GND` **Black**) feeding the leg **Wandler** (`ADS1115 V280`, `SCL` before `SDA`) via split `3.3V / GND` + `SCx / SDx` uplink, with onboard `4× 100 nF` RC low-pass filters, `10 kΩ` pull-up on `A3`, and `ADDR -> GND` strap (`0x48`):
 
 <p align="center">
   <img src="../../hardware/electronics/wiring/02_single_leg_feedback_harness.svg" alt="Single Leg Feedback Harness" width="850">

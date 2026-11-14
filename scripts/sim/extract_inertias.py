@@ -96,10 +96,10 @@ def main():
     results = {}
     
     parts_to_analyze = [
-        ("coxa_bracket", f"{MODELS_DIR}/custom/v2/parts/coxa_bracket.FCStd", "Coxa_Bracket", DENSITY_PETG),
-        ("femur_body", f"{MODELS_DIR}/custom/v2/parts/femur.FCStd", "Femur_Body", DENSITY_PETG),
-        ("femur_cover", f"{MODELS_DIR}/custom/v2/parts/femur.FCStd", "Femur_Cover", DENSITY_PETG),
-        ("tibia", f"{MODELS_DIR}/custom/v2/parts/tibia.FCStd", "Tibia_v2", DENSITY_PETG),
+        ("coxa", f"{MODELS_DIR}/custom/v2/parts/coxa/coxa.FCStd", "Coxa", DENSITY_PETG),
+        ("femur_body", f"{MODELS_DIR}/custom/v2/parts/femur/femur.FCStd", "Femur_Body", DENSITY_PETG),
+        ("femur_cover", f"{MODELS_DIR}/custom/v2/parts/femur/femur.FCStd", "Femur_Cover", DENSITY_PETG),
+        ("tibia", f"{MODELS_DIR}/custom/v2/parts/tibia/tibia.FCStd", "Tibia_v2", DENSITY_PETG),
         ("body_bottom", f"{MODELS_DIR}/custom/v1/parts/body_bottom.FCStd", "BodyBottom", DENSITY_CARBON),
         ("body_top", f"{MODELS_DIR}/custom/v1/parts/body_top.FCStd", "BodyTop", DENSITY_CARBON),
         ("spacer", f"{MODELS_DIR}/custom/v1/parts/spacer_14x50.FCStd", "SpacerRod", DENSITY_ALU),

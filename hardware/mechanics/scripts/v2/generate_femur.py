@@ -18,21 +18,24 @@ Generate Lasius Hexapod Organic Monolithic Femur & Encapsulated ADS1115 Housing
 import math
 import os
 import sys
+import zipfile
 import FreeCAD as App
 import Part
 
 print("--- Generating Lasius Organic Femur with Encapsulated ADS1115 Chamber ---")
 
 repo_root = "/home/bjoern/Workspace/Hexapods/lasius"
-models_dir = f"{repo_root}/hardware/mechanics/models/custom/v2/parts"
+models_dir = f"{repo_root}/hardware/mechanics/models/custom/v2/parts/femur"
 cots_dir = f"{repo_root}/hardware/mechanics/models/cots"
-export_step_dir = f"{repo_root}/hardware/mechanics/export/step/custom/v2/parts"
-export_stl_dir = f"{repo_root}/hardware/mechanics/export/stl/custom/v2/parts"
+export_step_dir = f"{repo_root}/hardware/mechanics/export/step/custom/v2/parts/femur"
+export_stl_dir = f"{repo_root}/hardware/mechanics/export/stl/custom/v2/parts/femur"
 
 fcstd_femur_path = f"{models_dir}/femur.FCStd"
 step_femur_path = f"{export_step_dir}/femur.step"
 stl_femur_path = f"{export_stl_dir}/femur.stl"
 stl_cover_path = f"{export_stl_dir}/femur_cover.stl"
+stl_frame_path = f"{export_stl_dir}/femur_cover_frame.stl"
+stl_canopy_path = f"{export_stl_dir}/femur_canopy.stl"
 
 
 def make_filleted_polygon_2d(pts, r_list):
@@ -397,7 +400,7 @@ def build_femur_shapes():
     # =========================================================================
     # 7. Encapsulated Central ADS1115 Chamber, Stepped Cover Rebate & Channels
     # =========================================================================
-    def make_rounded_rect_z(x_min, x_max, y_min, y_max, r_corner, z_min, z_max):
+    def make_rounded_rect_wire_z(x_min, x_max, y_min, y_max, r_corner, z_val):
         k = r_corner * (1.0 - 1.0 / math.sqrt(2.0))
         pts = [
             (x_min + r_corner, y_max),
@@ -413,7 +416,7 @@ def build_femur_shapes():
             (x_min, y_max - r_corner),
             (x_min + k, y_max - k),
         ]
-        v = [App.Vector(px, py, z_min) for px, py in pts]
+        v = [App.Vector(px, py, z_val) for px, py in pts]
         edges = [
             Part.makeLine(v[0], v[1]),
             Part.Edge(Part.ArcOfCircle(v[1], v[2], v[3])),
@@ -424,8 +427,11 @@ def build_femur_shapes():
             Part.makeLine(v[9], v[10]),
             Part.Edge(Part.ArcOfCircle(v[10], v[11], v[0])),
         ]
-        face = Part.Face(Part.Wire(edges))
-        return face.extrude(App.Vector(0.0, 0.0, z_max - z_min))
+        return Part.Wire(edges)
+
+    def make_rounded_rect_z(x_min, x_max, y_min, y_max, r_corner, z_min, z_max):
+        wire = make_rounded_rect_wire_z(x_min, x_max, y_min, y_max, r_corner, z_min)
+        return Part.Face(wire).extrude(App.Vector(0.0, 0.0, z_max - z_min))
 
     # A. Outer Lid Rebate (Stepped recess in top +Z face for the cover skirt):
     # X in [28.5, 71.5] (43.0 mm), Y in [Y_mid - 17.5, Y_mid + 17.5] (35.0 mm), R=4.0 mm
@@ -499,84 +505,84 @@ def build_femur_shapes():
     base_solid = base_solid.cut(tunnel_left).cut(tunnel_right)
 
     # =========================================================================
-    # 9. Build the Raised Dome Top Cover (Variante 3.2.B + Option C Hold-Downs)
+    # 9. Build the Modular Translucent Mini-Canopy Service Cover (Vorschlag 2)
     # =========================================================================
+    # Two-piece architecture:
+    # 9A. Femur_Cover_Frame: Black PETG bezel & sealing frame with 4x M2 countersunk
+    #     screws clamping down the canopy base rim onto the femur body pocket ledge.
+    # 9B. Femur_Canopy: Translucent Ice-Blue 55% Alpha double-curved aerodynamic dome
+    #     matching chassis_canopy.FCStd, with 3x 45° chevron convection louvers
+    #     and Option C PCB hold-down sleeves descending directly onto the ADS1115.
+
     # 0.05 mm nominal seating tolerance above lid_z_floor eliminates coplanar BOPAlgo
-    # SelfIntersect on the Femur_Complete compound while keeping flush visual fit.
+    # SelfIntersect on compounds while keeping flush visual fit.
     cover_z_base = lid_z_floor + 0.05
-    cover_outer = make_rounded_rect_z(28.65, 71.35, Y_mid - 17.35, Y_mid + 17.35, 3.85, cover_z_base, 20.0)
-    cover_solid = cover_outer.common(envelope_xz)
 
-    def make_rounded_rect_wire_z(x_min, x_max, y_min, y_max, r_corner, z_val):
-        k = r_corner * (1.0 - 1.0 / math.sqrt(2.0))
-        pts = [
-            (x_min + r_corner, y_max),
-            (x_max - r_corner, y_max),
-            (x_max - k, y_max - k),
-            (x_max, y_max - r_corner),
-            (x_max, y_min + r_corner),
-            (x_max - k, y_min + k),
-            (x_max - r_corner, y_min),
-            (x_min + r_corner, y_min),
-            (x_min + k, y_min + k),
-            (x_min, y_min + r_corner),
-            (x_min, y_max - r_corner),
-            (x_min + k, y_max - k),
-        ]
-        v = [App.Vector(px, py, z_val) for px, py in pts]
-        edges = [
-            Part.makeLine(v[0], v[1]),
-            Part.Edge(Part.ArcOfCircle(v[1], v[2], v[3])),
-            Part.makeLine(v[3], v[4]),
-            Part.Edge(Part.ArcOfCircle(v[4], v[5], v[6])),
-            Part.makeLine(v[6], v[7]),
-            Part.Edge(Part.ArcOfCircle(v[7], v[8], v[9])),
-            Part.makeLine(v[9], v[10]),
-            Part.Edge(Part.ArcOfCircle(v[10], v[11], v[0])),
-        ]
-        return Part.Wire(edges)
+    # -------------------------------------------------------------------------
+    # 9A. Femur_Cover_Frame (Bezel / Clamping Ring in Graphitschwarz PETG)
+    # -------------------------------------------------------------------------
+    # Outer envelope matching femur waist hourglass curvature:
+    frame_outer = make_rounded_rect_z(28.65, 71.35, Y_mid - 17.35, Y_mid + 17.35, 3.85, cover_z_base, 20.0)
+    frame_solid = frame_outer.common(envelope_xz)
 
-    # Raised vertical-DuPont Dome ("Haube") reaching Z = +22.00 mm outer (Z = +19.80 mm inner ceiling),
-    # providing >= 6.46 mm wire-bend clearance above plugged 14 mm DuPont housings (Z_max = +13.34 mm)
-    # and >= 2.20 mm cover dome wall thickness everywhere while clearing all 4 M2 screw heads by >= 2.1 mm.
-    w_dome_out_0 = make_rounded_rect_wire_z(33.80, 66.20, Y_mid - 11.40, Y_mid + 11.40, 3.20, 10.20)
-    w_dome_out_1 = make_rounded_rect_wire_z(34.40, 65.60, Y_mid - 10.80, Y_mid + 10.80, 2.80, 22.00)
-    dome_outer = Part.makeLoft([w_dome_out_0, w_dome_out_1], True)
-    cover_solid = cover_solid.fuse(dome_outer)
-
-    # Carve hollow interior pocket inside the dome down into the main chamber (leaving >= 2.20 mm roof & walls)
-    w_dome_in_0 = make_rounded_rect_wire_z(35.30, 64.70, Y_mid - 9.20, Y_mid + 9.20, 2.00, cover_z_base - 0.10)
-    w_dome_in_1 = make_rounded_rect_wire_z(36.70, 63.30, Y_mid - 8.40, Y_mid + 8.40, 1.80, 19.80)
-    dome_inner_void = Part.makeLoft([w_dome_in_0, w_dome_in_1], True)
-    cover_solid = cover_solid.cut(dome_inner_void)
-
-    # Unbroken 1.60 mm thick sealing/alignment lip ring (Z = 7.50 .. cover_z_base + 0.1)
-    lip_outer = make_rounded_rect_z(33.70, 66.30, Y_mid - 13.30, Y_mid + 13.30, 3.30, lid_z_floor - 1.50, cover_z_base + 0.1)
-    lip_inner = make_rounded_rect_z(35.30, 64.70, Y_mid - 11.70, Y_mid + 11.70, 2.00, lid_z_floor - 1.60, cover_z_base + 0.2)
+    # Downward sealing / alignment lip ring descending 1.50 mm into the chamber:
+    lip_outer = make_rounded_rect_z(33.70, 66.30, Y_mid - 13.30, Y_mid + 13.30, 3.30, lid_z_floor - 1.50, cover_z_base + 0.10)
+    lip_inner = make_rounded_rect_z(35.30, 64.70, Y_mid - 11.70, Y_mid + 11.70, 2.00, lid_z_floor - 1.60, cover_z_base + 0.20)
     lip_ring = lip_outer.cut(lip_inner)
-    cover_solid = cover_solid.fuse(lip_ring)
+    frame_solid = frame_solid.fuse(lip_ring)
 
-    # Option C Hold-Down Sleeves + Rear Dome-Wall Buttresses on Femur_Cover underside:
-    # Descend from dome inner/upper wall (Z = +12.50 mm) down to Z = -3.05 mm (0.15 mm nominal
-    # clearance above PCB top Z=-3.20 mm) directly over the bare mounting-hole pad rings
-    # (X=39.90 / 60.10, Y=Y_mid+5.30), with Ø2.60 mm bores clearing the Ø2.15 mm centering pins.
+    # 4x M2 countersunk screws matching base_solid pilot hole positions:
+    for sx, sy in screw_coords:
+        sh_through = Part.makeCylinder(1.10, 10.0, App.Vector(sx, sy, cover_z_base - 1.0))
+        sh_csink = Part.makeCone(1.10, 2.10, 1.0, App.Vector(sx, sy, cover_z_base + 1.80))
+        sh_head = Part.makeCylinder(2.10, 10.0, App.Vector(sx, sy, cover_z_base + 2.80))
+        frame_solid = frame_solid.cut(sh_through).cut(sh_csink).cut(sh_head)
+
+    # Clamping rebate pocket on underside for canopy base flange (Z = cover_z_base .. 10.50):
+    flange_pocket = make_rounded_rect_z(33.60, 66.40, Y_mid - 11.80, Y_mid + 11.80, 3.30, cover_z_base - 0.50, 10.50)
+    frame_solid = frame_solid.cut(flange_pocket)
+
+    # Central window aperture through which the canopy dome rises:
+    frame_opening = make_rounded_rect_z(34.80, 65.20, Y_mid - 11.00, Y_mid + 11.00, 4.00, cover_z_base - 2.0, 25.0)
+    frame_solid = frame_solid.cut(frame_opening)
+    frame_solid = frame_solid.removeSplitter()
+
+    # -------------------------------------------------------------------------
+    # 9B. Femur_Canopy (Translucent Aerodynamic Canopy)
+    # -------------------------------------------------------------------------
+    # Base clamping rim (sits in pocket under frame bezel ledge):
+    canopy_base = make_rounded_rect_z(33.70, 66.30, Y_mid - 11.70, Y_mid + 11.70, 3.20, cover_z_base, 10.50)
+
+    # Outer aerodynamic dome loft matching chassis_canopy.FCStd curvature:
+    w_c_out_0 = make_rounded_rect_wire_z(35.00, 65.00, Y_mid - 10.80, Y_mid + 10.80, 3.80, 10.50)
+    w_c_out_1 = make_rounded_rect_wire_z(35.20, 64.80, Y_mid - 10.50, Y_mid + 10.50, 3.50, 13.50)
+    w_c_out_2 = make_rounded_rect_wire_z(36.80, 63.20, Y_mid - 9.50, Y_mid + 9.50, 3.20, 17.00)
+    w_c_out_3 = make_rounded_rect_wire_z(39.80, 60.20, Y_mid - 8.00, Y_mid + 8.00, 2.80, 20.00)
+    w_c_out_4 = make_rounded_rect_wire_z(44.00, 56.00, Y_mid - 5.50, Y_mid + 5.50, 2.50, 22.00)
+    canopy_outer_dome = Part.makeLoft([w_c_out_0, w_c_out_1, w_c_out_2, w_c_out_3, w_c_out_4], True)
+    canopy_solid = canopy_base.fuse(canopy_outer_dome)
+
+    # Inner hollow cavity loft:
+    w_c_in_0 = make_rounded_rect_wire_z(35.50, 64.50, Y_mid - 9.50, Y_mid + 9.50, 2.50, cover_z_base - 0.10)
+    w_c_in_1 = make_rounded_rect_wire_z(36.50, 63.50, Y_mid - 8.80, Y_mid + 8.80, 2.20, 13.50)
+    w_c_in_2 = make_rounded_rect_wire_z(38.00, 62.00, Y_mid - 7.60, Y_mid + 7.60, 2.00, 17.00)
+    w_c_in_3 = make_rounded_rect_wire_z(41.00, 59.00, Y_mid - 6.00, Y_mid + 6.00, 1.80, 19.80)
+    canopy_inner_void = Part.makeLoft([w_c_in_0, w_c_in_1, w_c_in_2, w_c_in_3], True)
+    canopy_solid = canopy_solid.cut(canopy_inner_void)
+
+    # Option C Hold-Down Sleeves descending from canopy roof onto PCB (Z = -3.05 mm):
     for px_pin, py_pin in pin_coords:
         hd_outer = Part.makeCylinder(2.10, 15.55, App.Vector(px_pin, py_pin, -3.05))
         hd_rib = Part.makeBox(2.40, 5.60, 5.00, App.Vector(px_pin - 1.20, py_pin, 7.60))
         hd_pin_clear = Part.makeCylinder(1.30, 4.00, App.Vector(px_pin, py_pin, -3.50))
-        cover_solid = cover_solid.fuse(hd_outer).fuse(hd_rib).cut(hd_pin_clear)
+        canopy_solid = canopy_solid.fuse(hd_outer).fuse(hd_rib).cut(hd_pin_clear)
 
-    # Drill 4x M2 countersunk through-holes in the cover flange:
-    for sx, sy in screw_coords:
-        sh_through = Part.makeCylinder(1.10, 10.0, App.Vector(sx, sy, cover_z_base - 1.0))
-        sh_csink = Part.makeCone(1.10, 2.10, 1.0, App.Vector(sx, sy, cover_z_base + 1.80))
-        sh_head = Part.makeCylinder(2.10, 6.0, App.Vector(sx, sy, cover_z_base + 2.80))
-        cover_solid = cover_solid.cut(sh_through).cut(sh_csink).cut(sh_head)
-
-    # 3 subtle rounded 45-degree chevron inspection / ventilation louvers in the dome roof:
+    # 3 subtle rounded 45-degree chevron convection / ventilation louvers in canopy roof:
     for dx_slot in [-7.0, 0.0, 7.0]:
         slot = make_chevron_slot(50.0 + dx_slot, Y_mid, 5.5, 2.0, 45.0, 19.0, 24.0)
-        cover_solid = cover_solid.cut(slot)
+        canopy_solid = canopy_solid.cut(slot)
+
+    canopy_solid = canopy_solid.removeSplitter()
 
     # =========================================================================
     # 10. Build Real Encapsulated COTS ADS1115 + Vertical Header & Solder Tails
@@ -594,37 +600,92 @@ def build_femur_shapes():
         ads_shape = ads_shape.fuse(tail)
 
     base_solid = base_solid.removeSplitter()
-    cover_solid = cover_solid.removeSplitter()
+    frame_solid = frame_solid.removeSplitter()
+    canopy_solid = canopy_solid.removeSplitter()
 
-    return base_solid, cover_solid, ads_shape
+    return base_solid, frame_solid, canopy_solid, ads_shape
+
+
+def patch_femur_view(filepath):
+    """Ensure GuiDocument.xml contains correct materials, colors and transparency for GUI viewing."""
+    temp_zip = filepath + ".tmp"
+    with zipfile.ZipFile(filepath, "r") as zin:
+        with zipfile.ZipFile(temp_zip, "w", compression=zipfile.ZIP_DEFLATED) as zout:
+            for item in zin.infolist():
+                data = zin.read(item.filename)
+                if item.filename == "GuiDocument.xml":
+                    xml_str = data.decode("utf-8")
+                    pos_canopy = xml_str.find('<ViewProvider name="Femur_Canopy"')
+                    if pos_canopy != -1:
+                        end_vp = xml_str.find("</ViewProvider>", pos_canopy)
+                        vp_chunk = xml_str[pos_canopy:end_vp]
+                        if 'name="Transparency"' not in vp_chunk:
+                            ins_pos = vp_chunk.find("</Properties>")
+                            if ins_pos != -1:
+                                transp_prop = '                <Property name="Transparency" type="App::PropertyPercent"><Integer value="55"/></Property>\n'
+                                diffuse_prop = '                <Property name="ShapeColor" type="App::PropertyColor"><PropertyColor value="4042322175"/></Property>\n'
+                                vp_chunk = vp_chunk[:ins_pos] + transp_prop + diffuse_prop + vp_chunk[ins_pos:]
+                                xml_str = xml_str[:pos_canopy] + vp_chunk + xml_str[end_vp:]
+                    data = xml_str.encode("utf-8")
+                zout.writestr(item, data)
+    os.replace(temp_zip, filepath)
 
 
 if __name__ in ("__main__", "generate_femur"):
-    femur_body, femur_cover, ads_module = build_femur_shapes()
+    femur_body, femur_frame, femur_canopy, ads_module = build_femur_shapes()
 
     print(f"Femur_Body Valid: {femur_body.isValid()}, Volume: {femur_body.Volume:.1f} mm^3, BB: {femur_body.BoundBox}")
-    print(f"Femur_Cover Valid: {femur_cover.isValid()}, Volume: {femur_cover.Volume:.1f} mm^3, BB: {femur_cover.BoundBox}")
+    print(f"Femur_Cover_Frame Valid: {femur_frame.isValid()}, Volume: {femur_frame.Volume:.1f} mm^3, BB: {femur_frame.BoundBox}")
+    print(f"Femur_Canopy Valid: {femur_canopy.isValid()}, Volume: {femur_canopy.Volume:.1f} mm^3, BB: {femur_canopy.BoundBox}")
 
     os.makedirs(models_dir, exist_ok=True)
     os.makedirs(export_step_dir, exist_ok=True)
     os.makedirs(export_stl_dir, exist_ok=True)
+
+    try:
+        App.closeDocument("femur")
+    except Exception:
+        pass
 
     doc = App.newDocument("femur")
     obj_body = doc.addObject("Part::Feature", "Femur_Body")
     obj_body.Label = "Femur Housing (Organic Double-Wrench, PETG)"
     obj_body.Shape = femur_body
 
+    obj_frame = doc.addObject("Part::Feature", "Femur_Cover_Frame")
+    obj_frame.Label = "Femur ADC Chamber Cover Frame (PETG)"
+    obj_frame.Shape = femur_frame
+
+    obj_canopy = doc.addObject("Part::Feature", "Femur_Canopy")
+    obj_canopy.Label = "Femur ADC Chamber Canopy (Plexiglas Transluzent)"
+    obj_canopy.Shape = femur_canopy
+
     obj_cover = doc.addObject("Part::Feature", "Femur_Cover")
-    obj_cover.Label = "Femur ADC Chamber Cover (Raised DuPont Dome)"
-    obj_cover.Shape = femur_cover
+    obj_cover.Label = "Femur ADC Chamber Cover Assembly (Frame + Canopy)"
+    obj_cover.Shape = Part.makeCompound([femur_frame, femur_canopy])
 
     obj_ads = doc.addObject("Part::Feature", "ADS1115_Board")
     obj_ads.Label = "Encapsulated ADS1115 16-Bit Leg ADC (0x48)"
     obj_ads.Shape = ads_module
 
     obj_comp = doc.addObject("Part::Feature", "Femur_Complete")
-    obj_comp.Label = "Femur Complete (Body + Cover)"
-    obj_comp.Shape = Part.makeCompound([femur_body, femur_cover])
+    obj_comp.Label = "Femur Complete (Body + Frame + Canopy)"
+    obj_comp.Shape = Part.makeCompound([femur_body, femur_frame, femur_canopy])
+
+    # Apply Style Guide materials & colors if GUI is present
+    for obj, col, trans, vis in [
+        (obj_body, (0.12, 0.35, 0.65), 0, True),
+        (obj_frame, (0.15, 0.15, 0.18), 0, True),
+        (obj_canopy, (0.85, 0.92, 0.98), 55, True),
+        (obj_cover, (0.15, 0.15, 0.18), 0, False),
+        (obj_ads, (0.04, 0.38, 0.88), 0, True),
+        (obj_comp, (0.12, 0.35, 0.65), 0, False),
+    ]:
+        if hasattr(obj, "ViewObject") and obj.ViewObject is not None:
+            obj.ViewObject.Visibility = vis
+            obj.ViewObject.ShapeColor = col
+            if trans > 0:
+                obj.ViewObject.Transparency = trans
 
     doc.recompute()
     doc.saveAs(fcstd_femur_path)
@@ -632,9 +693,13 @@ if __name__ in ("__main__", "generate_femur"):
 
     obj_comp.Shape.exportStep(step_femur_path)
     femur_body.exportStl(stl_femur_path)
-    femur_cover.exportStl(stl_cover_path)
+    femur_frame.exportStl(stl_frame_path)
+    femur_canopy.exportStl(stl_canopy_path)
+    obj_cover.Shape.exportStl(stl_cover_path)
     print(f"Exported STEP: {step_femur_path}")
-    print(f"Exported STL:  {stl_femur_path} & {stl_cover_path}")
+    print(f"Exported STLs: {stl_femur_path}, {stl_frame_path}, {stl_canopy_path}, {stl_cover_path}")
 
     App.closeDocument("femur")
-    sys.exit(0)
+
+    patch_femur_view(fcstd_femur_path)
+    print("✔ Patched GuiDocument.xml with transparent Plexiglas appearance")

@@ -35,9 +35,9 @@ import Part
 
 print("--- Generating Lasius Electronics Tray v2 (FreeCAD 1.1+) ---")
 
-models_dir = "/home/bjoern/Workspace/Hexapods/lasius/hardware/mechanics/models/custom/v2/parts"
-export_step_dir = "/home/bjoern/Workspace/Hexapods/lasius/hardware/mechanics/export/step/custom/v2/parts"
-export_stl_dir = "/home/bjoern/Workspace/Hexapods/lasius/hardware/mechanics/export/stl/custom/v2/parts"
+models_dir = "/home/bjoern/Workspace/Hexapods/lasius/hardware/mechanics/models/custom/v2/parts/electronics_tray"
+export_step_dir = "/home/bjoern/Workspace/Hexapods/lasius/hardware/mechanics/export/step/custom/v2/parts/electronics_tray"
+export_stl_dir = "/home/bjoern/Workspace/Hexapods/lasius/hardware/mechanics/export/stl/custom/v2/parts/electronics_tray"
 
 fcstd_tray_path = f"{models_dir}/electronics_tray.FCStd"
 step_tray_path = f"{export_step_dir}/electronics_tray.step"

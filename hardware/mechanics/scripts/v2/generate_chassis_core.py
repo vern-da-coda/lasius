@@ -39,7 +39,7 @@ import Part
 print("--- Generating Lasius Monocoque Central Core (custom/v2/parts/chassis_core.FCStd) ---")
 
 repo_root = "/home/bjoern/Workspace/Hexapods/lasius"
-models_dir = f"{repo_root}/hardware/mechanics/models/custom/v2/parts"
+models_dir = f"{repo_root}/hardware/mechanics/models/custom/v2/parts/chassis"
 asm_dir = f"{repo_root}/hardware/mechanics/models/custom/v2"
 cots_dir = f"{repo_root}/hardware/mechanics/models/cots"
 

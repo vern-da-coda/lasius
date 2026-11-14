@@ -87,7 +87,7 @@ flowchart TD
 | **Multiplexer `SC0`** | **Gelb** (`YE`) | **`SCL`** *(Pin 3!)* | I2C Takt Sub-Kanal 0 |
 | **Multiplexer `SD0`** | **Blau** (`BU`) | **`SDA`** *(Pin 4!)* | I2C Daten Sub-Kanal 0 |
 | **`GND`-Schiene** | **Schwarz** (`BK`) | `ADDR` | Wählt Standardadresse `0x48` |
-| *Coxa / Femur / Tibia / Fuß* | *Weiß / Grün / Violett / Orange* | `A0–A3` | Analoge Potis (`A0–A2`) + Fußschalter (`A3`) |
+| *Coxa / Femur / Tibia / Fuß* | *Weiß / Weiß / Weiß / Orange* | `A0–A3` | Analoge Potis (`A0–A2`, Poti-Leitung aus Servo immer Weiß) + Fußschalter (`A3`) |
 
 ---
 

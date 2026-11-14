@@ -4,7 +4,7 @@
  * Reverse-engineered from FreeCAD models and manufacturing specifications:
  * - Chassis Bottom / Top Plates: body_bottom.FCStd / body_top.FCStd (2.0 mm solid)
  * - Standoff Spacer Pillars: spacer_14x50.FCStd (Ø 14.0 mm x 51.3 mm)
- * - Coxa Bracket: coxa_bracket.FCStd (115 mm length, 31.7 mm width, stabilization cheeks)
+ * - Coxa Joint Segment: coxa.FCStd (115 mm length, 31.7 mm width, stabilization cheeks)
  * - Femur Side Plates: femur_plate.FCStd (100 mm pitch, 31.6 mm width, 51.3 mm spacing)
  * - Tibia Claw: tibia.FCStd (130 mm pitch, 7.0 mm solid, analytical sickle contour)
  * - Master Assembly: body_assembly.FCStd (142 parts, mirrored right legs)

@@ -37,7 +37,7 @@ import Part
 print("--- Generating Lasius Draped Plexiglas Canopy v2 (FreeCAD 1.1+) ---")
 
 repo_root = "/home/bjoern/Workspace/Hexapods/lasius"
-models_dir = f"{repo_root}/hardware/mechanics/models/custom/v2/parts"
+models_dir = f"{repo_root}/hardware/mechanics/models/custom/v2/parts/chassis"
 body_top_path = f"{repo_root}/hardware/mechanics/models/custom/v1/parts/body_top.FCStd"
 fcstd_canopy_path = f"{models_dir}/chassis_canopy.FCStd"
 

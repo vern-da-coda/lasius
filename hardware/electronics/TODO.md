@@ -47,9 +47,9 @@ Dieses Dokument bündelt den aktuellen Testbench-Stand, Hardware-Befunde, das ve
 | **`CH4` (`RM`) Daten** | **Weiß** | **Multiplexer** `SD4` → **Wandler** `RM` |
 | **`CH5` (`RR`) Daten** | **Grau** | **Multiplexer** `SD5` → **Wandler** `RR` |
 | *(`CH6` Reserve Daten)* | ***Braun*** | *Stromsensor (`INA228`)* |
-| **Analog `A0` (`Coxa` Poti)** | **Weiß** | Servo-Schleifer Coxa → **Wandler** `A0` |
-| **Analog `A1` (`Femur` Poti)** | **Grün** | Servo-Schleifer Femur → **Wandler** `A1` |
-| **Analog `A2` (`Tibia` Poti)** | **Violett** | Servo-Schleifer Tibia → **Wandler** `A2` |
+| **Analog `A0` (`Coxa` Poti)** | **Weiß** | Servo-Schleifer Coxa → **Wandler** `A0` (Poti-Leitung aus Servo immer Weiß) |
+| **Analog `A1` (`Femur` Poti)** | **Weiß** | Servo-Schleifer Femur → **Wandler** `A1` (Poti-Leitung aus Servo immer Weiß) |
+| **Analog `A2` (`Tibia` Poti)** | **Weiß** | Servo-Schleifer Tibia → **Wandler** `A2` (Poti-Leitung aus Servo immer Weiß) |
 | **Analog `A3` (`Foot` Switch)** | **Orange** | Mikroschalter `NO` → **Wandler** `A3` (`COM → GND` = **Schwarz**) |
 
 *(Am 6-Pin-Seitenheader des **Controllers** bleiben `OE` offen und **`V+` strikt unverbunden**, da auf `V+` die `6 V`-Servospannung liegt.)*
@@ -71,7 +71,7 @@ Dieses Dokument bündelt den aktuellen Testbench-Stand, Hardware-Befunde, das ve
 ### AP 2: Schaltpläne (`WireViz`) & Dokumentation abgleichen
 - [x] **WireViz-Spezifikationen & READMEs an reale Hardware & Master-Farbschema anpassen:**  
   * [`01_i2c_sensor_bus_topology.yml`](wiring/01_i2c_sensor_bus_topology.yml): Reale Belegung des **Multiplexers** (`SDx/SCx` ohne integrierte `3,3 V/GND`-Kanäle), zentrale `3,3 V / GND`-Verteilerschiene (`Dist_3V3_GND_Rail`), Hauptbus-Daisy-Chain (`Pi → Controller Left 0x40 → Controller Right 0x42 → Multiplexer 0x71`) und Pro-Kanal-Farbcode (`Blau/Grün/Violett/Orange/Weiß/Grau + Gelb`) eingepflegt.
-  * [`02_single_leg_feedback_harness.yml`](wiring/02_single_leg_feedback_harness.yml): Analoge Adernfarben (`A0 = Weiß`, `A1 = Grün`, `A2 = Violett`, `A3 = Orange/Schwarz`), Split-Uplink sowie reale `V280`-Pinreihenfolge (`SCL` vor `SDA`) und `ADDR → GND` eingepflegt.
+  * [`02_single_leg_feedback_harness.yml`](wiring/02_single_leg_feedback_harness.yml): Analoge Adernfarben (`A0/A1/A2 = Weiß` [Poti-Leitung aus den Servos immer Weiß], `A3 = Orange/Schwarz`), Split-Uplink sowie reale `V280`-Pinreihenfolge (`SCL` vor `SDA`) und `ADDR → GND` eingepflegt.
   * [`03_power_distribution.yml`](wiring/03_power_distribution.yml) & [`04_pca9685_servo_distribution.yml`](wiring/04_pca9685_servo_distribution.yml) (`Dist_3V3_GND_Rail` inkl. Einzelreferenz an `Star_Ground_Bus`, einheitliche Platinen-Benennung **Controller / Multiplexer / Wandler**) sowie [`wiring/README.md`](wiring/README.md), [`hardware/README.md`](../README.md) und [`README.md`](../../README.md) aktualisiert.
 - [x] **WireViz-Diagramme (`.svg`, `.png`, `.html`, `.bom.tsv`) neu gebaut** (`cd hardware/electronics/wiring && uv run wireviz ...`).
 - [ ] **Detail-Dokumentation in `docs/` nachziehen:**  
@@ -81,9 +81,9 @@ Dieses Dokument bündelt den aktuellen Testbench-Stand, Hardware-Befunde, das ve
 
 ### AP 3: Hardware-Ausbau Testbench & Serienaufbau (18 DOF)
 - [ ] **Vollständiges Testbein (`LF` auf `CH0`) am Wandler aufbauen:**  
-  * Zweites & drittes Servo-Poti an **`A1` (Grün, Femur)** und **`A2` (Violett, Tibia)** sowie den `Omron D2F-L` Fußschalter mit **`10 kΩ` Pull-up (`A3 → 3,3 V`)** an **`A3` (Orange)** + `COM → GND` (**Schwarz**) testen.
+  * Zweites & drittes Servo-Poti an **`A1` (Weiß, Femur)** und **`A2` (Weiß, Tibia)** sowie den `Omron D2F-L` Fußschalter mit **`10 kΩ` Pull-up (`A3 → 3,3 V`)** an **`A3` (Orange)** + `COM → GND` (**Schwarz**) testen.
 - [ ] **Filter-Test (`4× 100 nF` MLCC) unter Volllast eines Beins:**  
-  * Rauschen an `A0–A2` prüfen, während alle 3 Servos gleichzeitig unter Last laufen; entscheiden, wie die `100 nF` + `10 kΩ` Passivbauteile platzsparend in die freie Lötzone von [`femur.FCStd`](../mechanics/models/custom/v2/parts/femur.FCStd) eingelötet werden.
+  * Rauschen an `A0–A2` prüfen, während alle 3 Servos gleichzeitig unter Last laufen; entscheiden, wie die `100 nF` + `10 kΩ` Passivbauteile platzsparend in die freie Lötzone von [`femur.FCStd`](../mechanics/models/custom/v2/parts/femur/femur.FCStd) eingelötet werden.
 - [ ] **Zweiten Controller (`0x42`, rechts, `A1` gebrückt) in Daisy-Chain integrieren & testen.**
 - [ ] **Restliche `5×` `V280`-Wandler einzeln prüfen:**  
   * Jeden weiteren **Wandler** vor dem Einbau in die Femur-Kammern auf Adresse `0x48` (`ADDR → GND`), 12- vs. 16-Bit-Auflösung und Kanal-Isolation (`CH1–CH5`) verifizieren.

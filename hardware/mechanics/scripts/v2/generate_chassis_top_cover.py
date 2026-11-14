@@ -26,7 +26,7 @@ import Part
 print("--- Generating Central Electronics Top Cover v2 ---")
 
 repo_root = "/home/bjoern/Workspace/Hexapods/lasius"
-models_dir = f"{repo_root}/hardware/mechanics/models/custom/v2/parts"
+models_dir = f"{repo_root}/hardware/mechanics/models/custom/v2/parts/chassis"
 fcstd_cover_path = f"{models_dir}/chassis_top_cover.FCStd"
 
 def make_rounded_rect_solid(x_min, x_max, y_min, y_max, r_corner, z_min, z_max):

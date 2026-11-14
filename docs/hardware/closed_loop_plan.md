@@ -173,9 +173,9 @@ All 6 **Wandler** boards are wired identically. `ADDR` is tied to `GND` on each 
 | **SDA** *(Pin 4!)* | **`SDn`** on **Multiplexer** (e.g. `SD0` for LF, leg color) | Isolated sub-I2C data |
 | **ADDR** | Board **GND** (**Black**) | Fixes address to `0x48` |
 | **ALRT** | *(Leave floating)* | Not used |
-| **A0** | **Coxa Servo Potentiometer Line** (**White**) | Hip swing joint angle |
-| **A1** | **Femur Servo Potentiometer Line** (**Green**) | Thigh joint angle |
-| **A2** | **Tibia Servo Potentiometer Line** (**Violet**) | Knee / claw joint angle |
+| **A0** | **Coxa Servo Potentiometer Line** (**White**) | Hip swing joint angle (poti line always white) |
+| **A1** | **Femur Servo Potentiometer Line** (**White**) | Thigh joint angle (poti line always white) |
+| **A2** | **Tibia Servo Potentiometer Line** (**White**) | Knee / claw joint angle (poti line always white) |
 | **A3** | **Omron D2F-L Foot Switch (`NO`, Orange) + `10 kΩ` Pull-Up to `3.3V`** | Tactile ground contact (`COM → GND` Black) |
 
 ---

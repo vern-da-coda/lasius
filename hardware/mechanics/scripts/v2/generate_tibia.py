@@ -21,10 +21,10 @@ import Part
 print("--- Generating Lasius Monolithic Tibia v2 (G1 Smooth Claw + 45-deg Truss Cage + Internal M4 Nut Seat) ---")
 
 models_dir = "/home/bjoern/Workspace/Hexapods/lasius/hardware/mechanics/models"
-export_step_dir = "/home/bjoern/Workspace/Hexapods/lasius/hardware/mechanics/export/step/custom/v2/parts"
-export_stl_dir = "/home/bjoern/Workspace/Hexapods/lasius/hardware/mechanics/export/stl/custom/v2/parts"
+export_step_dir = "/home/bjoern/Workspace/Hexapods/lasius/hardware/mechanics/export/step/custom/v2/parts/tibia"
+export_stl_dir = "/home/bjoern/Workspace/Hexapods/lasius/hardware/mechanics/export/stl/custom/v2/parts/tibia"
 
-fcstd_tibia_v2_path = f"{models_dir}/custom/v2/parts/tibia.FCStd"
+fcstd_tibia_v2_path = f"{models_dir}/custom/v2/parts/tibia/tibia.FCStd"
 step_tibia_v2_path = f"{export_step_dir}/tibia.step"
 stl_tibia_v2_path = f"{export_stl_dir}/tibia.stl"
 

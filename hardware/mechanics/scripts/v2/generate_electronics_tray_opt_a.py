@@ -22,11 +22,11 @@ import Part
 print("--- Generating Electronics Tray Option A (Vertical On-Edge Mounting) ---")
 
 repo_root = "/home/bjoern/Workspace/Hexapods/lasius"
-models_dir = f"{repo_root}/hardware/mechanics/models/custom/v2/parts"
+models_dir = f"{repo_root}/hardware/mechanics/models/custom/v2/parts/electronics_tray/concepts"
 asm_dir = f"{repo_root}/hardware/mechanics/models/custom/v2"
 cots_dir = f"{repo_root}/hardware/mechanics/models/cots"
-export_step_dir = f"{repo_root}/hardware/mechanics/export/step/custom/v2/parts"
-export_stl_dir = f"{repo_root}/hardware/mechanics/export/stl/custom/v2/parts"
+export_step_dir = f"{repo_root}/hardware/mechanics/export/step/custom/v2/parts/electronics_tray/concepts"
+export_stl_dir = f"{repo_root}/hardware/mechanics/export/stl/custom/v2/parts/electronics_tray/concepts"
 export_asm_step_dir = f"{repo_root}/hardware/mechanics/export/step/custom/v2"
 export_asm_stl_dir = f"{repo_root}/hardware/mechanics/export/stl/custom/v2"
 

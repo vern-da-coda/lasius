@@ -32,9 +32,9 @@ import Part
 
 print("--- Generating Lasius Chassis Belly Pan v2 (FreeCAD 1.1+) ---")
 
-models_dir = "/home/bjoern/Workspace/Hexapods/lasius/hardware/mechanics/models/custom/v2/parts"
-export_step_dir = "/home/bjoern/Workspace/Hexapods/lasius/hardware/mechanics/export/step/custom/v2/parts"
-export_stl_dir = "/home/bjoern/Workspace/Hexapods/lasius/hardware/mechanics/export/stl/custom/v2/parts"
+models_dir = "/home/bjoern/Workspace/Hexapods/lasius/hardware/mechanics/models/custom/v2/parts/chassis"
+export_step_dir = "/home/bjoern/Workspace/Hexapods/lasius/hardware/mechanics/export/step/custom/v2/parts/chassis"
+export_stl_dir = "/home/bjoern/Workspace/Hexapods/lasius/hardware/mechanics/export/stl/custom/v2/parts/chassis"
 
 fcstd_pan_path = f"{models_dir}/chassis_belly_pan.FCStd"
 step_pan_path = f"{export_step_dir}/chassis_belly_pan.step"

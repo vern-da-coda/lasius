@@ -29,16 +29,16 @@ import os
 import FreeCAD as App
 import Part
 
-print("--- Generating Lasius Coxa Bracket v2 (Truss Gussets + Healed Flanges + Option A) ---")
+print("--- Generating Lasius Coxa v2 (Monolithic Joint Segment & Lightweight Truss) ---")
 
 models_dir = "/home/bjoern/Workspace/Hexapods/lasius/hardware/mechanics/models"
 v1_coxa_path = f"{models_dir}/custom/v1/parts/coxa_bracket.FCStd"
-v2_coxa_path = f"{models_dir}/custom/v2/parts/coxa_bracket.FCStd"
+v2_coxa_path = f"{models_dir}/custom/v2/parts/coxa/coxa.FCStd"
 
-export_step_dir = "/home/bjoern/Workspace/Hexapods/lasius/hardware/mechanics/export/step/custom/v2/parts"
-export_stl_dir = "/home/bjoern/Workspace/Hexapods/lasius/hardware/mechanics/export/stl/custom/v2/parts"
-step_coxa_path = f"{export_step_dir}/coxa_bracket.step"
-stl_coxa_path = f"{export_stl_dir}/coxa_bracket.stl"
+export_step_dir = "/home/bjoern/Workspace/Hexapods/lasius/hardware/mechanics/export/step/custom/v2/parts/coxa"
+export_stl_dir = "/home/bjoern/Workspace/Hexapods/lasius/hardware/mechanics/export/stl/custom/v2/parts/coxa"
+step_coxa_path = f"{export_step_dir}/coxa.step"
+stl_coxa_path = f"{export_stl_dir}/coxa.stl"
 
 
 # Tibia-Standard Strut Parameters (from generate_tibia.py servo cage):
@@ -312,6 +312,74 @@ def build_coxa_bracket_v2_shape():
     shape = shape.cut(bore_pivot_3mm)
 
     # -------------------------------------------------------------
+    # 5. Cheek 45-Degree Bionic Truss Windows (Konzept 1: Symmetrical A-Truss & Flank Windows)
+    # -------------------------------------------------------------
+    # Implements Style-Guide Section 3 compliant 45-degree Warren and A-truss windows
+    # across the front cheek (Y in [0.00, 5.00]) and rear cheek (Y in [25.50, 31.70]),
+    # perfectly mirrored about the horizontal midline Z = 9.00 mm (Z_top(x) = 18.00 - Z_bot(x)).
+    # Interior hardware chamber (Y in [5.00, 25.50]) is left 100% untouched.
+
+    # A. Flank Windows (Zone 1: X in [9.70, 21.20])
+    # Upper flank window above Femur servo mounting belt (Z in [20.50, 30.00]):
+    p_flank_top = [
+        App.Vector(9.70, 20.50, 0.0),
+        App.Vector(21.20, 20.50, 0.0),
+        App.Vector(21.20, 30.00, 0.0),
+        App.Vector(19.20, 30.00, 0.0),
+    ]
+    f_fl_t = make_filleted_polygon_2d(p_flank_top, R_FILLET)
+
+    # Lower flank window flanking counter-bearing tab (Z in [-12.00, -2.50]):
+    p_flank_bot = [
+        App.Vector(9.70, -2.50, 0.0),
+        App.Vector(19.20, -12.00, 0.0),
+        App.Vector(21.20, -12.00, 0.0),
+        App.Vector(21.20, -2.50, 0.0),
+    ]
+    f_fl_b = make_filleted_polygon_2d(p_flank_bot, R_FILLET)
+
+    # B. Central Bridge Windows (Zone 2: X in [27.00, 51.50])
+    # 1. Inner Upper Triangle (Chevron half, hypotenuse at -45 deg, bottom at Z = 10.25):
+    p_chev_sp_t = [
+        App.Vector(27.00, 10.25, 0.0),
+        App.Vector(44.75, 10.25, 0.0),
+        App.Vector(27.00, 28.00, 0.0),
+    ]
+    f_chev_sp_t = make_filleted_polygon_2d(p_chev_sp_t, R_FILLET)
+
+    # 2. Inner Lower Triangle (mirror across Z = 9.00 mm, hypotenuse at +45 deg, top at Z = 7.75):
+    p_chev_sp_b = [
+        App.Vector(27.00, -10.00, 0.0),
+        App.Vector(44.75, 7.75, 0.0),
+        App.Vector(27.00, 7.75, 0.0),
+    ]
+    f_chev_sp_b = make_filleted_polygon_2d(p_chev_sp_b, R_FILLET)
+
+    # 3. Outer Upper Trapezoid (parallel 45-deg strut, S-curve chord margin >= 2.50 mm):
+    p_br_top = [
+        App.Vector(29.00, 29.54, 0.0),
+        App.Vector(48.29, 10.25, 0.0),
+        App.Vector(51.50, 10.25, 0.0),
+        App.Vector(51.50, 19.80, 0.0),
+    ]
+    f_br_t = make_filleted_polygon_2d(p_br_top, R_FILLET)
+
+    # 4. Outer Lower Trapezoid (mirror across Z = 9.00 mm):
+    p_br_bot = [
+        App.Vector(29.00, -11.54, 0.0),
+        App.Vector(51.50, -1.80, 0.0),
+        App.Vector(51.50, 6.50, 0.0),
+        App.Vector(48.29, 6.50, 0.0),
+    ]
+    f_br_b = make_filleted_polygon_2d(p_br_bot, R_FILLET)
+
+    # Cut both Front Cheek (Y in [0.00, 5.00]) and Rear Cheek (Y in [25.50, 31.70])
+    for f in [f_fl_t, f_fl_b, f_chev_sp_t, f_chev_sp_b, f_br_t, f_br_b]:
+        cut_f = extrude_face_xz(f, -1.0, 7.0)
+        cut_r = extrude_face_xz(f, 24.5, 8.5)
+        shape = shape.cut(cut_f).cut(cut_r)
+
+    # -------------------------------------------------------------
     # 6. Front Wall Central Bulkhead Weight-Relief Window - REMOVED
     # -------------------------------------------------------------
     # Kept completely solid so the Coxa servo screw block (X = 66.30, Y in [3.95, 5.00])
@@ -373,7 +441,7 @@ def build_coxa_bracket_v2_shape():
 if __name__ == "__main__":
     shape_v2 = build_coxa_bracket_v2_shape()
     print(
-        f"Coxa_Bracket v2 Valid: {shape_v2.isValid()}, Solids: {len(shape_v2.Solids)}, "
+        f"Coxa v2 Valid: {shape_v2.isValid()}, Solids: {len(shape_v2.Solids)}, "
         f"Volume: {shape_v2.Volume:.1f} mm^3, Mass (PETG): {shape_v2.Volume * 1.27 / 1000.0:.1f} g"
     )
 
@@ -381,9 +449,9 @@ if __name__ == "__main__":
     os.makedirs(export_step_dir, exist_ok=True)
     os.makedirs(export_stl_dir, exist_ok=True)
 
-    doc = App.newDocument("coxa_bracket")
-    obj = doc.addObject("Part::Feature", "Coxa_Bracket")
-    obj.Label = "Coxa Bracket v2 (Truss Gusset & Weight-Relief Windows)"
+    doc = App.newDocument("coxa")
+    obj = doc.addObject("Part::Feature", "Coxa")
+    obj.Label = "Coxa v2 (Monolithic Joint Segment & Lightweight Truss)"
     obj.Shape = shape_v2
 
     doc.recompute()
@@ -394,4 +462,4 @@ if __name__ == "__main__":
     shape_v2.exportStl(stl_coxa_path)
     print(f"Exported STEP & STL: {step_coxa_path}, {stl_coxa_path}")
 
-    App.closeDocument("coxa_bracket")
+    App.closeDocument("coxa")

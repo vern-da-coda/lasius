@@ -111,7 +111,7 @@ cables:
   Femur_Pot_Line:
     gauge: 28 AWG
     length: 0.18
-    colors: [GN]
+    colors: [WH]
     wirecount: 1
 
   Tibia_Power_PWM:
@@ -123,7 +123,7 @@ cables:
   Tibia_Pot_Line:
     gauge: 28 AWG
     length: 0.30
-    colors: [VT]
+    colors: [WH]
     wirecount: 1
 
   Foot_Switch_Line:
@@ -165,7 +165,7 @@ connections:
     - Coxa_Pot_Line: [1]
     - Wandler_Leg_Board: [A0_Coxa]
 
-  # Femur Servo PWM + Potentiometer Wiper (Green -> A1)
+  # Femur Servo PWM + Potentiometer Wiper (White -> A1)
   -
     - Controller_Leg_Block: [Femur_PWM, Femur_V+, Femur_GND]
     - Femur_Power_PWM: [1, 2, 3]
@@ -175,7 +175,7 @@ connections:
     - Femur_Pot_Line: [1]
     - Wandler_Leg_Board: [A1_Femur]
 
-  # Tibia Servo PWM + Potentiometer Wiper (Violet -> A2)
+  # Tibia Servo PWM + Potentiometer Wiper (White -> A2)
   -
     - Controller_Leg_Block: [Tibia_PWM, Tibia_V+, Tibia_GND]
     - Tibia_Power_PWM: [1, 2, 3]

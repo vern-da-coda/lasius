@@ -42,7 +42,7 @@ os.makedirs(f"{export_dir}/stl/custom/v2", exist_ok=True)
 doc.saveAs(fcstd_path)
 
 # Open source master documents
-doc_tray = App.openDocument(f"{parts_dir}/electronics_tray.FCStd")
+doc_tray = App.openDocument(f"{parts_dir}/electronics_tray/electronics_tray.FCStd")
 doc_pca = App.openDocument(f"{cots_dir}/pca9685_board.FCStd")
 doc_tca = App.openDocument(f"{cots_dir}/tca9548a_board.FCStd")
 doc_bat = App.openDocument(f"{cots_dir}/battery_lipo_2s.FCStd")
