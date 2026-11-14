@@ -101,34 +101,26 @@ Dieser Backlog führt alle offenen Aufgaben, konstruktiven Erweiterungen und Ver
 
 ---
 
-## 6. Biomimetische Module & Aktuatoren (Kopf & Hinterleib)
+## 6. Biomimetische Module & Aktuatoren (Kopf & Hinterleib – Lynxmotion A-Pod Adaption)
 
-- [ ] **Gaster modellieren (Ameisen-Hinterleib / Abdomen):**  
-  * **Status:** Neues Modul am Heck des Roboters.
-  * **Zweck & Funktion:**
-    * Primär: Statischer und dynamischer Gewichtsausgleich (*Counterweight*) für die vorderen Kopfkomponenten (Kameraturm und Mandibeln).
-    * Sekundär (zu evaluieren): Bauraum für Zusatzakku (z. B. 2S/3S LiPo), Power-Distribution-Board oder Heck-Sensorik.
-  * **Überlegung Artikulation / Beweglichkeit:**
-    * *Sollte sich der Gaster bewegen können?*
-    * 1- bis 2-Achs-Gelenk (Servo am Petiolus / Stielchenglied) ermöglicht aktive dynamische Schwerpunktverlagerung (*Center of Gravity Shifting*) beim Klettern oder Laufen auf Steigungen sowie lebensechte biomimetische Gesten.
-  * **Strukturelles Petiolus-/Heck-Element als Ersatz der 2 Heck-Spacer:**
-    * *Idee & Befestigung:* Die beiden hinteren Kunststoff-Distanzbolzen (`Spacer_Rear_1` bei $X = -90{,}0\,\text{mm}, Y = 0{,}0\,\text{mm}$ und `Spacer_Rear_2` bei $X = -120{,}0\,\text{mm}, Y = 0{,}0\,\text{mm}$) werden durch ein einziges strukturelles 3D-Druck-Formteil ("Petiolus-" bzw. "Heck-Interface-Modul") ersetzt.
-    * *Bohrungskompatibilität:* Nutzt exakt die bestehenden M3-Bohrungen auf der Heck-Mittellinie der oberen und unteren Carbonplatte und stützt die $51{,}3\,\text{mm}$ Distanz ab.
-    * *Integrierte Gelenk-Aktorik:* Direkte Aufnahme für das Schwenkgelenk des Gaster sowie Unterbringung des Gelenkservos im Heckbereich zwischen den Platten.
-    * *Kabeldurchführung:* Integrierter Kabeldurchlass für Leitungen zum Gaster (Zusatzakku, Stromverteilung, Sensorik/Beleuchtung).
-    * *Bionischer Formschluss:* Fließender, anatomischer Übergang von der Thorax-Carapace zum Petiolus und Abdomen.
-  * **Konstruktion:** Organisch geschwungener Hinterleib, passend zur Designsprache der Lasius-Beinsegmente.
-- [ ] **Integrierte Kopf-Baugruppe (`head_assembly.FCStd` – Mandibeln & Kameraturm vereinen):**  
-  * **Konzept:** Zusammenfassung von Mandibeln und Kamerasystem zu einem einheitlichen Kopfmodul an der Roboterfront:
-    * *Augen / Sensorik:* Kameraturm (2-Achs Pan/Tilt Kopf mit 2× Micro-Servos und Pi Camera Module 3).
-    * *Mundwerkzeuge:* Aktive Mandibeln (Greifzangen) darunter, gesteuert über einen Servo mit Kniehebel-/Zahnradgetriebe.
-    * *Vorteil der Zusammenführung:* Biologisch stimmige Anatomie, geteilter Bauraum und gemeinsame Leitungsführung durch den "Hals" ins Chassis.
-  * **Strukturelles Hals-/Nacken-Element als Ersatz der 2 Front-Spacer:**
-    * *Idee & Befestigung:* Die beiden vorderen Kunststoff-Distanzbolzen (`Spacer_Front_L` und `Spacer_Front_R` bei $X = 128{,}0\,\text{mm}, Y = \pm 12{,}0\,\text{mm}$) werden durch ein einziges strukturelles 3D-Druck-Formteil ("Hals-" bzw. "Nacken-Modul") ersetzt.
-    * *Bohrungskompatibilität:* Nutzt exakt die bestehenden M3-Bohrungen der beiden Carbonplatten und stützt die $51{,}3\,\text{mm}$ Distanz formstabil ab.
-    * *Integrierte Aktorik & Mechanik:* Das Nackenelement nimmt die Mandibeln und deren Antriebsservos direkt im Zwischenraum der Platten auf.
-    * *Kabeldurchführung:* Integrierter, geschützter Kabelkanal für das CSI-Kamerakabel und die Kopf-Servoleitungen direkt ins Chassis-Innere.
-    * *Bionischer Formschluss:* Bildet den fließenden anatomischen Übergang von der Thorax-Oberdeck-Haube zur Kopfkapsel.
+- [x] ~~**A-Pod Gaster modellieren (Platten-Sandwich-Hinterleib & 2-DoF Gimbal):**~~ **[ERLEDIGT]**  
+  * **Modelle & Generatoren:** [`apod_tail_mount.FCStd`](parts/apod_tail_mount.FCStd), [`apod_tail_bracket.FCStd`](parts/apod_tail_bracket.FCStd), [`apod_gaster.FCStd`](parts/apod_gaster.FCStd) und [`gaster_assembly.FCStd`](gaster_assembly.FCStd) generiert via [`generate_gaster_assembly.py`](../../../scripts/v2/generate_gaster_assembly.py).
+  * **Status:** Vollständig umgesetzt im originalgetreuen Lynxmotion A-Pod Kit-Design (Kåre Halvorsen / *Zenta*) als 2-DoF Platten-Sandwich-Hinterleib (Länge $117{,}0\,\text{mm}$, Breite $96{,}0\,\text{mm}$, $X \in [-148{,}0, -265{,}0\,\text{mm}]$).
+  * **Chassis-Interface über Spacer-Bohrungen:**
+    * Montageblock ([`apod_tail_mount.FCStd`](parts/apod_tail_mount.FCStd)) überbrückt den $51{,}30\,\text{mm}$ Chassis-Spalt und verankert starr über die beiden hinteren M3-Bohrungen auf der Längsachse ($X = -90{,}0\,\text{mm}$ und $X = -120{,}0\,\text{mm}$).
+    * 2-DoF SES-Gimbal ([`apod_tail_bracket.FCStd`](parts/apod_tail_bracket.FCStd)) mit Standard-Servos (Hitec HS-645MG / Torcster NR-645): Pan (Gieren links/rechts $\pm 45^\circ$) und Tilt (Nicken heben/senken $\pm 35^\circ$).
+    * Konturierte Ober- und Unterplatten ($2{,}5\,\text{mm}$ Carbon) mit 4× Distanzbolzen und T-Schubstegen (großzügiger Innenraum für Zusatzakku oder Telemetrie).
+  * **Integration:** Eingebunden in die erweiterte Master-Assembly [`body_gaster_assembly.FCStd`](body_gaster_assembly.FCStd).
+
+- [x] ~~**A-Pod Kopf- & Mandibeln-Baugruppe (5-DoF Bionik-Kopf & massive 3D-Sandwich-Mandibeln):**~~ **[ERLEDIGT]**  
+  * **Modelle & Generatoren:** [`apod_head_mount.FCStd`](parts/apod_head_mount.FCStd), [`apod_neck_bracket.FCStd`](parts/apod_neck_bracket.FCStd), [`apod_head_platform.FCStd`](parts/apod_head_platform.FCStd), [`apod_mandible_left.FCStd`](parts/apod_mandible_left.FCStd), [`apod_mandible_right.FCStd`](parts/apod_mandible_right.FCStd) und [`head_assembly.FCStd`](head_assembly.FCStd) generiert via [`generate_head_assembly.py`](../../../scripts/v2/generate_head_assembly.py).
+  * **Status:** Vollständig umgesetzt in der originalgetreuen Lynxmotion/Zenta A-Pod 5-DoF Architektur mit 5 Standard-Servos (HS-645MG):
+    * 3-DoF Hals: Pan (Gieren Z), Tilt (Nicken Y) und Roll (Rollen X).
+    * Kopf-Plattform ([`apod_head_platform.FCStd`](parts/apod_head_platform.FCStd)): Bionisches Kopfchassis mit getrennter Aufnahme für linkes und rechtes Mandibel-Servo (`cMandLeftPin`, `cMandRightPin`) sowie Facettenaugen-Ports.
+    * Massive 3D-Sandwich-Mandibeln ([`apod_mandible_left.FCStd`](parts/apod_mandible_left.FCStd), [`apod_mandible_right.FCStd`](parts/apod_mandible_right.FCStd)): $134\,\text{mm}$ Länge, $120\,\text{mm}$ Ausladung vor Drehpunkt, $Y = \pm 68\,\text{mm}$ Spannweite, 4 gezahnte Greifspitzen, Carbon-Doppelplatten mit 4 Distanzbolzen und Weather-Stripping-Führung.
+  * **Chassis-Interface über Spacer-Bohrungen:**
+    * Montageblock ([`apod_head_mount.FCStd`](parts/apod_head_mount.FCStd)) überbrückt den $51{,}30\,\text{mm}$ Spalt und verankert starr über die beiden vorderen M3-Bohrungen ($X = 128{,}0\,\text{mm}, Y = \pm 12{,}0\,\text{mm}$) mit Tasche für das Pan-Servo.
+  * **Integration:** Eingebunden in die Master-Assembly [`body_gaster_assembly.FCStd`](body_gaster_assembly.FCStd).
 
 ---
 
@@ -180,32 +172,55 @@ Dieser Backlog führt alle offenen Aufgaben, konstruktiven Erweiterungen und Ver
     * **TCA9548A I2C-Multiplexer:** Signalviolett `(0.58, 0.15, 0.75)`
     * **2S LiPo-Akku:** Signalgold / Gelb `(0.95, 0.75, 0.10)` im Untergeschoss unter dem Tray-Deck ($Z = 3{,}0\dots 17{,}0\,\text{mm}$ World).
   * **Integration in Master Body Assembly v2:** Als einheitliche Baugruppe via `App::Link` in [`body_assembly.FCStd`](body_assembly.FCStd) referenziert. Raspberry Pi 4 sitzt auf dem Oberdeck bei $Z = 55{,}3\,\text{mm}$ unter der Chitin-Haube. STEP- und STL-Exporte synchronisiert.
-- [ ] **Organische Neugestaltung der oberen Chassis-Abdeckung (`parts/chassis_top_cover.FCStd`):**  
-  * **Status:** Offenes Konstruktions-Todo zur bionischen Weiterentwicklung der Oberdeck-Haube.
-  * **Designphilosophie & Ästhetik:**
-    * Signifikant weniger technisch/kantig, deutlich organischer gestalten (Bionik / Ameisen-Thorax-Carapace).
-    * Formen und Schwingung der bestehenden Bauteile (insb. Femur-Wangen und Coxa-Brackets) harmonisch aufgreifen und fortführen.
-  * **Geometrische Ausdehnung & Linienführung:**
-    * Die Abdeckung soll über alle 6 Coxa-Servoachsen hinweg gespannt werden und fließend/organisch über den Raspberry Pi 4 verlaufen.
-    * Optische und funktionale Schutzhaube, die die Drehachsen und den SBC in einer durchgehenden Skulptur vereint.
-  * **Befestigung des Raspberry Pi 4:**
-    * Evaluierung und Konstruktion einer dedizierten Befestigungslösung:
-      * *Option 1:* Eigene Montage-/Adapterplatte auf der oberen Carbonplatte (`Body_Top`), auf die der Pi 4 geschraubt wird.
-      * *Option 2:* Direkte Verschraubung in der Abdeckung selbst (integrierte Schraubdome / Zentrierzapfen an der Hauben-Innenseite).
-- [ ] **Konzeptstudie: Monolithischer Chassis-Kern / Kapselung als Ersatz der 4 mittleren Spacer:**  
-  * **Idee & Fragestellung:** Prüfen, ob die 4 mittleren Kunststoff-Distanzbolzen (`Spacer_Window_FL/FR/RL/RR` bei $X = \pm 45{,}0, Y = \pm 30{,}0\,\text{mm}$) durch ein einziges strukturelles 3D-Druck-Formteil (Chassis-Kernmodul / Sandwich-Core) ersetzt werden sollten.
-  * **Erhalt der Carbon-Sandwich-Bauweise (Primäre Tragstruktur):**
-    * Die beiden $2{,}0\,\text{mm}$ dicken Carbonfaser-Platten ([`body_bottom.FCStd`](../../custom/v1/parts/body_bottom.FCStd) als Untergurt und [`body_top.FCStd`](../../custom/v1/parts/body_top.FCStd) als Obergurt) bleiben als primäre tragende Außenhaut erhalten, da sie eine enorme Biegesteifigkeit und Zug-/Druckfestigkeit bieten.
-    * Das 3D-Formteil fungiert als strukturierter **Stützkern (*Sandwich-Core / Schubsteg*)** zwischen den beiden Platten:
-      * Es stützt die $51{,}3\,\text{mm}$ Distanz formstabil ab und nimmt die Druck- und Torsionskräfte auf.
-      * Ersetzt die punktuelle Krafteinleitung der 4 diskreten Spacer durch eine großflächige, schwingungsdämpfende und verwindungssteife Verbindung.
-  * **Direkte Platinen- und Akku-Kapselung:**
-    * Die beiden PCA9685 Servo-Controller, der TCA9548A Multiplexer und der 2S LiPo-Akku werden direkt in integrierte Führungsschienen, Montagefächer und Steckplätze im Kern-Formteil eingeschoben/verschraubt (macht ein separates Zwischen-Tray überflüssig).
-    * **Abgeschlossenes Gehäusedesign:** Vollständige seitliche Staub-, Spritz- und Berührungskapselung aller Innenraum-Platinen und Leitungen.
-    * **Wartungszugang:** Wartungs- und Steckzugriff ausschließlich von **oben** (durch das obere Plattenfenster nach Abnehmen der Haube) oder von **unten** (durch das untere Plattenfenster nach Lösen der Belly Pan).
-  * **Dynamischer Coxa-Freigang:**
-    * Die Außenflanken des 3D-Kerns müssen unter Berücksichtigung der maximalen Coxa-Ausschläge (insb. der mittleren Servos ML/MR sowie der inneren Schwenkradien von FL/FR/RL/RR) tailliert und freigestellt werden, um Kollisionen beim Schwenken der Beine absolut auszuschließen.
-    * Definierte, geschützte Durchführungsöffnungen bzw. Tüllen für die Servokabel zu den Beinen.
+- [x] ~~**Service-Abdeckung mit '>>>' Chevrons & Raspberry Pi 4 Montageplatte im Canopy:**~~ **[ERLEDIGT]**  
+  * **Modelle & Generatoren:**
+    * Raspberry Pi 4 Montageplatte: [`chassis_rpi_mount.FCStd`](parts/chassis_rpi_mount.FCStd) generiert via [`generate_chassis_rpi_mount.py`](../../../scripts/v2/generate_chassis_rpi_mount.py).
+    * Service-Abdeckung: [`chassis_service_cover.FCStd`](parts/chassis_service_cover.FCStd) generiert via [`generate_chassis_service_cover.py`](../../../scripts/v2/generate_chassis_service_cover.py).
+    * Erhöhtes Plexiglas-Canopy mit Service-Ausschnitt: [`chassis_canopy.FCStd`](parts/chassis_canopy.FCStd) generiert via [`generate_chassis_canopy.py`](../../../scripts/v2/generate_chassis_canopy.py).
+  * **Funktion & Konstruktion (Zentrierte Ausrichtung zwischen den 4 mittleren Bohrungen):**
+    * **1. Raspberry Pi 4 Positionierung & Montageplatte (`chassis_rpi_mount.FCStd`):**
+      * Der Raspberry Pi 4 Model B sitzt symmetrisch zentriert bei $X = 0{,}0\,\text{mm}, Y = 0{,}0\,\text{mm}, Z = 59{,}80\,\text{mm}$ exakt zwischen den 4 zentralen Chassis-Bohrungen bei $(\pm 45{,}0, \pm 30{,}0\,\text{mm})$.
+      * 4× M3 Senkschrauben bei $X = \pm 45{,}0\,\text{mm}, Y = \pm 30{,}0\,\text{mm}$ verankern die Trägerplatte starr im Zentralkern (`chassis_core`).
+      * 4× integrierte Sockeldome ($\varnothing 6{,}4\,\text{mm}$, Höhe $2{,}5\,\text{mm}$) im $58 \times 49\,\text{mm}$ Lochbild ($X = \pm 29{,}0, Y = \pm 24{,}5\,\text{mm}$) mit M2.5-Gewindeeinsatztaschen.
+      * Unterseitige Kabeltasche ($44 \times 36\,\text{mm}$) für Flachbandkabel (CSI-Kamera, DSI) und Kühlluftzirkulation aus dem Chassis-Innenraum.
+    * **2. Zentrierte Service-Abdeckung (`chassis_service_cover.FCStd`):**
+      * Abnehmbarer Wartungsdeckel direkt über dem Raspberry Pi 4 in gleicher Länge ($89{,}0\,\text{mm}$, $X \in [-43{,}5, +45{,}5\,\text{mm}]$) und Breite ($57{,}0\,\text{mm}$, $Y \in [-28{,}5, +28{,}5\,\text{mm}]$).
+      * Schließt bündig an die Kappenkontur an ($Z_{\text{rebate}} = 80{,}20\,\text{mm}$ bis $Z_{\text{apex}} = 85{,}00\,\text{mm}$).
+      * **Bionische abgerundete '>>>' Chevron-Kaminbelüftung:** 5× $45^\circ$ nach vorn gepfeilte Lamellenschlitze mit verrundeten Pillen-/Kapselenden identisch zur Konstruktion im Femur-Deckel ([`generate_femur.py`](../../../scripts/v2/generate_femur.py)) über dem BCM2711 Quad-Core SoC zur passiven Kamin-Konvektionskühlung ($X \in [-15{,}0, +15{,}0\,\text{mm}]$).
+      * $6{,}3\,\text{mm}$ vertikale Kopffreiheit über den höchsten Pi 4 USB/Ethernet-Ports ($Z = 77{,}20\,\text{mm}$).
+    * **3. Erhöhtes Plexiglas-Canopy mit zentrierter Service-Öffnung (`chassis_canopy.FCStd`):**
+      * Loft-Apex bei **$Z = 81{,}50\,\text{mm}$**, symmetrisch zentriert um $X = 0, Y = 0$.
+      * Zentrierter Durchbruch ($X \in [-41{,}8, +43{,}8\,\text{mm}], Y \in [-26{,}8, +26{,}8\,\text{mm}]$) und Stufenfalz ($X \in [-43{,}8, +45{,}8\,\text{mm}], Z \ge 80{,}20\,\text{mm}$) mit $0{,}2\,\text{mm}$ Fügespiel für die Service-Abdeckung.
+      * Kollisionsprüfung mit Montageplatte, Pi 4 und Service-Deckel: Exakt $0{,}0000\,\text{mm}^3$ Schnittvolumen across all parts.
+  * **Integration:** Vollständig eingebunden via `App::Link` in [`body_assembly.FCStd`](body_assembly.FCStd) und [`body_gaster_assembly.FCStd`](body_gaster_assembly.FCStd).
+
+- [x] ~~**Organische Neugestaltung der oberen Chassis-Abdeckung & Plexiglas-Canopy:**~~ **[ERLEDIGT]**  
+  * **Modelle & Generatoren:**
+    * Innere Elektronikhaube: [`chassis_top_cover.FCStd`](parts/chassis_top_cover.FCStd) generiert via [`generate_chassis_top_cover.py`](../../../scripts/v2/generate_chassis_top_cover.py).
+    * Drapierte Plexiglas-Haube (Revision 1): [`chassis_canopy.FCStd`](parts/chassis_canopy.FCStd) generiert via [`generate_chassis_canopy.py`](../../../scripts/v2/generate_chassis_canopy.py).
+  * **Status:** 2-teilige Thorax-Abdeckung bestehend aus innerem Elektronikgehäuse und äußerer transparenter Tiefziehkappe (Revision 1):
+  * **1. Chassis Canopy (`chassis_canopy.FCStd` – Drapierte Acrylhaube Revision 1):**
+    * **Organische Doppelkrümmung:** Stufen- und knickfreie Loft-Oberfläche von $Z = 76{,}00\,\text{mm}$ (Apex) herab auf $Z = 55{,}30\,\text{mm}$, die sich wie eine warm geformte $1{,}50\,\text{mm}$ Plexiglasplatte harmonisch über das zentrale Top Cover schmiegt.
+    * **Randbeschnitt:** 100 % bündig mit der 24-Kanten-Außenkontur von [`body_top.FCStd`](../../custom/v1/parts/body_top.FCStd) ($X \in [-132{,}0, +135{,}0]\,\text{mm}$, $Y \in [-88{,}5, +88{,}5]\,\text{mm}$).
+    * **Lochbild:** 4× M3 Zentralkern ($X = \pm 45, Y = \pm 30$), 1× Heck ($X = -90, Y = 0$), 2× Front ($X = 128, Y = \pm 12$).
+    * **Optik:** 55 % Transparenz mit zartem Eisblau-Glanz (`(0.85, 0.92, 0.98)`).
+  * **2. Chassis Top Cover (`chassis_top_cover.FCStd` – Inneres Strukturgehäuse):**
+    * Kompaktes anthrazitfarbenes 3D-Druck-Gehäuse ($X \in [-88{,}0, 92{,}0]\,\text{mm}$, $Y \in [-35{,}0, 35{,}0]\,\text{mm}$, $Z \in [55{,}30, 74{,}50]\,\text{mm}$) unter der Plexiglashaube.
+    * 4 integrierte Montage-Sockeldome ($\varnothing 6{,}0\,\text{mm}$) für Raspberry Pi 4 im $58 \times 49\,\text{mm}$ Lochbild.
+    * 5× $45^\circ$ nach vorn gepfeilte Chevron-Kaminbelüftungsschlitze über dem SoC.
+    * 4× M3 Senkschrauben bei $X = \pm 45, Y = \pm 30\,\text{mm}$ (in den Zentralkern).
+  * **Integration:** Beide Teile als separate Komponenten via `App::Link` in [`body_assembly.FCStd`](body_assembly.FCStd) und [`body_gaster_assembly.FCStd`](body_gaster_assembly.FCStd) eingebunden.
+
+- [x] ~~**Konzeptstudie & Realisierung: Monolithischer Chassis-Kern / Kapselung als Ersatz der 4 mittleren Spacer:**~~ **[ERLEDIGT]**  
+  * **Modelle & Generatoren:** [`chassis_core.FCStd`](parts/chassis_core.FCStd) und [`chassis_core_assembly.FCStd`](chassis_core_assembly.FCStd) generiert via [`generate_chassis_core.py`](../../../scripts/v2/generate_chassis_core.py).
+  * **Status:** Vollständig umgesetzter 3D-Druck-Sandwich-Stützkern ($51{,}3\,\text{mm}$ Bauhöhe zwischen $Z = 2{,}0$ und $53{,}3\,\text{mm}$), der die 4 mittleren Kunststoff-Spacer bei $X = \pm 45, Y = \pm 30\,\text{mm}$ durch eine steife, vibrationsdämpfende Schubsteg-Monocoque-Struktur ersetzt.
+  * **Integrierte Kapselung:**
+    * Vertikale Führungsschienen für 2× PCA9685 PWM-Controller (Stiftleisten ragen kollisionsfrei nach oben $+Z$ in den Wartungsschacht).
+    * LiPo-Akkutunnel im Untergeschoss ($Z \in [1{,}5\dots 16{,}5\,\text{mm}]$) für 2S Flat-Pack.
+    * TCA9548A I2C-Multiplexer-Kammer im Heckbereich.
+    * Formschluss-Zentrierfalze und horizontale M3 Ruthex-Schnittstellen zu Front (`chassis_neck`) und Heck (`chassis_tail`).
+    * $16\,\text{mm}$ Taillierungs-Freigang zu den mittleren Coxa-Servos ML und MR.
+  * **Integration:** Eingebunden in [`body_gaster_assembly.FCStd`](body_gaster_assembly.FCStd).
 
 
 

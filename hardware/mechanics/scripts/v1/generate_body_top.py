@@ -4,6 +4,8 @@ Generate Lasius Hexapod Body Top Plate FreeCAD Model (body_top.FCStd)
 Plate Thickness: 2.0 mm solid
 Coordinate origin: (0, 0, 0) at chassis center (midpoint between ML and MR coxa pivots)
 Analytic Geometry: Pure G1-continuous circular arcs and lines (matching body_bottom exactly)
+Central Cutout: Stepped cruciform window matching physical scanned plate (35 mm front/rear tongues, 58 mm middle bay)
+Coxa Horn Holes: 4x M2 on Ø16 mm BCD around each of the 6 Ø8 mm pivot bores (matching femur_plate.FCStd)
 """
 
 import math
@@ -177,16 +179,80 @@ outer_face = Part.Face(outer_wire)
 outer_face.rotate(App.Vector(0.0, 0.0, 0.0), App.Vector(0.0, 0.0, 1.0), 180.0)
 
 # -------------------------------------------------------------
-# 3. Central Window Cutout (50.0 mm x 160.0 mm)
+# 3. Central Stepped Window Cutout (Matching Scanned Physical Plate)
 # -------------------------------------------------------------
-win_pts = [
-    App.Vector(-80.0, -25.0, 0.0),
-    App.Vector(80.0, -25.0, 0.0),
-    App.Vector(80.0, 25.0, 0.0),
-    App.Vector(-80.0, 25.0, 0.0)
-]
-win_edges = [Part.makeLine(win_pts[i], win_pts[(i+1)%4]) for i in range(4)]
-win_wire = Part.Wire(win_edges)
+# Stepped cruciform window topology:
+# - Front tongue: X in [+26.0, +58.0] mm (length 32 mm), width 35.0 mm (Y in [-17.5, +17.5] mm)
+# - Middle wide chamber: X in [-32.0, +26.0] mm (length 58 mm), width 58.0 mm (Y in [-29.0, +29.0] mm)
+# - Rear tongue: X in [-64.0, -32.0] mm (length 32 mm), width 35.0 mm (Y in [-17.5, +17.5] mm)
+# - G1-continuous corners (Rc = 2.0 mm) and shoulder concave transition fillets (Rf = 4.0 mm)
+# Preserves >= 12.5 mm solid carbon flange around all 4 central standoff holes at (+-45, +-30) mm.
+
+def make_stepped_window(x_top=58.0, x_fsh=26.0, x_rsh=-32.0, x_bot=-64.0, y_t=17.5, y_m=29.0, rc=2.0, rf=4.0):
+    edges = []
+    # 1. Front centerline to top-left corner
+    edges.append(Part.makeLine(App.Vector(x_top, 0.0, 0.0), App.Vector(x_top, y_t - rc, 0.0)))
+    # 2. Top-left corner arc
+    p1_s = App.Vector(x_top, y_t - rc, 0.0)
+    p1_e = App.Vector(x_top - rc, y_t, 0.0)
+    p1_m = App.Vector(x_top - rc + rc * math.cos(math.pi / 4.0), y_t - rc + rc * math.sin(math.pi / 4.0), 0.0)
+    edges.append(Part.Edge(Part.ArcOfCircle(p1_s, p1_m, p1_e)))
+    # 3. Flank down to front shoulder fillet
+    edges.append(Part.makeLine(p1_e, App.Vector(x_fsh + rf, y_t, 0.0)))
+    # 4. Front shoulder concave fillet
+    p2_s = App.Vector(x_fsh + rf, y_t, 0.0)
+    p2_e = App.Vector(x_fsh, y_t + rf, 0.0)
+    p2_m = App.Vector(x_fsh + rf - rf * math.cos(math.pi / 4.0), y_t + rf - rf * math.sin(math.pi / 4.0), 0.0)
+    edges.append(Part.Edge(Part.ArcOfCircle(p2_s, p2_m, p2_e)))
+    # 5. Front shoulder step out
+    edges.append(Part.makeLine(p2_e, App.Vector(x_fsh, y_m - rc, 0.0)))
+    # 6. Front shoulder convex corner into middle chamber
+    p3_s = App.Vector(x_fsh, y_m - rc, 0.0)
+    p3_e = App.Vector(x_fsh - rc, y_m, 0.0)
+    p3_m = App.Vector(x_fsh - rc + rc * math.cos(math.pi / 4.0), y_m - rc + rc * math.sin(math.pi / 4.0), 0.0)
+    edges.append(Part.Edge(Part.ArcOfCircle(p3_s, p3_m, p3_e)))
+    # 7. Middle chamber flank
+    edges.append(Part.makeLine(p3_e, App.Vector(x_rsh + rc, y_m, 0.0)))
+    # 8. Rear shoulder convex corner out of middle chamber
+    p4_s = App.Vector(x_rsh + rc, y_m, 0.0)
+    p4_e = App.Vector(x_rsh, y_m - rc, 0.0)
+    p4_m = App.Vector(x_rsh + rc - rc * math.cos(math.pi / 4.0), y_m - rc + rc * math.sin(math.pi / 4.0), 0.0)
+    edges.append(Part.Edge(Part.ArcOfCircle(p4_s, p4_m, p4_e)))
+    # 9. Rear shoulder step in
+    edges.append(Part.makeLine(p4_e, App.Vector(x_rsh, y_t + rf, 0.0)))
+    # 10. Rear shoulder concave fillet into rear tongue
+    p5_s = App.Vector(x_rsh, y_t + rf, 0.0)
+    p5_e = App.Vector(x_rsh - rf, y_t, 0.0)
+    p5_m = App.Vector(x_rsh - rf + rf * math.cos(math.pi / 4.0), y_t + rf - rf * math.sin(math.pi / 4.0), 0.0)
+    edges.append(Part.Edge(Part.ArcOfCircle(p5_s, p5_m, p5_e)))
+    # 11. Rear tongue flank
+    edges.append(Part.makeLine(p5_e, App.Vector(x_bot + rc, y_t, 0.0)))
+    # 12. Rear-left corner arc
+    p6_s = App.Vector(x_bot + rc, y_t, 0.0)
+    p6_e = App.Vector(x_bot, y_t - rc, 0.0)
+    p6_m = App.Vector(x_bot + rc - rc * math.cos(math.pi / 4.0), y_t - rc + rc * math.sin(math.pi / 4.0), 0.0)
+    edges.append(Part.Edge(Part.ArcOfCircle(p6_s, p6_m, p6_e)))
+    # 13. Rear bottom edge to centerline
+    edges.append(Part.makeLine(p6_e, App.Vector(x_bot, 0.0, 0.0)))
+
+    # Mirror for right half (Y < 0):
+    right_edges = []
+    for e in reversed(edges):
+        curve = e.Curve
+        if isinstance(curve, Part.Line):
+            p1 = App.Vector(e.Vertexes[1].X, -e.Vertexes[1].Y, 0.0)
+            p0 = App.Vector(e.Vertexes[0].X, -e.Vertexes[0].Y, 0.0)
+            right_edges.append(Part.makeLine(p1, p0))
+        elif isinstance(curve, Part.Circle):
+            p1 = App.Vector(e.Vertexes[1].X, -e.Vertexes[1].Y, 0.0)
+            p0 = App.Vector(e.Vertexes[0].X, -e.Vertexes[0].Y, 0.0)
+            pm = curve.value((e.FirstParameter + e.LastParameter) / 2.0)
+            pm_mirrored = App.Vector(pm.x, -pm.y, 0.0)
+            right_edges.append(Part.Edge(Part.ArcOfCircle(p1, pm_mirrored, p0)))
+
+    return Part.Wire(Part.__sortEdges__(edges + right_edges))
+
+win_wire = make_stepped_window()
 base_face = outer_face.cut(Part.Face(win_wire))
 
 # -------------------------------------------------------------
@@ -195,16 +261,23 @@ base_face = outer_face.cut(Part.Face(win_wire))
 plate_solid = base_face.extrude(App.Vector(0.0, 0.0, thickness))
 
 # -------------------------------------------------------------
-# 5. Drill 6x Coxa Bearing Holes (dia 8.0 mm)
+# 5. Drill 6x Coxa Pivot Hub Bores (Ø8.0 mm) & 24x M2 Horn Holes (Ø2.0 mm)
 # -------------------------------------------------------------
+# 4x M2 horn mounting holes on Ø16.00 mm Bolt Circle Diameter (R = 8.00 mm)
+# matching femur_plate.FCStd and the physical scanned top plate.
 coxa_holes = [
     (86.0, 65.0), (86.0, -65.0),
     (0.0, 75.0), (0.0, -75.0),
     (-86.0, 65.0), (-86.0, -65.0),
 ]
 for xc, yc in coxa_holes:
+    # Central Ø8.0 mm pivot bore:
     cyl = Part.makeCylinder(4.0, thickness + 4.0, App.Vector(xc, yc, -2.0), App.Vector(0.0, 0.0, 1.0))
     plate_solid = plate_solid.cut(cyl)
+    # 4x M2 horn screw holes on Ø16.0 mm BCD:
+    for dx, dy in [(8.0, 0.0), (-8.0, 0.0), (0.0, 8.0), (0.0, -8.0)]:
+        m2_cyl = Part.makeCylinder(1.0, thickness + 4.0, App.Vector(xc + dx, yc + dy, -2.0), App.Vector(0.0, 0.0, 1.0))
+        plate_solid = plate_solid.cut(m2_cyl)
 
 # -------------------------------------------------------------
 # 6. Drill 8x M3 Screw Holes (dia 3.0 mm)

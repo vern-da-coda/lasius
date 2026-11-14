@@ -8,6 +8,7 @@ Generate Lasius Leg Assembly v2 (Modular Subassembly with Organic Monolithic Fem
 import math
 import os
 import shutil
+import sys
 import FreeCAD as App
 import Part
 
@@ -126,10 +127,12 @@ rot_negy_posz = App.Rotation(App.Vector(1, 0, 0), 90.0)
 rot_negy_negz = App.Rotation(App.Vector(1, 0, 0), -90.0)
 
 # A. Chassis Pivot Bearing Set (Vertical axis at X=0.00, Y=2.50 along -Z)
+# Screw head seats flush inside Coxa_Bracket's built-in 45° M4 countersink (Z = -12.25..-11.25),
+# cleanly clearing Coxa_Servo bottom (Z = -10.55) and protruding cleanly past Chassis_Nut.
 make_link("Chassis_Washer",  "Chassis Shim Washer (s0.3)",      doc_w.Passscheibe_M4,      App.Placement(App.Vector(0, 2.50, -10.95), rot_down_posz))
 make_link("Chassis_Bearing", "Chassis Ball Bearing (D8 H3)",    doc_b.Kugellager_6x3x4,    App.Placement(App.Vector(0, 2.50, -12.25), rot_down_posz))
 make_link("Chassis_Nut",     "Chassis M4 Hex Nut (SW7)",         doc_n.M4_Mutter,           App.Placement(App.Vector(0, 2.50, -15.25), rot_down_posz))
-make_link("Chassis_Screw",   "Chassis M4 Countersunk Screw",     doc_s.M4_Senkkopfschraube, App.Placement(App.Vector(0, 2.50, -9.25),  rot_down_negz))
+make_link("Chassis_Screw",   "Chassis M4 Countersunk Screw",     doc_s.M4_Senkkopfschraube, App.Placement(App.Vector(0, 2.50, -11.25), rot_down_negz))
 
 # B. Femur Pivot Bearing Set (Horizontal axis at X=56.50, Z=0.00 along -Y; Option A: internal M4 DIN 439 nut, external M4 screw)
 make_link("Femur_Washer",  "Femur Shim Washer (s0.3)",            doc_w.Passscheibe_M4,           App.Placement(App.Vector(56.50, -21.00, 0.00), rot_negy_posz))
@@ -137,11 +140,12 @@ make_link("Femur_Bearing", "Femur Ball Bearing (D8 H3)",          doc_b.Kugellag
 make_link("Femur_Nut",     "Femur M4 Low-Profile Nut (DIN 439)", doc_n_low.M4_Mutter_DIN439,     App.Placement(App.Vector(56.50, -20.40, 0.00), rot_negy_negz))
 make_link("Femur_Screw",   "Femur M4 Countersunk Screw",           doc_s.M4_Senkkopfschraube,      App.Placement(App.Vector(56.50, -27.20, 0.00), rot_negy_posz))
 
-# C. Knee Pivot Bearing Set (Horizontal axis at X=156.50, Z=0.00 along -Y; Option A: internal M4 nut, external M4 screw)
-make_link("Knee_Washer",  "Knee Shim Washer (s0.3)",      doc_w.Passscheibe_M4,      App.Placement(App.Vector(156.50, -21.00, 0.00), rot_negy_posz))
-make_link("Knee_Bearing", "Knee Ball Bearing (D8 H3)",    doc_b.Kugellager_6x3x4,    App.Placement(App.Vector(156.50, -21.65, 0.00), rot_negy_posz))
-make_link("Knee_Nut",     "Knee M4 Hex Nut (SW7)",         doc_n.M4_Mutter,           App.Placement(App.Vector(156.50, -18.00, 0.00), rot_negy_posz))
-make_link("Knee_Screw",   "Knee M4 Countersunk Screw",     doc_s.M4_Senkkopfschraube, App.Placement(App.Vector(156.50, -27.20, 0.00), rot_negy_posz))
+# C. Knee Pivot Bearing Set (Horizontal axis at X=156.50, Z=0.00 along -Y; Option A: internal M4 DIN 439 nut aligned to 50° Tibia hex pocket)
+rot_knee_nut = rot_negy_negz.multiply(App.Rotation(App.Vector(0, 0, 1), 50.0))
+make_link("Knee_Washer",  "Knee Shim Washer (s0.3)",            doc_w.Passscheibe_M4,           App.Placement(App.Vector(156.50, -21.00, 0.00), rot_negy_posz))
+make_link("Knee_Bearing", "Knee Ball Bearing (D8 H3)",          doc_b.Kugellager_6x3x4,         App.Placement(App.Vector(156.50, -21.65, 0.00), rot_negy_posz))
+make_link("Knee_Nut",     "Knee M4 Low-Profile Nut (DIN 439)",  doc_n_low.M4_Mutter_DIN439,     App.Placement(App.Vector(156.50, -20.40, 0.00), rot_knee_nut))
+make_link("Knee_Screw",   "Knee M4 Countersunk Screw",          doc_s.M4_Senkkopfschraube,      App.Placement(App.Vector(156.50, -27.20, 0.00), rot_negy_posz))
 
 doc.recompute()
 doc.save()
@@ -155,3 +159,4 @@ for d in list(App.listDocuments().values()):
     App.closeDocument(d.Name)
 
 print("--- Leg Assembly v2 Completed Successfully ---")
+sys.exit(0)

@@ -184,8 +184,8 @@ def build_pca9685():
     # 16x 3-Pin Servo Pin Headers (90° Right Angle pointing horizontally in +Y direction)
     # Plastic base sits on PCB along +Y edge: 40.64 x 4.5 x 3.0 mm
     hdr_base = Part.makeBox(40.64, 4.5, 3.0, App.Vector(-20.32, 7.5, 1.6))
-    # 90° Right-angle pins extending horizontally past PCB edge (Y reaches 19.5 mm)
-    hdr_pins = Part.makeBox(40.64, 8.0, 6.0, App.Vector(-20.32, 11.5, 2.5))
+    # 90° Right-angle pins extending horizontally past PCB edge (8.5 mm protrusion past Y=12.7, reaching Y=21.2 mm)
+    hdr_pins = Part.makeBox(40.64, 9.2, 5.0, App.Vector(-20.32, 12.0, 2.5))
     headers = hdr_base.fuse(hdr_pins)
 
     # Dual 6-Pin I2C Headers (Straight pins pointing vertically +Z on -X and +X edges)

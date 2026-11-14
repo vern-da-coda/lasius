@@ -49,7 +49,9 @@ doc_spacer = App.openDocument(f"{v1_parts_dir}/spacer_14x50.FCStd")
 doc_leg = App.openDocument(f"{v2_asm_dir}/leg_assembly.FCStd")
 doc_tray_asm = App.openDocument(f"{v2_asm_dir}/electronics_tray_assembly.FCStd")
 doc_belly = App.openDocument(f"{models_base}/custom/v2/parts/chassis_belly_pan.FCStd")
-doc_cover = App.openDocument(f"{models_base}/custom/v2/parts/chassis_top_cover.FCStd")
+doc_rpi_mount = App.openDocument(f"{models_base}/custom/v2/parts/chassis_rpi_mount.FCStd")
+doc_service_cover = App.openDocument(f"{models_base}/custom/v2/parts/chassis_service_cover.FCStd")
+doc_canopy = App.openDocument(f"{models_base}/custom/v2/parts/chassis_canopy.FCStd")
 doc_tof = App.openDocument(f"{cots_dir}/vl53l5cx_board.FCStd")
 doc_rpi = App.openDocument(f"{cots_dir}/rpi4_model_b.FCStd")
 
@@ -85,7 +87,9 @@ def make_link(name, label, target_obj, placement, color=None, parent=asm_part):
 COLOR_CARBON = (0.16, 0.16, 0.18)        # Dark graphite / carbon fiber plates
 COLOR_SPACER = (0.78, 0.78, 0.80)        # Technical plastic standoff spacers (POM/PA / Nylon)
 COLOR_BELLY_PAN = (0.26, 0.26, 0.30)     # Rugged anthracite PETG skid plate
-COLOR_CHASSIS_COVER = (0.20, 0.20, 0.23) # Dark chitinous exoskeleton canopy
+COLOR_RPI_MOUNT = (0.24, 0.24, 0.28)     # Anthracite technical mounting plate
+COLOR_SERVICE_COVER = (0.20, 0.20, 0.23) # Dark anthracite service cover with '>>>' louvers
+COLOR_CANOPY = (0.85, 0.92, 0.98)        # Transparent Plexiglas / acrylic
 COLOR_PCB_RED = (0.75, 0.15, 0.15)       # VL53L5CX ToF Distance Sensor (SparkFun red)
 COLOR_RPI_GREEN = (0.08, 0.52, 0.24)     # Raspberry Pi 4 Model B (Raspberry Green PCB)
 
@@ -113,14 +117,21 @@ make_link("Chassis_Belly_Pan", "4. Chassis Belly Pan (v2)", doc_belly.Chassis_Be
 p_tof = App.Placement(App.Vector(0.0, 0.0, -4.40), App.Rotation(App.Vector(0, 1, 0), 180.0))
 make_link("Sensor_VL53L5CX_ToF", "5. VL53L5CX 9-Zone ToF Distance Sensor (COTS)", doc_tof.VL53L5CX_Board, p_tof, COLOR_PCB_RED)
 
-# Raspberry Pi 4 Model B mounted on top surface of Body_Top at X = 35.0, Y = 0.0, Z = 55.30 mm
-# Direct convective chimney cooling through chassis top cover chevron louvers
-p_rpi = App.Placement(App.Vector(35.0, 0.0, 55.30), App.Rotation())
-make_link("Board_RPi4", "6. Raspberry Pi 4 Model B (Top Deck, COTS)", doc_rpi.Raspberry_Pi_4, p_rpi, COLOR_RPI_GREEN)
+# Raspberry Pi 4 Mounting Plate on Body_Top at Z = 55.30 .. 59.80 mm
+p_mount = App.Placement(App.Vector(0.0, 0.0, 0.00), App.Rotation())
+make_link("Chassis_RPi_Mount", "6. Raspberry Pi 4 Mounting Plate (v2)", doc_rpi_mount.getObject("Chassis_RPi_Mount"), p_mount, COLOR_RPI_MOUNT)
 
-# Chassis Top Cover (Carapace) at Z = 0.00 mm (mounted to top surface of top plate)
+# Raspberry Pi 4 Model B elevated on Mount Bosses at X = 0.0, Y = 0.0, Z = 59.80 mm
+p_rpi = App.Placement(App.Vector(0.0, 0.0, 59.80), App.Rotation())
+make_link("Board_RPi4", "7. Raspberry Pi 4 Model B (Elevated Deck, COTS)", doc_rpi.Raspberry_Pi_4, p_rpi, COLOR_RPI_GREEN)
+
+# Draped Plexiglas Canopy with Service Aperture at Z = 0.00 mm (Thermoformed & Trimmed Flush)
+p_canopy = App.Placement(App.Vector(0.0, 0.0, 0.00), App.Rotation())
+make_link("Chassis_Canopy", "8. Draped Plexiglas Canopy with Service Aperture (v2)", doc_canopy.getObject("Chassis_Canopy"), p_canopy, COLOR_CANOPY)
+
+# Removable Service Cover with '>>>' Chevron Louvers at Z = 0.00 mm
 p_cover = App.Placement(App.Vector(0.0, 0.0, 0.00), App.Rotation())
-make_link("Chassis_Top_Cover", "7. Chassis Exoskeleton Top Cover (v2)", doc_cover.Chassis_Top_Cover, p_cover, COLOR_CHASSIS_COVER)
+make_link("Chassis_Service_Cover", "9. Service Cover with '>>>' Chevron Louvers (v2)", doc_service_cover.getObject("Chassis_Service_Cover"), p_cover, COLOR_SERVICE_COVER)
 
 # -------------------------------------------------------------
 # 2. Chassis Standoff Spacers (8x at small M3 screw holes, inherited from v1)
@@ -189,23 +200,28 @@ print(f"Assembly Compound Valid: {asm_part.Shape.isValid()}")
 print(f"Bounding Box: X=[{bbox.XMin:.2f}, {bbox.XMax:.2f}], Y=[{bbox.YMin:.2f}, {bbox.YMax:.2f}], Z=[{bbox.ZMin:.2f}, {bbox.ZMax:.2f}]")
 print(f"Total Width (Y): {bbox.YLength:.2f} mm, Length (X): {bbox.XLength:.2f} mm, Height (Z): {bbox.ZLength:.2f} mm")
 
-try:
-    asm_part.Shape.exportStep(step_path)
-    print(f"Exported STEP: {step_path}")
-except Exception as e:
-    print(f"STEP export error: {e}")
-
-try:
-    asm_part.Shape.exportStl(stl_path)
-    print(f"Exported STL: {stl_path}")
-except Exception as e:
-    print(f"STL export error: {e}")
-
 for d in list(App.listDocuments().values()):
     try:
         App.closeDocument(d.Name)
     except Exception:
         pass
+
+import zipfile
+def patch_fcstd_visibility(filepath):
+    temp_zip = filepath + ".tmp"
+    with zipfile.ZipFile(filepath, "r") as zin:
+        with zipfile.ZipFile(temp_zip, "w", compression=zipfile.ZIP_DEFLATED) as zout:
+            for item in zin.infolist():
+                data = zin.read(item.filename)
+                if item.filename == "GuiDocument.xml":
+                    xml_str = data.decode("utf-8")
+                    xml_str = xml_str.replace('<Bool value="false"/>', '<Bool value="true"/>')
+                    data = xml_str.encode("utf-8")
+                zout.writestr(item, data)
+    os.replace(temp_zip, filepath)
+
+patch_fcstd_visibility(fcstd_path)
+print("✔ Patched GuiDocument.xml for full visibility")
 print("--- Done ---")
 import sys
 sys.exit(0)

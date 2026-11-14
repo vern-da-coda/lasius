@@ -17,14 +17,17 @@ Generate Lasius Hexapod Organic Monolithic Femur & Encapsulated ADS1115 Housing
 
 import math
 import os
+import sys
 import FreeCAD as App
 import Part
 
 print("--- Generating Lasius Organic Femur with Encapsulated ADS1115 Chamber ---")
 
-models_dir = "/home/bjoern/Workspace/Hexapods/lasius/hardware/mechanics/models/custom/v2/parts"
-export_step_dir = "/home/bjoern/Workspace/Hexapods/lasius/hardware/mechanics/export/step/custom/v2/parts"
-export_stl_dir = "/home/bjoern/Workspace/Hexapods/lasius/hardware/mechanics/export/stl/custom/v2/parts"
+repo_root = "/home/bjoern/Workspace/Hexapods/lasius"
+models_dir = f"{repo_root}/hardware/mechanics/models/custom/v2/parts"
+cots_dir = f"{repo_root}/hardware/mechanics/models/cots"
+export_step_dir = f"{repo_root}/hardware/mechanics/export/step/custom/v2/parts"
+export_stl_dir = f"{repo_root}/hardware/mechanics/export/stl/custom/v2/parts"
 
 fcstd_femur_path = f"{models_dir}/femur.FCStd"
 step_femur_path = f"{export_step_dir}/femur.step"
@@ -424,42 +427,51 @@ def build_femur_shapes():
         face = Part.Face(Part.Wire(edges))
         return face.extrude(App.Vector(0.0, 0.0, z_max - z_min))
 
-    # A. Outer Lid Rebate (Stepped recess in top +Z face for the flush cover):
-    # X in [30.5, 69.5] (39.0 mm), Y in [Y_mid - 16.5, Y_mid + 16.5] (33.0 mm), R=4.5 mm
+    # A. Outer Lid Rebate (Stepped recess in top +Z face for the cover skirt):
+    # X in [28.5, 71.5] (43.0 mm), Y in [Y_mid - 17.5, Y_mid + 17.5] (35.0 mm), R=4.0 mm
     lid_z_floor = 9.00
-    lid_prism_raw = make_rounded_rect_z(30.5, 69.5, Y_mid - 16.5, Y_mid + 16.5, 4.5, lid_z_floor, 20.0)
+    lid_prism_raw = make_rounded_rect_z(28.5, 71.5, Y_mid - 17.5, Y_mid + 17.5, 4.0, lid_z_floor, 20.0)
 
     # B. Inner Hollow ADS1115 Chamber Pocket:
     # X in [33.5, 66.5] (33.0 mm), Y in [Y_mid - 13.5, Y_mid + 13.5] (27.0 mm), R=3.5 mm
-    # Bottom floor at Z = -7.80 mm leaves a solid 4.00 mm structural bottom wall at the waist!
-    chamber_z_floor = -7.80
+    # Bottom floor at Z = -8.50 mm leaves a solid 3.30 mm bottom wall at the waist
+    # while increasing underside clearance under the Z=-4.80 mm PCB to 3.70 mm
+    # for 2.5-3.0 mm vertical header tails, solder fillets & 100 nF MLCCs.
+    chamber_z_floor = -8.50
     chamber_pocket = make_rounded_rect_z(33.5, 66.5, Y_mid - 13.5, Y_mid + 13.5, 3.5, chamber_z_floor, 20.0)
 
+    # 4x M2 cover corner screws positioned well clear of chamber pocket & cover perimeter
+    # (100% enclosed M2 countersinks with >= 0.99 mm outer cover rim, unbroken lip ring)
     screw_coords = [
-        (33.0, Y_mid - 13.7),
-        (33.0, Y_mid + 13.7),
-        (67.0, Y_mid - 13.7),
-        (67.0, Y_mid + 13.7),
+        (31.8, Y_mid - 13.8),
+        (31.8, Y_mid + 13.8),
+        (68.2, Y_mid - 13.8),
+        (68.2, Y_mid + 13.8),
     ]
-    boss_pillars = []
-    for sx, sy in screw_coords:
-        boss = Part.makeCylinder(3.1, lid_z_floor - chamber_z_floor, App.Vector(sx, sy, chamber_z_floor))
-        boss_pillars.append(boss)
+    base_solid = base_solid.cut(lid_prism_raw).cut(chamber_pocket)
 
-    chamber_void = chamber_pocket
-    for b in boss_pillars:
-        chamber_void = chamber_void.cut(b)
-
-    base_solid = base_solid.cut(lid_prism_raw).cut(chamber_void)
-
-    # Add 2x ADS1115 PCB Support Cradles / Stand-offs on the chamber floor (Z = -7.80 to -4.80 mm)
-    # Spanning Y in [Y_mid - 5.5, Y_mid + 8.5] leaves a full clearance channel along the front
-    # edge (Y = Y_mid - 7.2) for the 10-pin header solder joints, 100nF MLCCs & 10k pull-up!
-    cradle_1 = Part.makeBox(3.0, 14.0, 3.0, App.Vector(36.0, Y_mid - 5.5, chamber_z_floor))
-    cradle_2 = Part.makeBox(3.0, 14.0, 3.0, App.Vector(61.0, Y_mid - 5.5, chamber_z_floor))
+    # Option C Support Cradles & Vertical Centering Pins (based on ads1115_board.FCStd):
+    # PCB (28.0 x 17.0 x 1.6 mm) sits at X=[36.0, 64.0], Y=[Y_mid-8.5, Y_mid+8.5], Z=[-4.80, -3.20].
+    # Mounting holes (Ø2.5 mm COTS / Ø2.35 mm real) at X=39.90 & 60.10, Y=Y_mid+5.30.
+    # Support cradles span ONLY the back mounting side (Y in [Y_mid+0.5, Y_mid+8.5]), keeping
+    # the entire front pin row (Y=Y_mid-7.62..-5.08) + filter network 100% unobstructed below.
+    z_pcb_bot = -4.80
+    cradle_h = z_pcb_bot - chamber_z_floor  # 3.70 mm
+    cradle_1 = Part.makeBox(6.5, 8.0, cradle_h, App.Vector(36.0, Y_mid + 0.5, chamber_z_floor))
+    cradle_2 = Part.makeBox(6.5, 8.0, cradle_h, App.Vector(57.5, Y_mid + 0.5, chamber_z_floor))
     base_solid = base_solid.fuse(cradle_1).fuse(cradle_2)
 
-    # Drill 4x M2 pilot holes (Ø1.8 mm, depth 8.0 mm) into the 4 cover bosses:
+    pin_coords = [
+        (39.90, Y_mid + 5.30),
+        (60.10, Y_mid + 5.30),
+    ]
+    for px_pin, py_pin in pin_coords:
+        # Ø2.15 mm centering pin (R=1.075 mm): 2.20 mm cylindrical body + 0.40 mm tapered lead-in
+        c_pin = Part.makeCylinder(1.075, 2.20, App.Vector(px_pin, py_pin, z_pcb_bot))
+        c_tip = Part.makeCone(1.075, 0.72, 0.40, App.Vector(px_pin, py_pin, z_pcb_bot + 2.20))
+        base_solid = base_solid.fuse(c_pin).fuse(c_tip)
+
+    # Drill 4x M2 pilot holes (Ø1.8 mm, depth 8.2 mm) in housing rim:
     for sx, sy in screw_coords:
         m2_hole = Part.makeCylinder(0.90, 9.0, App.Vector(sx, sy, lid_z_floor - 8.2))
         base_solid = base_solid.cut(m2_hole)
@@ -487,41 +499,99 @@ def build_femur_shapes():
     base_solid = base_solid.cut(tunnel_left).cut(tunnel_right)
 
     # =========================================================================
-    # 9. Build the Flush Curved Removable Top Cover (Femur_Cover)
+    # 9. Build the Raised Dome Top Cover (Variante 3.2.B + Option C Hold-Downs)
     # =========================================================================
-    cover_outer = make_rounded_rect_z(30.65, 69.35, Y_mid - 16.35, Y_mid + 16.35, 4.35, lid_z_floor, 20.0)
+    # 0.05 mm nominal seating tolerance above lid_z_floor eliminates coplanar BOPAlgo
+    # SelfIntersect on the Femur_Complete compound while keeping flush visual fit.
+    cover_z_base = lid_z_floor + 0.05
+    cover_outer = make_rounded_rect_z(28.65, 71.35, Y_mid - 17.35, Y_mid + 17.35, 3.85, cover_z_base, 20.0)
     cover_solid = cover_outer.common(envelope_xz)
 
-    lip_outer = make_rounded_rect_z(33.70, 66.30, Y_mid - 13.30, Y_mid + 13.30, 3.30, lid_z_floor - 1.50, lid_z_floor)
-    lip_inner = make_rounded_rect_z(35.30, 64.70, Y_mid - 11.70, Y_mid + 11.70, 2.00, lid_z_floor - 1.60, lid_z_floor + 0.1)
+    def make_rounded_rect_wire_z(x_min, x_max, y_min, y_max, r_corner, z_val):
+        k = r_corner * (1.0 - 1.0 / math.sqrt(2.0))
+        pts = [
+            (x_min + r_corner, y_max),
+            (x_max - r_corner, y_max),
+            (x_max - k, y_max - k),
+            (x_max, y_max - r_corner),
+            (x_max, y_min + r_corner),
+            (x_max - k, y_min + k),
+            (x_max - r_corner, y_min),
+            (x_min + r_corner, y_min),
+            (x_min + k, y_min + k),
+            (x_min, y_min + r_corner),
+            (x_min, y_max - r_corner),
+            (x_min + k, y_max - k),
+        ]
+        v = [App.Vector(px, py, z_val) for px, py in pts]
+        edges = [
+            Part.makeLine(v[0], v[1]),
+            Part.Edge(Part.ArcOfCircle(v[1], v[2], v[3])),
+            Part.makeLine(v[3], v[4]),
+            Part.Edge(Part.ArcOfCircle(v[4], v[5], v[6])),
+            Part.makeLine(v[6], v[7]),
+            Part.Edge(Part.ArcOfCircle(v[7], v[8], v[9])),
+            Part.makeLine(v[9], v[10]),
+            Part.Edge(Part.ArcOfCircle(v[10], v[11], v[0])),
+        ]
+        return Part.Wire(edges)
+
+    # Raised vertical-DuPont Dome ("Haube") reaching Z = +22.00 mm outer (Z = +19.80 mm inner ceiling),
+    # providing >= 6.46 mm wire-bend clearance above plugged 14 mm DuPont housings (Z_max = +13.34 mm)
+    # and >= 2.20 mm cover dome wall thickness everywhere while clearing all 4 M2 screw heads by >= 2.1 mm.
+    w_dome_out_0 = make_rounded_rect_wire_z(33.80, 66.20, Y_mid - 11.40, Y_mid + 11.40, 3.20, 10.20)
+    w_dome_out_1 = make_rounded_rect_wire_z(34.40, 65.60, Y_mid - 10.80, Y_mid + 10.80, 2.80, 22.00)
+    dome_outer = Part.makeLoft([w_dome_out_0, w_dome_out_1], True)
+    cover_solid = cover_solid.fuse(dome_outer)
+
+    # Carve hollow interior pocket inside the dome down into the main chamber (leaving >= 2.20 mm roof & walls)
+    w_dome_in_0 = make_rounded_rect_wire_z(35.30, 64.70, Y_mid - 9.20, Y_mid + 9.20, 2.00, cover_z_base - 0.10)
+    w_dome_in_1 = make_rounded_rect_wire_z(36.70, 63.30, Y_mid - 8.40, Y_mid + 8.40, 1.80, 19.80)
+    dome_inner_void = Part.makeLoft([w_dome_in_0, w_dome_in_1], True)
+    cover_solid = cover_solid.cut(dome_inner_void)
+
+    # Unbroken 1.60 mm thick sealing/alignment lip ring (Z = 7.50 .. cover_z_base + 0.1)
+    lip_outer = make_rounded_rect_z(33.70, 66.30, Y_mid - 13.30, Y_mid + 13.30, 3.30, lid_z_floor - 1.50, cover_z_base + 0.1)
+    lip_inner = make_rounded_rect_z(35.30, 64.70, Y_mid - 11.70, Y_mid + 11.70, 2.00, lid_z_floor - 1.60, cover_z_base + 0.2)
     lip_ring = lip_outer.cut(lip_inner)
-    for sx, sy in screw_coords:
-        boss_clear = Part.makeCylinder(3.35, 2.0, App.Vector(sx, sy, lid_z_floor - 1.60))
-        lip_ring = lip_ring.cut(boss_clear)
     cover_solid = cover_solid.fuse(lip_ring)
 
-    # Drill 4x M2 countersunk through-holes in the cover:
+    # Option C Hold-Down Sleeves + Rear Dome-Wall Buttresses on Femur_Cover underside:
+    # Descend from dome inner/upper wall (Z = +12.50 mm) down to Z = -3.05 mm (0.15 mm nominal
+    # clearance above PCB top Z=-3.20 mm) directly over the bare mounting-hole pad rings
+    # (X=39.90 / 60.10, Y=Y_mid+5.30), with Ø2.60 mm bores clearing the Ø2.15 mm centering pins.
+    for px_pin, py_pin in pin_coords:
+        hd_outer = Part.makeCylinder(2.10, 15.55, App.Vector(px_pin, py_pin, -3.05))
+        hd_rib = Part.makeBox(2.40, 5.60, 5.00, App.Vector(px_pin - 1.20, py_pin, 7.60))
+        hd_pin_clear = Part.makeCylinder(1.30, 4.00, App.Vector(px_pin, py_pin, -3.50))
+        cover_solid = cover_solid.fuse(hd_outer).fuse(hd_rib).cut(hd_pin_clear)
+
+    # Drill 4x M2 countersunk through-holes in the cover flange:
     for sx, sy in screw_coords:
-        sh_through = Part.makeCylinder(1.10, 10.0, App.Vector(sx, sy, lid_z_floor - 2.0))
-        sh_csink = Part.makeCone(1.10, 2.10, 1.0, App.Vector(sx, sy, lid_z_floor + 1.80))
-        sh_head = Part.makeCylinder(2.10, 5.0, App.Vector(sx, sy, lid_z_floor + 2.80))
+        sh_through = Part.makeCylinder(1.10, 10.0, App.Vector(sx, sy, cover_z_base - 1.0))
+        sh_csink = Part.makeCone(1.10, 2.10, 1.0, App.Vector(sx, sy, cover_z_base + 1.80))
+        sh_head = Part.makeCylinder(2.10, 6.0, App.Vector(sx, sy, cover_z_base + 2.80))
         cover_solid = cover_solid.cut(sh_through).cut(sh_csink).cut(sh_head)
 
-    # 3 subtle 45-degree chevron inspection / ventilation louvers in the cover center:
+    # 3 subtle rounded 45-degree chevron inspection / ventilation louvers in the dome roof:
     for dx_slot in [-7.0, 0.0, 7.0]:
-        slot = make_chevron_slot(50.0 + dx_slot, Y_mid, 5.5, 2.0, 45.0, lid_z_floor - 2.0, 20.0)
+        slot = make_chevron_slot(50.0 + dx_slot, Y_mid, 5.5, 2.0, 45.0, 19.0, 24.0)
         cover_solid = cover_solid.cut(slot)
 
     # =========================================================================
-    # 10. Build the Encapsulated ADS1115 Breakout Board Model (for Assembly)
+    # 10. Build Real Encapsulated COTS ADS1115 + Vertical Header & Solder Tails
     # =========================================================================
-    pcb_box = Part.makeBox(28.0, 17.0, 1.6, App.Vector(36.0, Y_mid - 8.5, -4.8))
-    ic_chip = Part.makeBox(5.0, 4.0, 1.2, App.Vector(47.5, Y_mid - 2.0, -3.2))
-    ads_shape = pcb_box.fuse(ic_chip)
+    doc_cots_ads = App.openDocument(f"{cots_dir}/ads1115_board.FCStd")
+    cots_ads_shape = doc_cots_ads.ADS1115_Board.Shape.copy()
+    App.closeDocument(doc_cots_ads.Name)
+    cots_ads_shape.Placement = App.Placement(App.Vector(50.0, Y_mid, z_pcb_bot), App.Rotation())
+
+    ads_shape = cots_ads_shape
+    # Realistic 2.80 mm pin header solder tails protruding underneath PCB (Z = -7.60 .. -4.80 mm)
     for i in range(10):
-        px_pin = 37.3 + i * 2.54
-        pin = Part.makeCylinder(0.4, 5.8, App.Vector(px_pin, Y_mid - 7.2, -7.2))
-        ads_shape = ads_shape.fuse(pin)
+        px_tail = 50.0 - 11.43 + i * 2.54
+        tail = Part.makeCylinder(0.35, 2.80, App.Vector(px_tail, Y_mid - 6.35, z_pcb_bot - 2.80))
+        ads_shape = ads_shape.fuse(tail)
 
     base_solid = base_solid.removeSplitter()
     cover_solid = cover_solid.removeSplitter()
@@ -529,7 +599,7 @@ def build_femur_shapes():
     return base_solid, cover_solid, ads_shape
 
 
-if __name__ == "__main__":
+if __name__ in ("__main__", "generate_femur"):
     femur_body, femur_cover, ads_module = build_femur_shapes()
 
     print(f"Femur_Body Valid: {femur_body.isValid()}, Volume: {femur_body.Volume:.1f} mm^3, BB: {femur_body.BoundBox}")
@@ -545,7 +615,7 @@ if __name__ == "__main__":
     obj_body.Shape = femur_body
 
     obj_cover = doc.addObject("Part::Feature", "Femur_Cover")
-    obj_cover.Label = "Femur ADC Chamber Cover (Flush Curved Lid)"
+    obj_cover.Label = "Femur ADC Chamber Cover (Raised DuPont Dome)"
     obj_cover.Shape = femur_cover
 
     obj_ads = doc.addObject("Part::Feature", "ADS1115_Board")
@@ -567,3 +637,4 @@ if __name__ == "__main__":
     print(f"Exported STL:  {stl_femur_path} & {stl_cover_path}")
 
     App.closeDocument("femur")
+    sys.exit(0)

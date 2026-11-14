@@ -140,6 +140,7 @@ cython_debug/
 # Local AI / Agent briefing files
 GEMINI.md
 gemini.md
+skills/
 
 # Hardware & CAD files
 hardware/mechanics/scans/*

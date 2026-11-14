@@ -61,7 +61,7 @@ Lasius combines embedded locomotion control, 3D physics simulation (PyBullet & M
 - **Unified Orchestration (`scripts/sim/sim_pilot.sh`):** Concurrent startup of PyBullet 3D simulation, HTTP Web Dashboard, WebSocket bridge, and `lasius-pilot` teleoperation with graceful single-signal shutdown.
 
 ### 5. I2C Sensor Bus & Testbench (`hardware/electronics/`, `scripts/bench/`)
-- **Two-Tier I2C Architecture:** Dual PCA9685 servo drivers (`0x40` left, `0x42` right) on primary I2C bus 1; central **TCA9548A 8-channel multiplexer** (`0x71`) isolating 6× **ADS1115** 16-bit ADCs (`0x48`) for closed-loop potentiometer feedback.
+- **Two-Tier I2C & Logic Architecture:** Dual **Controllers** (`PCA9685` `0x40` left, `0x42` right) daisy-chained with the central **Multiplexer** (`PCA9548A` at `0x71`, avoiding `0x70 ALLCALL`), isolated per-leg **Wandler** ADCs (`6× ADS1115 V280` at `0x48` on `CH0–CH5`, verified `SCL`-before-`SDA` pinout and effective 12-bit / `2.0 mV` steps) reading servo potentiometers & Omron D2F-L foot switches (`A3`), plus a central `3.3V / GND` distribution rail tied once to `Star_Ground_Bus`.
 - **Automated Diagnostic Tool (`scripts/bench/test_electronics.py`):** Full topology scan, sub-channel switching, and live analog voltage monitor with offline `--mock` mode.
 
 ---
@@ -104,7 +104,8 @@ Direct links to all distributed technical documentation, specifications, hardwar
 - [**`docs/hardware/wiring_plan.md`**](docs/hardware/wiring_plan.md) – Raspberry Pi to PCA9685 I2C daisy chain, logic levels & common ground scheme
 - [**`hardware/README.md`**](hardware/README.md) – Hardware overview, dual-plate chassis dimensions, limb lengths & power distribution
 - [**`hardware/mechanics/README.md`**](hardware/mechanics/README.md) – FreeCAD parametric models, fabrication exports (STEP, STL, DXF) & SVG drill templates
-- [**`hardware/electronics/wiring/README.md`**](hardware/electronics/wiring/README.md) – WireViz cable harnesses (`.yml`), visual harness diagrams & automated BOMs
+- [**`hardware/electronics/wiring/README.md`**](hardware/electronics/wiring/README.md) – WireViz cable harnesses (`.yml`), visual harness diagrams, master color scheme & automated BOMs
+- [**`hardware/electronics/TODO.md`**](hardware/electronics/TODO.md) – Electronics bench verification status, master color scheme, `3.3V/GND` rail & wiring backlog
 
 ### Teleoperation & Controls (`docs/pilot/`)
 - [**`docs/pilot/gamepad_stadia.md`**](docs/pilot/gamepad_stadia.md) – Google Stadia Bluetooth/USB controller profile, button mappings & teleoperation
