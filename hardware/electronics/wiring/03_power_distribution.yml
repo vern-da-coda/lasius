@@ -1,5 +1,5 @@
 # Lasius Hexapod - Power Distribution & Star Ground Architecture
-# Bench Supply / 2S-3S LiPo (XT60BE-M), 25A Blade Fuse, Main Switch, Dual 6V Servo Rails & 5.1V Pi Logic
+# Bench Supply / 2S-3S LiPo (XT60BE-M), 25A Blade Fuse, Main Switch, Dual 6V Servo Rails, 5.1V Pi Logic & Central 3.3V Rail
 
 options:
   fontname: "DejaVu Sans"
@@ -11,7 +11,7 @@ connectors:
     pincount: 2
     pinlabels: [BAT+, BAT-]
     color: YE
-    notes: "Panel-mount rear power inlet (currently operated on bench supply)"
+    notes: "Panel-mount rear power inlet (bench supply used during bring-up)"
 
   Inline_Fuse:
     type: Automotive Blade Fuse Holder
@@ -37,14 +37,15 @@ connectors:
   Star_Ground_Bus:
     type: Central Star-GND Busbar
     subtype: Common Reference Point
-    pincount: 4
+    pincount: 5
     pinlabels:
       - BAT_GND
       - UBEC_L_GND
       - UBEC_R_GND
       - PI_BUCK_GND
+      - LOGIC_REF_GND
     color: BK
-    notes: "Prevents ground bounce between high-current servo loads and 16-bit ADC telemetry"
+    notes: "Prevents ground bounce between high-current servo loads and ADC telemetry; 3.3V rail ties here via 1 single link"
 
   UBEC_Left:
     type: High-Current UBEC Left (6.0V)
@@ -69,26 +70,35 @@ connectors:
     pinlabels: [VIN+, GND_IN, VOUT_5V1, GND_OUT]
     color: GN
 
-  PCA9685_Left_Power:
-    type: PCA9685 Left Screw Terminal (0x40)
+  Controller_Left_Power:
+    type: Controller Left Screw Terminal (PCA9685 0x40)
     subtype: V+ Servo Power Input
     pincount: 2
     pinlabels: [V+_6V, GND]
     color: BU
 
-  PCA9685_Right_Power:
-    type: PCA9685 Right Screw Terminal (0x42)
+  Controller_Right_Power:
+    type: Controller Right Screw Terminal (PCA9685 0x42)
     subtype: V+ Servo Power Input
     pincount: 2
     pinlabels: [V+_6V, GND]
     color: BU
 
   RaspberryPi_Power:
-    type: Raspberry Pi 4 Power Input
-    subtype: USB-C / 5V Header Supply
-    pincount: 2
-    pinlabels: [5V1, GND]
+    type: Raspberry Pi 4 Power Input + 3.3V Feed
+    subtype: 5V Header/USB-C In to Pin 1/17 3.3V Out
+    pincount: 3
+    pinlabels: [5V1_IN, GND, 3V3_PIN1_OUT]
     color: GN
+    notes: "3.3V Pin 1/17 supplies ~60-100 mA sensor/logic rail (never feed 5V to logic boards)"
+
+  Dist_3V3_GND_Rail:
+    type: Central 3.3V / GND Distribution Rail
+    subtype: Perfboard Busbar (100nF + 10uF Decoupling)
+    pincount: 2
+    pinlabels: [3V3_LOGIC_RAIL, GND_LOGIC_RAIL]
+    color: RD
+    notes: "Feeds 2x Controller VCC, 1x Multiplexer (0x71),\n6x Wandler (0x48) + planned IMU/ToF (~10-13 taps)"
 
 cables:
   Inlet_to_Fuse:
@@ -151,6 +161,18 @@ cables:
     colors: [RD, BK]
     wirecount: 2
 
+  Pi_3V3_Logic_Tap:
+    gauge: 26 AWG
+    length: 0.12
+    colors: [RD]
+    wirecount: 1
+
+  Logic_StarGND_Ref:
+    gauge: 24 AWG
+    length: 0.12
+    colors: [BK]
+    wirecount: 1
+
 connections:
   # Main Positive Path: XT60 Inlet -> 25A Fuse -> Master Switch -> V+ Distribution
   -
@@ -200,16 +222,24 @@ connections:
     - Supply_Pi_Buck: [2]
     - StepDown_Pi: [GND_IN]
 
-  # Regulated Outputs to PCA9685 Left (0x40), PCA9685 Right (0x42), and Raspberry Pi 4
+  # Regulated Outputs to Controller Left (0x40), Controller Right (0x42), Raspberry Pi 4, and 3.3V Logic Rail
   -
     - UBEC_Left: [VOUT_6V, GND_OUT]
     - Servo_Rail_Left: [1, 2]
-    - PCA9685_Left_Power: [V+_6V, GND]
+    - Controller_Left_Power: [V+_6V, GND]
   -
     - UBEC_Right: [VOUT_6V, GND_OUT]
     - Servo_Rail_Right: [1, 2]
-    - PCA9685_Right_Power: [V+_6V, GND]
+    - Controller_Right_Power: [V+_6V, GND]
   -
     - StepDown_Pi: [VOUT_5V1, GND_OUT]
     - Pi_5V_Rail: [1, 2]
-    - RaspberryPi_Power: [5V1, GND]
+    - RaspberryPi_Power: [5V1_IN, GND]
+  -
+    - RaspberryPi_Power: [3V3_PIN1_OUT]
+    - Pi_3V3_Logic_Tap: [1]
+    - Dist_3V3_GND_Rail: [3V3_LOGIC_RAIL]
+  -
+    - Star_Ground_Bus: [LOGIC_REF_GND]
+    - Logic_StarGND_Ref: [1]
+    - Dist_3V3_GND_Rail: [GND_LOGIC_RAIL]

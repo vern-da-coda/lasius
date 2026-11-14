@@ -1,12 +1,12 @@
-# Lasius Hexapod - Single Leg Wiring & Potentiometer Feedback Harness
-# 3x Reely NR-645 MG BB Servos, Omron D2F-L Foot Switch, ADS1115 ADC, 4x 100nF MLCC & 10k Pull-Up
+# Lasius Hexapod - Single Leg Wiring & Potentiometer Feedback Harness (Master Color Scheme)
+# 3x Reely NR-645 MG BB Servos, Omron D2F-L Foot Switch, Wandler (ADS1115 V280), 4x 100nF MLCC & 10k Pull-Up
 
 options:
   fontname: "DejaVu Sans"
 
 connectors:
-  PCA9685_Leg_Block:
-    type: PCA9685 4-Channel Header Block
+  Controller_Leg_Block:
+    type: Controller 4-Channel Header Block (PCA9685)
     subtype: Channels 4k, 4k+1, 4k+2 (4k+3 Spare)
     pinlabels:
       - Coxa_PWM
@@ -22,20 +22,27 @@ connectors:
       - Spare_CH_V+
       - Spare_CH_GND
     color: BU
-    notes: "4th slot in each 4-channel block (CH3, CH7, CH11) remains free for front/aux servos"
+    notes: "4th slot (CH3, CH7, CH11) free for aux/head; V+ = 6.0V servo rail (strictly isolated from 3.3V logic)"
 
-  TCA9548A_SubBus:
-    type: TCA9548A Sub-Channel Uplink (CHx)
-    subtype: 4-Pin I2C + 3.3V Feed
-    pinlabels: [3V3, GND, SDA, SCL]
-    color: BU
+  Dist_3V3_GND_Rail:
+    type: Central 3.3V / GND Distribution Rail
+    subtype: Logic Power Feed
+    pinlabels: [3V3_OUT, GND_OUT]
+    color: RD
+
+  Multiplexer_SubBus:
+    type: Multiplexer Sub-Channel Uplink (PCA9548A CHx)
+    subtype: Clock + Data Only (shown for CH0 / LF)
+    pinlabels: [SCx, SDx]
+    color: VT
+    notes: "No 3.3V/GND pins on CH0-CH7. SDx color by leg: CH0=BU, CH1=GN, CH2=VT, CH3=OG, CH4=WH, CH5=GY (SCx always YE)"
 
   Servo_Coxa: &servo_template
     type: Reely NR-645 MG BB
     subtype: Modified 4-Wire Servo (Coxa)
     pinlabels: [PWM, V+, GND, POT_WIPER]
     color: GY
-    notes: "Wiper voltage 0.88V-2.25V (1.563V @ 0 deg)"
+    notes: "Wiper voltage 0.88V-2.25V (1.559V-1.563V @ 0 deg, verified max 3.3V)"
 
   Servo_Femur:
     <<: *servo_template
@@ -51,25 +58,25 @@ connectors:
     pinlabels: [NO_SIG, COM_GND]
     color: BK
 
-  ADS1115_Leg_Board:
-    type: ADS1115 16-Bit ADC Breakout
-    subtype: Leg Telemetry Module (Addr 0x48)
+  Wandler_Leg_Board:
+    type: Wandler 4-Ch ADC (ADS1115 V280)
+    subtype: Leg Telemetry Module (Addr 0x48, effective 12-bit / 2.0 mV steps)
     pinlabels:
       - VDD_3V3
       - GND
-      - SDA
       - SCL
+      - SDA
       - ADDR
       - A0_Coxa
       - A1_Femur
       - A2_Tibia
       - A3_Foot
     color: OG
-    notes: "ADDR bridged to GND (0x48). PGA Gain = 1 (+/-4.096V, 860 SPS)."
+    notes: "V280 header order: VDD|GND|SCL|SDA|ADDR|ALRT|A0..A3\nSCL before SDA! ADDR bridged to GND (0x48); PGA=1 (+/-4.096V)"
 
   Onboard_RC_Pullup:
-    type: Passive Filter + Pull-Up Network
-    subtype: Soldered Directly Under ADS1115 Header
+    type: Passive Filter, Pull-Up + ADDR Strap
+    subtype: Soldered Directly Under Wandler Header
     pinlabels:
       - C0_A0
       - C1_A1
@@ -78,8 +85,9 @@ connectors:
       - R_PULLUP_A3
       - R_PULLUP_3V3
       - C_COMMON_GND
+      - ADDR_TO_GND
     color: YE
-    notes: "4x 100nF 50V MLCC (A0..A3 to GND, fc ~ 636 Hz) + 1x 10kOhm Pull-Up (A3 to VDD_3V3)"
+    notes: "4x 100nF 50V MLCC (A0..A3 to GND, fc ~ 636 Hz)\n1x 10kOhm Pull-Up (A3 to VDD_3V3) + ADDR to GND strap"
 
 cables:
   Coxa_Power_PWM:
@@ -103,7 +111,7 @@ cables:
   Femur_Pot_Line:
     gauge: 28 AWG
     length: 0.18
-    colors: [WH]
+    colors: [GN]
     wirecount: 1
 
   Tibia_Power_PWM:
@@ -115,72 +123,76 @@ cables:
   Tibia_Pot_Line:
     gauge: 28 AWG
     length: 0.30
-    colors: [WH]
+    colors: [VT]
     wirecount: 1
 
   Foot_Switch_Line:
     gauge: 28 AWG
     length: 0.35
-    colors: [BU, BK]
+    colors: [OG, BK]
     wirecount: 2
 
   SubBus_I2C_Feed:
     gauge: 28 AWG
     length: 0.20
-    colors: [RD, BK, BU, YE]
+    colors: [RD, BK, YE, BU]
     wirecount: 4
 
   Direct_Header_Solder:
     gauge: 26 AWG
     length: 0.01
-    colors: [YE, YE, YE, YE, VT, RD, BK]
-    wirecount: 7
+    colors: [YE, YE, YE, YE, OG, RD, BK, BK]
+    wirecount: 8
 
 connections:
-  # I2C & 3.3V Supply from TCA9548A Multiplexer to Leg ADS1115
+  # 3.3V/GND from Central Rail + SCx/SDx from Multiplexer -> 4-Wire Sub-Bus to Leg Wandler (SCL before SDA)
   -
-    - TCA9548A_SubBus: [3V3, GND, SDA, SCL]
-    - SubBus_I2C_Feed: [1, 2, 3, 4]
-    - ADS1115_Leg_Board: [VDD_3V3, GND, SDA, SCL]
+    - Dist_3V3_GND_Rail: [3V3_OUT, GND_OUT]
+    - SubBus_I2C_Feed: [1, 2]
+    - Wandler_Leg_Board: [VDD_3V3, GND]
+  -
+    - Multiplexer_SubBus: [SCx, SDx]
+    - SubBus_I2C_Feed: [3, 4]
+    - Wandler_Leg_Board: [SCL, SDA]
 
-  # Coxa Servo PWM + Potentiometer Wiper
+  # Coxa Servo PWM + Potentiometer Wiper (White -> A0)
   -
-    - PCA9685_Leg_Block: [Coxa_PWM, Coxa_V+, Coxa_GND]
+    - Controller_Leg_Block: [Coxa_PWM, Coxa_V+, Coxa_GND]
     - Coxa_Power_PWM: [1, 2, 3]
     - Servo_Coxa: [PWM, V+, GND]
   -
     - Servo_Coxa: [POT_WIPER]
     - Coxa_Pot_Line: [1]
-    - ADS1115_Leg_Board: [A0_Coxa]
+    - Wandler_Leg_Board: [A0_Coxa]
 
-  # Femur Servo PWM + Potentiometer Wiper
+  # Femur Servo PWM + Potentiometer Wiper (Green -> A1)
   -
-    - PCA9685_Leg_Block: [Femur_PWM, Femur_V+, Femur_GND]
+    - Controller_Leg_Block: [Femur_PWM, Femur_V+, Femur_GND]
     - Femur_Power_PWM: [1, 2, 3]
     - Servo_Femur: [PWM, V+, GND]
   -
     - Servo_Femur: [POT_WIPER]
     - Femur_Pot_Line: [1]
-    - ADS1115_Leg_Board: [A1_Femur]
+    - Wandler_Leg_Board: [A1_Femur]
 
-  # Tibia Servo PWM + Potentiometer Wiper
+  # Tibia Servo PWM + Potentiometer Wiper (Violet -> A2)
   -
-    - PCA9685_Leg_Block: [Tibia_PWM, Tibia_V+, Tibia_GND]
+    - Controller_Leg_Block: [Tibia_PWM, Tibia_V+, Tibia_GND]
     - Tibia_Power_PWM: [1, 2, 3]
     - Servo_Tibia: [PWM, V+, GND]
   -
     - Servo_Tibia: [POT_WIPER]
     - Tibia_Pot_Line: [1]
-    - ADS1115_Leg_Board: [A2_Tibia]
+    - Wandler_Leg_Board: [A2_Tibia]
 
-  # Tactile Foot Switch (Active-Low to GND)
+  # Tactile Foot Switch (Orange NO -> A3, Black COM -> GND)
   -
     - Foot_Sensor: [NO_SIG, COM_GND]
     - Foot_Switch_Line: [1, 2]
-    - ADS1115_Leg_Board: [A3_Foot, GND]
+    - Wandler_Leg_Board: [A3_Foot, GND]
 
-  # Soldered Onboard 4x 100nF Low-Pass Capacitors (Ax -> GND) & 10k Pull-Up (A3 -> VDD_3V3)
+  # Soldered Onboard 4x 100nF Low-Pass Capacitors (Ax -> GND), 10k Pull-Up (A3 -> VDD_3V3) & ADDR Strap (ADDR -> GND)
   -
-    - ADS1115_Leg_Board: [A0_Coxa, A1_Femur, A2_Tibia, A3_Foot, A3_Foot, VDD_3V3, GND]
-    - Direct_Header_Solder: [1, 2, 3, 4, 5, 6, 7]
-    - Onboard_RC_Pullup: [C0_A0, C1_A1, C2_A2, C3_A3, R_PULLUP_A3, R_PULLUP_3V3, C_COMMON_GND]
+    - Wandler_Leg_Board: [A0_Coxa, A1_Femur, A2_Tibia, A3_Foot, A3_Foot, VDD_3V3, GND, ADDR]
+    - Direct_Header_Solder: [1, 2, 3, 4, 5, 6, 7, 8]
+    - Onboard_RC_Pullup: [C0_A0, C1_A1, C2_A2, C3_A3, R_PULLUP_A3, R_PULLUP_3V3, C_COMMON_GND, ADDR_TO_GND]

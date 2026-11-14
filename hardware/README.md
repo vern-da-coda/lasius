@@ -24,23 +24,21 @@ All dimensions and physical kinematics are defined in [`software/lasius-core/src
   - **Middle Width:** 150 mm ($Y = \pm 75\,\text{mm}$).
   - **Axis Distance along Body:** 86 mm ($X = +86\,\text{mm}$ front, $0\,\text{mm}$ middle, $-86\,\text{mm}$ rear).
   - **Default Stance:** $X = 160\,\text{mm}$ radial reach, $Z = -80\,\text{mm}$ ground clearance.
-- **Actuation & Drivers:**
-  - **Servos (18×):** Standard 25T spline metal-gear servos (Hitec HS-645MG / NR-645).
-  - **PWM Drivers (2×):** PCA9685 on I2C Bus 1 at `0x40` (left 9 servos) and `0x42` (right 9 servos, A1 bridged), powered by a 6.0 V high-current UBEC (20A). PCA9685 `ALLCALL` (`0x70`) is disabled in software.
-- **Sensor Bus Architecture (STEMMA QT / Qwiic I2C):**
-  - `0x70`: Adafruit PCA9548 8-Channel I2C Multiplexer
-  - `0x4A`: Adafruit BNO085 9-DOF Orientation IMU
-  - `0x41` & `0x44`: 2× Adafruit INA260 High-Side Voltage/Current/Power Monitors (left & right servo banks)
-  - `CH0–CH2` (`0x29`): 3× Adafruit VL53L4CD Time-of-Flight laser distance sensors (1–1300 mm, front left/center/right)
-  - `0x20`: Adafruit MCP23017 16-pin I2C GPIO expander reading 6× foot contact microswitches
-  - `CH3–CH7` (`0x48`): 6× ADS1115 16-Bit ADCs reading internal servo potentiometers for closed-loop angle feedback
+- **Actuation & Controllers:**
+  - **Servos (18×):** Reely NR-645 MG BB (25T spline) metal-gear servos with exposed internal potentiometer wiper wires ($\le 3.3\,\text{V}$).
+  - **Controllers (2× PCA9685):** Daisy-chained on I2C Bus 1 at `0x40` (left 9 servos) and `0x42` (right 9 servos, `A1` bridged), servo `V+` powered by 6.0 V high-current UBECs / bench supply. PCA9685 `ALLCALL` (`0x70`) is cleared in software.
+- **Sensor Bus, Multiplexer & Wandler Architecture (`I2C1`, 3.3 V Logic):**
+  - **Central `3.3V / GND` Distribution Rail:** Perfboard busbar (`100 nF + 10 µF` decoupling, ~`60–100 mA` total budget from Pi `Pin 1/17`) feeding logic boards centrally and tied once to `Star_Ground_Bus` (as the `PCA9548A` exposes `SDx/SCx` only on `CH0–CH7`).
+  - **`0x71` — Multiplexer (`PCA9548A` / `PW548A`):** 8-channel I2C hub (`A0` wired to `3.3 V` to avoid `0x70 ALLCALL` conflicts).
+  - **`CH0–CH5` (`0x48`) — 6× Wandler (`ADS1115 V280`):** 1 ADC per leg (`LF`, `LM`, `LR`, `RF`, `RM`, `RR`; `V280` `SCL`-before-`SDA` header order; verified effective 12-bit / `2.0 mV` steps) reading Coxa/Femur/Tibia servo potentiometers on `A0–A2` (`100 nF` RC filters) plus the Omron D2F-L tactile foot switch on `A3` (`10 kΩ` pull-up to `3.3V`, `COM` to `GND`).
+  - **Planned Expansion:** `BNO085` 9-DOF IMU (`0x4A` primary bus), `INA228`/`INA260` power monitors (`CH6`), and `VL53L4CD`/`VL53L5CX` Time-of-Flight sensors (`CH7`).
 
 ---
 
 ## Subdirectories
 
 - [**`mechanics/`**](mechanics/README.md): Parametric FreeCAD 3D CAD models (`.FCStd`), headless generation scripts (`scripts/`), fabrication exports (`export/` in STEP, STL, DXF), 1:1 SVG drill templates, and 1200 DPI reference flatbed scans.
-- [**`electronics/`**](electronics/wiring/README.md): WireViz wiring definitions (`.yml`), electrical harness diagrams (`.svg`, `.png`), and automated Bills of Materials (`.bom.tsv`).
+- [**`electronics/`**](electronics/wiring/README.md): WireViz wiring definitions (`.yml`), electrical harness diagrams (`.svg`, `.png`), and automated Bills of Materials (`.bom.tsv`). See also the [**Electronics & Wiring Backlog / TODOs**](electronics/TODO.md).
 
 ---
 

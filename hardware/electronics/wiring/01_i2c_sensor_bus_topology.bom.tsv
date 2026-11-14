@@ -1,14 +1,15 @@
 Id	Description	Qty	Unit	Designators
-1	Cable, 4 x 26 AWG	0.45	m	Bus_to_PCA_Left, Bus_to_PCA_Right, Bus_to_TCA9548A, Pi_to_PrimaryHub
-2	Cable, 4 x 28 AWG	1	m	SubBus_CH0_LF, SubBus_CH1_LM, SubBus_CH2_LR, SubBus_CH3_RF, SubBus_CH4_RM, SubBus_CH5_RR
-3	Connector, ADS1115 16-Bit ADC Breakout, Left Front Leg (CH0, Addr 0x48), 4 pins, OG	1		ADS1115_LF
-4	Connector, ADS1115 16-Bit ADC Breakout, Left Middle Leg (CH1, Addr 0x48), 4 pins, OG	1		ADS1115_LM
-5	Connector, ADS1115 16-Bit ADC Breakout, Left Rear Leg (CH2, Addr 0x48), 4 pins, OG	1		ADS1115_LR
-6	Connector, ADS1115 16-Bit ADC Breakout, Right Front Leg (CH3, Addr 0x48), 4 pins, OG	1		ADS1115_RF
-7	Connector, ADS1115 16-Bit ADC Breakout, Right Middle Leg (CH4, Addr 0x48), 4 pins, OG	1		ADS1115_RM
-8	Connector, ADS1115 16-Bit ADC Breakout, Right Rear Leg (CH5, Addr 0x48), 4 pins, OG	1		ADS1115_RR
-9	Connector, Adafruit TCA9548A 8-Ch Multiplexer, Central Sensor Hub (Addr 0x71 via A0), 28 pins, BU	1		TCA9548A_Mux
-10	Connector, PCA9685 Left Servo Driver, I2C Logic Header (Addr 0x40), 4 pins, BU	1		PCA9685_Left_I2C
-11	Connector, PCA9685 Right Servo Driver, I2C Logic Header (Addr 0x42 via A1), 4 pins, BU	1		PCA9685_Right_I2C
-12	Connector, Primary I2C1 Bus Distribution, 3.3V STEMMA QT / Header Busbar, 4 pins, GY	1		I2C_Primary_Hub
-13	Connector, Raspberry Pi 4 (40-Pin Header), Pins 1 (3.3V), 3 (SDA1), 5 (SCL1), 6 (GND), 4 pins, GN	1		RaspberryPi_GPIO
+1	Cable, 2 x 26 AWG	0.67	m	I2C_Ctrl_Left_to_Right, I2C_Ctrl_Right_to_Mux, I2C_Pi_to_Ctrl_Left, Pi_Logic_Power, Rail_to_Ctrl_Left, Rail_to_Ctrl_Right
+2	Cable, 3 x 26 AWG	0.08	m	Rail_to_Multiplexer
+3	Cable, 4 x 28 AWG	1	m	SubBus_CH0_LF, SubBus_CH1_LM, SubBus_CH2_LR, SubBus_CH3_RF, SubBus_CH4_RM, SubBus_CH5_RR
+4	Connector, Central 3.3V / GND Distribution Rail, Perfboard Busbar (100nF + 10uF Decoupling), 21 pins, RD	1		Dist_3V3_GND_Rail
+5	Connector, Controller Left (PCA9685 PWM Driver), 6-Pin Logic Pass-Through Header (Addr 0x40), 6 pins, BU	1		Controller_Left
+6	Connector, Controller Right (PCA9685 PWM Driver), 6-Pin Logic Pass-Through Header (Addr 0x42 via A1), 6 pins, BU	1		Controller_Right
+7	Connector, Multiplexer (PCA9548A / PW548A 8-Ch), Addr 0x71 (A0 tied to 3.3V) | CH0-CH7 Data + Clock Only, 17 pins, VT	1		Multiplexer
+8	Connector, Raspberry Pi 4 (40-Pin Header), Pins 1 (3.3V), 6 (GND), 3 (SDA1), 5 (SCL1), 4 pins, GN	1		RaspberryPi_GPIO
+9	Connector, Wandler 4-Ch ADC (ADS1115 V280), Left Front Leg (CH0, Addr 0x48), 4 pins, OG	1		Wandler_LF
+10	Connector, Wandler 4-Ch ADC (ADS1115 V280), Left Middle Leg (CH1, Addr 0x48), 4 pins, OG	1		Wandler_LM
+11	Connector, Wandler 4-Ch ADC (ADS1115 V280), Left Rear Leg (CH2, Addr 0x48), 4 pins, OG	1		Wandler_LR
+12	Connector, Wandler 4-Ch ADC (ADS1115 V280), Right Front Leg (CH3, Addr 0x48), 4 pins, OG	1		Wandler_RF
+13	Connector, Wandler 4-Ch ADC (ADS1115 V280), Right Middle Leg (CH4, Addr 0x48), 4 pins, OG	1		Wandler_RM
+14	Connector, Wandler 4-Ch ADC (ADS1115 V280), Right Rear Leg (CH5, Addr 0x48), 4 pins, OG	1		Wandler_RR

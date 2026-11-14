@@ -16,16 +16,15 @@ This document consolidates all final architectural decisions from the project sp
 
 ## 1. Overall Concept & Development Roadmap
 
-1. **Modular 6-Arm Sensor Platform ("Underbody Sensor Tray"):**
-   - All chassis sensors are consolidated onto a **single removable mounting plate** beneath the lower chassis plate.
-   - The center hosts the multiplexer (TCA9548A), IMU (BNO085), current/power sensors (INA228), GPIO expander (MCP23017), and the 6 ADS1115 leg ADC modules; the front nose houses the ToF distance sensor.
-   - **Advantage:** Complete pre-wiring outside the robot at the workbench; disconnected during maintenance via a single centralized I2C uplink from the Raspberry Pi 4.
+1. **Modular Sensor Tray & Femur Integration:**
+   - Central electronics (`Raspberry Pi 4`, **Controllers** `0x40`/`0x42`, **Multiplexer** `0x71`, planned **IMU** `BNO085`, power monitors `INA228`/`INA260`) sit inside the chassis core (`electronics_tray`), with **1× Wandler** (`ADS1115 V280`, `0x48`) integrated inside each femur chamber and **ToF** (`VL53L4CD`/`VL53L5CX`) planned at the front.
+   - *(Note: Earlier drafts planned a separate `MCP23017 (0x20)` GPIO expander for the 6 foot switches. That was simplified: each leg's **Omron D2F-L** microswitch connects directly to `A3` (with `10 kΩ` pull-up to `3.3V` + `100 nF` RC filter) on that leg's **Wandler**.)*
 2. **Decoupled Single-Leg Docking Test Rig:**
-   - A 3D-printed **single-leg test bench (docking station)** accommodates exactly *one* leg along with its ADS1115 module, INA228, and foot switch, docking directly to the robot's I2C multiplexer or a test Raspberry Pi.
-   - Enables isolated validation of **CAD fit, potentiometer calibration, tibia compliance, and stall current shutdown** on a single leg before assembling all 6 legs.
+   - A 3D-printed / bench **single-leg test setup** accommodates *one* leg (`LF` on `CH0`) along with its **Wandler** (`ADS1115 V280`) and foot switch, verified on `bkhexapod` (`Controller CH0` ↔ `Wandler A0`).
+   - Enables isolated validation of **CAD fit, potentiometer calibration, tibia compliance, and stall/lag telemetry** on a single leg before assembling all 6 legs.
    - *(Note: The legacy concept of external AS5600 magnetic encoders on the Coxa axes has been completely abandoned — internal potentiometer feedback provides native 18-DOF telemetry for all 18 joints without mechanical air-gap alignment).*
-3. **100% Solderless Sensor Ecosystem (Adafruit STEMMA QT / Qwiic):**
-   - All I2C sensors use 4-pin JST-SH connectors (3.3V logic level from the Raspberry Pi). No custom carrier boards or solder bridges for pull-up resistors are required.
+3. **3.3V Logic Distribution & Real Breakout Ecosystem (`Controller` / `Multiplexer` / `Wandler`):**
+   - Because the real purple **`PCA9548A` (`PW548A`)** breakout exposes `SDx / SCx` only on `CH0–CH7` (no integrated `3.3V / GND` pins per sub-channel, and `A0` tied externally to `3.3V`), all logic supplies (`VCC`/`VDD`/`VIN` + `GND`) are fanned out via a central **`3.3V / GND` perfboard distribution rail** tied once to `Star_Ground_Bus` (see [`hardware/electronics/wiring/README.md`](../../hardware/electronics/wiring/README.md) & [`hardware/electronics/TODO.md`](../../hardware/electronics/TODO.md)).
 
 ---
 
@@ -47,37 +46,36 @@ This document consolidates all final architectural decisions from the project sp
 
 To isolate the 6 leg ADC boards (**ADS1115**) and maintain a clean I2C bus hierarchy, an **8-channel multiplexer (TCA9548A)** is used:
 
-- **Primary I2C Bus (`/dev/i2c-1` on Raspberry Pi):**
-  - `0x40`: PCA9685 Servo Board Left (PWM drive)
-  - `0x42`: PCA9685 Servo Board Right (PWM drive)
-  - `0x71`: **TCA9548A 8-Channel I2C Multiplexer** (Solder bridge A0 closed $\rightarrow$ address `0x71`, eliminates boot conflict with PCA9685 default `0x70`)
-  - `0x20`: **Adafruit MCP23017 I2C GPIO Expander** (16 digital I/Os with internal pull-ups)
-  - `0x4A`: **Adafruit BNO085 9-DOF Orientation IMU** (Quaternions, gravity vector, linear acceleration)
-- **Multiplexer Channels (`TCA9548A @ 0x71`):**
-  - `CH0`: **ADS1115 #1 (Left Front: Coxa, Femur, Tibia, Foot)** (`0x48`)
-  - `CH1`: **ADS1115 #2 (Left Middle: Coxa, Femur, Tibia, Foot)** (`0x48`)
-  - `CH2`: **ADS1115 #3 (Left Rear: Coxa, Femur, Tibia, Foot)** (`0x48`)
-  - `CH3`: **ADS1115 #4 (Right Front: Coxa, Femur, Tibia, Foot)** (`0x48`)
-  - `CH4`: **ADS1115 #5 (Right Middle: Coxa, Femur, Tibia, Foot)** (`0x48`)
-  - `CH5`: **ADS1115 #6 (Right Rear: Coxa, Femur, Tibia, Foot)** (`0x48`)
-  - `CH6`: **2× INA228** (Current/voltage monitoring for dual servo rails, A0/A1 bridged)
-  - `CH7`: **1× VL53L4CD Time-of-Flight (ToF) Distance Sensor (`0x29`)** in front fascia (1 mm – 1300 mm range)
+- **Primary I2C Bus (`/dev/i2c-1` on Raspberry Pi, Daisy-Chain):**
+  - `0x40`: **Controller Left (`PCA9685`)** (9 PWM leg channels `LF, LM, LR`)
+  - `0x42`: **Controller Right (`PCA9685`)** (9 PWM leg channels `RF, RM, RR`, `A1` bridged)
+  - `0x71`: **Multiplexer (`PCA9548A` / `PW548A` 8-Channel)** (`A0` wired to `3.3V` $\rightarrow$ `0x71`, eliminates boot conflict with PCA9685 `ALLCALL 0x70`)
+  - `0x4A`: **Adafruit BNO085 9-DOF Orientation IMU** *(planned)* (Quaternions, gravity vector, linear acceleration)
+- **Multiplexer Channels (`PCA9548A @ 0x71`, `SCx/SDx` + Central `3.3V/GND` Rail):**
+  - `CH0`: **Wandler #1 (`ADS1115 V280`, Left Front: Coxa, Femur, Tibia, Foot)** (`0x48`)
+  - `CH1`: **Wandler #2 (`ADS1115 V280`, Left Middle: Coxa, Femur, Tibia, Foot)** (`0x48`)
+  - `CH2`: **Wandler #3 (`ADS1115 V280`, Left Rear: Coxa, Femur, Tibia, Foot)** (`0x48`)
+  - `CH3`: **Wandler #4 (`ADS1115 V280`, Right Front: Coxa, Femur, Tibia, Foot)** (`0x48`)
+  - `CH4`: **Wandler #5 (`ADS1115 V280`, Right Middle: Coxa, Femur, Tibia, Foot)** (`0x48`)
+  - `CH5`: **Wandler #6 (`ADS1115 V280`, Right Rear: Coxa, Femur, Tibia, Foot)** (`0x48`)
+  - `CH6`: **INA228 / INA260** *(planned)* (Current/voltage monitoring for servo rails)
+  - `CH7`: **VL53L4CD / VL53L5CX Time-of-Flight (ToF)** *(planned)* in front fascia
 
 ### 3.2 Tactile Ground Contact Detection & Audio Feedback
 
-- **Foot Contact Switches (6×):** **Omron D2F-L** subminiature lever microswitches (Made in Japan, ultra-low actuation force ~0.75 N, ensuring robot self-weight reliably triggers the switch).
-- **Interface:** All 6 microswitches are connected with 2 wires (`COM` to `GND`, `NO` to `GPA0`–`GPA5`) to the **MCP23017 (`0x20`)** with internal pull-up resistors enabled in software.
-- **Acoustic Status/Warning Buzzer:** **Passive Piezo Buzzer** wired directly to **GPIO 13 (`PWM1`, Pin 33)** and `GND` (Pin 34) on the Raspberry Pi 4 for multi-tone status chimes (boot, calibration confirm, stall/undervoltage alert).
+- **Foot Contact Switches (6×):** **Omron D2F-L** subminiature lever microswitches (ultra-low actuation force ~0.75 N).
+- **Interface:** Connected directly to pin **`A3`** (**Orange**) and `GND` (**Black**, `COM`) on each leg's **Wandler** (`ADS1115 V280`, `0x48`) with a soldered `10 kΩ` pull-up resistor to `VDD (3.3V)` and `100 nF` RC filter capacitor (eliminates the separate `MCP23017`).
+- **Acoustic Status/Warning Buzzer:** **Passive Piezo Buzzer** *(planned)* wired to **GPIO 13 (`PWM1`, Pin 33)** and `GND` (Pin 34) on the Raspberry Pi 4 for multi-tone status chimes.
 
 ### 3.3 18-DOF Analog Closed-Loop Servo Feedback (Reely NR-645 MG BB)
 
 - **Concept:** Direct tapping of wiper voltage across all 18 internal servo potentiometers for full real-time joint angle measurement, stall detection, and tactile foot contact sensing.
-- **Empirical Model Parameters:** $R^2 = 0.99959$ (99.96% linearity), sensitivity $+7.589\,\text{mV}/^\circ$, zero point $1.5633\,\text{V}$ at $0^\circ$ (1500 µs), conversion formula: $\theta(V) = (V - 1.5633) \cdot 131.772^\circ$.
+- **Empirical Model Parameters (`bkhexapod` Stage 3 verified):** `Controller CH0` ↔ `Wandler A0`: $R^2 = 0.999876$, sensitivity $+7.530\,\text{mV}/^\circ$ (`132.802 °/V`), zero point $1.5590\,\text{V}$ at $0^\circ$ (earlier `CH15` multimeter series in [`data/bench/`](../../data/bench/README.md): $R^2 = 0.999591$, $+7.589\,\text{mV}/^\circ$, $1.5633\,\text{V}$).
 - **Architecture & Bus Design (100% Python on Raspberry Pi 4):**
-  - **TCA9548A 8-Channel I2C Multiplexer (`0x71` with solder jumper A0 closed):** Prevents address collisions with PCA9685 `ALLCALL` default (`0x70`) during bootup.
-  - **6× ADS1115 (16-Bit 4-Channel ADCs, `0x48` each):** Symmetric **1-board-per-leg** architecture on Mux channels `CH0` through `CH5`. Each ADS1115 reads `A0` (Coxa), `A1` (Femur), `A2` (Tibia), and `A3` (Reserve / analog foot sensor).
-  - **Noise Suppression:** 18× (or 24×) **100 nF 50V MLCC ceramic capacitors** soldered directly to the bottom of each ADS1115 between analog inputs and GND ($f_c \approx 636\,\text{Hz}$, filters out PWM and motor brush noise).
-  - **Complete Schematic Documentation:** See [`closed_loop_plan.md`](closed_loop_plan.md).
+  - **Multiplexer (`PCA9548A / PW548A @ 0x71`, `A0 → 3.3V`):** Prevents address collisions with PCA9685 `ALLCALL` (`0x70`) during bootup.
+  - **6× Wandler (`ADS1115 V280`, `0x48` each):** Symmetric **1-board-per-leg** architecture on Mux channels `CH0`–`CH5`. Hardware verified: real `V280` pinout has **`SCL` before `SDA`** (`VDD | GND | SCL | SDA | ADDR | ALRT | A0–A3`) and tested silicon yields left-aligned **12-bit** steps (`2.0 mV` / step $\approx 0.26^\circ$). Reads `A0` (Coxa, White), `A1` (Femur, Green), `A2` (Tibia, Violet), and `A3` (Omron foot switch, Orange).
+  - **Noise Suppression:** 24× **100 nF 50V MLCC ceramic capacitors** (`A0–A3` to `GND`, $f_c \approx 636\,\text{Hz}$) + 6× `10 kΩ` pull-up resistors (`A3` to `3.3V`) soldered directly at each **Wandler** header.
+  - **Complete Schematic Documentation:** See [`closed_loop_plan.md`](closed_loop_plan.md) & [`hardware/electronics/wiring/README.md`](../../hardware/electronics/wiring/README.md).
 
 ---
 
@@ -87,17 +85,14 @@ To isolate the 6 leg ADC boards (**ADS1115**) and maintain a clean I2C bus hiera
 
 | Qty | Component / Part Number | Role in Hexapod:Lasius |
 | :---: | :--- | :--- |
-| **6×** | **ADS1115 16-Bit 4-Channel I2C ADC Breakouts** | 1 board per leg: Reads Coxa, Femur & Tibia potentiometer voltages + foot contact (`0x48` on Mux CH0–CH5) |
-| **2×** | **TCA9548A 8-Channel I2C Multiplexer Breakouts** | Central sensor hub at `0x71` (1x Torso, 1x Single-Leg Test Rig). Isolates all 6 leg boards |
-| **100×**| **100 nF 50V MLCC Monolithic Ceramic Capacitors** | Low-pass filter capacitors soldered directly to ADS1115 pin headers ($f_c \approx 636\,\text{Hz}$) |
-| **1×** | **Adafruit VL53L4CD Time of Flight Distance Sensor** (`5396`) | Precision short-range laser distance sensor (1–1300 mm) in front nose (Mux CH7) |
-| **2×** | **Adafruit INA228 I2C 85V 20-Bit Power Monitor** (`5832`) | Real-time current (A), voltage (V), and power (W) telemetry for left & right servo rails (Mux CH6) |
-| **1×** | **Adafruit 9-DOF Orientation IMU Fusion Breakout – BNO085** (`4754`) | On-chip sensor fusion (Roll/Pitch/Yaw) for active body self-leveling on main I2C bus (`0x4A`) |
-| **1×** | **Adafruit MCP23017 I2C GPIO Expander Breakout** (`5346`) | Reads digital foot microswitches over main I2C bus (`0x20`) |
-| **8×** | `4210` | **STEMMA QT / Qwiic JST SH 4-Pin Cable – 100mm** | Short I2C patch links in central sensor tray |
-| **6×** | `4401` | **STEMMA QT / Qwiic JST SH 4-Pin Cable – 200mm** | Outgoing leads from multiplexer to leg arm segments |
-| **1×** | `5385` | **STEMMA QT / Qwiic JST SH 4-Pin Cable – 300mm** | Long uplink harness for external Single-Leg Docking Test Rig |
-| **2×** | `4397` | **STEMMA QT to Female Socket Jumper Cable (150mm)** | Main I2C link between Raspberry Pi GPIO header (3.3V, GND, SDA, SCL) and sensor tray |
+| **6×** | **Wandler: ADS1115 (`V280`) 4-Channel I2C ADC Breakouts** | 1 board per leg: Reads Coxa (`A0`), Femur (`A1`), Tibia (`A2`) pot voltages + Omron foot switch (`A3`) (`0x48` on Mux CH0–CH5; effective 12-bit / `2.0 mV` steps) |
+| **1–2×** | **Multiplexer: PCA9548A (`PW548A`) / TCA9548A 8-Ch I2C Hub** | Central sensor hub at `0x71` (`A0 → 3.3V`). Isolates all 6 leg boards (`SDx/SCx` only; `3.3V/GND` via central rail) |
+| **1×** | **Central `3.3V / GND` Distribution Perfboard** | Fans out Pi `Pin 1/17 (3.3V)` + `GND` (`100 nF + 10 µF` decoupling) to Controllers, Multiplexer & Wandlers (1× tie to `Star-GND`) |
+| **100×** | **100 nF 50V MLCC + 10 kΩ Resistors** | Low-pass filter caps (`4×` per Wandler `A0–A3 → GND`, $f_c \approx 636\,\text{Hz}$) + `10 kΩ` pull-up (`A3 → 3.3V`) |
+| **1×** | **Adafruit VL53L4CD / VL53L5CX ToF Sensor** *(planned)* | Short-range laser distance sensor in front nose (Mux CH7) |
+| **1–2×** | **INA228 / INA260 Power Monitor** *(planned)* | Real-time current/voltage/power telemetry (Mux CH6) |
+| **1×** | **Adafruit 9-DOF Orientation IMU – BNO085** *(planned)* | On-chip sensor fusion (Roll/Pitch/Yaw) on primary I2C bus (`0x4A`) |
+| **Assorted** | **Dupont / JST Wire Harnesses (Master Color Scheme)** | Standardized color coding across `3.3V/GND`, Mux `CH0–CH6`, and `A0–A3` (see [`hardware/electronics/wiring/README.md`](../../hardware/electronics/wiring/README.md)) |
 
 ### 4.2 Hardware, Switches & Fasteners
 

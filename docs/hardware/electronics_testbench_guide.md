@@ -6,38 +6,43 @@
 
 ## 1. Übersicht & Architektur
 
-Für die Closed-Loop-Gelenkwinkelrückführung und Fußsensorik nutzt der Lasius Hexapod eine zweistufige I2C-Architektur:
-* **Aktoren (PWM-Servos):** Zwei PCA9685 Treiberboards (`0x40` links, `0x42` rechts) direkt am primären I2C-Bus 1 des Raspberry Pi 4.
-* **Sensorik (ADCs & Telemetrie):** Ein zentraler **TCA9548A 8-Kanal-I2C-Multiplexer** trennt die 6 Bein-ADCs (**ADS1115**, 16-Bit), sodass alle ADCs dieselbe Standardadresse `0x48` nutzen können, ohne Adresskonflikte zu verursachen.
+Für die Closed-Loop-Gelenkwinkelrückführung und Fußsensorik nutzt der Lasius Hexapod eine zweistufige I2C-Architektur (**Controller / Multiplexer / Wandler**):
+* **Aktoren (Controller):** Zwei PCA9685 Servotreiberboards (`0x40` links, `0x42` rechts) als Daisy-Chain am primären I2C-Bus 1 des Raspberry Pi 4 (`ALLCALL 0x70` in `lasius-core` deaktiviert).
+* **Sensorik (Multiplexer & Wandler):** Ein zentraler **TCA9548A / PCA9548A 8-Kanal-I2C-Multiplexer** (`0x71`) trennt die 6 Bein-**Wandler** (**ADS1115 V280**, `0x48`, verifizierte linksbündige **12-Bit**-Auflösung mit `2,0 mV`-Stufen), sodass alle Wandler dieselbe Standardadresse `0x48` nutzen können. Die `3,3 V / GND`-Logikversorgung erfolgt zentral über eine **`3,3 V / GND`-Verteilerschiene** mit Einzelreferenz an `Star-GND`, da das reale `PW548A`-Breakout auf `CH0–CH7` nur `SDx / SCx` führt.
 
 ```mermaid
 flowchart TD
-    Pi["Raspberry Pi 4 (I2C1 / 3.3V)"]
-    PCA1["PCA9685 Links (0x40) - 9 Servos"]
-    PCA2["PCA9685 Rechts (0x42) - 9 Servos"]
-    Mux["TCA9548A Multiplexer (0x71 via A0)"]
+    Pi["Raspberry Pi 4 (I2C1 / 3.3V Pin 1/17)"]
+    Rail["Zentrale 3,3V / GND Verteilerschiene"]
+    Ctrl1["Controller Links (PCA9685 0x40) - 9 Servos"]
+    Ctrl2["Controller Rechts (PCA9685 0x42) - 9 Servos"]
+    Mux["Multiplexer (PCA9548A / PW548A 0x71 via A0 -> 3.3V)"]
     
-    ADC0["CH0: ADS1115 (0x48) - Left Front Leg"]
-    ADC1["CH1: ADS1115 (0x48) - Left Middle Leg"]
-    ADC2["CH2: ADS1115 (0x48) - Left Rear Leg"]
-    ADC3["CH3: ADS1115 (0x48) - Right Front Leg"]
-    ADC4["CH4: ADS1115 (0x48) - Right Middle Leg"]
-    ADC5["CH5: ADS1115 (0x48) - Right Rear Leg"]
+    ADC0["CH0: Wandler V280 (0x48) - Left Front Leg"]
+    ADC1["CH1: Wandler V280 (0x48) - Left Middle Leg"]
+    ADC2["CH2: Wandler V280 (0x48) - Left Rear Leg"]
+    ADC3["CH3: Wandler V280 (0x48) - Right Front Leg"]
+    ADC4["CH4: Wandler V280 (0x48) - Right Middle Leg"]
+    ADC5["CH5: Wandler V280 (0x48) - Right Rear Leg"]
     CH6["CH6: INA228 Power Monitor (0x45)"]
-    CH7["CH7: VL53L4CD ToF Distanzsensor (0x29)"]
+    CH7["CH7: VL53L4CD / VL53L5CX ToF (0x29)"]
 
-    Pi --> PCA1
-    Pi --> PCA2
-    Pi --> Mux
+    Pi -->|SDA1 / SCL1| Ctrl1
+    Ctrl1 -->|I2C Pass-Through| Ctrl2
+    Ctrl2 -->|I2C Pass-Through| Mux
+    Pi -->|3.3V / GND| Rail
+    Rail -.->|3.3V / GND| Ctrl1
+    Rail -.->|3.3V / GND| Ctrl2
+    Rail -.->|3.3V / GND| Mux
 
-    Mux --> ADC0
-    Mux --> ADC1
-    Mux --> ADC2
-    Mux --> ADC3
-    Mux --> ADC4
-    Mux --> ADC5
-    Mux --> CH6
-    Mux --> CH7
+    Mux -->|SC0 / SD0| ADC0
+    Mux -->|SC1 / SD1| ADC1
+    Mux -->|SC2 / SD2| ADC2
+    Mux -->|SC3 / SD3| ADC3
+    Mux -->|SC4 / SD4| ADC4
+    Mux -->|SC5 / SD5| ADC5
+    Mux -->|SC6 / SD6| CH6
+    Mux -->|SC7 / SD7| CH7
 ```
 
 ---
@@ -69,15 +74,20 @@ flowchart TD
 | *(Interne Brücke)* | 3.3V DC | `A0` | Adress-Offset $\to$ Basisadresse `0x71` |
 | *(Offen / GND)* | GND | `A1`, `A2` | Unbeschaltet (Logisch 0) |
 
-### 3.2 Verbindung: TCA9548A (Kanal 0) $\leftrightarrow$ ADS1115 ADC
-| TCA9548A Pin | Signal | ADS1115 Pin | Funktion |
+### 3.2 Verbindung: Zentrale `3.3V/GND` + Multiplexer (`CH0`) $\leftrightarrow$ Wandler (`ADS1115 V280`)
+> [!NOTE]
+> **Reale Platinen-Pinbelegung beachten (`PW548A` & `V280`):**
+> * Am violetten **Multiplexer (`PW548A`)** liegen auf `CH0–CH7` ausschließlich `SDx / SCx` (keine eigenen `3,3 V / GND`-Pins je Kanal). `3,3 V` und `GND` kommen über die gemeinsame Verteilerschiene.
+> * Am blauen **`V280`-Wandler** liegt **`SCL` vor `SDA`** (`VDD | GND | SCL | SDA | ADDR | ALRT | A0–A3`)!
+
+| Quelle | Farbe (Master-Schema) | Wandler (`V280`) Pin | Funktion |
 |---|---|---|---|
-| `3.3V` (vom Pi) | 3.3V DC | `VDD` | Logik- und Referenzspannung |
-| `GND` (vom Pi) | GND | `GND` | Masse |
-| **`SD0`** | Sub-Bus 0 SDA | `SDA` | I2C Daten Sub-Kanal 0 |
-| **`SC0`** | Sub-Bus 0 SCL | `SCL` | I2C Takt Sub-Kanal 0 |
-| `GND` | GND | `ADDR` | Wählt Standardadresse `0x48` |
-| *(Testspannung)* | 0.0 .. 3.3V | `A0` | Analogeingang Kanal 0 (z. B. Poti) |
+| **Pi / `3.3V`-Schiene** | **Rot** (`RD`) | `VDD` | Logik- und Referenzspannung (`Max AIN: VDD`) |
+| **Pi / `GND`-Schiene** | **Schwarz** (`BK`) | `GND` | Gemeinsame Masse (`Star-GND`-Referenz) |
+| **Multiplexer `SC0`** | **Gelb** (`YE`) | **`SCL`** *(Pin 3!)* | I2C Takt Sub-Kanal 0 |
+| **Multiplexer `SD0`** | **Blau** (`BU`) | **`SDA`** *(Pin 4!)* | I2C Daten Sub-Kanal 0 |
+| **`GND`-Schiene** | **Schwarz** (`BK`) | `ADDR` | Wählt Standardadresse `0x48` |
+| *Coxa / Femur / Tibia / Fuß* | *Weiß / Grün / Violett / Orange* | `A0–A3` | Analoge Potis (`A0–A2`) + Fußschalter (`A3`) |
 
 ---
 

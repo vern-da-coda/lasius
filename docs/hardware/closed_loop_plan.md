@@ -10,9 +10,11 @@
 ## Hardware Specification, Connection Plan & Architectural Findings
 
 > **Project:** Hexapod:Lasius (18 DOF, 6 Legs)  
-> **Status:** Verified & Specified  
+> **Status:** Stage 1–3 Bench-Verified (`bkhexapod`) & Specified  
 > **Date:** November 2026  
-> **Architecture:** 100% Python on Raspberry Pi 4 (I2C Multiplexing via TCA9548A + 6× ADS1115)
+> **Architecture:** 100% Python on Raspberry Pi 4 (**Controllers** `PCA9685` `0x40`/`0x42` → **Multiplexer** `PCA9548A/PW548A` `0x71` → 6× **Wandler** `ADS1115 V280` `0x48` + Central `3.3V / GND` Rail)
+
+*(Bench note: Empirical Stage 2/3 tests on `bkhexapod` confirmed `V280` boards use `VDD | GND | SCL | SDA | ADDR | ALRT | A0–A3` pin order (`SCL` before `SDA`) and deliver left-aligned **12-bit** resolution (`2.0 mV` / step $\approx 0.26^\circ$ at the Reely NR-645 pot, live closed-loop sweep $R^2 = 0.999876$, $+7.530\,\text{mV}/^\circ$). Since the purple `PW548A` exposes `SDx/SCx` only on `CH0–CH7`, `3.3V` and `GND` are split via a central `3.3V / GND` distribution rail tied once to `Star-GND`.)*
 
 ---
 
@@ -160,21 +162,21 @@ flowchart TD
   > On the TCA9548A breakout, the **solder jumper `A0` must be bridged** (solder blob across both pads).  
   > **Reason:** The PCA9685 servo driver boots with active `ALLCALL` address `0x70`. By setting `A0=High`, the TCA9548A operates permanently at **`0x71`**, eliminating address conflicts at power-on.
 
-### 4.2 The 6 Leg Modules (ADS1115)
-All 6 ADS1115 boards are wired identically. The address line `ADDR` is connected to `GND` on each board (**Standard address `0x48`** on each isolated Mux channel):
+### 4.2 The 6 Leg Modules (**Wandler** `ADS1115 V280`)
+All 6 **Wandler** boards are wired identically. `ADDR` is tied to `GND` on each board (**Standard address `0x48`** on each isolated Mux channel). Note the real **`V280` header order (`SCL` before `SDA`)**:
 
-| ADS1115 Pin | Connection on TCA9548A Sub-Channel | Function |
+| `V280` Pin | Connection | Function |
 | :--- | :--- | :--- |
-| **VDD** | Shared **3.3V** Rail (Raspberry Pi) | Logic power supply |
-| **GND** | Shared **GND** Rail (Common Ground) | Ground reference |
-| **SCL** | **`SCn`** on TCA9548A (e.g. `SC0` for LF) | Isolated sub-I2C clock |
-| **SDA** | **`SDn`** on TCA9548A (e.g. `SD0` for LF) | Isolated sub-I2C data |
-| **ADDR** | Board **GND** | Fixes address to `0x48` |
+| **VDD** | Central **`3.3V` Rail** (`Pi Pin 1/17`) | Logic power & `Max AIN` reference |
+| **GND** | Central **`GND` Rail** (1× tie to `Star-GND`) | Common logic & analog reference |
+| **SCL** *(Pin 3!)* | **`SCn`** on **Multiplexer** (e.g. `SC0` for LF, **Yellow**) | Isolated sub-I2C clock |
+| **SDA** *(Pin 4!)* | **`SDn`** on **Multiplexer** (e.g. `SD0` for LF, leg color) | Isolated sub-I2C data |
+| **ADDR** | Board **GND** (**Black**) | Fixes address to `0x48` |
 | **ALRT** | *(Leave floating)* | Not used |
-| **A0** | **Coxa Servo Potentiometer Line** | Hip swing joint angle |
-| **A1** | **Femur Servo Potentiometer Line** | Thigh joint angle |
-| **A2** | **Tibia Servo Potentiometer Line** | Knee / claw joint angle |
-| **A3** | **Foot Contact Sensor** *(or reserve)* | Ground touchdown detection |
+| **A0** | **Coxa Servo Potentiometer Line** (**White**) | Hip swing joint angle |
+| **A1** | **Femur Servo Potentiometer Line** (**Green**) | Thigh joint angle |
+| **A2** | **Tibia Servo Potentiometer Line** (**Violet**) | Knee / claw joint angle |
+| **A3** | **Omron D2F-L Foot Switch (`NO`, Orange) + `10 kΩ` Pull-Up to `3.3V`** | Tactile ground contact (`COM → GND` Black) |
 
 ---
 

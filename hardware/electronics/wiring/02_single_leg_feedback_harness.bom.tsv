@@ -3,12 +3,13 @@ Id	Description	Qty	Unit	Designators
 2	Cable, 2 x 28 AWG	0.35	m	Foot_Switch_Line
 3	Cable, 3 x 24 AWG	0.64	m	Coxa_Power_PWM, Femur_Power_PWM, Tibia_Power_PWM
 4	Cable, 4 x 28 AWG	0.2	m	SubBus_I2C_Feed
-5	Cable, 7 x 26 AWG	0.01	m	Direct_Header_Solder
-6	Connector, ADS1115 16-Bit ADC Breakout, Leg Telemetry Module (Addr 0x48), 9 pins, OG	1		ADS1115_Leg_Board
-7	Connector, Omron D2F-L Microswitch, Tactile Foot Contact (Active-Low), 2 pins, BK	1		Foot_Sensor
-8	Connector, PCA9685 4-Channel Header Block, Channels 4k, 4k+1, 4k+2 (4k+3 Spare), 12 pins, BU	1		PCA9685_Leg_Block
-9	Connector, Passive Filter + Pull-Up Network, Soldered Directly Under ADS1115 Header, 7 pins, YE	1		Onboard_RC_Pullup
-10	Connector, Reely NR-645 MG BB, Modified 4-Wire Servo (Coxa), 4 pins, GY	1		Servo_Coxa
-11	Connector, Reely NR-645 MG BB, Modified 4-Wire Servo (Femur), 4 pins, GY	1		Servo_Femur
-12	Connector, Reely NR-645 MG BB, Modified 4-Wire Servo (Tibia), 4 pins, GY	1		Servo_Tibia
-13	Connector, TCA9548A Sub-Channel Uplink (CHx), 4-Pin I2C + 3.3V Feed, 4 pins, BU	1		TCA9548A_SubBus
+5	Cable, 8 x 26 AWG	0.01	m	Direct_Header_Solder
+6	Connector, Central 3.3V / GND Distribution Rail, Logic Power Feed, 2 pins, RD	1		Dist_3V3_GND_Rail
+7	Connector, Controller 4-Channel Header Block (PCA9685), Channels 4k, 4k+1, 4k+2 (4k+3 Spare), 12 pins, BU	1		Controller_Leg_Block
+8	Connector, Multiplexer Sub-Channel Uplink (PCA9548A CHx), Clock + Data Only (shown for CH0 / LF), 2 pins, VT	1		Multiplexer_SubBus
+9	Connector, Omron D2F-L Microswitch, Tactile Foot Contact (Active-Low), 2 pins, BK	1		Foot_Sensor
+10	Connector, Passive Filter, Pull-Up + ADDR Strap, Soldered Directly Under Wandler Header, 8 pins, YE	1		Onboard_RC_Pullup
+11	Connector, Reely NR-645 MG BB, Modified 4-Wire Servo (Coxa), 4 pins, GY	1		Servo_Coxa
+12	Connector, Reely NR-645 MG BB, Modified 4-Wire Servo (Femur), 4 pins, GY	1		Servo_Femur
+13	Connector, Reely NR-645 MG BB, Modified 4-Wire Servo (Tibia), 4 pins, GY	1		Servo_Tibia
+14	Connector, Wandler 4-Ch ADC (ADS1115 V280), Leg Telemetry Module (Addr 0x48, effective 12-bit / 2.0 mV steps), 9 pins, OG	1		Wandler_Leg_Board

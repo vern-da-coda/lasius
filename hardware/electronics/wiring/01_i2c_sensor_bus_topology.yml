@@ -1,5 +1,6 @@
 # Lasius Hexapod - I2C Bus Topology (Primary Actuation & Multiplexed Sensor Bus)
-# Raspberry Pi 4 -> 2x PCA9685 (0x40, 0x42) & TCA9548A Multiplexer (0x71) -> 6x ADS1115 Leg ADCs (0x48)
+# Raspberry Pi 4 -> Controller Left (0x40) -> Controller Right (0x42) -> Multiplexer (0x71) -> 6x Wandler (0x48)
+# Note: Real purple PCA9548A (PW548A) carries SDx/SCx only on CH0-CH7; 3.3V & GND come from the central rail.
 
 options:
   fontname: "DejaVu Sans"
@@ -7,191 +8,269 @@ options:
 connectors:
   RaspberryPi_GPIO:
     type: Raspberry Pi 4 (40-Pin Header)
-    subtype: Pins 1 (3.3V), 3 (SDA1), 5 (SCL1), 6 (GND)
-    pincount: 4
-    pinlabels: [3V3, GND, SDA1, SCL1]
+    subtype: Pins 1 (3.3V), 6 (GND), 3 (SDA1), 5 (SCL1)
+    pinlabels: [3V3_Pin1, GND_Pin6, SDA1_Pin3, SCL1_Pin5]
     color: GN
+    notes: "Logic feed ~60-100 mA total (never connect 5V Pin 2/4 or 6V Servo V+)"
 
-  I2C_Primary_Hub:
-    type: Primary I2C1 Bus Distribution
-    subtype: 3.3V STEMMA QT / Header Busbar
-    pincount: 4
-    pinlabels: [3V3_BUS, GND_BUS, SDA_BUS, SCL_BUS]
-    color: GY
+  Dist_3V3_GND_Rail:
+    type: Central 3.3V / GND Distribution Rail
+    subtype: Perfboard Busbar (100nF + 10uF Decoupling)
+    pinlabels:
+      - IN_3V3
+      - IN_GND
+      - CTRL_L_3V3
+      - CTRL_L_GND
+      - CTRL_R_3V3
+      - CTRL_R_GND
+      - MUX_VIN_3V3
+      - MUX_A0_3V3
+      - MUX_GND
+      - CH0_LF_3V3
+      - CH0_LF_GND
+      - CH1_LM_3V3
+      - CH1_LM_GND
+      - CH2_LR_3V3
+      - CH2_LR_GND
+      - CH3_RF_3V3
+      - CH3_RF_GND
+      - CH4_RM_3V3
+      - CH4_RM_GND
+      - CH5_RR_3V3
+      - CH5_RR_GND
+    color: RD
+    notes: "Central 3.3V (RD) + GND (BK) split;\n1x single ref tie to Star_Ground_Bus"
 
-  PCA9685_Left_I2C:
-    type: PCA9685 Left Servo Driver
-    subtype: I2C Logic Header (Addr 0x40)
-    pincount: 4
-    pinlabels: [VCC_3V3, GND, SDA, SCL]
+  Controller_Left:
+    type: Controller Left (PCA9685 PWM Driver)
+    subtype: 6-Pin Logic Pass-Through Header (Addr 0x40)
+    pinlabels: [VCC_3V3, GND, SDA_IN, SCL_IN, SDA_OUT, SCL_OUT]
     color: BU
-    notes: "Default address 0x40; ALLCALL (0x70) disabled in software"
+    notes: "Addr 0x40 (ALLCALL 0x70 cleared in SW)\nOE + V+ (6V) stay open on logic header"
 
-  PCA9685_Right_I2C:
-    type: PCA9685 Right Servo Driver
-    subtype: I2C Logic Header (Addr 0x42 via A1)
-    pincount: 4
-    pinlabels: [VCC_3V3, GND, SDA, SCL]
+  Controller_Right:
+    type: Controller Right (PCA9685 PWM Driver)
+    subtype: 6-Pin Logic Pass-Through Header (Addr 0x42 via A1)
+    pinlabels: [VCC_3V3, GND, SDA_IN, SCL_IN, SDA_OUT, SCL_OUT]
     color: BU
-    notes: "Solder bridge A1 closed for 0x42; ALLCALL (0x70) disabled"
+    notes: "A1 bridged for 0x42 (ALLCALL 0x70 cleared)\nOE + V+ (6V) stay open on logic header"
 
-  TCA9548A_Mux:
-    type: Adafruit TCA9548A 8-Ch Multiplexer
-    subtype: Central Sensor Hub (Addr 0x71 via A0)
+  Multiplexer:
+    type: Multiplexer (PCA9548A / PW548A 8-Ch)
+    subtype: Addr 0x71 (A0 tied to 3.3V) | CH0-CH7 Data + Clock Only
     pinlabels:
       - VIN_3V3
+      - A0_3V3
       - GND
       - SDA
       - SCL
-      - CH0_3V3
-      - CH0_GND
-      - CH0_SDA
-      - CH0_SCL
-      - CH1_3V3
-      - CH1_GND
-      - CH1_SDA
-      - CH1_SCL
-      - CH2_3V3
-      - CH2_GND
-      - CH2_SDA
-      - CH2_SCL
-      - CH3_3V3
-      - CH3_GND
-      - CH3_SDA
-      - CH3_SCL
-      - CH4_3V3
-      - CH4_GND
-      - CH4_SDA
-      - CH4_SCL
-      - CH5_3V3
-      - CH5_GND
-      - CH5_SDA
-      - CH5_SCL
-    color: BU
-    notes: "Solder bridge A0 closed for 0x71 (avoids 0x70 boot conflict). CH6 (INA228) and CH7 (VL53L4CD) reserved."
+      - SC0
+      - SD0
+      - SC1
+      - SD1
+      - SC2
+      - SD2
+      - SC3
+      - SD3
+      - SC4
+      - SD4
+      - SC5
+      - SD5
+    color: VT
+    notes: "PW548A: A0/1/2 10k pull-downs, RST/SDA/SCL 10k pull-ups\nNo 3.3V/GND pins on CH0-CH7; CH6 (INA228 BN/YE) + CH7 (ToF) reserved"
 
-  ADS1115_LF: &ads_leg
-    type: ADS1115 16-Bit ADC Breakout
+  Wandler_LF: &wandler_leg
+    type: Wandler 4-Ch ADC (ADS1115 V280)
     subtype: Left Front Leg (CH0, Addr 0x48)
-    pincount: 4
-    pinlabels: [VDD_3V3, GND, SDA, SCL]
+    pinlabels: [VDD_3V3, GND, SCL, SDA]
     color: OG
-    notes: "ADDR tied to GND on board for 0x48"
+    notes: "V280 order: VDD|GND|SCL|SDA (SCL before SDA!)\nADDR to GND (BK) for 0x48; effective 12-bit (2.0 mV steps)"
 
-  ADS1115_LM:
-    <<: *ads_leg
+  Wandler_LM:
+    <<: *wandler_leg
     subtype: Left Middle Leg (CH1, Addr 0x48)
 
-  ADS1115_LR:
-    <<: *ads_leg
+  Wandler_LR:
+    <<: *wandler_leg
     subtype: Left Rear Leg (CH2, Addr 0x48)
 
-  ADS1115_RF:
-    <<: *ads_leg
+  Wandler_RF:
+    <<: *wandler_leg
     subtype: Right Front Leg (CH3, Addr 0x48)
 
-  ADS1115_RM:
-    <<: *ads_leg
+  Wandler_RM:
+    <<: *wandler_leg
     subtype: Right Middle Leg (CH4, Addr 0x48)
 
-  ADS1115_RR:
-    <<: *ads_leg
+  Wandler_RR:
+    <<: *wandler_leg
     subtype: Right Rear Leg (CH5, Addr 0x48)
 
 cables:
-  Pi_to_PrimaryHub:
+  Pi_Logic_Power:
+    gauge: 26 AWG
+    length: 0.12
+    colors: [RD, BK]
+    wirecount: 2
+
+  Rail_to_Ctrl_Left:
+    gauge: 26 AWG
+    length: 0.10
+    colors: [RD, BK]
+    wirecount: 2
+
+  Rail_to_Ctrl_Right:
+    gauge: 26 AWG
+    length: 0.10
+    colors: [RD, BK]
+    wirecount: 2
+
+  Rail_to_Multiplexer:
+    gauge: 26 AWG
+    length: 0.08
+    colors: [RD, RD, BK]
+    wirecount: 3
+
+  I2C_Pi_to_Ctrl_Left:
     gauge: 26 AWG
     length: 0.15
-    colors: [RD, BK, BU, YE]
-    wirecount: 4
+    colors: [BU, YE]
+    wirecount: 2
 
-  Bus_to_PCA_Left:
+  I2C_Ctrl_Left_to_Right:
     gauge: 26 AWG
     length: 0.10
-    colors: [RD, BK, BU, YE]
-    wirecount: 4
+    colors: [BU, YE]
+    wirecount: 2
 
-  Bus_to_PCA_Right:
+  I2C_Ctrl_Right_to_Mux:
     gauge: 26 AWG
     length: 0.10
-    colors: [RD, BK, BU, YE]
-    wirecount: 4
+    colors: [BU, YE]
+    wirecount: 2
 
-  Bus_to_TCA9548A:
-    gauge: 26 AWG
-    length: 0.10
-    colors: [RD, BK, BU, YE]
-    wirecount: 4
-
-  SubBus_CH0_LF: &stemma_leg_cable
+  SubBus_CH0_LF:
     gauge: 28 AWG
     length: 0.20
-    colors: [RD, BK, BU, YE]
+    colors: [RD, BK, YE, BU]
     wirecount: 4
 
   SubBus_CH1_LM:
-    <<: *stemma_leg_cable
+    gauge: 28 AWG
     length: 0.10
+    colors: [RD, BK, YE, GN]
+    wirecount: 4
 
   SubBus_CH2_LR:
-    <<: *stemma_leg_cable
+    gauge: 28 AWG
     length: 0.20
+    colors: [RD, BK, YE, VT]
+    wirecount: 4
 
   SubBus_CH3_RF:
-    <<: *stemma_leg_cable
+    gauge: 28 AWG
     length: 0.20
+    colors: [RD, BK, YE, OG]
+    wirecount: 4
 
   SubBus_CH4_RM:
-    <<: *stemma_leg_cable
+    gauge: 28 AWG
     length: 0.10
+    colors: [RD, BK, YE, WH]
+    wirecount: 4
 
   SubBus_CH5_RR:
-    <<: *stemma_leg_cable
+    gauge: 28 AWG
     length: 0.20
+    colors: [RD, BK, YE, GY]
+    wirecount: 4
 
 connections:
-  # Raspberry Pi 4 to Primary I2C1 Distribution Hub
+  # 1. Central 3.3V / GND Distribution Rail fed from Raspberry Pi 4
   -
-    - RaspberryPi_GPIO: [3V3, GND, SDA1, SCL1]
-    - Pi_to_PrimaryHub: [1, 2, 3, 4]
-    - I2C_Primary_Hub: [3V3_BUS, GND_BUS, SDA_BUS, SCL_BUS]
+    - RaspberryPi_GPIO: [3V3_Pin1, GND_Pin6]
+    - Pi_Logic_Power: [1, 2]
+    - Dist_3V3_GND_Rail: [IN_3V3, IN_GND]
 
-  # Primary I2C1 Devices: PCA9685 Left (0x40), PCA9685 Right (0x42), TCA9548A (0x71)
+  # 2. Primary I2C1 Daisy-Chain: Pi 4 -> Controller Left (0x40) -> Controller Right (0x42) -> Multiplexer (0x71)
   -
-    - I2C_Primary_Hub: [3V3_BUS, GND_BUS, SDA_BUS, SCL_BUS]
-    - Bus_to_PCA_Left: [1, 2, 3, 4]
-    - PCA9685_Left_I2C: [VCC_3V3, GND, SDA, SCL]
+    - RaspberryPi_GPIO: [SDA1_Pin3, SCL1_Pin5]
+    - I2C_Pi_to_Ctrl_Left: [1, 2]
+    - Controller_Left: [SDA_IN, SCL_IN]
   -
-    - I2C_Primary_Hub: [3V3_BUS, GND_BUS, SDA_BUS, SCL_BUS]
-    - Bus_to_PCA_Right: [1, 2, 3, 4]
-    - PCA9685_Right_I2C: [VCC_3V3, GND, SDA, SCL]
+    - Controller_Left: [SDA_OUT, SCL_OUT]
+    - I2C_Ctrl_Left_to_Right: [1, 2]
+    - Controller_Right: [SDA_IN, SCL_IN]
   -
-    - I2C_Primary_Hub: [3V3_BUS, GND_BUS, SDA_BUS, SCL_BUS]
-    - Bus_to_TCA9548A: [1, 2, 3, 4]
-    - TCA9548A_Mux: [VIN_3V3, GND, SDA, SCL]
+    - Controller_Right: [SDA_OUT, SCL_OUT]
+    - I2C_Ctrl_Right_to_Mux: [1, 2]
+    - Multiplexer: [SDA, SCL]
 
-  # Isolated Multiplexer Sub-Buses (CH0-CH5) with 3.3V & GND to 6x Leg ADS1115 Boards
+  # 3. 3.3V & GND feeds from Central Rail to Controllers & Multiplexer (including A0 -> 3.3V = 0x71)
   -
-    - TCA9548A_Mux: [CH0_3V3, CH0_GND, CH0_SDA, CH0_SCL]
-    - SubBus_CH0_LF: [1, 2, 3, 4]
-    - ADS1115_LF: [VDD_3V3, GND, SDA, SCL]
+    - Dist_3V3_GND_Rail: [CTRL_L_3V3, CTRL_L_GND]
+    - Rail_to_Ctrl_Left: [1, 2]
+    - Controller_Left: [VCC_3V3, GND]
   -
-    - TCA9548A_Mux: [CH1_3V3, CH1_GND, CH1_SDA, CH1_SCL]
-    - SubBus_CH1_LM: [1, 2, 3, 4]
-    - ADS1115_LM: [VDD_3V3, GND, SDA, SCL]
+    - Dist_3V3_GND_Rail: [CTRL_R_3V3, CTRL_R_GND]
+    - Rail_to_Ctrl_Right: [1, 2]
+    - Controller_Right: [VCC_3V3, GND]
   -
-    - TCA9548A_Mux: [CH2_3V3, CH2_GND, CH2_SDA, CH2_SCL]
-    - SubBus_CH2_LR: [1, 2, 3, 4]
-    - ADS1115_LR: [VDD_3V3, GND, SDA, SCL]
+    - Dist_3V3_GND_Rail: [MUX_VIN_3V3, MUX_A0_3V3, MUX_GND]
+    - Rail_to_Multiplexer: [1, 2, 3]
+    - Multiplexer: [VIN_3V3, A0_3V3, GND]
+
+  # 4. Multiplexed Sub-Buses (CH0-CH5): Central 3.3V/GND Rail + Multiplexer SCx/SDx -> 6x Leg Wandler (V280 SCL-first)
   -
-    - TCA9548A_Mux: [CH3_3V3, CH3_GND, CH3_SDA, CH3_SCL]
-    - SubBus_CH3_RF: [1, 2, 3, 4]
-    - ADS1115_RF: [VDD_3V3, GND, SDA, SCL]
+    - Dist_3V3_GND_Rail: [CH0_LF_3V3, CH0_LF_GND]
+    - SubBus_CH0_LF: [1, 2]
+    - Wandler_LF: [VDD_3V3, GND]
   -
-    - TCA9548A_Mux: [CH4_3V3, CH4_GND, CH4_SDA, CH4_SCL]
-    - SubBus_CH4_RM: [1, 2, 3, 4]
-    - ADS1115_RM: [VDD_3V3, GND, SDA, SCL]
+    - Multiplexer: [SC0, SD0]
+    - SubBus_CH0_LF: [3, 4]
+    - Wandler_LF: [SCL, SDA]
+
   -
-    - TCA9548A_Mux: [CH5_3V3, CH5_GND, CH5_SDA, CH5_SCL]
-    - SubBus_CH5_RR: [1, 2, 3, 4]
-    - ADS1115_RR: [VDD_3V3, GND, SDA, SCL]
+    - Dist_3V3_GND_Rail: [CH1_LM_3V3, CH1_LM_GND]
+    - SubBus_CH1_LM: [1, 2]
+    - Wandler_LM: [VDD_3V3, GND]
+  -
+    - Multiplexer: [SC1, SD1]
+    - SubBus_CH1_LM: [3, 4]
+    - Wandler_LM: [SCL, SDA]
+
+  -
+    - Dist_3V3_GND_Rail: [CH2_LR_3V3, CH2_LR_GND]
+    - SubBus_CH2_LR: [1, 2]
+    - Wandler_LR: [VDD_3V3, GND]
+  -
+    - Multiplexer: [SC2, SD2]
+    - SubBus_CH2_LR: [3, 4]
+    - Wandler_LR: [SCL, SDA]
+
+  -
+    - Dist_3V3_GND_Rail: [CH3_RF_3V3, CH3_RF_GND]
+    - SubBus_CH3_RF: [1, 2]
+    - Wandler_RF: [VDD_3V3, GND]
+  -
+    - Multiplexer: [SC3, SD3]
+    - SubBus_CH3_RF: [3, 4]
+    - Wandler_RF: [SCL, SDA]
+
+  -
+    - Dist_3V3_GND_Rail: [CH4_RM_3V3, CH4_RM_GND]
+    - SubBus_CH4_RM: [1, 2]
+    - Wandler_RM: [VDD_3V3, GND]
+  -
+    - Multiplexer: [SC4, SD4]
+    - SubBus_CH4_RM: [3, 4]
+    - Wandler_RM: [SCL, SDA]
+
+  -
+    - Dist_3V3_GND_Rail: [CH5_RR_3V3, CH5_RR_GND]
+    - SubBus_CH5_RR: [1, 2]
+    - Wandler_RR: [VDD_3V3, GND]
+  -
+    - Multiplexer: [SC5, SD5]
+    - SubBus_CH5_RR: [3, 4]
+    - Wandler_RR: [SCL, SDA]
