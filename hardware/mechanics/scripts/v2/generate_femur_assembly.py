@@ -43,8 +43,9 @@ doc = App.newDocument(doc_name)
 doc.saveAs(fcstd_path)
 
 # Open source master documents
-femur_master = f"{parts_femur_dir}/femur.FCStd"
-doc_femur = App.openDocument(femur_master)
+doc_femur = App.openDocument(f"{parts_femur_dir}/femur.FCStd")
+doc_cover = App.openDocument(f"{parts_femur_dir}/femur_cover.FCStd")
+doc_ads = App.openDocument(f"{cots_dir}/ads1115_board.FCStd")
 
 # Main Assembly Container
 asm_part = doc.addObject("App::Part", "Femur_Assembly_v2")
@@ -85,17 +86,19 @@ COLOR_ADC_BLUE = (0.04, 0.38, 0.88)        # Adafruit Signal Blue PCB
 # -------------------------------------------------------------
 # 1. Add Sub-Components to Femur Subassembly
 # -------------------------------------------------------------
-# Femur bone structure
+# 1. Femur bone structure
 make_link("Femur_Body", "1. Femur Monolithic Housing (PETG)", doc_femur.Femur_Body, color=COLOR_FEMUR_BODY)
 
-# Encapsulated ADC board clamped in internal chamber
-make_link("ADS1115_Board", "2. Encapsulated Leg ADC (ADS1115 0x48)", doc_femur.ADS1115_Board, color=COLOR_ADC_BLUE)
+# 2. Encapsulated COTS ADC board clamped in internal chamber
+# Sits at X=50.00, Y=3.65 (Y_mid), Z=-4.80 mm
+p_ads = App.Placement(App.Vector(50.00, 3.65, -4.80), App.Rotation())
+make_link("ADS1115_Board", "2. Encapsulated Leg ADC (ADS1115 0x48)", doc_ads.ADS1115_Board, placement=p_ads, color=COLOR_ADC_BLUE)
 
-# Cover Frame Bezel
-make_link("Femur_Cover_Frame", "3. Femur Cover Frame Bezel (Graphitschwarz)", doc_femur.Femur_Cover_Frame, color=COLOR_COVER_FRAME)
+# 3. Cover Frame Bezel
+make_link("Femur_Cover_Frame", "3. Femur Cover Frame Bezel (Graphitschwarz)", doc_cover.Femur_Cover_Frame, color=COLOR_COVER_FRAME)
 
-# Translucent Mini-Canopy
-make_link("Femur_Canopy", "4. Femur Mini-Canopy (Eisblau 55%)", doc_femur.Femur_Canopy, color=COLOR_CANOPY, transparency=55)
+# 4. Translucent Mini-Canopy
+make_link("Femur_Canopy", "4. Femur Mini-Canopy (Eisblau 55%)", doc_cover.Femur_Canopy, color=COLOR_CANOPY, transparency=55)
 
 doc.recompute()
 doc.save()
@@ -114,6 +117,8 @@ if shapes:
     print(f"✔ Exported STL:  {stl_path}")
 
 App.closeDocument(doc_femur.Name)
+App.closeDocument(doc_cover.Name)
+App.closeDocument(doc_ads.Name)
 App.closeDocument(doc.Name)
 
 # -------------------------------------------------------------

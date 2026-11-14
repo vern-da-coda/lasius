@@ -32,8 +32,8 @@ cots_dir = f"{repo_root}/hardware/mechanics/models/cots"
 export_step_dir = f"{repo_root}/hardware/mechanics/export/step/custom/v2/parts/femur/concepts"
 export_stl_dir = f"{repo_root}/hardware/mechanics/export/stl/custom/v2/parts/femur/concepts"
 
-fcstd_femur_path = f"{models_dir}/femur_opt3.FCStd"
-step_femur_path = f"{export_step_dir}/femur_opt3.step"
+fcstd_cover_path = f"{models_dir}/femur_cover_opt3.FCStd"
+step_cover_path = f"{export_step_dir}/femur_cover_opt3.step"
 stl_cover_path = f"{export_stl_dir}/femur_cover_opt3.stl"
 
 os.makedirs(models_dir, exist_ok=True)
@@ -148,12 +148,6 @@ def build_femur_shapes_opt3():
     envelope_xz = Part.Face(xz_wire).extrude(App.Vector(0.0, 72.0, 0.0))
     envelope_xz.translate(App.Vector(0.0, -32.0, 0.0))
 
-    # We reuse the master femur_body from femur.FCStd to ensure 100% exact match
-    doc_master = App.openDocument(f"{parts_dir}/femur.FCStd")
-    base_solid = doc_master.Femur_Body.Shape.copy()
-    ads_module = doc_master.ADS1115_Board.Shape.copy()
-    App.closeDocument(doc_master.Name)
-
     lid_z_floor = 9.00
     cover_z_base = lid_z_floor + 0.05
 
@@ -250,56 +244,40 @@ def build_femur_shapes_opt3():
         cover_solid = cover_solid.cut(slot)
 
     cover_solid = cover_solid.removeSplitter()
-    return base_solid, cover_solid, ads_module
+    femur_cover = cover_solid
 
-
-if __name__ in ("__main__", "generate_femur_opt3"):
-    femur_body, femur_cover, ads_module = build_femur_shapes_opt3()
-
-    print(f"Femur_Body Valid: {femur_body.isValid()}, Volume: {femur_body.Volume:.1f} mm^3")
     print(f"Femur_Cover_Opt3 Valid: {femur_cover.isValid()}, Volume: {femur_cover.Volume:.1f} mm^3, BB: {femur_cover.BoundBox}")
 
-    doc_name = "femur_opt3"
+    fcstd_cover_path = f"{models_dir}/femur_cover_opt3.FCStd"
+    step_cover_path = f"{export_step_dir}/femur_cover_opt3.step"
+    stl_cover_path = f"{export_stl_dir}/femur_cover_opt3.stl"
+
+    doc_name = "femur_cover_opt3"
     try:
         App.closeDocument(doc_name)
     except Exception:
         pass
 
     doc = App.newDocument(doc_name)
-    obj_body = doc.addObject("Part::Feature", "Femur_Body")
-    obj_body.Label = "Femur Housing (Organic Double-Wrench, PETG)"
-    obj_body.Shape = femur_body
-
     obj_cover = doc.addObject("Part::Feature", "Femur_Cover_Opt3")
-    obj_cover.Label = "Femur ADC Chamber Cover (Stealth-Facetten-Canopy)"
+    obj_cover.Label = "Femur ADC Chamber Cover Opt 3 (Stealth-Facetten-Canopy)"
     obj_cover.Shape = femur_cover
 
-    obj_ads = doc.addObject("Part::Feature", "ADS1115_Board")
-    obj_ads.Label = "Encapsulated ADS1115 16-Bit Leg ADC (0x48)"
-    obj_ads.Shape = ads_module
-
-    obj_comp = doc.addObject("Part::Feature", "Femur_Complete")
-    obj_comp.Label = "Femur Complete (Body + Cover Opt 3)"
-    obj_comp.Shape = Part.makeCompound([femur_body, femur_cover])
-
-    # Colors
-    for obj, col, vis in [
-        (obj_body, (0.12, 0.35, 0.65), True),
-        (obj_cover, (0.15, 0.15, 0.18), True),
-        (obj_ads, (0.04, 0.38, 0.88), True),
-        (obj_comp, (0.12, 0.35, 0.65), False),
-    ]:
-        if hasattr(obj, "ViewObject") and obj.ViewObject is not None:
-            obj.ViewObject.Visibility = vis
-            obj.ViewObject.ShapeColor = col
+    if hasattr(obj_cover, "ViewObject") and obj_cover.ViewObject is not None:
+        obj_cover.ViewObject.Visibility = True
+        obj_cover.ViewObject.ShapeColor = (0.15, 0.15, 0.18)
 
     doc.recompute()
-    doc.saveAs(fcstd_femur_path)
-    print(f"Saved Concept Model: {fcstd_femur_path}")
+    doc.saveAs(fcstd_cover_path)
+    print(f"Saved Concept Model: {fcstd_cover_path}")
 
     femur_cover.exportStl(stl_cover_path)
-    obj_comp.Shape.exportStep(step_femur_path)
+    femur_cover.exportStep(step_cover_path)
     print(f"Exported STL: {stl_cover_path}")
-    print(f"Exported STEP: {step_femur_path}")
+    print(f"Exported STEP: {step_cover_path}")
 
     App.closeDocument(doc_name)
+
+
+build_femur_shapes_opt3()
+
