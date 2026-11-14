@@ -104,11 +104,8 @@ make_link("Femur_Body", "1. Femur Monolithic Housing (PETG)", doc_femur.Femur_Bo
 p_ads = App.Placement(App.Vector(50.00, 3.65, -4.80), App.Rotation())
 make_link("ADS1115_Board", "2. Encapsulated Leg ADC (ADS1115 0x48)", doc_ads.ADS1115_Board, placement=p_ads, color=COLOR_ADC_BLUE)
 
-# 3. Cover Frame Bezel
-make_link("Femur_Cover_Frame", "3. Femur Cover Frame Bezel (Graphitschwarz)", doc_cover.Femur_Cover_Frame, color=COLOR_COVER_FRAME)
-
-# 4. Translucent Mini-Canopy
-make_link("Femur_Canopy", "4. Femur Mini-Canopy (Eisblau 55%)", doc_cover.Femur_Canopy, color=COLOR_CANOPY, transparency=55)
+# 3. Monolithic Service Cover & Canopy (Draped Convex Eisblau 55%)
+make_link("Femur_Cover", "3. Femur Service Cover & Canopy (Monolithic Eisblau 55%)", doc_cover.Femur_Cover, color=COLOR_CANOPY, transparency=55)
 
 doc.recompute()
 doc.save()
@@ -149,8 +146,8 @@ if gui_xml:
     gui_xml = gui_xml.replace('<Property name="Visibility" type="App::PropertyBool">\n          <Bool value="false"/>',
                               '<Property name="Visibility" type="App::PropertyBool">\n          <Bool value="true"/>')
 
-    # Update canopy transparency to 55%
-    canopy_view_search = '<ViewProvider name="Femur_Canopy"'
+    # Update cover canopy transparency to 55%
+    canopy_view_search = '<ViewProvider name="Femur_Cover"'
     if canopy_view_search in gui_xml:
         idx = gui_xml.find(canopy_view_search)
         end_idx = gui_xml.find("</ViewProvider>", idx)
