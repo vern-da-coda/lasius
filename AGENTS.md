@@ -21,3 +21,5 @@ Alle Modelle unter `hardware/mechanics/models/` und Fertigungsexporte unter `har
    - Unveränderte Bauteile aus einer früheren Generation werden nicht kopiert, sondern per relativem `App::Link` aus der Vorgängergeneration referenziert (z. B. `../v1/parts/coxa_bracket.FCStd`).
    - `export/{step,stl,dxf}/` spiegelt die Ordnerstruktur von `models/` 1:1.
    - Nach jeder Pfadänderung müssen alle Assembly-`XLink`-Pfade sowie `python3 scripts/dev/check_links.py` verifiziert werden.
+5. **Mechanik-Style-Guide & Bionische Formensprache:**
+   - Alle Neukonstruktionen und Überarbeitungen folgen den verbindlichen Gestaltungs- und Fertigungsrichtlinien in [`hardware/mechanics/STYLE_GUIDE.md`](hardware/mechanics/STYLE_GUIDE.md) ($G^1$-stetige Taillierungen, $45^\circ$-Fachwerkfenster mit $w = 2{,}50\,\text{mm}$, $R = 1{,}4\text{--}2{,}0\,\text{mm}$ Eckenradien, $R = 1{,}0\text{--}1{,}5\,\text{mm}$ Außenfillets, DfAM-Wandstärken für PETG).

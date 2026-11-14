@@ -104,6 +104,7 @@ Direct links to all distributed technical documentation, specifications, hardwar
 - [**`docs/hardware/wiring_plan.md`**](docs/hardware/wiring_plan.md) – Raspberry Pi to PCA9685 I2C daisy chain, logic levels & common ground scheme
 - [**`hardware/README.md`**](hardware/README.md) – Hardware overview, dual-plate chassis dimensions, limb lengths & power distribution
 - [**`hardware/mechanics/README.md`**](hardware/mechanics/README.md) – FreeCAD parametric models, fabrication exports (STEP, STL, DXF) & SVG drill templates
+- [**`hardware/mechanics/STYLE_GUIDE.md`**](hardware/mechanics/STYLE_GUIDE.md) – Mechanical & Hardware Style-Guide (Bionic design DNA, truss standards, DfAM for PETG & COTS interfaces)
 - [**`hardware/electronics/wiring/README.md`**](hardware/electronics/wiring/README.md) – WireViz cable harnesses (`.yml`), visual harness diagrams, master color scheme & automated BOMs
 - [**`hardware/electronics/TODO.md`**](hardware/electronics/TODO.md) – Electronics bench verification status, master color scheme, `3.3V/GND` rail & wiring backlog
 
