@@ -29,6 +29,16 @@ os.makedirs(v2_asm_dir, exist_ok=True)
 os.makedirs(os.path.dirname(step_path), exist_ok=True)
 os.makedirs(os.path.dirname(stl_path), exist_ok=True)
 
+# Backup existing GuiDocument.xml if present to survive headless console saves
+fallback_gui_xml = None
+if os.path.exists(fcstd_path):
+    try:
+        with zipfile.ZipFile(fcstd_path, "r") as zin:
+            if "GuiDocument.xml" in zin.namelist():
+                fallback_gui_xml = zin.read("GuiDocument.xml")
+    except Exception:
+        pass
+
 try:
     App.closeDocument(doc_name)
 except Exception:
@@ -161,14 +171,16 @@ for d in list(App.listDocuments().values()):
     App.closeDocument(d.Name)
 
 
-def patch_leg_assembly_view(filepath):
+def patch_leg_assembly_view(filepath, fallback_gui_data=None):
     temp_zip = filepath + ".tmp"
     with zipfile.ZipFile(filepath, "r") as zin:
+        has_gui = "GuiDocument.xml" in zin.namelist()
         with zipfile.ZipFile(temp_zip, "w", compression=zipfile.ZIP_DEFLATED) as zout:
             for item in zin.infolist():
                 data = zin.read(item.filename)
                 if item.filename == "GuiDocument.xml":
                     xml_str = data.decode("utf-8")
+                    xml_str = xml_str.replace('<Bool value="false"/>', '<Bool value="true"/>')
                     pos_canopy = xml_str.find('<ViewProvider name="Femur_Canopy"')
                     if pos_canopy != -1:
                         end_vp = xml_str.find("</ViewProvider>", pos_canopy)
@@ -182,10 +194,14 @@ def patch_leg_assembly_view(filepath):
                                 xml_str = xml_str[:pos_canopy] + vp_chunk + xml_str[end_vp:]
                     data = xml_str.encode("utf-8")
                 zout.writestr(item, data)
+            if not has_gui and fallback_gui_data:
+                xml_str = fallback_gui_data.decode("utf-8")
+                xml_str = xml_str.replace('<Bool value="false"/>', '<Bool value="true"/>')
+                zout.writestr("GuiDocument.xml", xml_str.encode("utf-8"))
     os.replace(temp_zip, filepath)
 
 
-patch_leg_assembly_view(fcstd_path)
+patch_leg_assembly_view(fcstd_path, fallback_gui_xml)
 print("✔ Patched leg_assembly GuiDocument.xml with transparent Plexiglas appearance")
 
 print("--- Leg Assembly v2 Completed Successfully ---")

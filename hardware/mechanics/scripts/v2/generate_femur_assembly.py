@@ -33,6 +33,16 @@ os.makedirs(v2_dir, exist_ok=True)
 os.makedirs(export_step_dir, exist_ok=True)
 os.makedirs(export_stl_dir, exist_ok=True)
 
+# Backup existing GuiDocument.xml if present to survive headless console saves
+fallback_gui_xml = None
+if os.path.exists(fcstd_path):
+    try:
+        with zipfile.ZipFile(fcstd_path, "r") as zin:
+            if "GuiDocument.xml" in zin.namelist():
+                fallback_gui_xml = zin.read("GuiDocument.xml")
+    except Exception:
+        pass
+
 try:
     App.closeDocument(doc_name)
 except Exception:
@@ -124,12 +134,15 @@ App.closeDocument(doc.Name)
 # -------------------------------------------------------------
 # 2. Patch GuiDocument.xml for full visibility and Plexiglas transparency if present
 # -------------------------------------------------------------
+gui_xml = None
 with zipfile.ZipFile(fcstd_path, "r") as zin:
     has_gui = "GuiDocument.xml" in zin.namelist()
     if has_gui:
         gui_xml = zin.read("GuiDocument.xml").decode("utf-8")
+    elif fallback_gui_xml:
+        gui_xml = fallback_gui_xml.decode("utf-8")
 
-if has_gui:
+if gui_xml:
     # Ensure all objects visible
     gui_xml = gui_xml.replace('<Property name="Visibility" type="App::PropertyBool" status="1">\n          <Bool value="false"/>',
                               '<Property name="Visibility" type="App::PropertyBool" status="1">\n          <Bool value="true"/>')
@@ -157,6 +170,8 @@ if has_gui:
                 zout.writestr(item, gui_xml.encode("utf-8"))
             else:
                 zout.writestr(item, zin.read(item.filename))
+        if "GuiDocument.xml" not in zin.namelist():
+            zout.writestr("GuiDocument.xml", gui_xml.encode("utf-8"))
     os.replace(tmp_fcstd, fcstd_path)
 
 print(f"✔ Saved Femur Assembly -> {fcstd_path}")

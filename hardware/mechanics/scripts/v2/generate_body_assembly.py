@@ -28,6 +28,18 @@ fcstd_path = f"{v2_asm_dir}/body_assembly.FCStd"
 step_path = f"{export_dir}/step/custom/v2/body_assembly.step"
 stl_path = f"{export_dir}/stl/custom/v2/body_assembly.stl"
 
+import zipfile
+
+# Backup existing GuiDocument.xml if present to survive headless console saves
+fallback_gui_xml = None
+if os.path.exists(fcstd_path):
+    try:
+        with zipfile.ZipFile(fcstd_path, "r") as zin:
+            if "GuiDocument.xml" in zin.namelist():
+                fallback_gui_xml = zin.read("GuiDocument.xml")
+    except Exception:
+        pass
+
 # Close any open document with same name
 try:
     App.closeDocument(doc_name)
@@ -206,10 +218,10 @@ for d in list(App.listDocuments().values()):
     except Exception:
         pass
 
-import zipfile
-def patch_fcstd_visibility(filepath):
+def patch_fcstd_visibility(filepath, fallback_gui_data=None):
     temp_zip = filepath + ".tmp"
     with zipfile.ZipFile(filepath, "r") as zin:
+        has_gui = "GuiDocument.xml" in zin.namelist()
         with zipfile.ZipFile(temp_zip, "w", compression=zipfile.ZIP_DEFLATED) as zout:
             for item in zin.infolist():
                 data = zin.read(item.filename)
@@ -218,9 +230,13 @@ def patch_fcstd_visibility(filepath):
                     xml_str = xml_str.replace('<Bool value="false"/>', '<Bool value="true"/>')
                     data = xml_str.encode("utf-8")
                 zout.writestr(item, data)
+            if not has_gui and fallback_gui_data:
+                xml_str = fallback_gui_data.decode("utf-8")
+                xml_str = xml_str.replace('<Bool value="false"/>', '<Bool value="true"/>')
+                zout.writestr("GuiDocument.xml", xml_str.encode("utf-8"))
     os.replace(temp_zip, filepath)
 
-patch_fcstd_visibility(fcstd_path)
+patch_fcstd_visibility(fcstd_path, fallback_gui_xml)
 print("✔ Patched GuiDocument.xml for full visibility")
 print("--- Done ---")
 import sys
