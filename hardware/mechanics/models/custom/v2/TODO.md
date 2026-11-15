@@ -241,6 +241,35 @@ Dieser Backlog führt alle offenen Aufgaben, konstruktiven Erweiterungen und Ver
        * Maximierung des Innenvolumens bei garantierter Kollisionsfreiheit ($0{,}0000\,\text{mm}^3$).
   * **Betroffener Code:** [`generate_chassis_core.py`](../../../scripts/v2/generate_chassis_core.py), [`generate_chassis_core_assembly.py`](../../../scripts/v2/generate_chassis_core.py), [`body_assembly.FCStd`](body_assembly.FCStd).
 
+---
+
+## 8. FEM-Strukturanalyse & Topologieoptimierung (Simulation-Driven Design)
+
+- [ ] **FE-Lastfall-Definition & Materialmodellierung (PETG / FDM-Anisotropie):**  
+  * **Lastfälle:**
+    1. *Statischer Tripod-Gait:* 3 Beine am Boden, Gesamtmasse Roboter ca. $2{,}2\text{--}2{,}5\,\text{kg}$ mit dynamischem Stoßbeiwert ($k_{\text{dyn}} = 1{,}8$) $\rightarrow$ vertikale Punktlast $F_z \approx 15\,\text{N}$ pro Standbein.
+    2. *Maximales Servo-Blockiermoment:* $M_{\text{stall}} = 1{,}2\,\text{N}\cdot\text{m}$ (Torcster NR-645) an Coxa-, Femur- und Tibia-Abtrieben.
+    3. *Torsions- & Querlast:* Seitliches Abdriften / Hangabtrieb ($F_y \approx 8\,\text{N}$) an der Tibia-Kufenwippe.
+  * **Materialkennwerte PETG (FDM-Druck):**
+    * E-Modul $E_{xy} = 2100\,\text{MPa}$, $E_z = 1400\,\text{MPa}$ (Schichtanisotropie 65 %).
+    * Streckgrenze $R_e \approx 45\,\text{MPa}$ (Sicherheitsbeiwert $S \ge 2{,}0$).
+  * **Werkzeuge:** FreeCAD FEM-Workbench (CalculiX Solver) & Netgen/Gmsh Vernetzung.
+
+- [ ] **Topologieoptimierung der Bein-Segmente (`femur.FCStd`, `coxa.FCStd`, `tibia.FCStd`):**  
+  * **Femur-Knochen:**
+    * Bionische Strukturoptimierung des $100\,\text{mm}$ Kragträgers zwischen Hüft- und Kniegelenk.
+    * Spannungsoptimierte Entlastungsfenster und Wandstärkenverteilung um die integrierte ADS1115-Kammer zur Maximierung der Biegesteifigkeit bei minimaler Bauteilmasse.
+  * **Coxa-Gelenk:**
+    * FEM-Optimierung des $45^\circ$-A-Truss-Gussets zur Reduktion von Kerbspannungen an der Krafteinleitung vom Servohorn ins Gegenlager.
+  * **Tibia-Träger:**
+    * Topologische Verifikation des Warren-Fachwerks entlang der Seitenwangen; Lastpfadanalyse von der Kufen-Wippen-Achse bis zum Kniegelenkskopf.
+
+- [ ] **Topologieoptimierung des Chassis-Monocoque-Kerns (`chassis_core.FCStd`):**  
+  * **Ziele:**
+    * Identifikation statisch gering belasteter Zonen im Monocoque-Körper zwischen den 4 M3-Standoff-Pfeilern und den Seitenwänden.
+    * Gezielte Einbringung bionischer Aussparungen und Fachwerkstrukturen gemäß [`STYLE_GUIDE.md`](../../../STYLE_GUIDE.md) (45°-Winkel, $w \ge 2{,}50\,\text{mm}$ Stegbreite).
+    * Maximale Verwindungssteifigkeit der Verbindung zwischen [`body_bottom.FCStd`](../../custom/v1/parts/body_bottom.FCStd) und [`body_top.FCStd`](../../custom/v1/parts/body_top.FCStd) bei minimalem Filamentverbrauch.
+
 
 
 
