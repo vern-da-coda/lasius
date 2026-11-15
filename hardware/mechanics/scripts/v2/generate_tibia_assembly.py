@@ -2,32 +2,19 @@
 """
 Generate Lasius Tibia v2 Subsystem Assembly with Integrated Foot Sensor
 ========================================================================
-Formschluss-Schraub-Hybrid (Option C) with G1-Continuous Bionic Monocoque:
-1. Monolithic Tibia Body: tibia_sensor_monocoque.FCStd
-   - Continuous G1-smooth bionic sickle contour flowing seamlessly into the clevis fork
-   - Integrates Warren truss servo cage (~45 deg) and knee counter-bearing holder
-   - Forms Cheek A (Fixed structural cheek on -Z side, Z in [-5.0, -2.5] mm)
-   - Features open-face sensor bay: microswitch pocket, compression spring pocket,
-     conduit channel, M3 Ruthex insert seat, M2 Ruthex insert seat, and top interlocking groove
-2. Removable Service Cover: tibia_foot_cover.FCStd
-   - Forms Cheek B (Removable cheek on +Z side, Z in [+3.5, +6.0] mm)
-   - Top tongue slides under the Tibia retaining lip for 100% positive form-fit
-   - 1x M2 countersunk screw for flush, vibration-proof retention
-   - Counterbore for M3 pivot pin
-3. Outward Bionic Foot Rocker: tibia_foot_rocker.FCStd
-   - Centered on Tibia midplane (Z in [-2.3, +3.3] mm) inside the 6.0 mm clevis slot
-   - +52% extended lever arm with tangential ski-glide geometry
-4. COTS Components:
-   - Torcster NR-645 high-torque metal gear servo
-   - Subminiature microswitch (12.8 x 6.5 x 5.8 mm)
-   - Stainless compression spring (Da = 4.5 mm, L = 12.0 mm)
-   - M3 hardened pivot pin & brass Ruthex insert
-   - M2 x 6 mm DIN 7991 countersunk screw
-
-Output Models:
-- hardware/mechanics/models/custom/v2/concepts/tibia_foot/tibia_sensor_monocoque.FCStd
-- hardware/mechanics/models/custom/v2/concepts/tibia_foot/tibia_foot_cover.FCStd
-- hardware/mechanics/models/custom/v2/concepts/tibia_foot/tibia_assembly.FCStd
+Organic Bionic Monocoque with Formschluss-Schraub-Hybrid (Option C):
+- Seamless G1-continuous bionic silhouette flowing gracefully from the knee servo cage
+  down through the beam and directly onto the foot rocker claw sole
+- Slender organic foot joint terminal wrapping closely around the pivot hub (R = 6.5 mm)
+  and spring pocket, completely eliminating any bulbous snout or awkward steps
+- 45-degree smooth transition between the 11.0 mm fork cheek and the 7.0 mm claw blade
+- Split clevis fork:
+  1. Monolithic Cheek A (Fixed, -Z side): Integrates open sensor bay, spring pocket,
+     conduit channel, M3 and M2 Ruthex brass insert seats, and interlocking retaining groove
+  2. Removable Cheek B (Cover, +Z side): Form-fit tongue, 1x flush M2 countersunk screw,
+     and counterbore for M3 pivot pin
+  3. Bionic Foot Rocker (Tarsus): Slender claw sole continuing the dorsal curvature
+     monotonically to the ground contact patch
 """
 
 import math
@@ -40,7 +27,7 @@ repo_root = "/home/bjoern/Workspace/Hexapods/lasius"
 sys.path.append(f"{repo_root}/hardware/mechanics/scripts/v2")
 import generate_tibia
 
-print("--- Generating Lasius Tibia v2 Bionic Assembly (Formschluss-Hybrid) ---")
+print("--- Generating Lasius Tibia v2 Organic Bionic Assembly ---")
 
 cots_dir = f"{repo_root}/hardware/mechanics/models/cots"
 concept_dir = f"{repo_root}/hardware/mechanics/models/custom/v2/concepts/tibia_foot"
@@ -55,21 +42,22 @@ os.makedirs(renders_dir, exist_ok=True)
 
 # Colors
 COLOR_CFRP = (0.22, 0.22, 0.24)        # Dark carbon anthracite
-COLOR_COVER = (0.28, 0.28, 0.30)       # Slightly contrasting carbon cover
+COLOR_COVER = (0.28, 0.28, 0.32)       # Contrasting carbon cover
 COLOR_SERVO = (0.12, 0.12, 0.12)       # Matte black servo
-COLOR_ORANGE = (0.92, 0.45, 0.10)      # Anodized orange aluminum / PETG rocker
+COLOR_ORANGE = (0.92, 0.45, 0.10)      # Anodized orange rocker
 COLOR_SWITCH = (0.15, 0.15, 0.15)      # Matte black switch
 COLOR_SPRING = (0.85, 0.85, 0.88)      # Stainless spring
 COLOR_BRASS = (0.85, 0.70, 0.20)       # Brass hardware
 COLOR_STEEL = (0.80, 0.80, 0.82)       # Steel fasteners
 
 # =============================================================================
-# 1. Build G1-Continuous Outer Contour of Unified Tibia Body
+# 1. Build Slender Organic Outer Contour of Unified Tibia Body
 # =============================================================================
-def build_sensor_tibia_outer_wire():
+def build_organic_tibia_outer_wire():
     """
-    Construct the G1-continuous outer silhouette of the Tibia, merging the
-    sickle claw with the enlarged distal foot fork without any steps or seams.
+    Construct the slender, organic G1-continuous outer silhouette of the Tibia.
+    Tapers gracefully over the spring pocket down to the pivot hub (R = 6.5 mm at (-122, -14)),
+    forming a completely natural joint transition for the foot rocker.
     """
     c2 = App.Vector(17.271, 36.152, 0.0)
     r2 = 1.489
@@ -136,18 +124,20 @@ def build_sensor_tibia_outer_wire():
     p6_e = App.Vector(-36.50, -14.25, 0.0)
     e6 = Part.makeLine(p56_e, p6_e)
 
-    # Distal tip circle arc
-    p_tip_top = App.Vector(-136.50, -6.00, 0.0)
-    p_tip_mid = App.Vector(-139.50, -14.00, 0.0)
-    p_tip_bot = App.Vector(-132.00, -22.00, 0.0)
-    e_tip = Part.Arc(p_tip_top, p_tip_mid, p_tip_bot).toShape()
+    # Distal joint terminal points around spring pocket and pivot hub:
+    p_spring_cheek = App.Vector(-130.0, -1.5, 0.0)
+    p_hub_left = App.Vector(-128.5, -14.0, 0.0)
+    p_hub_bot = App.Vector(-122.0, -20.5, 0.0)
+
+    arc_cheek_tip = Part.Arc(p_spring_cheek, App.Vector(-131.0, -8.0, 0.0), p_hub_left).toShape()
+    arc_pivot_bot = Part.Arc(p_hub_left, App.Vector(-126.5, -19.0, 0.0), p_hub_bot).toShape()
 
     # Dorsal arch
     poles1 = [
-        p_tip_top,
-        (-134.0, -1.0),
-        (-128.0, 4.0),
-        (-118.0, 6.0),
+        p_spring_cheek,
+        (-128.0, 0.0),
+        (-124.0, 2.5),
+        (-116.0, 5.5),
         (-106.0, 8.5),
         (-92.0, 12.5),
         (-78.200, 16.948),
@@ -162,8 +152,8 @@ def build_sensor_tibia_outer_wire():
         (15.874, 37.981),
         p2_s,
     ]
-    t_tip_top = App.Vector(1.0, 1.2, 0.0)
-    e1 = generate_tibia.make_g1_cubic_bspline(poles1, t_tip_top, generate_tibia.circle_tangent_cw(c2, p2_s))
+    t_dorsal_start = App.Vector(1.0, 0.5, 0.0)
+    e1 = generate_tibia.make_g1_cubic_bspline(poles1, t_dorsal_start, generate_tibia.circle_tangent_cw(c2, p2_s))
 
     # Ventral arch
     poles7 = [
@@ -177,17 +167,16 @@ def build_sensor_tibia_outer_wire():
         (-87.00, -8.00),
         (-96.50, -10.50),
         (-106.50, -14.00),
-        (-116.00, -17.50),
-        (-123.00, -20.50),
-        p_tip_bot,
+        (-115.00, -17.50),
+        p_hub_bot,
     ]
-    t_tip_bot = App.Vector(-1.0, -0.2, 0.0)
-    e7 = generate_tibia.make_g1_cubic_bspline(poles7, App.Vector(-1.0, 0.0, 0.0), t_tip_bot)
+    t_ventral_end = App.Vector(-1.0, -0.2, 0.0)
+    e7 = generate_tibia.make_g1_cubic_bspline(poles7, App.Vector(-1.0, 0.0, 0.0), t_ventral_end)
 
-    wire = Part.Wire([e_tip, e1, e2, e3, e4, e5, e5b, e6, e7])
+    wire = Part.Wire([arc_cheek_tip, arc_pivot_bot, e7, e6, e5b, e5, e4, e3, e2, e1])
     return wire
 
-outer_wire = build_sensor_tibia_outer_wire()
+outer_wire = build_organic_tibia_outer_wire()
 
 # =============================================================================
 # 2. Build Monolithic Tibia Body & Removable Cover
@@ -206,7 +195,7 @@ claw_base = claw_base.fuse(ear_bosses)
 truss_cage = generate_tibia.build_triangulated_truss_servo_cage()
 tibia_base = claw_base.fuse(truss_cage).cut(cutout_prism)
 
-# Servo pocket, cable slot, knee counter-bearing, and ear holes
+# Cut servo body pocket, cable slot, counter bearing, ear holes
 servo_pocket = Part.makeBox(40.80, 20.30, 28.00, App.Vector(-31.65, -10.15, -20.00))
 tibia_base = tibia_base.cut(servo_pocket)
 
