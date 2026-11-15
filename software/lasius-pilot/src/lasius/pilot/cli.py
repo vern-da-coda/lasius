@@ -17,6 +17,7 @@ import argparse
 import asyncio
 import json
 import sys
+from typing import Optional
 
 try:
     import websockets

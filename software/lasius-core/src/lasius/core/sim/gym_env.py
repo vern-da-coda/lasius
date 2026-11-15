@@ -97,7 +97,8 @@ class LasiusGymEnv(gym.Env):
         if not Path(self.urdf_path).is_file():
             raise FileNotFoundError(f"Lasius URDF model not found at '{self.urdf_path}'.")
 
-        assert action_mode in ["residual", "direct"], f"Invalid action_mode: {action_mode}"
+        if action_mode not in ["residual", "direct"]:
+            raise ValueError(f"Invalid action_mode: '{action_mode}'. Expected 'residual' or 'direct'.")
         self.action_mode = action_mode
         self.render_mode = render_mode
         self.control_freq = control_freq
