@@ -471,6 +471,75 @@ def build_triangulated_truss_servo_cage():
     return cage
 
 
+def build_upper_truss_cheeks(z_min=4.00, z_max=18.00):
+    """
+    Build the monolithic upper longitudinal cage cheeks ("Käfig-Wangen")
+    flanking the upper Torcster NR-645 servo housing (Z in [+4.00, +18.00] mm).
+    - Longitudinal side walls along Y in [+10.15, +12.80] and [-12.80, -10.15] mm.
+    - Top is 100% open so the servo drops straight in from above between the cheeks.
+    - Protects the servo casing against lateral shear forces without requiring an enclosed roof.
+    - Each cheek features two framed 45-degree Warren truss windows matching the lower cage.
+    """
+    dz = z_max - z_min
+    x_min, x_max = -34.60, 12.10
+    y_out = 12.80
+    r_c = 3.00
+    k = r_c * (1.0 - 1.0 / math.sqrt(2.0))
+    dy_waist = 1.40
+    x_w1, x_w2 = -26.50, 4.00
+    x_wm = 0.5 * (x_w1 + x_w2)
+
+    v = [
+        App.Vector(x_min + r_c, y_out, z_min),
+        App.Vector(x_w1, y_out, z_min),
+        App.Vector(x_wm, y_out - dy_waist, z_min),
+        App.Vector(x_w2, y_out, z_min),
+        App.Vector(x_max - r_c, y_out, z_min),
+        App.Vector(x_max - k, y_out - k, z_min),
+        App.Vector(x_max, y_out - r_c, z_min),
+        App.Vector(x_max, -y_out + r_c, z_min),
+        App.Vector(x_max - k, -y_out + k, z_min),
+        App.Vector(x_max - r_c, -y_out, z_min),
+        App.Vector(x_w2, -y_out, z_min),
+        App.Vector(x_wm, -y_out + dy_waist, z_min),
+        App.Vector(x_w1, -y_out, z_min),
+        App.Vector(x_min + r_c, -y_out, z_min),
+        App.Vector(x_min + k, -y_out + k, z_min),
+        App.Vector(x_min, -y_out + r_c, z_min),
+        App.Vector(x_min, y_out - r_c, z_min),
+        App.Vector(x_min + k, y_out - k, z_min),
+    ]
+    edges_xy = [
+        Part.makeLine(v[0], v[1]),
+        Part.Arc(v[1], v[2], v[3]).toShape(),
+        Part.makeLine(v[3], v[4]),
+        Part.Arc(v[4], v[5], v[6]).toShape(),
+        Part.makeLine(v[6], v[7]),
+        Part.Arc(v[7], v[8], v[9]).toShape(),
+        Part.makeLine(v[9], v[10]),
+        Part.Arc(v[10], v[11], v[12]).toShape(),
+        Part.makeLine(v[12], v[13]),
+        Part.Arc(v[13], v[14], v[15]).toShape(),
+        Part.makeLine(v[15], v[16]),
+        Part.Arc(v[16], v[17], v[0]).toShape(),
+    ]
+    cheeks = Part.Face(Part.Wire(edges_xy)).extrude(App.Vector(0, 0, dz))
+
+    # Cut channel Y in [-10.15, 10.15] completely open from the top
+    channel_cut = Part.makeBox(80.0, 20.30, dz + 4.0, App.Vector(-45.0, -10.15, z_min - 2.0))
+    cheeks = cheeks.cut(channel_cut)
+
+    # 45-degree Warren truss cutouts in each cheek
+    map_xz = lambda p: App.Vector(p.x, -20.0, p.y)
+    tri_u1 = [(-28.00, 8.50, 1.40), (-14.00, 8.50, 1.40), (-28.00, 16.50, 1.40)]
+    tri_u2 = [(-11.50, 8.50, 1.40), (  5.00, 8.50, 1.40), (  5.00, 16.50, 1.40)]
+    for tri in (tri_u1, tri_u2):
+        w_t = make_rounded_polygon_wire_2d(tri, map_xz)
+        cheeks = cheeks.cut(Part.Face(w_t).extrude(App.Vector(0, 40.0, 0)))
+
+    return cheeks
+
+
 def make_hex_nut_pocket_z(cx, cy, z_bottom, z_top, sw=7.10):
     """
     Create a hexagonal prism (across flats = sw) from z_bottom to z_top
@@ -507,13 +576,15 @@ def build_tibia_v2_shape():
     ear_bosses = build_servo_ear_bosses().cut(cutout_prism)
     claw_base = claw_base.fuse(ear_bosses)
 
-    # 3. Build and fuse the Torsion-Stiff ~45-deg Triangulated Truss Servo Cage (Z in [-23.00, -3.00]):
+    # 3. Build and fuse Lower Truss Servo Cage (Z in [-23.00, -3.00]) and
+    #    Monolithic Upper Longitudinal Cage Cheeks (Z in [+4.00, +18.00]):
     truss_cage = build_triangulated_truss_servo_cage()
-    tibia_v2 = claw_base.fuse(truss_cage).cut(cutout_prism)
+    upper_cheeks = build_upper_truss_cheeks()
+    tibia_v2 = claw_base.fuse(truss_cage).fuse(upper_cheeks).cut(cutout_prism)
 
-    # 4. Precision Servo Body Pocket (X in [-31.65, +9.15], Y in [-10.15, +10.15], Z in [-20.00, +8.00]):
-    #    Sharp corners for 0.15 mm clearance around the rectangular servo casing.
-    servo_pocket = Part.makeBox(40.80, 20.30, 28.00, App.Vector(-31.65, -10.15, -20.00))
+    # 4. Precision Servo Body Pocket (X in [-31.65, +9.15], Y in [-10.15, +10.15], Z in [-20.00, +22.00]):
+    #    Sharp corners for 0.15 mm clearance around the rectangular servo casing, open at top.
+    servo_pocket = Part.makeBox(40.80, 20.30, 48.00, App.Vector(-31.65, -10.15, -20.00))
     tibia_v2 = tibia_v2.cut(servo_pocket)
 
     # Note: Both mounting pads (-X and +X) are solid without cable slot cutout,
@@ -528,10 +599,8 @@ def build_tibia_v2_shape():
     tibia_v2 = tibia_v2.cut(screw_bore).cut(nut_pocket)
 
     # 7. 4x Coaxial Servo Mounting Ear Holes at (13.00, +-5.00) and (-35.50, +-5.00):
-    #    Start at Z = -3.00 mm (bottom of claw) through Z = +7.00 mm (top of ear boss)
-    #    so they never notch the outer walls of the truss cage below Z = -3.00 mm!
     for sx, sy in [(13.00, 5.00), (13.00, -5.00), (-35.50, 5.00), (-35.50, -5.00)]:
-        ear_hole = Part.makeCylinder(1.25, 11.0, App.Vector(sx, sy, -3.20))
+        ear_hole = Part.makeCylinder(1.25, 25.0, App.Vector(sx, sy, -3.20))
         tibia_v2 = tibia_v2.cut(ear_hole)
 
     tibia_v2 = tibia_v2.removeSplitter()
