@@ -21,7 +21,7 @@ assembly_files = [
     os.path.join(models_dir, "custom/v2/femur_assembly.FCStd"),
     os.path.join(models_dir, "custom/v2/leg_assembly.FCStd"),
     os.path.join(models_dir, "custom/v2/body_assembly.FCStd"),
-    os.path.join(models_dir, "custom/v2/body_gaster_assembly.FCStd"),
+    os.path.join(models_dir, "custom/v2/lasius_assembly.FCStd"),
 ]
 
 total_links = 0

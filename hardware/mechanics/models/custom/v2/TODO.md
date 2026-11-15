@@ -109,7 +109,7 @@ Dieser Backlog führt alle offenen Aufgaben, konstruktiven Erweiterungen und Ver
     * Montageblock ([`apod_tail_mount.FCStd`](parts/gaster/apod_tail_mount.FCStd)) überbrückt den $51{,}30\,\text{mm}$ Chassis-Spalt und verankert starr über die beiden hinteren M3-Bohrungen auf der Längsachse ($X = -90{,}0\,\text{mm}$ und $X = -120{,}0\,\text{mm}$).
     * 2-DoF SES-Gimbal ([`apod_tail_bracket.FCStd`](parts/gaster/apod_tail_bracket.FCStd)) mit Standard-Servos (Hitec HS-645MG / Torcster NR-645): Pan (Gieren links/rechts $\pm 45^\circ$) und Tilt (Nicken heben/senken $\pm 35^\circ$).
     * Konturierte Ober- und Unterplatten ($2{,}5\,\text{mm}$ Carbon) mit 4× Distanzbolzen und T-Schubstegen (großzügiger Innenraum für Zusatzakku oder Telemetrie).
-  * **Integration:** Eingebunden in die erweiterte Master-Assembly [`body_gaster_assembly.FCStd`](body_gaster_assembly.FCStd).
+  * **Integration:** Eingebunden in die erweiterte Master-Assembly [`lasius_assembly.FCStd`](lasius_assembly.FCStd).
 
 - [x] ~~**A-Pod Kopf- & Mandibeln-Baugruppe (5-DoF Bionik-Kopf & massive 3D-Sandwich-Mandibeln):**~~ **[ERLEDIGT]**  
   * **Modelle & Generatoren:** [`apod_head_mount.FCStd`](parts/head/apod_head_mount.FCStd), [`apod_neck_bracket.FCStd`](parts/head/apod_neck_bracket.FCStd), [`apod_head_platform.FCStd`](parts/head/apod_head_platform.FCStd), [`apod_mandible_left.FCStd`](parts/head/apod_mandible_left.FCStd), [`apod_mandible_right.FCStd`](parts/head/apod_mandible_right.FCStd) und [`head_assembly.FCStd`](head_assembly.FCStd) generiert via [`generate_head_assembly.py`](../../../scripts/v2/generate_head_assembly.py).
@@ -119,7 +119,7 @@ Dieser Backlog führt alle offenen Aufgaben, konstruktiven Erweiterungen und Ver
     * Massive 3D-Sandwich-Mandibeln ([`apod_mandible_left.FCStd`](parts/head/apod_mandible_left.FCStd), [`apod_mandible_right.FCStd`](parts/head/apod_mandible_right.FCStd)): $134\,\text{mm}$ Länge, $120\,\text{mm}$ Ausladung vor Drehpunkt, $Y = \pm 68\,\text{mm}$ Spannweite, 4 gezahnte Greifspitzen, Carbon-Doppelplatten mit 4 Distanzbolzen und Weather-Stripping-Führung.
   * **Chassis-Interface über Spacer-Bohrungen:**
     * Montageblock ([`apod_head_mount.FCStd`](parts/head/apod_head_mount.FCStd)) überbrückt den $51{,}30\,\text{mm}$ Spalt und verankert starr über die beiden vorderen M3-Bohrungen ($X = 128{,}0\,\text{mm}, Y = \pm 12{,}0\,\text{mm}$) mit Tasche für das Pan-Servo.
-  * **Integration:** Eingebunden in die Master-Assembly [`body_gaster_assembly.FCStd`](body_gaster_assembly.FCStd).
+  * **Integration:** Eingebunden in die Master-Assembly [`lasius_assembly.FCStd`](lasius_assembly.FCStd).
 
 ---
 
@@ -191,7 +191,7 @@ Dieser Backlog führt alle offenen Aufgaben, konstruktiven Erweiterungen und Ver
       * Loft-Apex bei **$Z = 81{,}50\,\text{mm}$**, symmetrisch zentriert um $X = 0, Y = 0$.
       * Zentrierter Durchbruch ($X \in [-41{,}8, +43{,}8\,\text{mm}], Y \in [-26{,}8, +26{,}8\,\text{mm}]$) und Stufenfalz ($X \in [-43{,}8, +45{,}8\,\text{mm}], Z \ge 80{,}20\,\text{mm}$) mit $0{,}2\,\text{mm}$ Fügespiel für die Service-Abdeckung.
       * Kollisionsprüfung mit Montageplatte, Pi 4 und Service-Deckel: Exakt $0{,}0000\,\text{mm}^3$ Schnittvolumen across all parts.
-  * **Integration:** Vollständig eingebunden via `App::Link` in [`body_assembly.FCStd`](body_assembly.FCStd) und [`body_gaster_assembly.FCStd`](body_gaster_assembly.FCStd).
+  * **Integration:** Vollständig eingebunden via `App::Link` in [`body_assembly.FCStd`](body_assembly.FCStd) und [`lasius_assembly.FCStd`](lasius_assembly.FCStd).
 
 - [x] ~~**Organische Neugestaltung der oberen Chassis-Abdeckung & Plexiglas-Canopy:**~~ **[ERLEDIGT]**  
   * **Modelle & Generatoren:**
@@ -208,7 +208,7 @@ Dieser Backlog führt alle offenen Aufgaben, konstruktiven Erweiterungen und Ver
     * 4 integrierte Montage-Sockeldome ($\varnothing 6{,}0\,\text{mm}$) für Raspberry Pi 4 im $58 \times 49\,\text{mm}$ Lochbild.
     * 5× $45^\circ$ nach vorn gepfeilte Chevron-Kaminbelüftungsschlitze über dem SoC.
     * 4× M3 Senkschrauben bei $X = \pm 45, Y = \pm 30\,\text{mm}$ (in den Zentralkern).
-  * **Integration:** Beide Teile als separate Komponenten via `App::Link` in [`body_assembly.FCStd`](body_assembly.FCStd) und [`body_gaster_assembly.FCStd`](body_gaster_assembly.FCStd) eingebunden.
+  * **Integration:** Beide Teile als separate Komponenten via `App::Link` in [`body_assembly.FCStd`](body_assembly.FCStd) und [`lasius_assembly.FCStd`](lasius_assembly.FCStd) eingebunden.
 
 - [x] ~~**Konzeptstudie & Realisierung: Monolithischer Chassis-Kern / Kapselung als Ersatz der 4 mittleren Spacer:**~~ **[ERLEDIGT]**  
   * **Modelle & Generatoren:** [`chassis_core.FCStd`](parts/chassis/chassis_core.FCStd) und [`chassis_core_assembly.FCStd`](chassis_core_assembly.FCStd) generiert via [`generate_chassis_core.py`](../../../scripts/v2/generate_chassis_core.py).
@@ -219,7 +219,7 @@ Dieser Backlog führt alle offenen Aufgaben, konstruktiven Erweiterungen und Ver
     * TCA9548A I2C-Multiplexer-Kammer im Heckbereich.
     * Formschluss-Zentrierfalze und horizontale M3 Ruthex-Schnittstellen zu Front (`chassis_neck`) und Heck (`chassis_tail`).
     * $16\,\text{mm}$ Taillierungs-Freigang zu den mittleren Coxa-Servos ML und MR.
-  * **Integration:** Eingebunden in [`body_gaster_assembly.FCStd`](body_gaster_assembly.FCStd).
+  * **Integration:** Eingebunden in [`lasius_assembly.FCStd`](lasius_assembly.FCStd).
 
 
 

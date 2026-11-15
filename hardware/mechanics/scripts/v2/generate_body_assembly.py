@@ -57,9 +57,8 @@ doc.saveAs(fcstd_path)
 cots_dir = f"{models_base}/cots"
 doc_bottom = App.openDocument(f"{v1_parts_dir}/body_bottom.FCStd")
 doc_top = App.openDocument(f"{v1_parts_dir}/body_top.FCStd")
-doc_spacer = App.openDocument(f"{v1_parts_dir}/spacer_14x50.FCStd")
 doc_leg = App.openDocument(f"{v2_asm_dir}/leg_assembly.FCStd")
-doc_tray_asm = App.openDocument(f"{v2_asm_dir}/electronics_tray_assembly.FCStd")
+doc_core_asm = App.openDocument(f"{v2_asm_dir}/chassis_core_assembly.FCStd")
 doc_belly = App.openDocument(f"{models_base}/custom/v2/parts/chassis/chassis_belly_pan.FCStd")
 doc_rpi_mount = App.openDocument(f"{models_base}/custom/v2/parts/chassis/chassis_rpi_mount.FCStd")
 doc_service_cover = App.openDocument(f"{models_base}/custom/v2/parts/chassis/chassis_service_cover.FCStd")
@@ -116,10 +115,12 @@ make_link("Body_Bottom", "1. Chassis Bottom Plate (2mm)", doc_bottom.BodyBottom,
 p_top = App.Placement(App.Vector(0.0, 0.0, 53.30), App.Rotation())
 make_link("Body_Top", "2. Chassis Top Plate (2mm)", doc_top.BodyTop, p_top, COLOR_CARBON)
 
-# Electronics Tray & Power Assembly at Z = 18.00 mm (held by 4 central standoff collars)
-# Encapsulates Tray Deck, dual PCA9685, TCA9548A, and 2S LiPo Battery
-p_tray_asm = App.Placement(App.Vector(0.0, 0.0, 18.00), App.Rotation())
-make_link("Electronics_Tray_Assembly", "3. Electronics Tray & Power Assembly (v2)", doc_tray_asm.Electronics_Tray_Assembly, p_tray_asm)
+# Monocoque Central Core Assembly at Z = 0.00 mm (spans Z = 2.00 .. 53.30 mm)
+# Replaces obsolete horizontal tray and all discrete spacers.
+# Rigidly connects Body_Bottom and Body_Top across the 51.3 mm gap.
+# Encapsulates dual vertical PCA9685, TCA9548A, and 2S LiPo Battery.
+p_core_asm = App.Placement(App.Vector(0.0, 0.0, 0.00), App.Rotation())
+make_link("Chassis_Core_Assembly", "3. Monocoque Central Core Assembly (v2)", doc_core_asm.getObject("Chassis_Core_Assembly"), p_core_asm)
 
 # Chassis Belly Pan (Skid Plate) at Z = 0.00 mm (mounted to underside of bottom plate)
 p_belly = App.Placement(App.Vector(0.0, 0.0, 0.00), App.Rotation())
@@ -146,28 +147,7 @@ p_cover = App.Placement(App.Vector(0.0, 0.0, 0.00), App.Rotation())
 make_link("Chassis_Service_Cover", "9. Service Cover with '>>>' Chevron Louvers (v2)", doc_service_cover.getObject("Chassis_Service_Cover"), p_cover, COLOR_SERVICE_COVER)
 
 # -------------------------------------------------------------
-# 2. Chassis Standoff Spacers (8x at small M3 screw holes, inherited from v1)
-# -------------------------------------------------------------
-spacer_positions = [
-    # 4x Window flanking standoffs
-    ("Spacer_Window_FL", "Standoff Pillar Window FL", 45.0, 30.0),
-    ("Spacer_Window_FR", "Standoff Pillar Window FR", 45.0, -30.0),
-    ("Spacer_Window_RL", "Standoff Pillar Window RL", -45.0, 30.0),
-    ("Spacer_Window_RR", "Standoff Pillar Window RR", -45.0, -30.0),
-    # 2x Front standoffs (side-by-side)
-    ("Spacer_Front_L", "Standoff Pillar Front Left", 128.0, 12.0),
-    ("Spacer_Front_R", "Standoff Pillar Front Right", 128.0, -12.0),
-    # 2x Rear centerline standoffs (inline)
-    ("Spacer_Rear_1", "Standoff Pillar Rear Mid 1", -90.0, 0.0),
-    ("Spacer_Rear_2", "Standoff Pillar Rear Tip 2", -120.0, 0.0),
-]
-
-for s_name, s_label, sx, sy in spacer_positions:
-    p_sp = App.Placement(App.Vector(sx, sy, 2.00), App.Rotation())
-    make_link(s_name, s_label, doc_spacer.SpacerRod, p_sp, COLOR_SPACER)
-
-# -------------------------------------------------------------
-# 3. Six Modular v2 Legs (All Servo Horns Forward towards Front -X)
+# 2. Six Modular v2 Legs (All Servo Horns Forward towards Front -X)
 # -------------------------------------------------------------
 z_leg_offset = 17.25
 
@@ -211,6 +191,19 @@ bbox = asm_part.Shape.BoundBox
 print(f"Assembly Compound Valid: {asm_part.Shape.isValid()}")
 print(f"Bounding Box: X=[{bbox.XMin:.2f}, {bbox.XMax:.2f}], Y=[{bbox.YMin:.2f}, {bbox.YMax:.2f}], Z=[{bbox.ZMin:.2f}, {bbox.ZMax:.2f}]")
 print(f"Total Width (Y): {bbox.YLength:.2f} mm, Length (X): {bbox.XLength:.2f} mm, Height (Z): {bbox.ZLength:.2f} mm")
+
+# Build compound shape for digital export
+shapes = []
+for obj in asm_part.Group:
+    if hasattr(obj, "Shape") and not obj.Shape.isNull():
+        shapes.append(obj.Shape)
+
+if shapes:
+    compound = Part.makeCompound(shapes)
+    compound.exportStep(step_path)
+    compound.exportStl(stl_path)
+    print(f"✔ Exported STEP: {step_path}")
+    print(f"✔ Exported STL:  {stl_path}")
 
 for d in list(App.listDocuments().values()):
     try:
