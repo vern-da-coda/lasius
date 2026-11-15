@@ -475,15 +475,15 @@ def build_upper_truss_cheeks(z_min=4.00, z_max=18.00):
     """
     Build the monolithic upper longitudinal cage cheeks ("Käfig-Wangen")
     flanking the upper Torcster NR-645 servo housing (Z in [+4.00, +18.00] mm).
+    - Shortened to exact Servo body width: X in [-31.50, +9.00] mm (40.50 mm).
     - Longitudinal side walls along Y in [+10.15, +12.80] and [-12.80, -10.15] mm.
     - Top is 100% open so the servo drops straight in from above between the cheeks.
-    - Protects the servo casing against lateral shear forces without requiring an enclosed roof.
-    - Each cheek features two framed 45-degree Warren truss windows matching the lower cage.
+    - Each cheek features two framed 45-degree Warren truss windows.
     """
     dz = z_max - z_min
-    x_min, x_max = -34.60, 12.10
+    x_min, x_max = -31.50, 9.00
     y_out = 12.80
-    r_c = 3.00
+    r_c = 1.20
     k = r_c * (1.0 - 1.0 / math.sqrt(2.0))
     dy_waist = 1.40
     x_w1, x_w2 = -26.50, 4.00
@@ -529,10 +529,10 @@ def build_upper_truss_cheeks(z_min=4.00, z_max=18.00):
     channel_cut = Part.makeBox(80.0, 20.30, dz + 4.0, App.Vector(-45.0, -10.15, z_min - 2.0))
     cheeks = cheeks.cut(channel_cut)
 
-    # 45-degree Warren truss cutouts in each cheek
+    # 45-degree Warren truss cutouts in each cheek (framed inside [-31.50, +9.00])
     map_xz = lambda p: App.Vector(p.x, -20.0, p.y)
-    tri_u1 = [(-28.00, 8.50, 1.40), (-14.00, 8.50, 1.40), (-28.00, 16.50, 1.40)]
-    tri_u2 = [(-11.50, 8.50, 1.40), (  5.00, 8.50, 1.40), (  5.00, 16.50, 1.40)]
+    tri_u1 = [(-28.50, 8.50, 1.40), (-14.00, 8.50, 1.40), (-28.50, 16.50, 1.40)]
+    tri_u2 = [(-11.50, 8.50, 1.40), (  6.00, 8.50, 1.40), (  6.00, 16.50, 1.40)]
     for tri in (tri_u1, tri_u2):
         w_t = make_rounded_polygon_wire_2d(tri, map_xz)
         cheeks = cheeks.cut(Part.Face(w_t).extrude(App.Vector(0, 40.0, 0)))

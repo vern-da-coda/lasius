@@ -10,6 +10,7 @@ Canonical Output Paths (Hardware-as-Code 3-Tier Architecture):
   * hardware/mechanics/models/custom/v2/parts/tibia/tibia.FCStd        (Tibia_Body)
   * hardware/mechanics/models/custom/v2/parts/tibia/tibia_cover.FCStd  (Tibia_Cover)
   * hardware/mechanics/models/custom/v2/parts/tibia/tibia_rocker.FCStd (Tibia_Rocker)
+  * hardware/mechanics/models/custom/v2/parts/tibia/tibia_shoe.FCStd   (Tibia_Shoe)
 - Custom v2 Tibia Subassembly:
   * hardware/mechanics/models/custom/v2/tibia_assembly.FCStd           (Tibia_Assembly)
 - Mirrored 1:1 in hardware/mechanics/export/{step,stl}/custom/v2/
@@ -70,30 +71,29 @@ h1 = Part.makeCylinder(1.05, 10.0, App.Vector(4.5, 2.5, -5.0), App.Vector(0, 0, 
 h2 = Part.makeCylinder(1.05, 10.0, App.Vector(4.5, 9.0, -5.0), App.Vector(0, 0, 1))
 sw_body = sw_body.cut(h1).cut(h2)
 
-# Plunger button behind leaf lever (X in [6.2, 6.7])
-pin_button = Part.makeCylinder(1.00, 0.5, App.Vector(6.2, 9.5, 0.0), App.Vector(1, 0, 0))
-# Leaf lever (X in [6.7, 7.1], Y in [1.5, 13.0], Z in [-2.0, +2.0])
-lever_box = Part.makeBox(0.4, 11.5, 4.0, App.Vector(6.7, 1.5, -2.0))
+# Direct rectangular pin plunger of Omron D2FC-F-K(50M) (X in [6.2, 7.1], Y in [8.55, 10.45], Z in [-0.6, +0.6])
+pin_button = Part.makeBox(0.90, 1.90, 1.20, App.Vector(6.20, 8.55, -0.60))
 
-lug1 = Part.makeBox(2.5, 0.6, 2.0, App.Vector(-2.5, 1.5, -1.0))
-lug2 = Part.makeBox(2.5, 0.6, 2.0, App.Vector(-2.5, 6.4, -1.0))
-lug3 = Part.makeBox(2.5, 0.6, 2.0, App.Vector(-2.5, 11.3, -1.0))
+lug1 = Part.makeBox(3.3, 0.6, 1.2, App.Vector(-3.3, 1.5, -0.6))
+lug2 = Part.makeBox(3.3, 0.6, 1.2, App.Vector(-3.3, 6.4, -0.6))
+lug3 = Part.makeBox(3.3, 0.6, 1.2, App.Vector(-3.3, 11.3, -0.6))
 
-sw_solid = sw_body.fuse(pin_button).fuse(lever_box).fuse(lug1).fuse(lug2).fuse(lug3)
+sw_solid = sw_body.fuse(pin_button).fuse(lug1).fuse(lug2).fuse(lug3)
 obj_sw = doc_sw.addObject("Part::Feature", "Microswitch_Subminiature")
-obj_sw.Label = "Subminiature Microswitch (12.8x6.5x5.8 mm with Leaf Lever)"
+obj_sw.Label = "Omron D2FC-F-K(50M) Subminiature Microswitch (12.8x6.5x5.8 mm, Direct Plunger)"
 obj_sw.Shape = sw_solid
 doc_sw.recompute()
 doc_sw.saveAs(fcstd_sw_path)
+sw_solid.exportStep(f"{repo_root}/hardware/mechanics/export/step/cots/microswitch_subminiature.step")
 
 doc_sp = App.newDocument("compression_spring_4x12")
 fcstd_sp_path = f"{cots_dir}/compression_spring_4x12.FCStd"
-sp_outer = Part.makeCylinder(2.25, 12.0, App.Vector(0, 0, 0), App.Vector(0, 1, 0))
-sp_inner = Part.makeCylinder(1.65, 14.0, App.Vector(0, -1.0, 0), App.Vector(0, 1, 0))
+sp_outer = Part.makeCylinder(2.25, 11.3, App.Vector(0, 0, 0), App.Vector(0, 1, 0))
+sp_inner = Part.makeCylinder(1.65, 13.3, App.Vector(0, -1.0, 0), App.Vector(0, 1, 0))
 sp_tube = sp_outer.cut(sp_inner)
 for i in range(5):
-    y_slot = 1.5 + i * 2.0
-    slot_cutter = Part.makeBox(6.0, 1.0, 1.0, App.Vector(-3.0, y_slot - 0.5, -0.5))
+    y_slot = 1.4 + i * 1.85
+    slot_cutter = Part.makeBox(6.0, 0.9, 1.0, App.Vector(-3.0, y_slot - 0.45, -0.5))
     slot_cutter.rotate(App.Vector(0, y_slot, 0), App.Vector(0, 1, 0), i * 45.0)
     sp_tube = sp_tube.cut(slot_cutter)
 
@@ -114,30 +114,35 @@ except Exception:
 doc_rocker = App.newDocument("tibia_rocker")
 fcstd_rocker_path = f"{parts_tibia_dir}/tibia_rocker.FCStd"
 
-p_hub_bot = App.Vector(1.16, 5.20, 0.0)
-p_spring_end = App.Vector(-14.02, 8.50, 0.0)
+p_hub_bot = App.Vector(3.60, 5.20, 0.0)
+p_neck_top = App.Vector(-6.60, 3.60, 0.0)
 
+# Structurally reinforced bionic Tarsus runner:
+# - Neck width increased from 7.3 mm to 10.5 mm
+# - Belly cross-section increased from 4.9 mm to 7.9 mm (+160% section modulus W_b)
+# - Fore-foot cross-section increased from 3.4 mm to 5.6 mm (+170% section modulus W_b)
+# - Distal tip increased from 2.1 mm to 3.4 mm (+165% section modulus W_b)
 loc_sole = [
     p_hub_bot,
-    App.Vector(-0.50, -1.69, 0.0),
-    App.Vector(-3.46, -10.21, 0.0),
-    App.Vector(-7.82, -18.14, 0.0),
-    App.Vector(-12.42, -22.74, 0.0),
-    App.Vector(-17.37, -25.56, 0.0),
-    App.Vector(-21.83, -25.89, 0.0),
+    App.Vector(2.20, -2.20, 0.0),
+    App.Vector(-1.20, -10.50, 0.0),
+    App.Vector(-6.20, -16.80, 0.0),
+    App.Vector(-12.60, -19.60, 0.0),
+    App.Vector(-19.80, -19.20, 0.0),
+    App.Vector(-26.40, -17.00, 0.0),
 ]
 loc_tip = [
-    App.Vector(-21.83, -25.89, 0.0),
-    App.Vector(-23.41, -25.78, 0.0),
-    App.Vector(-24.22, -23.82, 0.0),
+    App.Vector(-26.40, -17.00, 0.0),
+    App.Vector(-28.20, -15.30, 0.0),
+    App.Vector(-26.80, -13.60, 0.0),
 ]
 loc_top = [
-    App.Vector(-24.22, -23.82, 0.0),
-    App.Vector(-20.66, -20.42, 0.0),
-    App.Vector(-16.60, -14.52, 0.0),
-    App.Vector(-14.48, -6.75, 0.0),
-    App.Vector(-13.74, 1.60, 0.0),
-    p_spring_end,
+    App.Vector(-26.80, -13.60, 0.0),
+    App.Vector(-20.40, -13.60, 0.0),
+    App.Vector(-14.20, -11.80, 0.0),
+    App.Vector(-9.40, -7.50, 0.0),
+    App.Vector(-7.00, -1.80, 0.0),
+    p_neck_top,
 ]
 
 c_sole = Part.BSplineCurve()
@@ -148,19 +153,27 @@ c_top = Part.BSplineCurve()
 c_top.interpolate(loc_top)
 e_top = c_top.toShape()
 
-# Upper lever contact face at X = +0.25 mm (0.05 mm rest clearance to microswitch lever at X = +0.20 mm)
+# Reinforced upper lever arm (h = 2.75 mm, X in [0.25, 3.00] for full 5 deg / 2.2 mm NC switch release travel),
+# massive M3 pivot eye (R_hub = 4.60 mm -> 3.05 mm wall),
+# and thickened internal spring arm (h = 3.8..4.5 mm, Y in [6.90, 10.60]) with notch-free transition to neck
 pts_upper = [
     p_hub_bot,
-    App.Vector(2.0, 12.0, 0.0),
-    App.Vector(2.5, 18.0, 0.0),
-    App.Vector(2.5, 26.0, 0.0),
-    App.Vector(2.5, 34.5, 0.0),
+    App.Vector(4.60, 9.20, 0.0),
+    App.Vector(4.40, 12.50, 0.0),
+    App.Vector(3.00, 18.0, 0.0),
+    App.Vector(3.00, 34.5, 0.0),
     App.Vector(0.25, 34.5, 0.0),
-    App.Vector(0.25, 24.0, 0.0),
-    App.Vector(-2.0, 16.0, 0.0),
-    App.Vector(-5.0, 13.5, 0.0),
-    App.Vector(-11.0, 8.50, 0.0),
-    p_spring_end,
+    App.Vector(0.25, 30.2, 0.0),
+    App.Vector(0.55, 29.0, 0.0),
+    App.Vector(0.55, 24.0, 0.0),
+    App.Vector(-2.0, 16.5, 0.0),
+    App.Vector(-4.8, 13.8, 0.0),
+    App.Vector(-7.5, 10.60, 0.0),
+    App.Vector(-12.2, 10.60, 0.0),
+    App.Vector(-12.2, 8.60, 0.0),
+    App.Vector(-9.5, 7.00, 0.0),
+    App.Vector(-7.2, 6.50, 0.0),
+    p_neck_top,
 ]
 edges_upper = [Part.makeLine(pts_upper[i], pts_upper[i + 1]) for i in range(len(pts_upper) - 1)]
 
@@ -171,10 +184,11 @@ rocker_solid = rocker_face.extrude(App.Vector(0.0, 0.0, 5.6)).translate(App.Vect
 
 # Pivot Bore (D = 3.10 mm, R = 1.55 mm) at (0.0, 10.0)
 rocker_solid = rocker_solid.cut(Part.makeCylinder(1.55, 10.0, App.Vector(0.0, 10.0, -5.0), App.Vector(0, 0, 1)))
-# Spring Boss at (-14.0, 8.50) (D = 3.00 mm, L = 2.50 mm up to Y = 11.00 mm)
-rocker_solid = rocker_solid.fuse(Part.makeCylinder(1.50, 2.50, App.Vector(-14.0, 8.50, 0.0), App.Vector(0, 1, 0)))
-# M2 Set Screw Pocket at (0.25..2.50, 32.5)
-rocker_solid = rocker_solid.cut(Part.makeCylinder(1.00, 2.35, App.Vector(2.55, 32.5, 0.0), App.Vector(-1, 0, 0)))
+# Coaxial Retaining Bore (D = 2.00 mm, R = 1.00 mm) at (-8.50, -13.00) for locking Tibia_Shoe
+rocker_solid = rocker_solid.cut(Part.makeCylinder(1.00, 10.0, App.Vector(-8.50, -13.00, -5.0), App.Vector(0, 0, 1)))
+# Enclosed Spring Boss at (-10.2, 10.60) (D = 2.80 mm, L = 2.50 mm up to Y = 13.10 mm; fits both 4.0 mm and 4.5 mm springs)
+rocker_solid = rocker_solid.fuse(Part.makeCylinder(1.40, 2.50, App.Vector(-10.2, 10.60, 0.0), App.Vector(0, 1, 0)))
+# Solid integrated actuation pad at Y_s in [30.2, 34.5], X_s = +0.25 mm directly presses the 1.2 mm wide D2FC-F-K(50M) plunger at Y_s = 32.5 mm
 rocker_solid = rocker_solid.removeSplitter()
 
 obj_rocker = doc_rocker.addObject("Part::Feature", "Tibia_Rocker")
@@ -188,6 +202,139 @@ doc_rocker.saveAs(fcstd_rocker_path)
 rocker_solid.exportStep(f"{export_step_parts}/tibia_rocker.step")
 rocker_solid.exportStl(f"{export_stl_parts}/tibia_rocker.stl")
 print(f"✔ Saved: {fcstd_rocker_path} (Valid={rocker_solid.isValid()}, Volume={rocker_solid.Volume:.1f} mm3)")
+
+# =============================================================================
+# 2b. Build Canonical Slip-On Spoon Shoe: custom/v2/parts/tibia/tibia_shoe.FCStd
+# =============================================================================
+print("2b. Building Canonical Part: tibia_shoe.FCStd...")
+try:
+    App.closeDocument("tibia_shoe")
+except Exception:
+    pass
+doc_shoe = App.newDocument("tibia_shoe")
+fcstd_shoe_path = f"{parts_tibia_dir}/tibia_shoe.FCStd"
+
+# 1. Side profile of the bionic spoon shoe (in X_s, Y_s plane, extruded along Z_s in [-7.0, +7.0]):
+pts_shoe_sole = [
+    App.Vector(-2.20, -12.60, 0.0),
+    App.Vector(-6.40, -18.80, 0.0),
+    App.Vector(-12.60, -21.60, 0.0),
+    App.Vector(-19.80, -21.20, 0.0),
+    App.Vector(-26.60, -19.00, 0.0),
+]
+pts_shoe_tip = [
+    App.Vector(-26.60, -19.00, 0.0),
+    App.Vector(-30.00, -15.30, 0.0),
+    App.Vector(-27.00, -11.80, 0.0),
+]
+pts_shoe_top = [
+    App.Vector(-27.00, -11.80, 0.0),
+    App.Vector(-20.40, -11.80, 0.0),
+    App.Vector(-14.20, -10.00, 0.0),
+    App.Vector(-9.20, -6.80, 0.0),
+    App.Vector(-5.80, -6.80, 0.0),
+]
+c_sh_sole = Part.BSplineCurve()
+c_sh_sole.interpolate(pts_shoe_sole)
+e_sh_sole = c_sh_sole.toShape()
+e_sh_tip = Part.Arc(pts_shoe_tip[0], pts_shoe_tip[1], pts_shoe_tip[2]).toShape()
+c_sh_top = Part.BSplineCurve()
+c_sh_top.interpolate(pts_shoe_top)
+e_sh_top = c_sh_top.toShape()
+e_sh_heel = Part.makeLine(pts_shoe_top[-1], pts_shoe_sole[0])
+
+shoe_side_wire = Part.Wire([e_sh_sole, e_sh_tip, e_sh_top, e_sh_heel])
+shoe_side_solid = Part.Face(shoe_side_wire).extrude(App.Vector(0.0, 0.0, 14.0)).translate(App.Vector(0.0, 0.0, -7.0))
+
+# 2. Top-view spoon / teardrop contour (in X_s, Z_s plane, extruded along Y_s in [-25.0, -4.0]):
+#    Flares from 8.40 mm at the ankle entry (-1.80) to 11.60 mm across the spoon bowl (-17.00)
+#    and rounds smoothly around the toe tip (-30.20)!
+pts_spoon_pos = [
+    App.Vector(-1.80, -25.0, 4.20),
+    App.Vector(-6.00, -25.0, 4.65),
+    App.Vector(-11.50, -25.0, 5.45),
+    App.Vector(-17.00, -25.0, 5.80),
+    App.Vector(-22.50, -25.0, 5.35),
+    App.Vector(-27.00, -25.0, 4.10),
+]
+pts_spoon_neg = [App.Vector(p.x, p.y, -p.z) for p in reversed(pts_spoon_pos)]
+c_sp_pos = Part.BSplineCurve()
+c_sp_pos.interpolate(pts_spoon_pos)
+c_sp_neg = Part.BSplineCurve()
+c_sp_neg.interpolate(pts_spoon_neg)
+e_sp_nose = Part.Arc(pts_spoon_pos[-1], App.Vector(-30.20, -25.0, 0.0), pts_spoon_neg[0]).toShape()
+e_sp_back = Part.makeLine(pts_spoon_neg[-1], pts_spoon_pos[0])
+
+spoon_plan_wire = Part.Wire([c_sp_pos.toShape(), e_sp_nose, c_sp_neg.toShape(), e_sp_back])
+spoon_plan_solid = Part.Face(spoon_plan_wire).extrude(App.Vector(0.0, 22.0, 0.0))
+
+shoe_outer = shoe_side_solid.common(spoon_plan_solid)
+
+# 3. Form-fit internal cavity for the 5.60 mm flat Tibia_Rocker (with 0.06 mm clearance per face -> 5.72 mm slot):
+#    - Closed toe cap in front of X_s = -14.20 wraps around the upturned Rocker tip
+#    - Open top entry behind X_s = -14.20 allows sliding the Rocker into the toe cap and pivoting down to lock
+rocker_offset_wire = rocker_wire.makeOffset2D(0.06)
+cavity_core = Part.Face(rocker_offset_wire).extrude(App.Vector(0.0, 0.0, 5.72)).translate(App.Vector(0.0, 0.0, -2.86))
+entry_slot = Part.makeBox(14.50, 10.00, 5.72, App.Vector(-14.20, -11.80, -2.86))
+rocker_cavity = cavity_core.fuse(entry_slot)
+
+# 4. Recessed 1.00 mm deep Spoon Pad Pocket on the underside (framed by a 1.50 mm protective rim for gluing a rubber/TPU pad):
+pts_rec_sole_top = [
+    App.Vector(-5.20, -16.70, 0.0),
+    App.Vector(-8.50, -19.20, 0.0),
+    App.Vector(-12.60, -20.60, 0.0),
+    App.Vector(-19.80, -20.20, 0.0),
+    App.Vector(-25.20, -18.30, 0.0),
+]
+c_rec_top = Part.BSplineCurve()
+c_rec_top.interpolate(pts_rec_sole_top)
+rec_side_wire = Part.Wire([
+    c_rec_top.toShape(),
+    Part.makeLine(pts_rec_sole_top[-1], App.Vector(-25.20, -25.0, 0.0)),
+    Part.makeLine(App.Vector(-25.20, -25.0, 0.0), App.Vector(-5.20, -25.0, 0.0)),
+    Part.makeLine(App.Vector(-5.20, -25.0, 0.0), pts_rec_sole_top[0]),
+])
+rec_side_solid = Part.Face(rec_side_wire).extrude(App.Vector(0.0, 0.0, 12.0)).translate(App.Vector(0.0, 0.0, -6.0))
+
+pts_rec_pos = [
+    App.Vector(-5.50, -25.0, 3.00),
+    App.Vector(-11.50, -25.0, 3.95),
+    App.Vector(-17.00, -25.0, 4.30),
+    App.Vector(-22.00, -25.0, 3.85),
+    App.Vector(-24.80, -25.0, 2.80),
+]
+pts_rec_neg = [App.Vector(p.x, p.y, -p.z) for p in reversed(pts_rec_pos)]
+c_rp_pos = Part.BSplineCurve()
+c_rp_pos.interpolate(pts_rec_pos)
+c_rp_neg = Part.BSplineCurve()
+c_rp_neg.interpolate(pts_rec_neg)
+e_rp_nose = Part.Arc(pts_rec_pos[-1], App.Vector(-26.60, -25.0, 0.0), pts_rec_neg[0]).toShape()
+e_rp_back = Part.Arc(pts_rec_neg[-1], App.Vector(-4.20, -25.0, 0.0), pts_rec_pos[0]).toShape()
+
+rec_plan_wire = Part.Wire([c_rp_pos.toShape(), e_rp_nose, c_rp_neg.toShape(), e_rp_back])
+rec_plan_solid = Part.Face(rec_plan_wire).extrude(App.Vector(0.0, 15.0, 0.0))
+pad_recess = rec_side_solid.common(rec_plan_solid)
+
+# 5. Coaxial D = 2.00 mm retaining pin hole at (-8.50, -13.00)
+shoe_pin_bore = Part.makeCylinder(1.00, 14.0, App.Vector(-8.50, -13.00, -7.0), App.Vector(0, 0, 1))
+
+shoe_solid = shoe_outer.cut(rocker_cavity).cut(pad_recess).cut(shoe_pin_bore)
+try:
+    shoe_solid = shoe_solid.removeSplitter()
+except Exception:
+    pass
+
+obj_shoe = doc_shoe.addObject("Part::Feature", "Tibia_Shoe")
+obj_shoe.Label = "Tibia Slip-On Bionic Spoon Shoe (11.6 mm Width, Sole Pad Recess, TPU/PETG)"
+obj_shoe.Shape = shoe_solid
+if hasattr(obj_shoe, "ViewObject") and obj_shoe.ViewObject is not None:
+    obj_shoe.ViewObject.Visibility = True
+    obj_shoe.ViewObject.ShapeColor = COLOR_COVER
+doc_shoe.recompute()
+doc_shoe.saveAs(fcstd_shoe_path)
+shoe_solid.exportStep(f"{export_step_parts}/tibia_shoe.step")
+shoe_solid.exportStl(f"{export_stl_parts}/tibia_shoe.stl")
+print(f"✔ Saved: {fcstd_shoe_path} (Valid={shoe_solid.isValid()}, Volume={shoe_solid.Volume:.1f} mm3)")
 
 # =============================================================================
 # 3. Build Canonical Monolithic Tibia Body & Removable Cover
@@ -265,17 +412,17 @@ def build_organic_tibia_outer_wire():
     p6_e = App.Vector(-36.50, -14.25, 0.0)
     e6 = Part.makeLine(p56_e, p6_e)
 
-    p_spring_cheek = App.Vector(-130.0, -0.5, 0.0)
+    p_spring_cheek = App.Vector(-132.0, -1.5, 0.0)
     p_hub_left = App.Vector(-128.5, -14.0, 0.0)
-    p_hub_bot = App.Vector(-122.0, -20.5, 0.0)
+    p_hub_bot = App.Vector(-121.0, -21.5, 0.0)
 
-    arc_cheek_tip = Part.Arc(p_spring_cheek, App.Vector(-131.0, -8.0, 0.0), p_hub_left).toShape()
-    arc_pivot_bot = Part.Arc(p_hub_left, App.Vector(-126.5, -19.0, 0.0), p_hub_bot).toShape()
+    arc_cheek_tip = Part.Arc(p_spring_cheek, App.Vector(-132.2, -7.8, 0.0), p_hub_left).toShape()
+    arc_pivot_bot = Part.Arc(p_hub_left, App.Vector(-126.0, -20.2, 0.0), p_hub_bot).toShape()
 
     poles1 = [
         p_spring_cheek,
-        (-128.0, 0.5),
-        (-124.0, 2.8),
+        (-129.5, -0.2),
+        (-124.5, 2.5),
         (-116.0, 5.8),
         (-106.0, 8.8),
         (-92.0, 12.5),
@@ -305,7 +452,7 @@ def build_organic_tibia_outer_wire():
         (-87.00, -9.50),
         (-96.50, -12.50),
         (-106.50, -16.00),
-        (-115.00, -18.80),
+        (-115.00, -19.50),
         p_hub_bot,
     ]
     t_ventral_end = App.Vector(-1.0, -0.2, 0.0)
@@ -375,48 +522,96 @@ py = 10.0 * math.cos(rot_rad)
 base_pos = App.Vector(-122.0 - px, -14.0 - py, 0.5)
 p_shank = App.Placement(base_pos, rot_foot)
 
-slot_upper = Part.makeBox(6.5, 30.0, 6.0, App.Vector(-2.5, 8.0, -3.0))
-slot_claw = Part.makeBox(45.0, 48.0, 6.0, App.Vector(-40.0, -32.0, -3.0))
-sw_pocket = Part.makeBox(10.5, 16.5, 6.0, App.Vector(-10.0, 22.0, -3.0))
+slot_upper = Part.makeBox(7.95, 30.0, 6.0, App.Vector(-2.5, 7.5, -3.0))
+# Internal spring arm chamber with beveled lower-left wall matching the outer contour (leaves 2.6..3.8 mm solid dirt shield all around the bend!)
+# Open to +Z over the full spring length up to Y_s = 22.00 mm so both pins and the spring are 100% accessible from the top!
+pts_slot_sp = [
+    App.Vector(-12.8, 8.20, -3.0),
+    App.Vector(-12.8, 22.00, -3.0),
+    App.Vector(-7.4, 22.00, -3.0),
+    App.Vector(-7.4, 17.50, -3.0),
+    App.Vector(-2.0, 17.50, -3.0),
+    App.Vector(-2.0, 6.40, -3.0),
+    App.Vector(-8.8, 6.40, -3.0),
+    App.Vector(-12.8, 8.20, -3.0),
+]
+slot_spring_arm = Part.Face(Part.makePolygon(pts_slot_sp)).extrude(App.Vector(0, 0, 6.0))
+# Throat exit at the bottom joint (X_s in [-7.65, +4.65]) + external runner clearance outside the housing (Y_s <= 2.4)
+slot_throat = Part.makeBox(12.30, 13.5, 6.0, App.Vector(-7.65, -4.0, -3.0))
+slot_ext = Part.makeBox(38.0, 24.4, 6.0, App.Vector(-34.0, -22.0, -3.0))
+slot_claw = slot_spring_arm.fuse(slot_throat).fuse(slot_ext)
 
-# Spring pocket spanning Y_s in [8.50, 20.60] with solid stop pillar (D=2.4 mm) from Y_s = 11.60 to 20.60
-pocket_cyl = Part.makeCylinder(2.40, 12.10, App.Vector(-14.0, 8.50, 0.0), App.Vector(0, 1, 0))
-stop_pillar = Part.makeCylinder(1.20, 9.00, App.Vector(-14.0, 11.60, 0.0), App.Vector(0, 1, 0))
-spring_pocket = pocket_cyl.cut(stop_pillar)
+# Stepped Microswitch Pocket:
+# - Switch body bay (X_s in [-7.10, +0.50]) spans Y_s in [22.80, 38.50]
+# - Solder lug bay (X_s in [-10.40, -7.10]) spans Y_s in [24.00, 38.50], leaving a solid 2.00 mm wall at Y_s in [22.00, 24.00] above the spring!
+sw_pocket_body = Part.makeBox(7.60, 15.70, 6.0, App.Vector(-7.10, 22.80, -3.0))
+sw_pocket_lugs = Part.makeBox(3.35, 14.50, 6.0, App.Vector(-10.40, 24.00, -3.0))
+sw_pocket = sw_pocket_body.fuse(sw_pocket_lugs)
 
-cable_conduit = Part.makeCylinder(1.80, 50.0, App.Vector(-4.5, 35.0, 0.0), App.Vector(-0.15, 1.0, 0.0))
+# Upper Spring Locating Pin on Tibia_Body at X_s = -10.20, Y_s in [19.50, 22.05] (D = 2.80 mm, L = 2.50 mm protruding into the spring chamber, matching the lower D = 2.80 mm pin on Tibia_Rocker at Y_s in [10.60, 13.10]!)
+upper_spring_pin = Part.makeCylinder(1.40, 2.55, App.Vector(-10.2, 19.50, 0.0), App.Vector(0, 1, 0))
 
-for c in [slot_upper, slot_claw, sw_pocket, spring_pocket, cable_conduit]:
+for c in [slot_upper, slot_claw, sw_pocket, upper_spring_pin]:
     c.Placement = p_shank.multiply(c.Placement)
 
-# Pivot bores at (-122.0, -14.0): Fixed Cheek A is Z in [-5.00, -2.50]
-pivot_bore = Part.makeCylinder(1.55, 20.0, App.Vector(-122.0, -14.0, -10.0), App.Vector(0, 0, 1))
-pivot_ruthex = Part.makeCylinder(2.15, 2.50, App.Vector(-122.0, -14.0, -5.00), App.Vector(0, 0, 1))
+# Internal C2-smooth B-Spline cable tunnel (D = 2.60 mm at Z = +0.50 mm) from sw_pocket (-101.5, 4.5)
+# completely enclosed inside the solid dorsal arch to exit right beside the Knee Servo cable slot at (+19.8, 2.5)!
+pts_cable = [
+    App.Vector(-101.5, 4.5, 0.5),
+    App.Vector(-95.0, 7.2, 0.5),
+    App.Vector(-85.0, 11.2, 0.5),
+    App.Vector(-75.0, 14.5, 0.5),
+    App.Vector(-62.0, 18.8, 0.5),
+    App.Vector(-48.0, 23.2, 0.5),
+    App.Vector(-32.0, 26.8, 0.5),
+    App.Vector(-16.0, 23.2, 0.5),
+    App.Vector(-4.0, 16.8, 0.5),
+    App.Vector(7.5, 13.4, 0.5),
+    App.Vector(14.8, 9.2, 0.5),
+    App.Vector(19.8, 2.5, 0.5),
+]
+bs_cable = Part.BSplineCurve()
+bs_cable.interpolate(pts_cable)
+spine_cable = Part.Wire([bs_cable.toShape()])
+t0_cable = bs_cable.tangent(bs_cable.FirstParameter)[0]
+circle_cable = Part.makeCircle(1.30, pts_cable[0], t0_cable)
+cable_conduit = spine_cable.makePipeShell([Part.Wire([circle_cable])], True, False)
+
+# Encapsulated blind pivot seat in Fixed Cheek A at (-122.0, -14.0): Z in [-4.20, -2.40] (outer wall Z = -5.00..4.20 is 100% closed!)
+pivot_bore = Part.makeCylinder(1.55, 4.00, App.Vector(-122.0, -14.0, -4.20), App.Vector(0, 0, 1))
+
+# Station 1: Integrated Micro-Zip-Tie Saddle at Knee Cable Exit (for 2.5 mm cable ties)
+# Two parallel slots (1.30 mm along X, 2.80 mm along Y, 12.0 mm along Z) at X = 21.0 and X = 23.6, Y = 2.80
+tie_slot_tibia1 = Part.makeBox(1.30, 2.80, 12.0, App.Vector(21.0, 2.80, -5.0))
+tie_slot_tibia2 = Part.makeBox(1.30, 2.80, 12.0, App.Vector(23.6, 2.80, -5.0))
 
 tibia_cut = (
     tibia_base.cut(slot_upper)
     .cut(slot_claw)
     .cut(sw_pocket)
-    .cut(spring_pocket)
+    .fuse(upper_spring_pin)
     .cut(cable_conduit)
     .cut(pivot_bore)
-    .cut(pivot_ruthex)
+    .cut(tie_slot_tibia1)
+    .cut(tie_slot_tibia2)
 )
 
 # Formschluss Rebate in Tibia for Removable Cover:
 cut_main = Part.makeBox(150.0 + X_SPLIT, 80.0, 3.5, App.Vector(-150.0, -40.0, 3.5))
 tongue_pocket = Part.makeBox(DX_TONGUE + 0.10, 80.0, 0.8, App.Vector(X_SPLIT - 0.10, -40.0, 3.0))
 
-# Microswitch Hole 1 (-2.40, 25.50): Integrated locating pin (D = 1.96 mm, Z in [-2.50, +3.30])
+# Microswitch Holes 1 & 2 at (-2.40, 25.50) and (-2.40, 32.00): Two integrated locating pins (D = 1.96 mm, Z in [-2.50, +3.40])
 p_sw_h1 = p_shank.multVec(App.Vector(-2.40, 25.50, 0.0))
-sw_pin1 = Part.makeCylinder(0.98, 5.80, App.Vector(p_sw_h1.x, p_sw_h1.y, -2.50), App.Vector(0, 0, 1))
+p_sw_h2 = p_shank.multVec(App.Vector(-2.40, 32.00, 0.0))
+sw_pin1 = Part.makeCylinder(0.98, 5.90, App.Vector(p_sw_h1.x, p_sw_h1.y, -2.50), App.Vector(0, 0, 1))
+sw_pin2 = Part.makeCylinder(0.98, 5.90, App.Vector(p_sw_h2.x, p_sw_h2.y, -2.50), App.Vector(0, 0, 1))
 
-# Microswitch Hole 2 (-2.40, 32.00): Coaxial M2 Cover Retaining Screw & Ruthex Insert in Cheek A (Z in [-5.00, -2.50])
-p_m2 = p_shank.multVec(App.Vector(-2.40, 32.00, 0.0))
-m2_ruthex_mono = Part.makeCylinder(1.65, 2.50, App.Vector(p_m2.x, p_m2.y, -5.00), App.Vector(0, 0, 1))
-m2_through_mono = Part.makeCylinder(1.05, 6.00, App.Vector(p_m2.x, p_m2.y, -5.50), App.Vector(0, 0, 1))
+# Dedicated M2 Cover Retaining Screw & Blind Ruthex Insert in solid Tibia material at X_s = +2.60, Y_s = 38.60 (Z in [-0.60, +3.50])
+p_m2 = p_shank.multVec(App.Vector(2.60, 38.60, 0.0))
+m2_ruthex_mono = Part.makeCylinder(1.65, 4.10, App.Vector(p_m2.x, p_m2.y, -0.60), App.Vector(0, 0, 1))
+m2_through_mono = Part.makeCylinder(1.05, 5.50, App.Vector(p_m2.x, p_m2.y, -1.80), App.Vector(0, 0, 1))
 
-tibia_mono_solid = tibia_cut.cut(cut_main).cut(tongue_pocket).fuse(sw_pin1).cut(m2_ruthex_mono).cut(m2_through_mono)
+tibia_mono_solid = tibia_cut.cut(cut_main).cut(tongue_pocket).fuse(sw_pin1).fuse(sw_pin2).cut(m2_ruthex_mono).cut(m2_through_mono)
 try:
     tibia_mono_solid = tibia_mono_solid.removeSplitter()
 except Exception:
@@ -432,10 +627,9 @@ tongue_clip = Part.makeBox(DX_TONGUE - 0.10, 80.0, 1.0, App.Vector(X_SPLIT - 0.0
 tongue_cover = tongue_cover.common(tongue_clip)
 cover = cover.fuse(tongue_cover)
 
-# M3 pivot pin through-hole and counterbore
-m3_hole_cover = Part.makeCylinder(1.60, 10.0, App.Vector(-122.0, -14.0, 0.0), App.Vector(0, 0, 1))
-m3_cbore_cover = Part.makeCylinder(3.10, 1.55, App.Vector(-122.0, -14.0, 4.50), App.Vector(0, 0, 1))
-cover = cover.cut(m3_hole_cover).cut(m3_cbore_cover)
+# Encapsulated blind pivot bore on inner side of Service Cover (Z in [3.50, 5.05]; outer surface at Z=6.00 is 100% closed!)
+m3_blind_cover = Part.makeCylinder(1.55, 1.55, App.Vector(-122.0, -14.0, 3.50), App.Vector(0, 0, 1))
+cover = cover.cut(m3_blind_cover)
 
 # 1x M2 retaining screw countersink at p_m2 (properly oriented cone: R=1.10 at Z=4.85 widening to R=2.25 at Z=6.00)
 m2_hole_cover = Part.makeCylinder(1.10, 10.0, App.Vector(p_m2.x, p_m2.y, 0.0), App.Vector(0, 0, 1))
@@ -537,26 +731,27 @@ p_servo = App.Placement(App.Vector(0.0, 0.0, 18.8), App.Rotation(App.Vector(0, 0
 make_link("Knee_Servo", "2. Knee Servo (Torcster NR-645 COTS)", doc_servo.Servo_Complete, p_servo, COLOR_SERVO)
 
 # 3. Bionic Foot Rocker
-make_link("Tibia_Rocker", "3. Bionic Tarsus Rocker Foot (+52% Lever)", obj_rocker, p_shank, COLOR_ORANGE)
+make_link("Tibia_Rocker", "3. Bionic Tarsus Rocker Foot (+52% Lever, 5.6 mm Flat)", obj_rocker, p_shank, COLOR_ORANGE)
+
+# 3b. Slip-On Bionic Spoon Shoe
+make_link("Tibia_Shoe", "3b. Slip-On Bionic Spoon Shoe (11.6 mm Width, Sole Pad Recess)", obj_shoe, p_shank, COLOR_COVER)
 
 # 4. Microswitch
 p_sw_local = App.Placement(App.Vector(-6.9, 23.0, 0.0), App.Rotation())
 make_link("Microswitch", "4. Subminiature Microswitch (COTS)", obj_sw, p_shank.multiply(p_sw_local), COLOR_SWITCH)
 
-# 5. Compression Spring (at Y_s = 8.55 mm -> spans Y_s in [8.55, 20.55])
-p_sp_local = App.Placement(App.Vector(-14.0, 8.55, 0.0), App.Rotation())
+# 5. Compression Spring (completely enclosed inside housing at X_s = -10.2, Y_s = 10.65 mm -> spans Y_s in [10.65, 22.65])
+p_sp_local = App.Placement(App.Vector(-10.2, 10.65, 0.0), App.Rotation())
 make_link("Compression_Spring", "5. Stainless Preload Spring (COTS)", obj_sp, p_shank.multiply(p_sp_local), COLOR_SPRING)
 
 # 6. Removable Service Cover (Cheek B)
 make_link("Tibia_Cover", "6. Removable Service Cover (Cheek B Form-Fit)", obj_cover, App.Placement(), COLOR_COVER)
 
-# 7. M3 Hardened Pivot Pin & Ruthex (Ruthex height = 2.45 mm inside Cheek A Z in [-5.00, -2.55])
+# 7. Encapsulated 3x9 mm Hardened Stainless Dowel Pin (ISO 2338, Z in [-4.10, +4.90], completely enclosed inside Cheek A & Service Cover!)
 pin_obj = doc_asm.addObject("Part::Feature", "Pivot_Pin_Assembly")
-pin_obj.Label = "7. M3 Hardened Pivot Pin & Ruthex"
-pin_head = Part.makeCylinder(2.80, 1.45, App.Vector(-122.0, -14.0, 4.55), App.Vector(0, 0, 1))
-pin_shaft = Part.makeCylinder(1.50, 9.55, App.Vector(-122.0, -14.0, -5.00), App.Vector(0, 0, 1))
-ruthex = Part.makeCylinder(2.10, 2.45, App.Vector(-122.0, -14.0, -5.00), App.Vector(0, 0, 1))
-pin_obj.Shape = pin_head.fuse(pin_shaft).fuse(ruthex)
+pin_obj.Label = "7. Encapsulated 3x9 mm Hardened Dowel Pin (ISO 2338)"
+pin_shaft = Part.makeCylinder(1.50, 9.00, App.Vector(-122.0, -14.0, -4.10), App.Vector(0, 0, 1))
+pin_obj.Shape = pin_shaft
 asm_part.addObject(pin_obj)
 if hasattr(pin_obj, "ViewObject") and pin_obj.ViewObject:
     try:
@@ -564,12 +759,12 @@ if hasattr(pin_obj, "ViewObject") and pin_obj.ViewObject:
     except Exception:
         pass
 
-# 8. M2 DIN 7991 Flush Countersunk Screw & Ruthex at p_m2 (coaxial with Microswitch Hole 2)
+# 8. M2 DIN 7991 Flush Countersunk Screw & Ruthex at p_m2 in solid Tibia material (M2x6, Z in [-0.50, +6.00])
 screw_m2 = doc_asm.addObject("Part::Feature", "Cover_Retaining_Screw_M2")
-screw_m2.Label = "8. M2x10 Flush Countersunk Retaining Screw & Ruthex"
+screw_m2.Label = "8. M2x6 Flush Countersunk Retaining Screw & Ruthex (in Solid Body)"
 head_m2 = Part.makeCone(1.00, 2.10, 1.10, App.Vector(p_m2.x, p_m2.y, 4.90), App.Vector(0, 0, 1))
-shank_m2 = Part.makeCylinder(0.98, 9.90, App.Vector(p_m2.x, p_m2.y, -5.00), App.Vector(0, 0, 1))
-ruthex_m2 = Part.makeCylinder(1.60, 2.45, App.Vector(p_m2.x, p_m2.y, -5.00), App.Vector(0, 0, 1))
+shank_m2 = Part.makeCylinder(0.98, 5.90, App.Vector(p_m2.x, p_m2.y, -1.00), App.Vector(0, 0, 1))
+ruthex_m2 = Part.makeCylinder(1.60, 4.00, App.Vector(p_m2.x, p_m2.y, -0.55), App.Vector(0, 0, 1))
 screw_m2.Shape = head_m2.fuse(shank_m2).fuse(ruthex_m2)
 asm_part.addObject(screw_m2)
 if hasattr(screw_m2, "ViewObject") and screw_m2.ViewObject:
@@ -608,7 +803,26 @@ for i in range(len(items)):
                 print(f"  ❌ COLLISION {n1} <-> {n2}: {v:.4f} mm^3")
                 max_coll = max(max_coll, v)
 if max_coll <= 1e-4:
-    print("  ✅ ZERO COLLISIONS across all 8 components in tibia_assembly.FCStd (0.0000 mm^3)!")
+    print(f"  ✅ ZERO COLLISIONS across all {len(items)} components in tibia_assembly.FCStd (0.0000 mm^3)!")
+
+print("6. Running Kinematic Rocker + Spoon Shoe Stroke Sweep (0.0 deg to -5.0 deg ground compression)...")
+s_body = doc_asm.getObject("Tibia_Body").Shape
+s_cover = doc_asm.getObject("Tibia_Cover").Shape
+s_sw = doc_asm.getObject("Microswitch").Shape
+for deg in [0.0, -1.0, -2.0, -3.0, -4.0, -5.0]:
+    r_local = App.Placement(App.Vector(0, 10, 0), App.Rotation(App.Vector(0, 0, 1), deg)).multiply(
+        App.Placement(App.Vector(0, -10, 0), App.Rotation())
+    )
+    rk = rocker_solid.copy()
+    rk.Placement = p_shank.multiply(r_local)
+    sh = shoe_solid.copy()
+    sh.Placement = p_shank.multiply(r_local)
+    vb = rk.common(s_body).Volume + sh.common(s_body).Volume
+    vc = rk.common(s_cover).Volume + sh.common(s_cover).Volume
+    vs = rk.common(s_sw).Volume
+    arm_p = r_local.multVec(App.Vector(0.25, 32.5, 0))
+    gap_sw = arm_p.x - 0.20
+    print(f"  Stroke {deg:+4.1f}°: Switch Release Gap = {gap_sw:+.2f} mm | vs Body={vb:.4f} mm3, Cover={vc:.4f} mm3, Switch={vs:.4f} mm3")
 
 for d in list(App.listDocuments().values()):
     try:
