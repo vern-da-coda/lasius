@@ -121,28 +121,43 @@ fcstd_rocker_path = f"{concept_dir}/tibia_foot_rocker.FCStd"
 # Bionic Foot Rocker (Organic Tarsus Wippe):
 # Thickness = 5.6 mm (Z in [-2.8, +2.8]), runs inside 6.0 mm slot.
 # Pivot at (0.0, 10.0).
-# Slender, predatory claw contour that continues the dorsal slope of the Tibia
-# monotonically down-left without any upward hump!
-p_spring_end = App.Vector(-14.0, 8.5, 0.0)
-p_dorsal_1 = App.Vector(-17.7, -0.0, 0.0)
-p_dorsal_2 = App.Vector(-20.5, -9.7, 0.0)
-p_apex_top = App.Vector(-22.8, -20.0, 0.0)
-p_tip_round = App.Vector(-20.3, -28.0, 0.0)
-p_apex_bot = App.Vector(-16.3, -28.0, 0.0)
-p_ventral_1 = App.Vector(-10.7, -20.0, 0.0)
-p_ventral_2 = App.Vector(-5.5, -11.0, 0.0)
-p_ventral_throat = App.Vector(-1.3, -3.5, 0.0)
-p_hub_bot = App.Vector(1.2, 5.2, 0.0)
+# Forms a sleek runner ("Kufe") that glides smoothly and tilts gently upward
+# towards the end (max reach = 42.76 mm <= 43.08 mm).
+p_hub_bot = App.Vector(1.16, 5.20, 0.0)
+p_spring_end = App.Vector(-14.02, 8.53, 0.0)
 
-curve_dorsal = Part.BSplineCurve()
-curve_dorsal.interpolate([p_spring_end, p_dorsal_1, p_dorsal_2, p_apex_top])
-edge_dorsal = curve_dorsal.toShape()
+loc_sole = [
+    p_hub_bot,
+    App.Vector(-0.50, -1.69, 0.0),
+    App.Vector(-3.46, -10.21, 0.0),
+    App.Vector(-7.82, -18.14, 0.0),
+    App.Vector(-12.42, -22.74, 0.0),
+    App.Vector(-17.37, -25.56, 0.0),
+    App.Vector(-21.83, -25.89, 0.0),
+]
+loc_tip = [
+    App.Vector(-21.83, -25.89, 0.0),
+    App.Vector(-23.41, -25.78, 0.0),
+    App.Vector(-24.22, -23.82, 0.0),
+]
+loc_top = [
+    App.Vector(-24.22, -23.82, 0.0),
+    App.Vector(-20.66, -20.42, 0.0),
+    App.Vector(-16.60, -14.52, 0.0),
+    App.Vector(-14.48, -6.75, 0.0),
+    App.Vector(-13.74, 1.60, 0.0),
+    p_spring_end,
+]
 
-arc_tip = Part.Arc(p_apex_top, p_tip_round, p_apex_bot).toShape()
+c_sole = Part.BSplineCurve()
+c_sole.interpolate(loc_sole)
+e_sole = c_sole.toShape()
 
-curve_ventral = Part.BSplineCurve()
-curve_ventral.interpolate([p_apex_bot, p_ventral_1, p_ventral_2, p_ventral_throat, p_hub_bot])
-edge_ventral = curve_ventral.toShape()
+e_tip = Part.Arc(loc_tip[0], loc_tip[1], loc_tip[2]).toShape()
+
+c_top = Part.BSplineCurve()
+c_top.interpolate(loc_top)
+e_top = c_top.toShape()
 
 pts_upper = [
     p_hub_bot,
@@ -159,7 +174,7 @@ pts_upper = [
 ]
 edges_upper = [Part.makeLine(pts_upper[i], pts_upper[i+1]) for i in range(len(pts_upper) - 1)]
 
-all_edges = edges_upper + [edge_dorsal, arc_tip, edge_ventral]
+all_edges = edges_upper + [e_top, e_tip, e_sole]
 rocker_wire = Part.Wire(all_edges)
 rocker_face = Part.Face(rocker_wire)
 rocker_solid = rocker_face.extrude(App.Vector(0.0, 0.0, 5.6)).translate(App.Vector(0.0, 0.0, -2.8))
