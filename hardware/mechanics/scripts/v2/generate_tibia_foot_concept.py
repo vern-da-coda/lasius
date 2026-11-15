@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Generate Lasius Tibia Foot Sensor Concept v2 (Extended Bionic Rocker & Lever)
+Generate Lasius Tibia Foot Sensor Concept v2 (Outward-Curving Bionic Tarsus)
 =============================================================================
 Parametric Generator for:
 1. COTS: microswitch_subminiature.FCStd (12.8 x 6.5 x 5.8 mm with leaf lever)
@@ -8,7 +8,8 @@ Parametric Generator for:
 3. Concept Shank: tibia_foot_shank.FCStd (11.0 mm clevis fork, 6.0 mm internal slot,
    switch pocket, spring pocket, M3 Ruthex pivot)
 4. Concept Rocker: tibia_foot_rocker.FCStd (5.6 mm thick bionic tarsus wippe with
-   extended smooth BSpline/Arc claw sole for +52% increased lever arm sensitivity)
+   outward-curving smooth BSpline/Arc claw sole for +52% increased lever arm sensitivity
+   and obstacle gliding / ski geometry)
 5. Assembly: tibia_foot_assembly.FCStd (Kinematic assembly linking all components)
 """
 
@@ -18,7 +19,7 @@ import sys
 import FreeCAD as App
 import Part
 
-print("--- Generating Lasius Tibia Foot Sensor Concept (Extended Bionic Lever) ---")
+print("--- Generating Lasius Tibia Foot Sensor Concept (Outward Bionic Tarsus) ---")
 
 repo_root = "/home/bjoern/Workspace/Hexapods/lasius"
 models_dir = f"{repo_root}/hardware/mechanics/models"
@@ -126,33 +127,36 @@ except Exception:
 doc_shank = App.newDocument(doc_shank_name)
 fcstd_shank_path = f"{concept_dir}/tibia_foot_shank.FCStd"
 
-# Geometry Coordinates:
+# Geometry Coordinates (Outward Tarsus Configuration):
 # Pivot is at (X = 0.0, Y = 10.0)
-# Ventral is -X (front), Dorsal is +X (rear)
+# Outward claw sole extends towards -X (distal reach away from knee)
+# Spring sits at X = -14.0 mm, Y in [11.0, 23.0] mm
+# Switch sits at X in [-3.5, 4.5] mm, Y in [22.5, 38.0] mm
+# Rocker upper arm is at X = 4.3 mm, moving in +X on touchdown (switch opens)
 # Shank extends from Y = -3.0 to Y = 75.0 mm.
 # Shank outer width = 11.0 mm (Z in [-5.5, +5.5])
 # Clevis slot = 6.0 mm (Z in [-3.0, +3.0])
 
 pts_shank = [
-    # Distal tip front
-    App.Vector(-3.0, -3.0, 0.0),
-    # Front cheek around pivot
-    App.Vector(-5.5, 6.0, 0.0),
-    # Front cheek enclosing upper rocker arm & switch
-    App.Vector(-7.5, 20.0, 0.0),
-    App.Vector(-8.0, 36.0, 0.0),
-    App.Vector(-5.0, 52.0, 0.0),
-    # Upper shank front
-    App.Vector(-4.0, 75.0, 0.0),
-    # Upper shank rear
-    App.Vector(14.0, 75.0, 0.0),
-    # Rear spine contour
-    App.Vector(16.0, 52.0, 0.0),
-    App.Vector(20.0, 32.0, 0.0),    # Spine around spring pocket
-    App.Vector(20.0, 14.0, 0.0),
-    App.Vector(18.0, 2.0, 0.0),     # Rear cheek
-    App.Vector(14.0, -3.0, 0.0),    # Bottom sole clearance
-    App.Vector(-3.0, -3.0, 0.0),
+    # Distal tip at sole clearance
+    App.Vector(3.0, -3.0, 0.0),
+    # Dorsal cheek around pivot
+    App.Vector(6.0, 6.0, 0.0),
+    # Dorsal spine enclosing upper rocker arm & switch stop
+    App.Vector(8.5, 20.0, 0.0),
+    App.Vector(9.0, 36.0, 0.0),
+    App.Vector(6.0, 52.0, 0.0),
+    # Upper shank dorsal mating face
+    App.Vector(4.0, 75.0, 0.0),
+    # Upper shank ventral mating face
+    App.Vector(-14.0, 75.0, 0.0),
+    # Ventral spine contour enclosing spring pocket
+    App.Vector(-16.0, 52.0, 0.0),
+    App.Vector(-20.0, 32.0, 0.0),    # Spine around spring pocket
+    App.Vector(-20.0, 14.0, 0.0),
+    App.Vector(-18.0, 2.0, 0.0),     # Ventral cheek
+    App.Vector(-14.0, -3.0, 0.0),    # Distal claw opening
+    App.Vector(3.0, -3.0, 0.0),
 ]
 shank_wire = Part.makePolygon(pts_shank)
 shank_face = Part.Face(shank_wire)
@@ -160,14 +164,14 @@ shank_solid = shank_face.extrude(App.Vector(0.0, 0.0, 11.0))
 shank_solid.translate(App.Vector(0.0, 0.0, -5.5))
 
 # 3.1 Clevis Fork Slot (6.0 mm wide, Z in [-3.0, +3.0])
-# Front/upper slot for rocker arm (X in [-9.5, +1.0], Y in [-5.0, 42.0])
-slot_front = Part.makeBox(12.0, 48.0, 6.0, App.Vector(-9.5, -5.0, -3.0))
-# Rear/lower slot generously open to the rear for extended claw travel
-slot_rear = Part.makeBox(40.0, 25.0, 6.0, App.Vector(0.0, -8.0, -3.0))
-shank_solid = shank_solid.cut(slot_front).cut(slot_rear)
+# Upper slot for rocker arm (X in [-2.0, 10.0], Y in [8.0, 43.0])
+slot_upper = Part.makeBox(12.0, 35.0, 6.0, App.Vector(-2.0, 8.0, -3.0))
+# Lower slot generously open outward for claw travel (X in [-40.0, 5.0], Y in [-32.0, 16.0])
+slot_claw = Part.makeBox(45.0, 48.0, 6.0, App.Vector(-40.0, -32.0, -3.0))
+shank_solid = shank_solid.cut(slot_upper).cut(slot_claw)
 
-# 3.2 Switch Chamber in solid core (X in [-4.0, +3.5], Y in [23.5, 37.5], Z in [-3.0, +3.0])
-sw_pocket = Part.makeBox(7.5, 14.0, 6.0, App.Vector(-4.0, 23.5, -3.0))
+# 3.2 Switch Chamber in solid core (X in [-3.5, 4.5], Y in [22.5, 38.0], Z in [-3.0, +3.0])
+sw_pocket = Part.makeBox(8.0, 15.5, 6.0, App.Vector(-3.5, 22.5, -3.0))
 shank_solid = shank_solid.cut(sw_pocket)
 
 # 3.3 Pivot Pin Bore (D = 3.2 mm) at (X = 0.0, Y = 10.0)
@@ -177,22 +181,22 @@ pivot_ruthex = Part.makeCylinder(2.10, 4.0, App.Vector(0.0, 10.0, -5.5), App.Vec
 shank_solid = shank_solid.cut(pivot_bore).cut(pivot_cbore).cut(pivot_ruthex)
 
 # 3.4 Microswitch Mounting Screw Holes (2x D = 2.1 mm through cheeks at Z in [-6, +6])
-sw_hole1 = Part.makeCylinder(1.10, 20.0, App.Vector(-2.0, 26.5, -10.0), App.Vector(0, 0, 1))
-sw_hole2 = Part.makeCylinder(1.10, 20.0, App.Vector(-2.0, 33.0, -10.0), App.Vector(0, 0, 1))
+sw_hole1 = Part.makeCylinder(1.10, 20.0, App.Vector(2.1, 25.5, -10.0), App.Vector(0, 0, 1))
+sw_hole2 = Part.makeCylinder(1.10, 20.0, App.Vector(2.1, 32.0, -10.0), App.Vector(0, 0, 1))
 shank_solid = shank_solid.cut(sw_hole1).cut(sw_hole2)
 
 # 3.5 Spring Blind Pocket in Shank Spine (Encapsulated Variante 3.a)
-# Centered at X = 14.0 mm, Y from 11.0 to 23.0 mm (depth = 12.0 mm, D = 4.8 mm)
-spring_pocket = Part.makeCylinder(2.40, 12.0, App.Vector(14.0, 11.0, 0.0), App.Vector(0, 1, 0))
+# Centered at X = -14.0 mm, Y from 11.0 to 23.0 mm (depth = 12.0 mm, D = 4.8 mm)
+spring_pocket = Part.makeCylinder(2.40, 12.0, App.Vector(-14.0, 11.0, 0.0), App.Vector(0, 1, 0))
 shank_solid = shank_solid.cut(spring_pocket)
 
 # 3.6 Cable Conduit from switch bay up to top of shank
-cable_conduit = Part.makeCylinder(1.80, 45.0, App.Vector(0.0, 35.0, 0.0), App.Vector(0.15, 1.0, 0.0))
+cable_conduit = Part.makeCylinder(1.80, 45.0, App.Vector(0.0, 35.0, 0.0), App.Vector(-0.15, 1.0, 0.0))
 shank_solid = shank_solid.cut(cable_conduit)
 
 # 3.7 Cheek Tip Bevels for terrain deflection
-chamfer_tip1 = Part.makeBox(10.0, 10.0, 3.0, App.Vector(-8.0, -6.0, 4.0))
-chamfer_tip2 = Part.makeBox(10.0, 10.0, 3.0, App.Vector(-8.0, -6.0, -7.0))
+chamfer_tip1 = Part.makeBox(12.0, 12.0, 3.0, App.Vector(1.0, -6.0, 4.0))
+chamfer_tip2 = Part.makeBox(12.0, 12.0, 3.0, App.Vector(1.0, -6.0, -7.0))
 shank_solid = shank_solid.cut(chamfer_tip1).cut(chamfer_tip2)
 
 obj_shank = doc_shank.addObject("Part::Feature", "Tibia_Foot_Shank")
@@ -203,7 +207,7 @@ doc_shank.saveAs(fcstd_shank_path)
 print(f"✔ Saved: {fcstd_shank_path}")
 
 # =============================================================================
-# 4. Build Concept Part: tibia_foot_rocker.FCStd (Enhanced Bionic Claw Curve)
+# 4. Build Concept Part: tibia_foot_rocker.FCStd (Outward Bionic Claw Curve)
 # =============================================================================
 print("4. Building Concept: tibia_foot_rocker.FCStd...")
 doc_rocker_name = "tibia_foot_rocker"
@@ -214,23 +218,23 @@ except Exception:
 doc_rocker = App.newDocument(doc_rocker_name)
 fcstd_rocker_path = f"{concept_dir}/tibia_foot_rocker.FCStd"
 
-# Bionic Foot Rocker (Tarsus Wippe):
+# Bionic Foot Rocker (Outward Tarsus Wippe):
 # Thickness = 5.6 mm (Z in [-2.8, +2.8]), runs inside 6.0 mm slot.
 # Pivot at (0.0, 10.0).
-# Upper arm (ventral, -X): strikes switch at X = -4.3 mm.
-# Lower sole: extended outward to X = 33.5 mm (+52% lever arm) with a smooth
-# tangent rolling arc (R = 6.0 mm local tip radius) for smooth terrain contact!
+# Upper arm (dorsal, +X): strikes switch at X = 4.3 mm.
+# Lower sole: extended outward to X = -33.5 mm (+52% lever arm) with a smooth
+# tangent rolling arc (R = 6.0 mm local tip radius) pointing outward (distal)!
 
-p_spring_end = App.Vector(17.0, 8.5, 0.0)
-p_dorsal_mid = App.Vector(28.0, -5.0, 0.0)
-p_apex_top = App.Vector(33.0, -20.0, 0.0)
-p_tip_round = App.Vector(31.0, -28.0, 0.0)
-p_apex_bot = App.Vector(23.0, -29.0, 0.0)
-p_ventral_mid = App.Vector(13.0, -18.0, 0.0)
-p_ventral_throat = App.Vector(1.0, -4.0, 0.0)
-p_hub_bot = App.Vector(-3.5, 8.5, 0.0)
+p_spring_end = App.Vector(-17.0, 8.5, 0.0)
+p_dorsal_mid = App.Vector(-28.0, -5.0, 0.0)
+p_apex_top = App.Vector(-33.0, -20.0, 0.0)
+p_tip_round = App.Vector(-31.0, -28.0, 0.0)
+p_apex_bot = App.Vector(-23.0, -29.0, 0.0)
+p_ventral_mid = App.Vector(-13.0, -18.0, 0.0)
+p_ventral_throat = App.Vector(-1.0, -4.0, 0.0)
+p_hub_bot = App.Vector(3.5, 8.5, 0.0)
 
-# Build BSpline for outer dorsal edge:
+# Build BSpline for outer curved claw sole:
 curve_dorsal = Part.BSplineCurve()
 curve_dorsal.interpolate([p_spring_end, p_dorsal_mid, p_apex_top])
 edge_dorsal = curve_dorsal.toShape()
@@ -238,22 +242,22 @@ edge_dorsal = curve_dorsal.toShape()
 # Build smooth arc for foot tip:
 arc_tip = Part.Arc(p_apex_top, p_tip_round, p_apex_bot).toShape()
 
-# Build BSpline for inner ventral edge:
+# Build BSpline for inner throat:
 curve_ventral = Part.BSplineCurve()
 curve_ventral.interpolate([p_apex_bot, p_ventral_mid, p_ventral_throat, p_hub_bot])
 edge_ventral = curve_ventral.toShape()
 
-# Upper arm edges:
+# Upper arm edges (actuator arm):
 pts_upper = [
     p_hub_bot,
-    App.Vector(-5.5, 18.0, 0.0),
-    App.Vector(-7.0, 26.0, 0.0),
-    App.Vector(-7.0, 35.0, 0.0),     # Top front
-    App.Vector(-4.3, 35.0, 0.0),     # Switch strike face (hits switch lever & stop shoulder)
-    App.Vector(-4.3, 24.0, 0.0),
-    App.Vector(-2.0, 16.0, 0.0),
-    App.Vector(2.0, 13.5, 0.0),
-    App.Vector(11.0, 8.5, 0.0),
+    App.Vector(5.5, 18.0, 0.0),
+    App.Vector(7.0, 26.0, 0.0),
+    App.Vector(7.0, 35.0, 0.0),     # Top rear stop surface
+    App.Vector(4.3, 35.0, 0.0),     # Switch strike face
+    App.Vector(4.3, 24.0, 0.0),
+    App.Vector(2.0, 16.0, 0.0),
+    App.Vector(-2.0, 13.5, 0.0),
+    App.Vector(-11.0, 8.5, 0.0),
     p_spring_end,
 ]
 edges_upper = []
@@ -270,16 +274,16 @@ rocker_solid.translate(App.Vector(0.0, 0.0, -2.8))
 r_bore = Part.makeCylinder(1.55, 10.0, App.Vector(0.0, 10.0, -5.0), App.Vector(0, 0, 1))
 rocker_solid = rocker_solid.cut(r_bore)
 
-# 4.2 Spring Boss on plateau at (X = 14.0, Y = 8.5, Z = 0.0) pointing in +Y
-spring_boss = Part.makeCylinder(1.50, 2.5, App.Vector(14.0, 8.5, 0.0), App.Vector(0, 1, 0))
+# 4.2 Spring Boss on plateau at (X = -14.0, Y = 8.5, Z = 0.0) pointing in +Y
+spring_boss = Part.makeCylinder(1.50, 2.5, App.Vector(-14.0, 8.5, 0.0), App.Vector(0, 1, 0))
 rocker_solid = rocker_solid.fuse(spring_boss)
 
-# 4.3 M2 Set Screw Pocket on Switch Strike Face (at X = -4.3, Y = 33.5 mm)
-m2_pocket = Part.makeCylinder(1.00, 6.0, App.Vector(-4.3, 33.5, 0.0), App.Vector(1, 0, 0))
+# 4.3 M2 Set Screw Pocket on Switch Strike Face (at X = 4.3, Y = 32.5 mm)
+m2_pocket = Part.makeCylinder(1.00, 6.0, App.Vector(4.3, 32.5, 0.0), App.Vector(-1, 0, 0))
 rocker_solid = rocker_solid.cut(m2_pocket)
 
 obj_rocker = doc_rocker.addObject("Part::Feature", "Tibia_Foot_Rocker")
-obj_rocker.Label = "Tibia Foot Rocker Lever (Bionic Tarsus Wippe)"
+obj_rocker.Label = "Tibia Foot Rocker Lever (Outward Bionic Tarsus Wippe)"
 obj_rocker.Shape = rocker_solid
 doc_rocker.recompute()
 doc_rocker.saveAs(fcstd_rocker_path)
@@ -329,12 +333,11 @@ p_rocker = App.Placement(App.Vector(0, 0, 0), App.Rotation())
 make_link("Tibia_Foot_Rocker", "2. Bionic Tarsus Rocker Foot", obj_rocker, p_rocker, COLOR_ALU_ORANGE)
 
 # 3. Microswitch
-rot_sw = App.Rotation(App.Vector(0, 0, 1), 180.0)
-p_sw = App.Placement(App.Vector(2.5, 36.8, 0.0), rot_sw)
+p_sw = App.Placement(App.Vector(4.3 - 6.7, 23.0, 0.0), App.Rotation())
 make_link("Microswitch", "3. Subminiature Microswitch (COTS)", obj_sw, p_sw, COLOR_SWITCH)
 
 # 4. Compression Spring
-p_sp = App.Placement(App.Vector(14.0, 8.5, 0.0), App.Rotation())
+p_sp = App.Placement(App.Vector(-14.0, 8.5, 0.0), App.Rotation())
 make_link("Compression_Spring", "4. Stainless Preload Spring (COTS)", obj_sp, p_sp, COLOR_SPRING)
 
 # 5. M3 Hardened Pivot Pin & Ruthex
@@ -353,7 +356,7 @@ if hasattr(pin_obj, "ViewObject") and pin_obj.ViewObject is not None:
         pass
 
 # 6. Section Display (Half Shank Cutaway for Internal Visualization)
-cutaway_box = Part.makeBox(60.0, 100.0, 10.0, App.Vector(-20.0, -10.0, 0.0))
+cutaway_box = Part.makeBox(80.0, 100.0, 10.0, App.Vector(-40.0, -10.0, 0.0))
 shank_cutaway_solid = shank_solid.cut(cutaway_box)
 shank_cutaway_obj = doc_asm.addObject("Part::Feature", "Tibia_Shank_Cutaway")
 shank_cutaway_obj.Label = "6. Shank Cutaway (Internal Kinematics Display)"
@@ -379,12 +382,12 @@ sp_shape.Placement = p_sp.multiply(sp_shape.Placement)
 
 shank_shape = obj_shank.Shape.copy()
 
-coll_sw_rocker = sw_shape.common(rocker_shape).Volume
+coll_shank_rocker = shank_shape.common(rocker_shape).Volume
 coll_sw_spring = sw_shape.common(sp_shape).Volume
 
-print(f"  Collision Switch <-> Rocker: {coll_sw_rocker:.4f} mm3")
+print(f"  Collision Shank <-> Rocker: {coll_shank_rocker:.4f} mm3")
 print(f"  Collision Switch <-> Spring: {coll_sw_spring:.4f} mm3")
-print(f"  Max Foot Lever Arm X: 33.5 mm (vs. 22.0 mm baseline: +52% sensitivity increase!)")
+print(f"  Max Outward Foot Lever Arm X: 33.5 mm (+52% sensitivity increase!)")
 
 # =============================================================================
 # 7. Export STEP & STL

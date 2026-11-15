@@ -7,7 +7,7 @@ Combines:
    (Monolithic v2 Tibia with ~45-deg Warren truss servo cage, knee counter-bearing,
     and integrated 11 mm clevis fork with internal microswitch & spring bays)
 2. Knee Servo: cots/servo_nr645.FCStd (Torcster NR-645 high-torque metal gear servo)
-3. Bionic Rocker Foot: tibia_foot_rocker.FCStd (Extended curved claw sole, +52% lever)
+3. Outward Bionic Rocker Foot: tibia_foot_rocker.FCStd (Extended curved claw sole, +52% lever)
 4. Microswitch: cots/microswitch_subminiature.FCStd (IP67 subminiature switch)
 5. Compression Spring: cots/compression_spring_4x12.FCStd (Stainless preload spring)
 6. Hardware: M3 hardened pivot pin with brass Ruthex threaded insert
@@ -140,16 +140,15 @@ make_link("Tibia_Body", "1. Tibia v2 Monocoque (Warren Truss + Clevis Fork)", ob
 p_servo = App.Placement(App.Vector(0.0, 0.0, 18.8), App.Rotation(App.Vector(0, 0, 1), 180.0))
 make_link("Knee_Servo", "2. Knee Servo (Torcster NR-645 COTS)", doc_servo.Objects[0], p_servo, COLOR_SERVO)
 
-# 3. Bionic Foot Rocker
+# 3. Bionic Foot Rocker (Outward Tarsus)
 make_link("Tibia_Foot_Rocker", "3. Bionic Tarsus Rocker Foot (+52% Lever)", doc_rocker.Objects[0], p_shank, COLOR_ORANGE)
 
 # 4. Microswitch
-rot_sw = App.Rotation(App.Vector(0, 0, 1), 180.0)
-p_sw_local = App.Placement(App.Vector(2.5, 36.8, 0.0), rot_sw)
+p_sw_local = App.Placement(App.Vector(4.3 - 6.7, 23.0, 0.0), App.Rotation())
 make_link("Microswitch", "4. Subminiature Microswitch (COTS)", doc_sw.Objects[0], p_shank.multiply(p_sw_local), COLOR_SWITCH)
 
 # 5. Compression Spring
-p_sp_local = App.Placement(App.Vector(14.0, 8.5, 0.0), App.Rotation())
+p_sp_local = App.Placement(App.Vector(-14.0, 8.5, 0.0), App.Rotation())
 make_link("Compression_Spring", "5. Stainless Preload Spring (COTS)", doc_sp.Objects[0], p_shank.multiply(p_sp_local), COLOR_SPRING)
 
 # 6. Pivot Pin & Ruthex
