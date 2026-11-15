@@ -79,6 +79,10 @@ doc_gaster = App.openDocument(f"{v2_asm_dir}/gaster_assembly.FCStd")
 asm_part = doc.addObject("App::Part", "Lasius_Assembly_v2")
 asm_part.Label = "Lasius Hexapod Master Assembly (v2, 25-DoF)"
 asm_part.Visibility = True
+for o in asm_part.Origin.OutList:
+    if hasattr(o, "Visibility"):
+        o.Visibility = False
+asm_part.Origin.Visibility = False
 
 def make_link(name, label, target_obj, placement, parent=asm_part):
     lnk = doc.addObject("App::Link", name)

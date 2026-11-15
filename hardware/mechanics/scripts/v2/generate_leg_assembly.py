@@ -50,7 +50,7 @@ doc.saveAs(fcstd_path)
 # Open all master part documents
 doc_coxa = App.openDocument(f"{v2_parts_dir}/coxa/coxa.FCStd")
 doc_femur_asm = App.openDocument(f"{v2_asm_dir}/femur_assembly.FCStd")
-doc_tibia = App.openDocument(f"{v2_parts_dir}/tibia/tibia.FCStd")
+doc_tibia_asm = App.openDocument(f"{v2_asm_dir}/concepts/tibia_foot/tibia_assembly.FCStd")
 doc_servo = App.openDocument(f"{hw_dir}/servo_nr645.FCStd")
 
 # Open hardware library documents
@@ -102,15 +102,15 @@ make_link("Coxa", "1. Coxa (Monolithic Joint Segment, PETG)", doc_coxa.Coxa, p_c
 p_femur = App.Placement(App.Vector(56.50, 0.00, 0.00), App.Rotation())
 make_link("Femur_Assembly", "4. Femur Subassembly v2 (Monolithic Bone + Encapsulated ADC & Canopy)", doc_femur_asm.Femur_Assembly_v2, p_femur)
 
-# Monolithic Tibia v2 (Claw + Integrated 30 mm Servo Cage & Counter-Bearing Seat, links to tibia_v2.FCStd)
+# Tibia Subassembly (Monocoque + Kufe Foot Contact Sensor + Knee Servo)
 theta = math.radians(50.0)
 c = math.cos(theta)
 s = math.sin(theta)
 tibia_mat = App.Matrix(-c, s, 0, 156.50,  0, 0, 1, 2.00,   s, c, 0, 0.00,  0, 0, 0, 1.0)
-make_link("Tibia_v2", "7. Tibia v2 (Monolithic Claw + Servo Cage, PETG)", doc_tibia.Tibia_v2, App.Placement(tibia_mat), (0.95, 0.50, 0.10))
+make_link("Tibia_Assembly", "7. Tibia Subassembly v2 (Monocoque + Kufe Foot Sensor + Knee Servo)", doc_tibia_asm.getObject("Tibia_Assembly"), App.Placement(tibia_mat))
 
 # -------------------------------------------------------------
-# 2. Actuators (3x Servos linked to servo_nr645.FCStd)
+# 2. Actuators (2x Joint Servos in Coxa / Femur; Knee Servo encapsulated in Tibia Subassembly)
 # -------------------------------------------------------------
 # Coxa Servo:
 rot_servo_in_bracket = App.Rotation(App.Vector(1, 0, 0), -90.0)
@@ -122,13 +122,6 @@ make_link("Coxa_Servo", "2. Coxa Servo (Torcster NR-645)", doc_servo.Servo_Compl
 local_f_servo = App.Placement(App.Vector(18.20, 15.25, 27.30), App.Rotation())
 p_f_servo = p_coxa.multiply(local_f_servo)
 make_link("Femur_Servo", "3. Femur Servo (Torcster NR-645)", doc_servo.Servo_Complete, p_f_servo, (0.28, 0.30, 0.36))
-
-# Tibia Servo:
-rot_k1 = App.Rotation(App.Vector(0, 1, 0), 50.0)
-rot_k2 = App.Rotation(App.Vector(1, 0, 0), -90.0)
-rot_knee = rot_k1.multiply(rot_k2)
-p_t_servo = App.Placement(App.Vector(156.50, 20.80, 0.00), rot_knee)
-make_link("Tibia_Servo", "6. Tibia Servo (Torcster NR-645)", doc_servo.Servo_Complete, p_t_servo, (0.28, 0.30, 0.36))
 
 # -------------------------------------------------------------
 # 3. Hardware (Fasteners & Bearings)
