@@ -477,6 +477,11 @@ def build_coxa_bracket_v2_shape():
     # The rear tail block (X in [105.0, 115.0]) is kept solid without through-openings
     # to conceal the Coxa servo mounting screws and protect internal hardware.
 
+    # Station 3: Integrated Micro-Zip-Tie Saddle on Coxa Bridge Flank (for 2.5 mm cable ties)
+    s_coxa1 = Part.makeBox(1.30, 8.0, 2.80, App.Vector(58.0, -1.0, 19.0))
+    s_coxa2 = Part.makeBox(1.30, 8.0, 2.80, App.Vector(61.0, -1.0, 19.0))
+    shape = shape.cut(s_coxa1).cut(s_coxa2)
+
     shape = shape.removeSplitter()
     return shape
 

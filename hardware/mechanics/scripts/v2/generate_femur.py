@@ -504,6 +504,15 @@ def build_femur_shapes():
     tunnel_right = make_cable_tunnel_x(65.0, 75.0, Y_mid, -1.0, width_y=14.0, height_z=7.0)
     base_solid = base_solid.cut(tunnel_left).cut(tunnel_right)
 
+    # Station 2: Integrated Micro-Zip-Tie Saddles in Tunnel Floors (for 2.5 mm cable ties)
+    # Left (proximal Coxa side): X = 28.5 & 31.5 mm, Y centered on Y_mid
+    s_femur_l1 = Part.makeBox(1.30, 2.80, 10.0, App.Vector(28.5, Y_mid - 1.40, -10.0))
+    s_femur_l2 = Part.makeBox(1.30, 2.80, 10.0, App.Vector(31.5, Y_mid - 1.40, -10.0))
+    # Right (distal Knee side): X = 68.5 & 71.5 mm, Y centered on Y_mid
+    s_femur_r1 = Part.makeBox(1.30, 2.80, 10.0, App.Vector(68.5, Y_mid - 1.40, -10.0))
+    s_femur_r2 = Part.makeBox(1.30, 2.80, 10.0, App.Vector(71.5, Y_mid - 1.40, -10.0))
+    base_solid = base_solid.cut(s_femur_l1).cut(s_femur_l2).cut(s_femur_r1).cut(s_femur_r2)
+
     base_solid = base_solid.removeSplitter()
     return base_solid
 

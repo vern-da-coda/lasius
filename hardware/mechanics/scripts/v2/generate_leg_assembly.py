@@ -43,6 +43,9 @@ doc_ads = App.openDocument(f"{hw_dir}/ads1115_board.FCStd")
 doc_tibia = App.openDocument(f"{v2_parts_dir}/tibia/tibia.FCStd")
 doc_t_cover = App.openDocument(f"{v2_parts_dir}/tibia/tibia_cover.FCStd")
 doc_t_rocker = App.openDocument(f"{v2_parts_dir}/tibia/tibia_rocker.FCStd")
+doc_t_shoe = App.openDocument(f"{v2_parts_dir}/tibia/tibia_shoe.FCStd")
+doc_cables = App.openDocument(f"{v2_parts_dir}/cables/leg_cable_harness.FCStd")
+doc_cables_r = App.openDocument(f"{v2_parts_dir}/cables/leg_cable_harness_right.FCStd")
 doc_sw = App.openDocument(f"{hw_dir}/microswitch_subminiature.FCStd")
 doc_sp = App.openDocument(f"{hw_dir}/compression_spring_4x12.FCStd")
 doc_servo = App.openDocument(f"{hw_dir}/servo_nr645.FCStd")
@@ -102,7 +105,8 @@ def check_leg_collisions(asm_part, title):
                 # If it's a link to an App::Part or an App::Part itself, we can just use child.Shape directly at top level
                 pass
             if hasattr(child, "Shape") and not child.Shape.isNull():
-                leaf_items.append((child.Name, child.Shape))
+                if "Cable" not in child.Name:
+                    leaf_items.append((child.Name, child.Shape))
 
     collect_leaves(asm_part)
     max_coll = 0.0
@@ -200,6 +204,9 @@ make_link(doc_l, asm_l, "Knee_Washer",  "Knee Shim Washer (s0.3)",            do
 make_link(doc_l, asm_l, "Knee_Bearing", "Knee Ball Bearing (D8 H3)",          doc_b.Kugellager_6x3x4,     App.Placement(App.Vector(156.50, -21.65, 0.00), rot_negy_posz))
 make_link(doc_l, asm_l, "Knee_Nut",     "Knee M4 Low-Profile Nut (DIN 439)",  doc_n_low.M4_Mutter_DIN439, App.Placement(App.Vector(156.50, -20.40, 0.00), rot_knee_nut_l))
 make_link(doc_l, asm_l, "Knee_Screw",   "Knee M4 Countersunk Screw",          doc_s.M4_Senkkopfschraube,  App.Placement(App.Vector(156.50, -27.20, 0.00), rot_negy_posz))
+
+# 4. Leg Cable Harness & Kinematic Service Loops
+make_link(doc_l, asm_l, "Leg_Cable_Harness", "8. Leg Cable Harness & Strain Reliefs (v2)", doc_cables.Leg_Cable_Harness, App.Placement())
 
 doc_l.recompute()
 doc_l.save()
@@ -342,6 +349,16 @@ make_link(
 make_link(
     doc_r,
     tibia_part_r,
+    "Tibia_Shoe",
+    "3b. Slip-On Bionic Spoon Shoe Right (Mirrored TPU/PETG)",
+    doc_t_shoe.Tibia_Shoe,
+    p_shank_r,
+    (0.18, 0.58, 0.68),
+    scale=App.Vector(1.0, 1.0, -1.0),
+)
+make_link(
+    doc_r,
+    tibia_part_r,
     "Microswitch",
     "4. Subminiature Microswitch (Unmirrored COTS)",
     doc_sw.Microswitch_Subminiature,
@@ -354,7 +371,7 @@ make_link(
     "Compression_Spring",
     "5. Stainless Preload Spring (Unmirrored COTS)",
     doc_sp.Compression_Spring,
-    p_shank_r.multiply(App.Placement(App.Vector(-14.0, 8.55, 0.0), App.Rotation())),
+    p_shank_r.multiply(App.Placement(App.Vector(-10.2, 10.65, 0.0), App.Rotation())),
     (0.85, 0.85, 0.88),
 )
 make_link(
@@ -408,6 +425,9 @@ make_link(doc_r, asm_r, "Knee_Washer",  "Knee Shim Washer (s0.3)",            do
 make_link(doc_r, asm_r, "Knee_Bearing", "Knee Ball Bearing (D8 H3)",          doc_b.Kugellager_6x3x4,     App.Placement(App.Vector(156.50, 21.65, 0.00), rot_negy_negz))
 make_link(doc_r, asm_r, "Knee_Nut",     "Knee M4 Low-Profile Nut (DIN 439)",  doc_n_low.M4_Mutter_DIN439, App.Placement(App.Vector(156.50, 20.40, 0.00), rot_knee_nut_r))
 make_link(doc_r, asm_r, "Knee_Screw",   "Knee M4 Countersunk Screw",          doc_s.M4_Senkkopfschraube,  App.Placement(App.Vector(156.50, 27.20, 0.00), rot_negy_negz))
+
+# 6. Leg Cable Harness Right (True Mirrored Geometry Y -> -Y)
+make_link(doc_r, asm_r, "Leg_Cable_Harness", "8. Leg Cable Harness & Strain Reliefs Right", doc_cables_r.Leg_Cable_Harness, App.Placement())
 
 doc_r.recompute()
 doc_r.save()
