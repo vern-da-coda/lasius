@@ -15,11 +15,11 @@ Design Concept (Vakuum-Tiefzieh-Haube / Draped Plexiglas Sheet):
        (X in [-132.0, +135.0 mm], Y in [-88.5, +88.5 mm]).
   3. Clearance & Fit:
      - Apex centered symmetrically around X = 0.0, Y = 0.0 mm.
-     - Inner cavity conforms precisely to the central components and clears
-       the 6 Coxa pivot axes.
-  4. Fastening Pattern:
-     - Coaxial through-holes (Ø3.4 mm) for M3 screws at (±45.0, ±30.0 mm),
-       rear (-90.0, 0.0 mm), and front (128.0, ±12.0 mm).
+     - Inner cavity conforms precisely to the central components and provides
+       generous headroom over the elevated Raspberry Pi 4.
+  4. Continuous Closed Shell:
+     - Clean, sealed aerodynamic carapace without piercing spacer bores.
+     - Supported from below by Chassis_RPi_Mount pillars.
   5. Service Hatch Aperture & Rebate:
      - Aperture centered directly over the Raspberry Pi 4 Model B at X = 0, Y = 0
        (X in [-41.8, +43.8 mm], Y in [-26.8, +26.8 mm]).
@@ -110,18 +110,13 @@ def build_draped_plexiglas_canopy():
     canopy_shell = loft_outer.cut(loft_inner)
 
     # -------------------------------------------------------------------------
-    # 4. Trim All Overhangs Flush Around Body_Top Perimeter & Coxa Clearances
+    # 4. Trim All Overhangs Flush Around Body_Top Perimeter
     # -------------------------------------------------------------------------
     face_top = Part.Face(outer_wire)
     face_top.translate(App.Vector(0.0, 0.0, z_base - 1.0 - face_top.BoundBox.ZMin))
     body_top_extruded = face_top.extrude(App.Vector(0.0, 0.0, 42.0))
 
     plexiglas_solid = canopy_shell.common(body_top_extruded)
-
-    # 6x Coxa pivot rotational clearances (Ø36.0 mm around each leg pivot axis)
-    for lx, ly in [(93.45, 53.55), (93.45, -53.55), (0.0, 65.0), (0.0, -65.0), (-93.45, 53.55), (-93.45, -53.55)]:
-        coxa_clear = Part.makeCylinder(18.0, 35.0, App.Vector(lx, ly, z_base - 1.0), App.Vector(0, 0, 1))
-        plexiglas_solid = plexiglas_solid.cut(coxa_clear)
 
     # -------------------------------------------------------------------------
     # 5. Service Hatch Aperture & Seating Rebate for Service Cover
@@ -137,23 +132,8 @@ def build_draped_plexiglas_canopy():
     plexiglas_solid = plexiglas_solid.cut(through_hole).cut(rebate)
 
     # -------------------------------------------------------------------------
-    # 6. Fastening Through-Holes (M3 clearance Ø3.4 mm)
+    # 6. Continuous Sealed Shell (Obsolete spacer through-holes closed)
     # -------------------------------------------------------------------------
-    # 4x Core M3 Holes at (±45.0, ±30.0 mm)
-    for sy in [-30.0, 30.0]:
-        for sx in [-45.0, 45.0]:
-            bore = Part.makeCylinder(1.70, 35.0, App.Vector(sx, sy, z_base - 1.0), App.Vector(0, 0, 1))
-            plexiglas_solid = plexiglas_solid.cut(bore)
-
-    # 1x Rear Tail M3 Hole at (-90.0, 0.0 mm)
-    bore_rear = Part.makeCylinder(1.70, 35.0, App.Vector(-90.0, 0.0, z_base - 1.0), App.Vector(0, 0, 1))
-    plexiglas_solid = plexiglas_solid.cut(bore_rear)
-
-    # 2x Front Neck M3 Holes at (128.0, ±12.0 mm)
-    for ny in [12.0, -12.0]:
-        bore_neck = Part.makeCylinder(1.70, 35.0, App.Vector(128.0, ny, z_base - 1.0), App.Vector(0, 0, 1))
-        plexiglas_solid = plexiglas_solid.cut(bore_neck)
-
     App.closeDocument(doc_plate_name)
     return plexiglas_solid
 

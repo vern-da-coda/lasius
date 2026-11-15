@@ -111,12 +111,12 @@ core_solid = core_solid.cut(bay_box).cut(bay_inner).cut(slot_left).cut(slot_righ
 bat_box = Part.makeBox(101.50, 36.40, 15.15, App.Vector(-55.50, -18.20, 1.50))
 core_solid = core_solid.cut(bat_box)
 
-# 1.5 Cut Rear TCA9548A Multiplexer Compartment (X = -54.0 .. -31.0 mm, Y = -16.0 .. +16.0 mm, Z = 18.0 .. 38.0 mm)
-tca_box = Part.makeBox(23.00, 32.00, 20.00, App.Vector(-54.00, -16.00, 18.00))
+# 1.5 Cut Rear TCA9548A Multiplexer Compartment - OPEN TO BODY_TOP (Z = 18.00 .. 54.00 mm)
+tca_box = Part.makeBox(23.00, 32.00, 36.00, App.Vector(-54.00, -16.00, 18.00))
 core_solid = core_solid.cut(tca_box)
 
-# 1.6 FRONT Neck / Head Modular Interface (at X = +54.0 mm)
-front_tunnel = Part.makeBox(26.00, 20.00, 14.00, App.Vector(30.00, -10.00, 22.00))
+# 1.6 FRONT Neck / Head Modular Interface & Wiring Bay - OPEN TO BODY_TOP (Z = 22.00 .. 54.00 mm)
+front_tunnel = Part.makeBox(24.00, 20.00, 32.00, App.Vector(30.00, -10.00, 22.00))
 core_solid = core_solid.cut(front_tunnel)
 for hy in [12.0, -12.0]:
     front_bore = Part.makeCylinder(2.10, 9.0, App.Vector(55.0, hy, 38.0), App.Vector(-1, 0, 0))
@@ -145,6 +145,13 @@ port_defs = [
 for px, py, pdx, pdy, pdz in port_defs:
     port_box = Part.makeBox(pdx, pdy, pdz, App.Vector(px, py, 23.00))
     core_solid = core_solid.cut(port_box)
+
+    # Station 4: Integrated Micro-Zip-Tie Saddle at Lateral Port Sill (for 2.5 mm cable ties)
+    sign_y = 1.0 if py > 0 else -1.0
+    ys = 15.0 * sign_y
+    s_ch1 = Part.makeBox(1.30, 2.80, 8.0, App.Vector(px + 3.5, ys - 1.40, 16.0))
+    s_ch2 = Part.makeBox(1.30, 2.80, 8.0, App.Vector(px + 6.5, ys - 1.40, 16.0))
+    core_solid = core_solid.cut(s_ch1).cut(s_ch2)
 
 # 1.9 Add Integrated Support Bosses & Centering Pins for TCA9548A at (-42.0, ±13.0 mm)
 for ty in [13.0, -13.0]:
@@ -264,4 +271,9 @@ for d in list(App.listDocuments().values()):
         App.closeDocument(d.Name)
     except Exception:
         pass
+try:
+    from PySide6 import QtCore
+    QtCore.QCoreApplication.processEvents()
+except Exception:
+    pass
 sys.exit(0)

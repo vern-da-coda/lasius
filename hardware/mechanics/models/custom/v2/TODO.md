@@ -221,6 +221,26 @@ Dieser Backlog führt alle offenen Aufgaben, konstruktiven Erweiterungen und Ver
     * $16\,\text{mm}$ Taillierungs-Freigang zu den mittleren Coxa-Servos ML und MR.
   * **Integration:** Eingebunden in [`lasius_assembly.FCStd`](lasius_assembly.FCStd).
 
+- [ ] **Chassis-Core-Monocoque Evolution: Vollständige Bodenabdeckung, flexibler Akkutunnel & Schwenkbereichs-Morphologie:**  
+  * **Hintergrund & Motivation:**
+    * Die Montageöffnung in der unteren Carbon-Bodenplatte ([`body_bottom.FCStd`](../../custom/v1/parts/body_bottom.FCStd)) misst $160{,}0 \times 50{,}0\,\text{mm}$ ($X \in [-80{,}0, +80{,}0]\,\text{mm}, Y \in [-25{,}0, +25{,}0]\,\text{mm}$). Der bisherige Kern ($X \in [-56{,}0, +54{,}0]\,\text{mm}$) deckt diesen Bereich nur teilweise ab.
+    * Die endgültige Akku-Größe und -Zellchemie (z. B. 2S/3S LiPo Flat-Pack oder 18650/21700 Li-Ion Rundzellen) steht noch nicht final fest. Der Bauraum unterhalb der beiden vertikalen PCA9685-Controller muss daher maximal genutzt werden.
+  * **Konstruktive Anforderungen:**
+    1. **Vollständige Abdeckung der Bodenplatte:**
+       * Das Monocoque wird an seiner Basis auf mindestens $X \in [-80{,}0, +80{,}0]\,\text{mm}$ und $Y \in [-25{,}0, +25{,}0]\,\text{mm}$ erweitert, sodass die gesamte $160 \times 50\,\text{mm}$ Öffnung in `Body_Bottom` staub- und schmutzdicht geschlossen wird.
+       * Formschlüssiger Übergang zur Unterboden-Schutzwanne ([`chassis_belly_pan.FCStd`](parts/chassis/chassis_belly_pan.FCStd)).
+    2. **Durchgehender, axial einschiebbarer Akkutunnel:**
+       * Der Hohlraum unterhalb der beiden vertikalen PCA9685-Platinen wird zu einem durchgehenden Längstunnel ($L \ge 160\,\text{mm}$) ausgebaut.
+       * Ermöglicht das axiale Einschieben variabler Akku-Packs von Front oder Heck mit integrierter Zugentlastung und Kabeldurchführung.
+    3. **Verschiebung / Erweiterung der Kopf- und Gaster-Schnittstellen:**
+       * Der Kernkörper wächst in X-Richtung nach vorn und hinten:
+         * *Front:* Anbindung an den Hals-Montageblock ([`apod_head_mount.FCStd`](parts/head/apod_head_mount.FCStd)) wird strukturell nach vorn versetzt / integriert.
+         * *Heck:* Anbindung an den Petiolus-Montageblock ([`apod_tail_mount.FCStd`](parts/gaster/apod_tail_mount.FCStd)) wird strukturell nach hinten versetzt / integriert.
+    4. **Bionische Rumpf-Morphologie um die Coxa-Schwenkbereiche:**
+       * Die Außenkontur des Monocoques folgt den realen Schwenkbereichen ($\pm 45^\circ\text{--}\pm 60^\circ$) aller 6 Coxa-Servos (FL, ML, RL, FR, MR, RR) unter Einhaltung eines Sicherheitsabstands ($\ge 2{,}5\text{--}3{,}0\,\text{mm}$).
+       * Maximierung des Innenvolumens bei garantierter Kollisionsfreiheit ($0{,}0000\,\text{mm}^3$).
+  * **Betroffener Code:** [`generate_chassis_core.py`](../../../scripts/v2/generate_chassis_core.py), [`generate_chassis_core_assembly.py`](../../../scripts/v2/generate_chassis_core.py), [`body_assembly.FCStd`](body_assembly.FCStd).
+
 
 
 

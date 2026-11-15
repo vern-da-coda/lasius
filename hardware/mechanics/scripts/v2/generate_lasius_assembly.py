@@ -65,6 +65,11 @@ for doc_k in list(App.listDocuments().keys()):
         App.closeDocument(doc_k)
     except Exception:
         pass
+try:
+    from PySide6 import QtCore
+    QtCore.QCoreApplication.processEvents()
+except Exception:
+    pass
 
 # Create and save document immediately (required for App::Link resolution)
 doc = App.newDocument(doc_name)

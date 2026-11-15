@@ -40,9 +40,15 @@ if os.path.exists(fcstd_path):
     except Exception:
         pass
 
-# Close any open document with same name
+# Close any open documents to ensure clean App::Link resolution
+for doc_k in list(App.listDocuments().keys()):
+    try:
+        App.closeDocument(doc_k)
+    except Exception:
+        pass
 try:
-    App.closeDocument(doc_name)
+    from PySide6 import QtCore
+    QtCore.QCoreApplication.processEvents()
 except Exception:
     pass
 
