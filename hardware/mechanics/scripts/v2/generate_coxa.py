@@ -318,10 +318,41 @@ def build_coxa_bracket_v2_shape():
         shape = shape.cut(b)
 
     # -------------------------------------------------------------
-    # 4. Coxa Pivot Axis 3 mm Screw Through-Bore (D = 3.20 mm)
+    # 4. Coxa Servo Pocket Clearance & Pivot Axis M4 Countersink
     # -------------------------------------------------------------
-    bore_pivot_3mm = Part.makeCylinder(1.60, 6.00, App.Vector(74.70, -1.00, 9.00), App.Vector(0, 1, 0))
-    shape = shape.cut(bore_pivot_3mm)
+    # A. Lower Coxa servo ear mounting shelf by 0.75 mm to Y = 30.90 mm so Coxa_Servo
+    #    at Y = 42.75 mm sits with its horn at Y = 51.25 mm (Z_world = 53.25 mm,
+    #    0.05 mm below Body_Top at Z_world = 53.30 mm -> zero collision!)
+    servo_ear_recess = Part.makeBox(56.00, 5.00, 21.00, App.Vector(58.00, 30.90, -1.50))
+    # B. Clear Coxa servo body pocket (X in [65.50, 106.40], Z in [-1.15, 19.15], Y in [3.85, 32.00])
+    #    plus wire grommet relief at X in [58.50, 66.00], Z in [5.40, 12.60], Y in [3.85, 12.00]
+    servo_body_clear = Part.makeBox(40.90, 28.15, 20.30, App.Vector(65.50, 3.85, -1.15))
+    servo_wire_clear = Part.makeBox(7.50, 8.15, 7.20, App.Vector(58.50, 3.85, 5.40))
+    shape = shape.cut(servo_ear_recess).cut(servo_body_clear).cut(servo_wire_clear)
+
+    # Re-drill 4x Coxa servo mounting screw holes (X = 66.30 and 109.70, Z = 4.00 and 14.00)
+    for sx_c in [66.30, 109.70]:
+        for sz_c in [4.00, 14.00]:
+            shape = shape.cut(Part.makeCylinder(1.10, 20.00, App.Vector(sx_c, 15.00, sz_c), App.Vector(0, 1, 0)))
+
+    # C. Coxa Pivot Axis (X = 74.70, Z = 9.00):
+    #    - Coaxial M4 through-bore (D = 4.10 mm, R = 2.05 mm)
+    #    - Internal 90-deg M4 countersink cone on inside floor (Y in [1.70, 3.80], R = 2.05..4.15 mm)
+    #      so Chassis_Screw at Z_leg = -11.45 mm (Y = 3.80 mm) seats flush below Coxa_Servo (Y = 3.95 mm)
+    #    - Underside shim washer recess (D = 6.20 mm, Y in [-0.10, +0.35 mm]) for 0.30 mm Passscheibe
+    #    - 0.05 mm underside axial relief (Y in [-0.10, +0.05 mm] for X > 58.0) so Coxa clears Body_Bottom
+    bore_pivot_m4 = Part.makeCylinder(2.05, 6.00, App.Vector(74.70, -1.00, 9.00), App.Vector(0, 1, 0))
+    csink_pivot_m4 = Part.makeCone(2.05, 4.15, 2.10, App.Vector(74.70, 1.70, 9.00), App.Vector(0, 1, 0))
+    head_clear_m4 = Part.makeCylinder(4.15, 1.00, App.Vector(74.70, 3.80, 9.00), App.Vector(0, 1, 0))
+    washer_recess_m4 = Part.makeCylinder(3.10, 0.45, App.Vector(74.70, -0.10, 9.00), App.Vector(0, 1, 0))
+    bottom_relief = Part.makeBox(65.00, 0.15, 40.00, App.Vector(58.00, -0.10, -10.00))
+    shape = (
+        shape.cut(bore_pivot_m4)
+        .cut(csink_pivot_m4)
+        .cut(head_clear_m4)
+        .cut(washer_recess_m4)
+        .cut(bottom_relief)
+    )
 
     # -------------------------------------------------------------
     # 5. Cheek 45-Degree Bionic Truss Windows (Konzept 1: Symmetrical A-Truss & Flank Windows)
@@ -450,7 +481,7 @@ def build_coxa_bracket_v2_shape():
     return shape
 
 
-if __name__ == "__main__":
+if __name__ in ("__main__", "generate_coxa"):
     shape_v2 = build_coxa_bracket_v2_shape()
     print(
         f"Coxa v2 Valid: {shape_v2.isValid()}, Solids: {len(shape_v2.Solids)}, "
@@ -475,3 +506,5 @@ if __name__ == "__main__":
     print(f"Exported STEP & STL: {step_coxa_path}, {stl_coxa_path}")
 
     App.closeDocument("coxa")
+    import sys
+    sys.exit(0)

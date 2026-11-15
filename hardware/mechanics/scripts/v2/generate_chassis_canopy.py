@@ -76,15 +76,15 @@ def build_draped_plexiglas_canopy():
     # 1. Load exact Body_Top perimeter wire
     doc_plate = App.openDocument(body_top_path)
     plate_shape = doc_plate.getObject("BodyTop").Shape
-    outer_wire = [w for w in plate_shape.Wires if w.BoundBox.XLength > 200][0]
+    outer_wire = max([w for w in plate_shape.Wires if w.BoundBox.XLength > 200], key=lambda w: w.BoundBox.ZMin). copy()
     doc_plate_name = doc_plate.Name
 
-    z_base = 55.30
+    z_base = 55.32  # 0.02 mm clearance above Body_Top (55.30 mm)
     thick = 1.50  # 1.5 mm thin Plexiglas sheet
-    h_apex = 26.20  # Apex at Z = 81.50 mm (Elevated to provide generous headroom over Raspberry Pi 4)
+    h_apex = 26.18  # Apex at Z = 81.50 mm (Elevated to provide generous headroom over Raspberry Pi 4)
 
     # -------------------------------------------------------------------------
-    # 2. Outer Draped Surface Profiles (Apex Z = 81.50 mm down to Z = 55.30 mm)
+    # 2. Outer Draped Surface Profiles (Apex Z = 81.50 mm down to Z = 55.32 mm)
     # -------------------------------------------------------------------------
     w_out_0 = make_filleted_wire(-140.0, 140.0, -95.0, 95.0, 35.0, z_base)
     w_out_1 = make_filleted_wire(-136.0, 136.0, -90.0, 90.0, 32.0, z_base + thick)
@@ -98,7 +98,7 @@ def build_draped_plexiglas_canopy():
     # -------------------------------------------------------------------------
     # 3. Inner Draped Surface Profiles (Offset inward by thick = 1.5 mm)
     # -------------------------------------------------------------------------
-    w_in_1 = make_filleted_wire(-134.5, 134.5, -88.5, 88.5, 30.5, z_base)
+    w_in_1 = make_filleted_wire(-134.5, 134.5, -88.5, 88.5, 30.5, z_base - 0.1)
     w_in_2 = make_filleted_wire(-113.5, 113.5, -73.5, 73.5, 24.5, z_base + 5.0)
     w_in_3 = make_filleted_wire(-88.5, 88.5, -56.5, 56.5, 18.5, z_base + 12.0)
     w_in_4 = make_filleted_wire(-63.5, 63.5, -40.5, 40.5, 13.5, z_base + 19.0)
@@ -110,13 +110,18 @@ def build_draped_plexiglas_canopy():
     canopy_shell = loft_outer.cut(loft_inner)
 
     # -------------------------------------------------------------------------
-    # 4. Trim All Overhangs Flush Around Body_Top Perimeter
+    # 4. Trim All Overhangs Flush Around Body_Top Perimeter & Coxa Clearances
     # -------------------------------------------------------------------------
     face_top = Part.Face(outer_wire)
-    face_top.translate(App.Vector(0.0, 0.0, z_base - face_top.BoundBox.ZMin))
-    body_top_extruded = face_top.extrude(App.Vector(0.0, 0.0, 40.0))
+    face_top.translate(App.Vector(0.0, 0.0, z_base - 1.0 - face_top.BoundBox.ZMin))
+    body_top_extruded = face_top.extrude(App.Vector(0.0, 0.0, 42.0))
 
     plexiglas_solid = canopy_shell.common(body_top_extruded)
+
+    # 6x Coxa pivot rotational clearances (Ø36.0 mm around each leg pivot axis)
+    for lx, ly in [(93.45, 53.55), (93.45, -53.55), (0.0, 65.0), (0.0, -65.0), (-93.45, 53.55), (-93.45, -53.55)]:
+        coxa_clear = Part.makeCylinder(18.0, 35.0, App.Vector(lx, ly, z_base - 1.0), App.Vector(0, 0, 1))
+        plexiglas_solid = plexiglas_solid.cut(coxa_clear)
 
     # -------------------------------------------------------------------------
     # 5. Service Hatch Aperture & Seating Rebate for Service Cover
@@ -176,6 +181,12 @@ obj.Visibility = True
 
 doc.recompute()
 doc.saveAs(fcstd_canopy_path)
+export_step_dir = f"{repo_root}/hardware/mechanics/export/step/custom/v2/parts/chassis"
+export_stl_dir = f"{repo_root}/hardware/mechanics/export/stl/custom/v2/parts/chassis"
+os.makedirs(export_step_dir, exist_ok=True)
+os.makedirs(export_stl_dir, exist_ok=True)
+canopy_solid.exportStep(f"{export_step_dir}/chassis_canopy.step")
+canopy_solid.exportStl(f"{export_stl_dir}/chassis_canopy.stl")
 print(f"Saved FreeCAD model: {fcstd_canopy_path}")
 App.closeDocument(doc_name)
 

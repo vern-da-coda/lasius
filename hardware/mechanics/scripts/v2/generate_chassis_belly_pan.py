@@ -78,42 +78,49 @@ def make_rounded_rect_solid(x_min, x_max, y_min, y_max, r_corner, z_min, z_max):
 
 def build_chassis_belly_pan():
     # Z coordinate convention:
-    # Top mating flange is at Z = 0.00 mm (flush against underside of body_bottom).
-    # Pan extends downwards into negative Z (Z = 0.00 down to Z = -10.00 mm).
-    z_top = 0.00
+    # Top mating flange is at Z = -0.02 mm (0.02 mm clearance against underside of body_bottom at Z = 0.00 mm).
+    # Pan extends downwards into negative Z (Z = -0.02 down to Z = -10.00 mm).
+    z_top = -0.02
     z_floor = -10.00
     z_cavity_floor = -7.60  # leaves 2.40 mm bottom floor thickness
 
     # -------------------------------------------------------------------------
     # 1. Main Skid Plate Hull (Top Flange: X in [-88, +88], Y in [-34, +34])
     # -------------------------------------------------------------------------
-    # Flange prism from Z = -2.40 to 0.00 mm
     flange_solid = make_rounded_rect_solid(-88.0, 88.0, -34.0, 34.0, 7.0, -2.40, z_top)
 
     # 4x Standoff Ears (X = ±45.0, Y = ±30.0)
     for sx in [-45.0, 45.0]:
         for sy in [-30.0, 30.0]:
-            ear = Part.makeCylinder(9.5, 2.40, App.Vector(sx, sy, -2.40), App.Vector(0, 0, 1))
+            ear = Part.makeCylinder(9.5, 2.38, App.Vector(sx, sy, -2.40), App.Vector(0, 0, 1))
             flange_solid = flange_solid.fuse(ear)
 
-    # Central Deep Tub (X in [-72.0, +72.0], Y in [-28.0, +28.0], Z in [-10.00, -2.40])
-    tub_solid = make_rounded_rect_solid(-72.0, 72.0, -28.0, 28.0, 5.0, z_floor, -2.40)
+    # Central Deep Tub (X in [-88.0, +88.0], Y in [-28.0, +28.0], Z in [-10.00, -2.40])
+    tub_solid = make_rounded_rect_solid(-88.0, 88.0, -28.0, 28.0, 5.0, z_floor, -2.40)
+
+    # Cut 30-degree Front and Rear Approach Ramps (between X = ±72.0 and X = ±88.0):
+    wedge_f = Part.Face(
+        Part.makePolygon(
+            [
+                App.Vector(72.0, -40.0, z_floor - 0.1),
+                App.Vector(90.0, -40.0, z_floor - 0.1),
+                App.Vector(90.0, -40.0, -2.40),
+                App.Vector(72.0, -40.0, z_floor - 0.1),
+            ]
+        )
+    ).extrude(App.Vector(0.0, 80.0, 0.0))
+    wedge_r = Part.Face(
+        Part.makePolygon(
+            [
+                App.Vector(-72.0, -40.0, z_floor - 0.1),
+                App.Vector(-90.0, -40.0, -2.40),
+                App.Vector(-90.0, -40.0, z_floor - 0.1),
+                App.Vector(-72.0, -40.0, z_floor - 0.1),
+            ]
+        )
+    ).extrude(App.Vector(0.0, 80.0, 0.0))
+    tub_solid = tub_solid.cut(wedge_f).cut(wedge_r)
     pan_solid = flange_solid.fuse(tub_solid)
-
-    # Front Approach Ramp (Angled wedge rising from Z = -10.0 to Z = -2.40 between X = 72 and 88)
-    ramp_front_pts = [
-        App.Vector(72.0, -28.0, z_floor),
-        App.Vector(88.0, -28.0, -2.40),
-        App.Vector(88.0, 28.0, -2.40),
-        App.Vector(72.0, 28.0, z_floor)
-    ]
-    # Smooth loft/prism transition for front ramp
-    ramp_f = make_rounded_rect_solid(72.0, 88.0, -28.0, 28.0, 5.0, z_floor, -2.40)
-    pan_solid = pan_solid.fuse(ramp_f)
-
-    # Rear Approach Ramp (Angled wedge rising from Z = -10.0 to Z = -2.40 between X = -88 and -72)
-    ramp_r = make_rounded_rect_solid(-88.0, -72.0, -28.0, 28.0, 5.0, z_floor, -2.40)
-    pan_solid = pan_solid.fuse(ramp_r)
 
     # -------------------------------------------------------------------------
     # 2. Hollow Internal Cavity (Pocket under body_bottom)
@@ -162,8 +169,8 @@ def build_chassis_belly_pan():
         pilot = Part.makeCylinder(hole_r, boss_h + 3.0, App.Vector(hx, hy, z_cavity_floor - 1.0), App.Vector(0, 0, 1))
         pan_solid = pan_solid.cut(pilot)
 
-    # Sensor Wire Harness Pass-through Slot (into main chassis)
-    wire_slot = make_rounded_rect_solid(-22.0, -14.0, -3.5, 3.5, 1.5, z_cavity_floor, z_top + 2.0)
+    # Sensor Wire Harness Pass-through Slot aligned with 6-pin I2C header (X in [-9.0, +9.0], Y in [-10.0, -5.0])
+    wire_slot = make_rounded_rect_solid(-9.0, 9.0, -10.0, -5.0, 1.5, z_cavity_floor, z_top + 2.0)
     pan_solid = pan_solid.cut(wire_slot)
 
     # -------------------------------------------------------------------------

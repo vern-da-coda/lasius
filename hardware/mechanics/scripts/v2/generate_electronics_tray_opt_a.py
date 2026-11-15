@@ -218,7 +218,7 @@ doc_asm.recompute()
 fcstd_asm = f"{asm_dir}/electronics_tray_assembly_opt_a.FCStd"
 doc_asm.saveAs(fcstd_asm)
 asm_obj.Shape.exportStep(f"{export_asm_step_dir}/electronics_tray_assembly_opt_a.step")
-asm_obj.Shape.exportStl(f"{export_asm_stl_dir}/electronics_tray_assembly_opt_a.stl")
+# Assembly STL omitted (assemblies use STEP for CAD; STL is reserved for 3D-printable parts)
 print(f"✔ Saved Electronics Tray Assembly Opt A -> {fcstd_asm}")
 
 App.closeDocument(doc_tray_name)

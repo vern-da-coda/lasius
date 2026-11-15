@@ -275,8 +275,8 @@ def build_vl53l5cx():
     lens1 = Part.makeCylinder(0.55, 0.4, App.Vector(-1.5, 0.0, 2.8), App.Vector(0, 0, 1))
     lens2 = Part.makeCylinder(0.55, 0.4, App.Vector(1.5, 0.0, 2.8), App.Vector(0, 0, 1))
 
-    # 6-Pin I2C Header (15.24 x 2.54 x 8.5 mm on -Y edge)
-    header = Part.makeBox(15.24, 2.54, 8.5, App.Vector(-7.62, -8.5, 1.6))
+    # 6-Pin I2C Header on back side (-Z) so header points upward into chassis while lens (+Z) faces downward
+    header = Part.makeBox(15.24, 2.54, 4.7, App.Vector(-7.62, -8.5, -4.7))
 
     tof_solid = pcb.fuse(sensor).fuse(lens1).fuse(lens2).fuse(header)
 

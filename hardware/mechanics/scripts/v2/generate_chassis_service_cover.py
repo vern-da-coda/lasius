@@ -145,6 +145,12 @@ obj.Visibility = True
 
 doc.recompute()
 doc.saveAs(fcstd_cover_path)
+export_step_dir = f"{repo_root}/hardware/mechanics/export/step/custom/v2/parts/chassis"
+export_stl_dir = f"{repo_root}/hardware/mechanics/export/stl/custom/v2/parts/chassis"
+os.makedirs(export_step_dir, exist_ok=True)
+os.makedirs(export_stl_dir, exist_ok=True)
+cover_solid.exportStep(f"{export_step_dir}/chassis_service_cover.step")
+cover_solid.exportStl(f"{export_stl_dir}/chassis_service_cover.stl")
 print(f"Saved FreeCAD model: {fcstd_cover_path}")
 App.closeDocument(doc_name)
 

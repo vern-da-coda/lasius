@@ -133,11 +133,7 @@ try:
 except Exception as e:
     print(f"STEP export error: {e}")
 
-try:
-    asm_part.Shape.exportStl(stl_path)
-    print(f"Exported STL: {stl_path}")
-except Exception as e:
-    print(f"STL export error: {e}")
+# Assembly STL omitted (assemblies use STEP for CAD; STL is reserved for 3D-printable parts)
 
 for d in list(App.listDocuments().values()):
     try:

@@ -58,6 +58,7 @@ cots_dir = f"{models_base}/cots"
 doc_bottom = App.openDocument(f"{v1_parts_dir}/body_bottom.FCStd")
 doc_top = App.openDocument(f"{v1_parts_dir}/body_top.FCStd")
 doc_leg = App.openDocument(f"{v2_asm_dir}/leg_assembly.FCStd")
+doc_leg_r = App.openDocument(f"{v2_asm_dir}/leg_right_assembly.FCStd")
 doc_core_asm = App.openDocument(f"{v2_asm_dir}/chassis_core_assembly.FCStd")
 doc_belly = App.openDocument(f"{models_base}/custom/v2/parts/chassis/chassis_belly_pan.FCStd")
 doc_rpi_mount = App.openDocument(f"{models_base}/custom/v2/parts/chassis/chassis_rpi_mount.FCStd")
@@ -126,8 +127,8 @@ make_link("Chassis_Core_Assembly", "3. Monocoque Central Core Assembly (v2)", do
 p_belly = App.Placement(App.Vector(0.0, 0.0, 0.00), App.Rotation())
 make_link("Chassis_Belly_Pan", "4. Chassis Belly Pan (v2)", doc_belly.Chassis_Belly_Pan, p_belly, COLOR_BELLY_PAN)
 
-# VL53L5CX 9-Zone ToF Terrain Distance Sensor inside Belly Pan at X = 0.0, Y = 0.0, Z = -4.40 mm, facing downward
-p_tof = App.Placement(App.Vector(0.0, 0.0, -4.40), App.Rotation(App.Vector(0, 1, 0), 180.0))
+# VL53L5CX 9-Zone ToF Terrain Distance Sensor inside Belly Pan at X = 0.0, Y = 0.0, Z = -2.75 mm, facing downward (PCB bottom at -4.35 mm above -4.40 mm bosses)
+p_tof = App.Placement(App.Vector(0.0, 0.0, -2.75), App.Rotation(App.Vector(0, 1, 0), 180.0))
 make_link("Sensor_VL53L5CX_ToF", "5. VL53L5CX 9-Zone ToF Distance Sensor (COTS)", doc_tof.VL53L5CX_Board, p_tof, COLOR_PCB_RED)
 
 # Raspberry Pi 4 Mounting Plate on Body_Top at Z = 55.30 .. 59.80 mm
@@ -172,13 +173,13 @@ leg_mounts = [
     ("Leg_Rear_Right",   "Leg Rear Right (RR, v2) [Mirrored]",     -86.0, -65.0, -135.0, True),
 ]
 
-leg_target_obj = getattr(doc_leg, "Leg_Assembly_v2", getattr(doc_leg, "Leg_Assembly", None))
+leg_target_left = getattr(doc_leg, "Leg_Assembly_v2", getattr(doc_leg, "Leg_Assembly", None))
+leg_target_right = getattr(doc_leg_r, "Leg_Right_Assembly_v2", getattr(doc_leg_r, "Leg_Right_Assembly", None))
 
 for l_name, l_label, lx, ly, l_yaw, l_mirrored in leg_mounts:
     p_leg = get_leg_placement(lx, ly, z_leg_offset, l_yaw, l_mirrored)
-    lnk = make_link(l_name, l_label, leg_target_obj, p_leg)
-    if l_mirrored:
-        lnk.ScaleVector = App.Vector(1.0, -1.0, 1.0)
+    target_obj = leg_target_right if l_mirrored else leg_target_left
+    make_link(l_name, l_label, target_obj, p_leg)
 
 # -------------------------------------------------------------
 # 4. Recompute, Save & Export
@@ -201,9 +202,8 @@ for obj in asm_part.Group:
 if shapes:
     compound = Part.makeCompound(shapes)
     compound.exportStep(step_path)
-    compound.exportStl(stl_path)
+    # Assembly STL omitted (assemblies use STEP for CAD; STL is reserved for 3D-printable parts)
     print(f"✔ Exported STEP: {step_path}")
-    print(f"✔ Exported STL:  {stl_path}")
 
 for d in list(App.listDocuments().values()):
     try:

@@ -1,25 +1,24 @@
 #!/usr/bin/env python3
 """
-Generate Lasius Tibia v2 Subsystem Assembly with Integrated Foot Sensor
-========================================================================
-Organic Bionic Monocoque with Formschluss-Schraub-Hybrid (Option C):
-- Seamless G1-continuous bionic silhouette flowing gracefully from the knee servo cage
-  down through the beam and directly onto the foot rocker claw sole
-- Slender organic foot joint terminal wrapping closely around the pivot hub (R = 6.5 mm)
-  and spring pocket, completely eliminating any bulbous snout or awkward steps
-- 45-degree smooth transition between the 11.0 mm fork cheek and the 7.0 mm claw blade
-- Split clevis fork:
-  1. Monolithic Cheek A (Fixed, -Z side): Integrates open sensor bay, spring pocket,
-     conduit channel, M3 and M2 Ruthex brass insert seats, and interlocking retaining groove
-  2. Removable Cheek B (Cover, +Z side): Form-fit tongue, 1x flush M2 countersunk screw,
-     and counterbore for M3 pivot pin
-  3. Bionic Foot Rocker (Tarsus): Slender claw sole continuing the dorsal curvature
-     monotonically to the ground contact patch
+Generate Lasius Tibia v2 Canonical Parts & Subsystem Assembly
+=============================================================
+Canonical Output Paths (Hardware-as-Code 3-Tier Architecture):
+- COTS Parts:
+  * hardware/mechanics/models/cots/microswitch_subminiature.FCStd
+  * hardware/mechanics/models/cots/compression_spring_4x12.FCStd
+- Custom v2 Tibia Parts:
+  * hardware/mechanics/models/custom/v2/parts/tibia/tibia.FCStd        (Tibia_Body)
+  * hardware/mechanics/models/custom/v2/parts/tibia/tibia_cover.FCStd  (Tibia_Cover)
+  * hardware/mechanics/models/custom/v2/parts/tibia/tibia_rocker.FCStd (Tibia_Rocker)
+- Custom v2 Tibia Subassembly:
+  * hardware/mechanics/models/custom/v2/tibia_assembly.FCStd           (Tibia_Assembly)
+- Mirrored 1:1 in hardware/mechanics/export/{step,stl}/custom/v2/
 """
 
 import math
 import os
 import sys
+import zipfile
 import FreeCAD as App
 import Part
 
@@ -27,18 +26,20 @@ repo_root = "/home/bjoern/Workspace/Hexapods/lasius"
 sys.path.append(f"{repo_root}/hardware/mechanics/scripts/v2")
 import generate_tibia
 
-print("--- Generating Lasius Tibia v2 Organic Bionic Assembly ---")
+print("--- Generating Lasius Tibia v2 Canonical Parts & Assembly ---")
 
-cots_dir = f"{repo_root}/hardware/mechanics/models/cots"
-concept_dir = f"{repo_root}/hardware/mechanics/models/custom/v2/concepts/tibia_foot"
-export_step_dir = f"{repo_root}/hardware/mechanics/export/step/custom/v2/concepts/tibia_foot"
-export_stl_dir = f"{repo_root}/hardware/mechanics/export/stl/custom/v2/concepts/tibia_foot"
-renders_dir = f"{repo_root}/hardware/mechanics/drawings/renders"
+models_dir = f"{repo_root}/hardware/mechanics/models"
+cots_dir = f"{models_dir}/cots"
+v2_dir = f"{models_dir}/custom/v2"
+parts_tibia_dir = f"{v2_dir}/parts/tibia"
 
-os.makedirs(concept_dir, exist_ok=True)
-os.makedirs(export_step_dir, exist_ok=True)
-os.makedirs(export_stl_dir, exist_ok=True)
-os.makedirs(renders_dir, exist_ok=True)
+export_step_v2 = f"{repo_root}/hardware/mechanics/export/step/custom/v2"
+export_stl_v2 = f"{repo_root}/hardware/mechanics/export/stl/custom/v2"
+export_step_parts = f"{export_step_v2}/parts/tibia"
+export_stl_parts = f"{export_stl_v2}/parts/tibia"
+
+for d in [cots_dir, v2_dir, parts_tibia_dir, export_step_v2, export_stl_v2, export_step_parts, export_stl_parts]:
+    os.makedirs(d, exist_ok=True)
 
 # Colors
 COLOR_CFRP = (0.22, 0.22, 0.24)        # Dark carbon anthracite
@@ -49,17 +50,152 @@ COLOR_SWITCH = (0.15, 0.15, 0.15)      # Matte black switch
 COLOR_SPRING = (0.85, 0.85, 0.88)      # Stainless spring
 COLOR_BRASS = (0.85, 0.70, 0.20)       # Brass hardware
 COLOR_STEEL = (0.80, 0.80, 0.82)       # Steel fasteners
-COLOR_TOP_CAGE = (0.20, 0.48, 0.68)    # Anodized metallic blue top cage accent
 
 # =============================================================================
-# 1. Build Slender Organic Outer Contour of Unified Tibia Body
+# 1. Build COTS: microswitch_subminiature.FCStd & compression_spring_4x12.FCStd
 # =============================================================================
+print("1. Building COTS: microswitch_subminiature.FCStd & compression_spring_4x12.FCStd...")
+for dname in ["microswitch_subminiature", "compression_spring_4x12"]:
+    try:
+        App.closeDocument(dname)
+    except Exception:
+        pass
+
+doc_sw = App.newDocument("microswitch_subminiature")
+fcstd_sw_path = f"{cots_dir}/microswitch_subminiature.FCStd"
+
+# Switch body: 6.5 x 12.8 x 5.8 mm (Z in [-2.9, +2.9])
+sw_body = Part.makeBox(6.5, 12.8, 5.8, App.Vector(0.0, 0.0, -2.9))
+h1 = Part.makeCylinder(1.05, 10.0, App.Vector(4.5, 2.5, -5.0), App.Vector(0, 0, 1))
+h2 = Part.makeCylinder(1.05, 10.0, App.Vector(4.5, 9.0, -5.0), App.Vector(0, 0, 1))
+sw_body = sw_body.cut(h1).cut(h2)
+
+# Plunger button behind leaf lever (X in [6.2, 6.7])
+pin_button = Part.makeCylinder(1.00, 0.5, App.Vector(6.2, 9.5, 0.0), App.Vector(1, 0, 0))
+# Leaf lever (X in [6.7, 7.1], Y in [1.5, 13.0], Z in [-2.0, +2.0])
+lever_box = Part.makeBox(0.4, 11.5, 4.0, App.Vector(6.7, 1.5, -2.0))
+
+lug1 = Part.makeBox(2.5, 0.6, 2.0, App.Vector(-2.5, 1.5, -1.0))
+lug2 = Part.makeBox(2.5, 0.6, 2.0, App.Vector(-2.5, 6.4, -1.0))
+lug3 = Part.makeBox(2.5, 0.6, 2.0, App.Vector(-2.5, 11.3, -1.0))
+
+sw_solid = sw_body.fuse(pin_button).fuse(lever_box).fuse(lug1).fuse(lug2).fuse(lug3)
+obj_sw = doc_sw.addObject("Part::Feature", "Microswitch_Subminiature")
+obj_sw.Label = "Subminiature Microswitch (12.8x6.5x5.8 mm with Leaf Lever)"
+obj_sw.Shape = sw_solid
+doc_sw.recompute()
+doc_sw.saveAs(fcstd_sw_path)
+
+doc_sp = App.newDocument("compression_spring_4x12")
+fcstd_sp_path = f"{cots_dir}/compression_spring_4x12.FCStd"
+sp_outer = Part.makeCylinder(2.25, 12.0, App.Vector(0, 0, 0), App.Vector(0, 1, 0))
+sp_inner = Part.makeCylinder(1.65, 14.0, App.Vector(0, -1.0, 0), App.Vector(0, 1, 0))
+sp_tube = sp_outer.cut(sp_inner)
+for i in range(5):
+    y_slot = 1.5 + i * 2.0
+    slot_cutter = Part.makeBox(6.0, 1.0, 1.0, App.Vector(-3.0, y_slot - 0.5, -0.5))
+    slot_cutter.rotate(App.Vector(0, y_slot, 0), App.Vector(0, 1, 0), i * 45.0)
+    sp_tube = sp_tube.cut(slot_cutter)
+
+obj_sp = doc_sp.addObject("Part::Feature", "Compression_Spring")
+obj_sp.Label = "Stainless Compression Spring (Da=4.5 mm, L=12 mm)"
+obj_sp.Shape = sp_tube
+doc_sp.recompute()
+doc_sp.saveAs(fcstd_sp_path)
+
+# =============================================================================
+# 2. Build Canonical Rocker: custom/v2/parts/tibia/tibia_rocker.FCStd
+# =============================================================================
+print("2. Building Canonical Part: tibia_rocker.FCStd...")
+try:
+    App.closeDocument("tibia_rocker")
+except Exception:
+    pass
+doc_rocker = App.newDocument("tibia_rocker")
+fcstd_rocker_path = f"{parts_tibia_dir}/tibia_rocker.FCStd"
+
+p_hub_bot = App.Vector(1.16, 5.20, 0.0)
+p_spring_end = App.Vector(-14.02, 8.50, 0.0)
+
+loc_sole = [
+    p_hub_bot,
+    App.Vector(-0.50, -1.69, 0.0),
+    App.Vector(-3.46, -10.21, 0.0),
+    App.Vector(-7.82, -18.14, 0.0),
+    App.Vector(-12.42, -22.74, 0.0),
+    App.Vector(-17.37, -25.56, 0.0),
+    App.Vector(-21.83, -25.89, 0.0),
+]
+loc_tip = [
+    App.Vector(-21.83, -25.89, 0.0),
+    App.Vector(-23.41, -25.78, 0.0),
+    App.Vector(-24.22, -23.82, 0.0),
+]
+loc_top = [
+    App.Vector(-24.22, -23.82, 0.0),
+    App.Vector(-20.66, -20.42, 0.0),
+    App.Vector(-16.60, -14.52, 0.0),
+    App.Vector(-14.48, -6.75, 0.0),
+    App.Vector(-13.74, 1.60, 0.0),
+    p_spring_end,
+]
+
+c_sole = Part.BSplineCurve()
+c_sole.interpolate(loc_sole)
+e_sole = c_sole.toShape()
+e_tip = Part.Arc(loc_tip[0], loc_tip[1], loc_tip[2]).toShape()
+c_top = Part.BSplineCurve()
+c_top.interpolate(loc_top)
+e_top = c_top.toShape()
+
+# Upper lever contact face at X = +0.25 mm (0.05 mm rest clearance to microswitch lever at X = +0.20 mm)
+pts_upper = [
+    p_hub_bot,
+    App.Vector(2.0, 12.0, 0.0),
+    App.Vector(2.5, 18.0, 0.0),
+    App.Vector(2.5, 26.0, 0.0),
+    App.Vector(2.5, 34.5, 0.0),
+    App.Vector(0.25, 34.5, 0.0),
+    App.Vector(0.25, 24.0, 0.0),
+    App.Vector(-2.0, 16.0, 0.0),
+    App.Vector(-5.0, 13.5, 0.0),
+    App.Vector(-11.0, 8.50, 0.0),
+    p_spring_end,
+]
+edges_upper = [Part.makeLine(pts_upper[i], pts_upper[i + 1]) for i in range(len(pts_upper) - 1)]
+
+all_edges = edges_upper + [e_top, e_tip, e_sole]
+rocker_wire = Part.Wire(all_edges)
+rocker_face = Part.Face(rocker_wire)
+rocker_solid = rocker_face.extrude(App.Vector(0.0, 0.0, 5.6)).translate(App.Vector(0.0, 0.0, -2.8))
+
+# Pivot Bore (D = 3.10 mm, R = 1.55 mm) at (0.0, 10.0)
+rocker_solid = rocker_solid.cut(Part.makeCylinder(1.55, 10.0, App.Vector(0.0, 10.0, -5.0), App.Vector(0, 0, 1)))
+# Spring Boss at (-14.0, 8.50) (D = 3.00 mm, L = 2.50 mm up to Y = 11.00 mm)
+rocker_solid = rocker_solid.fuse(Part.makeCylinder(1.50, 2.50, App.Vector(-14.0, 8.50, 0.0), App.Vector(0, 1, 0)))
+# M2 Set Screw Pocket at (0.25..2.50, 32.5)
+rocker_solid = rocker_solid.cut(Part.makeCylinder(1.00, 2.35, App.Vector(2.55, 32.5, 0.0), App.Vector(-1, 0, 0)))
+rocker_solid = rocker_solid.removeSplitter()
+
+obj_rocker = doc_rocker.addObject("Part::Feature", "Tibia_Rocker")
+obj_rocker.Label = "Tibia Foot Rocker Lever (Organic Bionic Tarsus Wippe, PETG)"
+obj_rocker.Shape = rocker_solid
+if hasattr(obj_rocker, "ViewObject") and obj_rocker.ViewObject is not None:
+    obj_rocker.ViewObject.Visibility = True
+    obj_rocker.ViewObject.ShapeColor = COLOR_ORANGE
+doc_rocker.recompute()
+doc_rocker.saveAs(fcstd_rocker_path)
+rocker_solid.exportStep(f"{export_step_parts}/tibia_rocker.step")
+rocker_solid.exportStl(f"{export_stl_parts}/tibia_rocker.stl")
+print(f"✔ Saved: {fcstd_rocker_path} (Valid={rocker_solid.isValid()}, Volume={rocker_solid.Volume:.1f} mm3)")
+
+# =============================================================================
+# 3. Build Canonical Monolithic Tibia Body & Removable Cover
+# =============================================================================
+print("3. Building Canonical Parts: tibia.FCStd & tibia_cover.FCStd...")
+
+
 def build_organic_tibia_outer_wire():
-    """
-    Construct the slender, organic G1-continuous outer silhouette of the Tibia.
-    Tapers gracefully over the spring pocket down to the pivot hub (R = 6.5 mm at (-122, -14)),
-    forming a completely natural joint transition for the foot rocker.
-    """
     c2 = App.Vector(17.271, 36.152, 0.0)
     r2 = 1.489
     a2_s = math.atan2(37.610 - c2.y, 17.570 - c2.x)
@@ -108,7 +244,9 @@ def build_organic_tibia_outer_wire():
         (36.800, 21.300),
         p4_s,
     ]
-    e3 = generate_tibia.make_g1_cubic_bspline(poles3, generate_tibia.circle_tangent_cw(c2, p2_e), generate_tibia.circle_tangent_cw(c4, p4_s))
+    e3 = generate_tibia.make_g1_cubic_bspline(
+        poles3, generate_tibia.circle_tangent_cw(c2, p2_e), generate_tibia.circle_tangent_cw(c4, p4_s)
+    )
 
     poles5 = [
         p4_e,
@@ -120,12 +258,13 @@ def build_organic_tibia_outer_wire():
         (19.50, -6.50),
         p56_s,
     ]
-    e5 = generate_tibia.make_g1_cubic_bspline(poles5, generate_tibia.circle_tangent_cw(c4, p4_e), generate_tibia.circle_tangent_cw(c56, p56_s))
+    e5 = generate_tibia.make_g1_cubic_bspline(
+        poles5, generate_tibia.circle_tangent_cw(c4, p4_e), generate_tibia.circle_tangent_cw(c56, p56_s)
+    )
 
     p6_e = App.Vector(-36.50, -14.25, 0.0)
     e6 = Part.makeLine(p56_e, p6_e)
 
-    # Distal joint terminal points around spring pocket and pivot hub:
     p_spring_cheek = App.Vector(-130.0, -0.5, 0.0)
     p_hub_left = App.Vector(-128.5, -14.0, 0.0)
     p_hub_bot = App.Vector(-122.0, -20.5, 0.0)
@@ -133,7 +272,6 @@ def build_organic_tibia_outer_wire():
     arc_cheek_tip = Part.Arc(p_spring_cheek, App.Vector(-131.0, -8.0, 0.0), p_hub_left).toShape()
     arc_pivot_bot = Part.Arc(p_hub_left, App.Vector(-126.5, -19.0, 0.0), p_hub_bot).toShape()
 
-    # Dorsal arch
     poles1 = [
         p_spring_cheek,
         (-128.0, 0.5),
@@ -156,7 +294,6 @@ def build_organic_tibia_outer_wire():
     t_dorsal_start = App.Vector(1.0, 0.5, 0.0)
     e1 = generate_tibia.make_g1_cubic_bspline(poles1, t_dorsal_start, generate_tibia.circle_tangent_cw(c2, p2_s))
 
-    # Ventral arch (expanded belly to enclose slot completely)
     poles7 = [
         p6_e,
         (-39.50, -14.25),
@@ -174,32 +311,27 @@ def build_organic_tibia_outer_wire():
     t_ventral_end = App.Vector(-1.0, -0.2, 0.0)
     e7 = generate_tibia.make_g1_cubic_bspline(poles7, App.Vector(-1.0, 0.0, 0.0), t_ventral_end)
 
-    wire = Part.Wire([arc_cheek_tip, arc_pivot_bot, e7, e6, e5b, e5, e4, e3, e2, e1])
-    return wire
+    return Part.Wire([arc_cheek_tip, arc_pivot_bot, e7, e6, e5b, e5, e4, e3, e2, e1])
+
 
 outer_wire = build_organic_tibia_outer_wire()
 
-# =============================================================================
-# 2. Build Monolithic Tibia Body & Removable Cover
-# =============================================================================
-print("1. Building Monolithic Tibia Body & Removable Cover...")
-
-# 2.1 Base Tibia Claw Body (Z in [-3.0, +4.0] mm)
+# Base Tibia Claw Body (Z in [-3.0, +4.0] mm)
 claw_base = Part.Face(outer_wire).extrude(App.Vector(0, 0, 7.0)).translate(App.Vector(0, 0, -3.0))
 w_cutout = generate_tibia.build_g1_claw_cutout_wire()
 cutout_prism = Part.Face(w_cutout).extrude(App.Vector(0, 0, 60.0)).translate(App.Vector(0, 0, -30.0))
 claw_base = claw_base.cut(cutout_prism)
 
-# Add raised servo pads & Warren truss servo cage
 ear_bosses = generate_tibia.build_servo_ear_bosses().cut(cutout_prism)
 claw_base = claw_base.fuse(ear_bosses)
 truss_cage = generate_tibia.build_triangulated_truss_servo_cage()
 upper_cheeks = generate_tibia.build_upper_truss_cheeks()
 tibia_base = claw_base.fuse(truss_cage).fuse(upper_cheeks).cut(cutout_prism)
 
-# Cut servo body pocket, counter bearing, ear holes (solid mounting pads without cutout)
+# Servo body pocket + cable exit grommet relief at X in [9.00, 16.50], Y in [-3.60, +3.60], Z in [-20.00, -15.00]
 servo_pocket = Part.makeBox(40.80, 20.30, 48.00, App.Vector(-31.65, -10.15, -20.00))
-tibia_base = tibia_base.cut(servo_pocket)
+servo_cable_slot = Part.makeBox(7.50, 7.20, 5.00, App.Vector(9.00, -3.60, -20.00))
+tibia_base = tibia_base.cut(servo_pocket).cut(servo_cable_slot)
 
 screw_bore = Part.makeCylinder(2.05, 6.0, App.Vector(0.0, 0.0, -24.0))
 nut_pocket = generate_tibia.make_hex_nut_pocket_z(0.0, 0.0, -22.40, -19.50, sw=7.10)
@@ -208,14 +340,13 @@ tibia_base = tibia_base.cut(screw_bore).cut(nut_pocket)
 for sx, sy in [(13.00, 5.00), (13.00, -5.00), (-35.50, 5.00), (-35.50, -5.00)]:
     tibia_base = tibia_base.cut(Part.makeCylinder(1.25, 25.0, App.Vector(sx, sy, -3.20)))
 
-# 2.2 Extend Fork Cheeks to 11.0 mm total width (Z in [-5.0, +6.0] mm) and taper gently to 7.0 mm body
+# Extend Fork Cheeks to 11.0 mm total width (Z in [-5.0, +6.0] mm) and taper gently to 7.0 mm body
 X_SPLIT = -92.0
 X_RAMP_END = -82.0
 DX_TONGUE = 3.5
 
 prism_outer = Part.Face(outer_wire).extrude(App.Vector(0, 0, 40.0)).translate(App.Vector(0, 0, -20.0))
 
-# Fixed Cheek A with gentle 11.3° transition ramp from Z = -5.0 to -3.0 mm:
 pts_back = [
     App.Vector(-150.0, -40.0, -5.0),
     App.Vector(X_SPLIT, -40.0, -5.0),
@@ -223,22 +354,19 @@ pts_back = [
     App.Vector(-150.0, -40.0, -3.0),
     App.Vector(-150.0, -40.0, -5.0),
 ]
-w_back_xz = Part.makePolygon(pts_back)
-wedge_back = Part.Face(w_back_xz).extrude(App.Vector(0.0, 80.0, 0.0)).common(prism_outer)
+wedge_back = Part.Face(Part.makePolygon(pts_back)).extrude(App.Vector(0.0, 80.0, 0.0)).common(prism_outer)
 tibia_base = tibia_base.fuse(wedge_back)
 
-# Front ramp on monolithic body with gentle 11.3° transition from Z = 6.0 down to 4.0 mm:
 pts_front = [
     App.Vector(X_SPLIT, -40.0, 4.0),
     App.Vector(X_SPLIT, -40.0, 6.0),
     App.Vector(X_RAMP_END, -40.0, 4.0),
     App.Vector(X_SPLIT, -40.0, 4.0),
 ]
-w_front_xz = Part.makePolygon(pts_front)
-ramp_front = Part.Face(w_front_xz).extrude(App.Vector(0.0, 80.0, 0.0)).common(prism_outer)
+ramp_front = Part.Face(Part.makePolygon(pts_front)).extrude(App.Vector(0.0, 80.0, 0.0)).common(prism_outer)
 tibia_base = tibia_base.fuse(ramp_front)
 
-# 2.3 Cut Internal Clevis Slot & Sensor Bays (Shifted -4.5 mm inwards to eliminate protrusion)
+# Cut Internal Clevis Slot & Sensor Bays
 rot_deg = -67.59
 rot_rad = math.radians(rot_deg)
 rot_foot = App.Rotation(App.Vector(0, 0, 1), rot_deg)
@@ -251,9 +379,9 @@ slot_upper = Part.makeBox(6.5, 30.0, 6.0, App.Vector(-2.5, 8.0, -3.0))
 slot_claw = Part.makeBox(45.0, 48.0, 6.0, App.Vector(-40.0, -32.0, -3.0))
 sw_pocket = Part.makeBox(10.5, 16.5, 6.0, App.Vector(-10.0, 22.0, -3.0))
 
-# Spring pocket with integrated solid stop pillar (D=2.4 mm) leaving exactly 0.60 mm compression travel:
-pocket_cyl = Part.makeCylinder(2.40, 8.5, App.Vector(-14.0, 11.0, 0.0), App.Vector(0, 1, 0))
-stop_pillar = Part.makeCylinder(1.20, 8.0, App.Vector(-14.0, 11.6, 0.0), App.Vector(0, 1, 0))
+# Spring pocket spanning Y_s in [8.50, 20.60] with solid stop pillar (D=2.4 mm) from Y_s = 11.60 to 20.60
+pocket_cyl = Part.makeCylinder(2.40, 12.10, App.Vector(-14.0, 8.50, 0.0), App.Vector(0, 1, 0))
+stop_pillar = Part.makeCylinder(1.20, 9.00, App.Vector(-14.0, 11.60, 0.0), App.Vector(0, 1, 0))
 spring_pocket = pocket_cyl.cut(stop_pillar)
 
 cable_conduit = Part.makeCylinder(1.80, 50.0, App.Vector(-4.5, 35.0, 0.0), App.Vector(-0.15, 1.0, 0.0))
@@ -261,47 +389,57 @@ cable_conduit = Part.makeCylinder(1.80, 50.0, App.Vector(-4.5, 35.0, 0.0), App.V
 for c in [slot_upper, slot_claw, sw_pocket, spring_pocket, cable_conduit]:
     c.Placement = p_shank.multiply(c.Placement)
 
-# Pivot bores at (-122.0, -14.0)
-pivot_bore = Part.makeCylinder(1.60, 20.0, App.Vector(-122.0, -14.0, -10.0), App.Vector(0, 0, 1))
-pivot_ruthex = Part.makeCylinder(2.10, 4.0, App.Vector(-122.0, -14.0, -5.0), App.Vector(0, 0, 1))
+# Pivot bores at (-122.0, -14.0): Fixed Cheek A is Z in [-5.00, -2.50]
+pivot_bore = Part.makeCylinder(1.55, 20.0, App.Vector(-122.0, -14.0, -10.0), App.Vector(0, 0, 1))
+pivot_ruthex = Part.makeCylinder(2.15, 2.50, App.Vector(-122.0, -14.0, -5.00), App.Vector(0, 0, 1))
 
-tibia_cut = tibia_base.cut(slot_upper).cut(slot_claw).cut(sw_pocket).cut(spring_pocket).cut(cable_conduit).cut(pivot_bore).cut(pivot_ruthex)
+tibia_cut = (
+    tibia_base.cut(slot_upper)
+    .cut(slot_claw)
+    .cut(sw_pocket)
+    .cut(spring_pocket)
+    .cut(cable_conduit)
+    .cut(pivot_bore)
+    .cut(pivot_ruthex)
+)
 
-# 2.4 Formschluss Rebate in Tibia for Removable Cover:
-# Cover sits in Z in [3.5, 6.0] mm for X < X_SPLIT (-92.0 mm)
-# Interlocking groove at X in [X_SPLIT, X_SPLIT + DX_TONGUE] in Z in [3.0, 3.8] mm
+# Formschluss Rebate in Tibia for Removable Cover:
 cut_main = Part.makeBox(150.0 + X_SPLIT, 80.0, 3.5, App.Vector(-150.0, -40.0, 3.5))
-tongue_pocket = Part.makeBox(DX_TONGUE, 80.0, 0.8, App.Vector(X_SPLIT, -40.0, 3.0))
+tongue_pocket = Part.makeBox(DX_TONGUE + 0.10, 80.0, 0.8, App.Vector(X_SPLIT - 0.10, -40.0, 3.0))
 
-# M2 brass Ruthex pocket in Monolithic Tibia at (-96.0, -4.0)
-p_m2 = App.Vector(-96.0, -4.0, 0.0)
-m2_ruthex_mono = Part.makeCylinder(1.70, 5.0, App.Vector(p_m2.x, p_m2.y, 0.0), App.Vector(0, 0, 1))
+# Microswitch Hole 1 (-2.40, 25.50): Integrated locating pin (D = 1.96 mm, Z in [-2.50, +3.30])
+p_sw_h1 = p_shank.multVec(App.Vector(-2.40, 25.50, 0.0))
+sw_pin1 = Part.makeCylinder(0.98, 5.80, App.Vector(p_sw_h1.x, p_sw_h1.y, -2.50), App.Vector(0, 0, 1))
 
-tibia_mono_solid = tibia_cut.cut(cut_main).cut(tongue_pocket).cut(m2_ruthex_mono)
+# Microswitch Hole 2 (-2.40, 32.00): Coaxial M2 Cover Retaining Screw & Ruthex Insert in Cheek A (Z in [-5.00, -2.50])
+p_m2 = p_shank.multVec(App.Vector(-2.40, 32.00, 0.0))
+m2_ruthex_mono = Part.makeCylinder(1.65, 2.50, App.Vector(p_m2.x, p_m2.y, -5.00), App.Vector(0, 0, 1))
+m2_through_mono = Part.makeCylinder(1.05, 6.00, App.Vector(p_m2.x, p_m2.y, -5.50), App.Vector(0, 0, 1))
 
+tibia_mono_solid = tibia_cut.cut(cut_main).cut(tongue_pocket).fuse(sw_pin1).cut(m2_ruthex_mono).cut(m2_through_mono)
 try:
     tibia_mono_solid = tibia_mono_solid.removeSplitter()
 except Exception:
     pass
 
-# 2.5 Build Removable Cover: tibia_foot_cover.FCStd (Shortened to X_SPLIT = -92.0 mm, clears cutout by >12 mm)
-box_cover = Part.makeBox(150.0 + X_SPLIT, 80.0, 3.5, App.Vector(-150.0, -40.0, 3.5))
-cover = Part.Face(outer_wire).extrude(App.Vector(0, 0, 2.5)).translate(App.Vector(0, 0, 3.5)).common(box_cover)
+# Build Removable Cover: custom/v2/parts/tibia/tibia_cover.FCStd
+# Add 0.04 mm clearance at Z=3.54 and X=X_SPLIT-0.04 to prevent coplanar contact
+box_cover = Part.makeBox(150.0 + X_SPLIT - 0.04, 80.0, 3.5, App.Vector(-150.0, -40.0, 3.54))
+cover = Part.Face(outer_wire).extrude(App.Vector(0, 0, 2.46)).translate(App.Vector(0, 0, 3.54)).common(box_cover)
 
-# Add matching interlocking tongue extending into monolithic body at X in [X_SPLIT, X_SPLIT + DX_TONGUE] in Z in [3.0, 3.75]
-tongue_cover = Part.Face(outer_wire).extrude(App.Vector(0, 0, 0.75)).translate(App.Vector(0, 0, 3.0))
-tongue_clip = Part.makeBox(DX_TONGUE, 80.0, 1.0, App.Vector(X_SPLIT, -40.0, 2.9))
+tongue_cover = Part.Face(outer_wire).extrude(App.Vector(0, 0, 0.70)).translate(App.Vector(0, 0, 3.05))
+tongue_clip = Part.makeBox(DX_TONGUE - 0.10, 80.0, 1.0, App.Vector(X_SPLIT - 0.04, -40.0, 2.95))
 tongue_cover = tongue_cover.common(tongue_clip)
 cover = cover.fuse(tongue_cover)
 
 # M3 pivot pin through-hole and counterbore
 m3_hole_cover = Part.makeCylinder(1.60, 10.0, App.Vector(-122.0, -14.0, 0.0), App.Vector(0, 0, 1))
-m3_cbore_cover = Part.makeCylinder(3.10, 1.5, App.Vector(-122.0, -14.0, 4.5), App.Vector(0, 0, 1))
+m3_cbore_cover = Part.makeCylinder(3.10, 1.55, App.Vector(-122.0, -14.0, 4.50), App.Vector(0, 0, 1))
 cover = cover.cut(m3_hole_cover).cut(m3_cbore_cover)
 
-# 1x M2 retaining screw countersink at (-96.0, -4.0)
+# 1x M2 retaining screw countersink at p_m2 (properly oriented cone: R=1.10 at Z=4.85 widening to R=2.25 at Z=6.00)
 m2_hole_cover = Part.makeCylinder(1.10, 10.0, App.Vector(p_m2.x, p_m2.y, 0.0), App.Vector(0, 0, 1))
-m2_csink_cover = Part.makeCone(2.2, 1.1, 1.1, App.Vector(p_m2.x, p_m2.y, 4.9), App.Vector(0, 0, 1))
+m2_csink_cover = Part.makeCone(1.10, 2.25, 1.15, App.Vector(p_m2.x, p_m2.y, 4.85), App.Vector(0, 0, 1))
 cover = cover.cut(m2_hole_cover).cut(m2_csink_cover)
 
 try:
@@ -309,55 +447,67 @@ try:
 except Exception:
     pass
 
-# Save Monolithic Body
-fcstd_mono_path = f"{concept_dir}/tibia_sensor_monocoque.FCStd"
+# Save Canonical Monolithic Body: custom/v2/parts/tibia/tibia.FCStd
+fcstd_mono_path = f"{parts_tibia_dir}/tibia.FCStd"
 try:
-    App.closeDocument("tibia_sensor_monocoque")
+    App.closeDocument("tibia")
 except Exception:
     pass
-doc_mono = App.newDocument("tibia_sensor_monocoque")
-obj_mono = doc_mono.addObject("Part::Feature", "Tibia_Sensor_Monocoque")
-obj_mono.Label = "Tibia v2 Monocoque Body with Integrated Fixed Cheek"
+doc_mono = App.newDocument("tibia")
+obj_mono = doc_mono.addObject("Part::Feature", "Tibia_Body")
+obj_mono.Label = "Tibia v2 Monocoque Body with Integrated Fixed Cheek (PETG)"
 obj_mono.Shape = tibia_mono_solid
+if hasattr(obj_mono, "ViewObject") and obj_mono.ViewObject is not None:
+    obj_mono.ViewObject.Visibility = True
+    obj_mono.ViewObject.ShapeColor = COLOR_CFRP
 doc_mono.recompute()
 doc_mono.saveAs(fcstd_mono_path)
+tibia_mono_solid.exportStep(f"{export_step_parts}/tibia.step")
+tibia_mono_solid.exportStl(f"{export_stl_parts}/tibia.stl")
 print(f"✔ Saved: {fcstd_mono_path} (Valid={tibia_mono_solid.isValid()}, Volume={tibia_mono_solid.Volume:.1f} mm3)")
 
-# Save Removable Cover
-fcstd_cover_path = f"{concept_dir}/tibia_foot_cover.FCStd"
+# Save Canonical Removable Cover: custom/v2/parts/tibia/tibia_cover.FCStd
+fcstd_cover_path = f"{parts_tibia_dir}/tibia_cover.FCStd"
 try:
-    App.closeDocument("tibia_foot_cover")
+    App.closeDocument("tibia_cover")
 except Exception:
     pass
-doc_cover = App.newDocument("tibia_foot_cover")
-obj_cover = doc_cover.addObject("Part::Feature", "Tibia_Foot_Cover")
-obj_cover.Label = "Tibia Foot Service Cover (Cheek B with Form-Fit Tongue)"
+doc_cover = App.newDocument("tibia_cover")
+obj_cover = doc_cover.addObject("Part::Feature", "Tibia_Cover")
+obj_cover.Label = "Tibia Foot Service Cover (Cheek B with Form-Fit Tongue, PETG)"
 obj_cover.Shape = cover
+if hasattr(obj_cover, "ViewObject") and obj_cover.ViewObject is not None:
+    obj_cover.ViewObject.Visibility = True
+    obj_cover.ViewObject.ShapeColor = COLOR_COVER
 doc_cover.recompute()
 doc_cover.saveAs(fcstd_cover_path)
+cover.exportStep(f"{export_step_parts}/tibia_cover.step")
+cover.exportStl(f"{export_stl_parts}/tibia_cover.stl")
 print(f"✔ Saved: {fcstd_cover_path} (Valid={cover.isValid()}, Volume={cover.Volume:.1f} mm3)")
 
 # =============================================================================
-# 3. Build Full Subsystem Assembly: tibia_assembly.FCStd
+# 4. Build Canonical Subsystem Assembly: custom/v2/tibia_assembly.FCStd
 # =============================================================================
-print("2. Building Full Subsystem Assembly: tibia_assembly.FCStd...")
+print("4. Building Canonical Subsystem Assembly: custom/v2/tibia_assembly.FCStd...")
 doc_asm_name = "tibia_assembly"
 try:
     App.closeDocument(doc_asm_name)
 except Exception:
     pass
-fcstd_asm_path = f"{concept_dir}/tibia_assembly.FCStd"
+fcstd_asm_path = f"{v2_dir}/tibia_assembly.FCStd"
 doc_asm = App.newDocument(doc_asm_name)
 doc_asm.saveAs(fcstd_asm_path)
 
-# Open COTS and components
 doc_servo = App.openDocument(f"{cots_dir}/servo_nr645.FCStd")
-doc_rocker = App.openDocument(f"{concept_dir}/tibia_foot_rocker.FCStd")
-doc_sw = App.openDocument(f"{cots_dir}/microswitch_subminiature.FCStd")
-doc_sp = App.openDocument(f"{cots_dir}/compression_spring_4x12.FCStd")
 
 asm_part = doc_asm.addObject("App::Part", "Tibia_Assembly")
 asm_part.Label = "Lasius Tibia v2 Subsystem Assembly with Foot Contact Sensor"
+for o in asm_part.Origin.OutList:
+    if hasattr(o, "Visibility"):
+        o.Visibility = False
+asm_part.Origin.Visibility = False
+asm_part.Visibility = True
+
 
 def make_link(name, label, target_obj, placement, color=None):
     lnk = doc_asm.addObject("App::Link", name)
@@ -378,33 +528,34 @@ def make_link(name, label, target_obj, placement, color=None):
             pass
     return lnk
 
-# 1. Monolithic Tibia Body (Fixed Cheek A + Integrated Lower & Upper Cage Cheeks)
+
+# 1. Monolithic Tibia Body
 make_link("Tibia_Body", "1. Tibia v2 Monocoque (Warren Truss + Fixed Cheek A)", obj_mono, App.Placement(), COLOR_CFRP)
 
 # 2. Knee Servo
 p_servo = App.Placement(App.Vector(0.0, 0.0, 18.8), App.Rotation(App.Vector(0, 0, 1), 180.0))
-make_link("Knee_Servo", "2. Knee Servo (Torcster NR-645 COTS)", doc_servo.Objects[0], p_servo, COLOR_SERVO)
+make_link("Knee_Servo", "2. Knee Servo (Torcster NR-645 COTS)", doc_servo.Servo_Complete, p_servo, COLOR_SERVO)
 
-# 3. Bionic Foot Rocker (Outward Tarsus)
-make_link("Tibia_Foot_Rocker", "3. Bionic Tarsus Rocker Foot (+52% Lever)", doc_rocker.Objects[0], p_shank, COLOR_ORANGE)
+# 3. Bionic Foot Rocker
+make_link("Tibia_Rocker", "3. Bionic Tarsus Rocker Foot (+52% Lever)", obj_rocker, p_shank, COLOR_ORANGE)
 
 # 4. Microswitch
 p_sw_local = App.Placement(App.Vector(-6.9, 23.0, 0.0), App.Rotation())
-make_link("Microswitch", "4. Subminiature Microswitch (COTS)", doc_sw.Objects[0], p_shank.multiply(p_sw_local), COLOR_SWITCH)
+make_link("Microswitch", "4. Subminiature Microswitch (COTS)", obj_sw, p_shank.multiply(p_sw_local), COLOR_SWITCH)
 
-# 5. Compression Spring
-p_sp_local = App.Placement(App.Vector(-14.0, 8.5, 0.0), App.Rotation())
-make_link("Compression_Spring", "5. Stainless Preload Spring (COTS)", doc_sp.Objects[0], p_shank.multiply(p_sp_local), COLOR_SPRING)
+# 5. Compression Spring (at Y_s = 8.55 mm -> spans Y_s in [8.55, 20.55])
+p_sp_local = App.Placement(App.Vector(-14.0, 8.55, 0.0), App.Rotation())
+make_link("Compression_Spring", "5. Stainless Preload Spring (COTS)", obj_sp, p_shank.multiply(p_sp_local), COLOR_SPRING)
 
 # 6. Removable Service Cover (Cheek B)
-make_link("Tibia_Foot_Cover", "6. Removable Service Cover (Cheek B Form-Fit)", obj_cover, App.Placement(), COLOR_COVER)
+make_link("Tibia_Cover", "6. Removable Service Cover (Cheek B Form-Fit)", obj_cover, App.Placement(), COLOR_COVER)
 
-# 7. M3 Hardened Pivot Pin & Ruthex
+# 7. M3 Hardened Pivot Pin & Ruthex (Ruthex height = 2.45 mm inside Cheek A Z in [-5.00, -2.55])
 pin_obj = doc_asm.addObject("Part::Feature", "Pivot_Pin_Assembly")
 pin_obj.Label = "7. M3 Hardened Pivot Pin & Ruthex"
-pin_head = Part.makeCylinder(2.8, 1.5, App.Vector(-122.0, -14.0, 4.5), App.Vector(0, 0, 1))
-pin_shaft = Part.makeCylinder(1.5, 11.0, App.Vector(-122.0, -14.0, -5.0), App.Vector(0, 0, 1))
-ruthex = Part.makeCylinder(2.1, 4.0, App.Vector(-122.0, -14.0, -5.0), App.Vector(0, 0, 1))
+pin_head = Part.makeCylinder(2.80, 1.45, App.Vector(-122.0, -14.0, 4.55), App.Vector(0, 0, 1))
+pin_shaft = Part.makeCylinder(1.50, 9.55, App.Vector(-122.0, -14.0, -5.00), App.Vector(0, 0, 1))
+ruthex = Part.makeCylinder(2.10, 2.45, App.Vector(-122.0, -14.0, -5.00), App.Vector(0, 0, 1))
 pin_obj.Shape = pin_head.fuse(pin_shaft).fuse(ruthex)
 asm_part.addObject(pin_obj)
 if hasattr(pin_obj, "ViewObject") and pin_obj.ViewObject:
@@ -413,12 +564,12 @@ if hasattr(pin_obj, "ViewObject") and pin_obj.ViewObject:
     except Exception:
         pass
 
-# 8. M2 DIN 7991 Flush Countersunk Screw
+# 8. M2 DIN 7991 Flush Countersunk Screw & Ruthex at p_m2 (coaxial with Microswitch Hole 2)
 screw_m2 = doc_asm.addObject("Part::Feature", "Cover_Retaining_Screw_M2")
-screw_m2.Label = "8. M2x6 Flush Countersunk Retaining Screw"
-head_m2 = Part.makeCone(1.1, 2.2, 1.1, App.Vector(-96.0, -4.0, 4.9), App.Vector(0, 0, 1))
-shank_m2 = Part.makeCylinder(1.0, 6.0, App.Vector(-96.0, -4.0, 0.0), App.Vector(0, 0, 1))
-ruthex_m2 = Part.makeCylinder(1.7, 4.0, App.Vector(-96.0, -4.0, 0.0), App.Vector(0, 0, 1))
+screw_m2.Label = "8. M2x10 Flush Countersunk Retaining Screw & Ruthex"
+head_m2 = Part.makeCone(1.00, 2.10, 1.10, App.Vector(p_m2.x, p_m2.y, 4.90), App.Vector(0, 0, 1))
+shank_m2 = Part.makeCylinder(0.98, 9.90, App.Vector(p_m2.x, p_m2.y, -5.00), App.Vector(0, 0, 1))
+ruthex_m2 = Part.makeCylinder(1.60, 2.45, App.Vector(p_m2.x, p_m2.y, -5.00), App.Vector(0, 0, 1))
 screw_m2.Shape = head_m2.fuse(shank_m2).fuse(ruthex_m2)
 asm_part.addObject(screw_m2)
 if hasattr(screw_m2, "ViewObject") and screw_m2.ViewObject:
@@ -429,28 +580,39 @@ if hasattr(screw_m2, "ViewObject") and screw_m2.ViewObject:
 
 doc_asm.recompute()
 doc_asm.save()
-print(f"✔ Saved Assembly: {fcstd_asm_path}")
+print(f"✔ Saved Canonical Assembly: {fcstd_asm_path}")
 
-# =============================================================================
-# 4. Export STEP & STL
-# =============================================================================
-print("3. Exporting STEP and STL...")
-step_asm_path = f"{export_step_dir}/tibia_assembly.step"
-stl_asm_path = f"{export_stl_dir}/tibia_assembly.stl"
-
-export_objs = [obj_mono, obj_cover, doc_servo.Objects[0], doc_rocker.Objects[0], doc_sw.Objects[0], doc_sp.Objects[0], pin_obj, screw_m2]
-Part.export(export_objs, step_asm_path)
+# Export STEP
+step_asm_path = f"{export_step_v2}/tibia_assembly.step"
+asm_part.Shape.exportStep(step_asm_path)
+# Assembly STL omitted (assemblies use STEP for CAD; STL is reserved for 3D-printable parts)
 print(f"✔ Exported STEP: {step_asm_path}")
 
-comp = Part.Compound([o.Shape for o in export_objs])
-comp.exportStl(stl_asm_path)
-print(f"✔ Exported STL: {stl_asm_path}")
+# =============================================================================
+# 5. Pairwise 3D B-Rep Collision Verification
+# =============================================================================
+print("5. Running Pairwise 3D B-Rep Collision Check on tibia_assembly.FCStd...")
+items = []
+for obj in asm_part.Group:
+    if hasattr(obj, "Shape") and not obj.Shape.isNull():
+        items.append((obj.Name, obj.Shape))
 
-# Also export individual printable components
-obj_mono.Shape.exportStep(f"{export_step_dir}/tibia_sensor_monocoque.step")
-obj_mono.Shape.exportStl(f"{export_stl_dir}/tibia_sensor_monocoque.stl")
-obj_cover.Shape.exportStep(f"{export_step_dir}/tibia_foot_cover.step")
-obj_cover.Shape.exportStl(f"{export_stl_dir}/tibia_foot_cover.stl")
-print("✔ Exported individual STEP & STL for Monocoque & Cover")
+max_coll = 0.0
+for i in range(len(items)):
+    for j in range(i + 1, len(items)):
+        n1, s1 = items[i]
+        n2, s2 = items[j]
+        if s1.BoundBox.intersect(s2.BoundBox):
+            v = s1.common(s2).Volume
+            if v > 1e-4:
+                print(f"  ❌ COLLISION {n1} <-> {n2}: {v:.4f} mm^3")
+                max_coll = max(max_coll, v)
+if max_coll <= 1e-4:
+    print("  ✅ ZERO COLLISIONS across all 8 components in tibia_assembly.FCStd (0.0000 mm^3)!")
 
-print("=== Tibia Assembly Generation Complete! ===")
+for d in list(App.listDocuments().values()):
+    try:
+        App.closeDocument(d.Name)
+    except Exception:
+        pass
+sys.exit(0)

@@ -119,9 +119,8 @@ for obj in asm_part.Group:
 if shapes:
     compound = Part.makeCompound(shapes)
     compound.exportStep(step_path)
-    compound.exportStl(stl_path)
+    # Assembly STL omitted (assemblies use STEP for CAD; STL is reserved for 3D-printable parts)
     print(f"✔ Exported STEP: {step_path}")
-    print(f"✔ Exported STL:  {stl_path}")
 
 App.closeDocument(doc_femur.Name)
 App.closeDocument(doc_cover.Name)

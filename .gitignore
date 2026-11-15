@@ -148,6 +148,6 @@ hardware/mechanics/scans/*
 *.FCBak
 *.fcbak
 
-!/hardware/mechanics/export/step/custom/v1/leg_assembly.step
-!/hardware/mechanics/export/stl/custom/v1/body_assembly.stl
-!/hardware/mechanics/export/stl/custom/v1/leg_assembly.stl
+# Assembly STLs are omitted from Git (Assemblies use STEP; STL is reserved for 3D-printable parts)
+hardware/mechanics/export/stl/**/*assembly*.stl
+hardware/mechanics/export/stl/*assembly*.stl
