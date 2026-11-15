@@ -126,7 +126,7 @@ def build_organic_tibia_outer_wire():
     e6 = Part.makeLine(p56_e, p6_e)
 
     # Distal joint terminal points around spring pocket and pivot hub:
-    p_spring_cheek = App.Vector(-130.0, -1.5, 0.0)
+    p_spring_cheek = App.Vector(-130.0, -0.5, 0.0)
     p_hub_left = App.Vector(-128.5, -14.0, 0.0)
     p_hub_bot = App.Vector(-122.0, -20.5, 0.0)
 
@@ -136,10 +136,10 @@ def build_organic_tibia_outer_wire():
     # Dorsal arch
     poles1 = [
         p_spring_cheek,
-        (-128.0, 0.0),
-        (-124.0, 2.5),
-        (-116.0, 5.5),
-        (-106.0, 8.5),
+        (-128.0, 0.5),
+        (-124.0, 2.8),
+        (-116.0, 5.8),
+        (-106.0, 8.8),
         (-92.0, 12.5),
         (-78.200, 16.948),
         (-62.257, 22.984),
@@ -156,7 +156,7 @@ def build_organic_tibia_outer_wire():
     t_dorsal_start = App.Vector(1.0, 0.5, 0.0)
     e1 = generate_tibia.make_g1_cubic_bspline(poles1, t_dorsal_start, generate_tibia.circle_tangent_cw(c2, p2_s))
 
-    # Ventral arch
+    # Ventral arch (expanded belly to enclose slot completely)
     poles7 = [
         p6_e,
         (-39.50, -14.25),
@@ -164,11 +164,11 @@ def build_organic_tibia_outer_wire():
         (-52.50, -9.40),
         (-61.50, -6.80),
         (-69.50, -5.75),
-        (-77.50, -6.10),
-        (-87.00, -8.00),
-        (-96.50, -10.50),
-        (-106.50, -14.00),
-        (-115.00, -17.50),
+        (-77.50, -6.50),
+        (-87.00, -9.50),
+        (-96.50, -12.50),
+        (-106.50, -16.00),
+        (-115.00, -18.80),
         p_hub_bot,
     ]
     t_ventral_end = App.Vector(-1.0, -0.2, 0.0)
@@ -212,17 +212,14 @@ for sx, sy in [(13.00, 5.00), (13.00, -5.00), (-35.50, 5.00), (-35.50, -5.00)]:
 X_SPLIT = -72.0
 DX_TONGUE = 3.0
 
+# Fixed Cheek A on back (-Z side): Z in [-5.0, -3.0] mm
 pad_back = Part.Face(outer_wire).extrude(App.Vector(0, 0, 2.0)).translate(App.Vector(0, 0, -5.0))
 clip_back = Part.makeBox(150.0 + X_SPLIT, 80.0, 20.0, App.Vector(-150.0, -40.0, -10.0))
 pad_back = pad_back.common(clip_back)
 
-pad_front = Part.Face(outer_wire).extrude(App.Vector(0, 0, 2.0)).translate(App.Vector(0, 0, 4.0))
-clip_front = Part.makeBox(150.0 + X_SPLIT, 80.0, 20.0, App.Vector(-150.0, -40.0, -10.0))
-pad_front = pad_front.common(clip_front)
+tibia_base = tibia_base.fuse(pad_back)
 
-tibia_base = tibia_base.fuse(pad_back).fuse(pad_front)
-
-# 2.3 Cut Internal Clevis Slot & Sensor Bays (Transformed from local shank coordinates)
+# 2.3 Cut Internal Clevis Slot & Sensor Bays (Shifted -4.5 mm inwards to eliminate protrusion)
 rot_deg = -67.59
 rot_rad = math.radians(rot_deg)
 rot_foot = App.Rotation(App.Vector(0, 0, 1), rot_deg)
@@ -231,16 +228,16 @@ py = 10.0 * math.cos(rot_rad)
 base_pos = App.Vector(-122.0 - px, -14.0 - py, 0.5)
 p_shank = App.Placement(base_pos, rot_foot)
 
-slot_upper = Part.makeBox(12.0, 35.0, 6.0, App.Vector(-2.0, 8.0, -3.0))
+slot_upper = Part.makeBox(6.5, 30.0, 6.0, App.Vector(-2.5, 8.0, -3.0))
 slot_claw = Part.makeBox(45.0, 48.0, 6.0, App.Vector(-40.0, -32.0, -3.0))
-sw_pocket = Part.makeBox(10.5, 16.5, 6.0, App.Vector(-5.5, 22.0, -3.0))
+sw_pocket = Part.makeBox(10.5, 16.5, 6.0, App.Vector(-10.0, 22.0, -3.0))
 
 # Spring pocket with integrated solid stop pillar (D=2.4 mm) leaving exactly 0.60 mm compression travel:
 pocket_cyl = Part.makeCylinder(2.40, 8.5, App.Vector(-14.0, 11.0, 0.0), App.Vector(0, 1, 0))
 stop_pillar = Part.makeCylinder(1.20, 8.0, App.Vector(-14.0, 11.6, 0.0), App.Vector(0, 1, 0))
 spring_pocket = pocket_cyl.cut(stop_pillar)
 
-cable_conduit = Part.makeCylinder(1.80, 50.0, App.Vector(0.0, 35.0, 0.0), App.Vector(-0.15, 1.0, 0.0))
+cable_conduit = Part.makeCylinder(1.80, 50.0, App.Vector(-4.5, 35.0, 0.0), App.Vector(-0.15, 1.0, 0.0))
 
 for c in [slot_upper, slot_claw, sw_pocket, spring_pocket, cable_conduit]:
     c.Placement = p_shank.multiply(c.Placement)
@@ -253,15 +250,14 @@ tibia_cut = tibia_base.cut(slot_upper).cut(slot_claw).cut(sw_pocket).cut(spring_
 
 # 2.4 Formschluss Rebate in Tibia for Removable Cover:
 # Cover sits in Z in [3.5, 6.0] mm for X < X_SPLIT
-# Interlocking groove at X in [X_SPLIT - DX_TONGUE, X_SPLIT] in Z in [3.5, 4.8] mm
-cut_main = Part.makeBox(150.0 + X_SPLIT - DX_TONGUE, 80.0, 3.5, App.Vector(-150.0, -40.0, 3.5))
-cut_tongue = Part.makeBox(DX_TONGUE, 80.0, 1.3, App.Vector(X_SPLIT - DX_TONGUE, -40.0, 3.5))
-rebate = cut_main.fuse(cut_tongue)
+# Interlocking groove at X in [X_SPLIT, X_SPLIT + DX_TONGUE] in Z in [3.0, 3.8] mm
+cut_main = Part.makeBox(150.0 + X_SPLIT, 80.0, 3.5, App.Vector(-150.0, -40.0, 3.5))
+tongue_pocket = Part.makeBox(DX_TONGUE, 80.0, 0.8, App.Vector(X_SPLIT, -40.0, 3.0))
 
 # M2 brass Ruthex pocket in Monolithic Tibia at (-100.0, -3.0)
 m2_ruthex_mono = Part.makeCylinder(1.70, 5.0, App.Vector(-100.0, -3.0, 0.0), App.Vector(0, 0, 1))
 
-tibia_mono_solid = tibia_cut.cut(rebate).cut(m2_ruthex_mono)
+tibia_mono_solid = tibia_cut.cut(cut_main).cut(tongue_pocket).cut(m2_ruthex_mono)
 
 try:
     tibia_mono_solid = tibia_mono_solid.removeSplitter()
@@ -272,9 +268,11 @@ except Exception:
 box_cover = Part.makeBox(150.0 + X_SPLIT, 80.0, 3.5, App.Vector(-150.0, -40.0, 3.5))
 cover = Part.Face(outer_wire).extrude(App.Vector(0, 0, 2.5)).translate(App.Vector(0, 0, 3.5)).common(box_cover)
 
-# Stepped tongue at top
-step_cut = Part.makeBox(DX_TONGUE, 80.0, 2.0, App.Vector(X_SPLIT - DX_TONGUE, -40.0, 4.8))
-cover = cover.cut(step_cut)
+# Add matching interlocking tongue extending into monolithic body at X in [X_SPLIT, X_SPLIT + DX_TONGUE] in Z in [3.0, 3.75]
+tongue_cover = Part.Face(outer_wire).extrude(App.Vector(0, 0, 0.75)).translate(App.Vector(0, 0, 3.0))
+tongue_clip = Part.makeBox(DX_TONGUE, 80.0, 1.0, App.Vector(X_SPLIT, -40.0, 2.9))
+tongue_cover = tongue_cover.common(tongue_clip)
+cover = cover.fuse(tongue_cover)
 
 # M3 pivot pin through-hole and counterbore
 m3_hole_cover = Part.makeCylinder(1.60, 10.0, App.Vector(-122.0, -14.0, 0.0), App.Vector(0, 0, 1))
@@ -371,7 +369,7 @@ make_link("Knee_Servo", "2. Knee Servo (Torcster NR-645 COTS)", doc_servo.Object
 make_link("Tibia_Foot_Rocker", "3. Bionic Tarsus Rocker Foot (+52% Lever)", doc_rocker.Objects[0], p_shank, COLOR_ORANGE)
 
 # 4. Microswitch
-p_sw_local = App.Placement(App.Vector(4.3 - 6.7, 23.0, 0.0), App.Rotation())
+p_sw_local = App.Placement(App.Vector(-6.9, 23.0, 0.0), App.Rotation())
 make_link("Microswitch", "4. Subminiature Microswitch (COTS)", doc_sw.Objects[0], p_shank.multiply(p_sw_local), COLOR_SWITCH)
 
 # 5. Compression Spring

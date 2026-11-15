@@ -146,14 +146,14 @@ edge_ventral = curve_ventral.toShape()
 
 pts_upper = [
     p_hub_bot,
-    App.Vector(3.5, 12.0, 0.0),
-    App.Vector(5.5, 18.0, 0.0),
-    App.Vector(7.0, 26.0, 0.0),
-    App.Vector(7.0, 35.0, 0.0),
-    App.Vector(4.3, 35.0, 0.0),
-    App.Vector(4.3, 24.0, 0.0),
-    App.Vector(2.0, 16.0, 0.0),
-    App.Vector(-2.0, 13.5, 0.0),
+    App.Vector(2.0, 12.0, 0.0),
+    App.Vector(2.5, 18.0, 0.0),
+    App.Vector(2.5, 26.0, 0.0),
+    App.Vector(2.5, 34.5, 0.0),
+    App.Vector(-0.2, 34.5, 0.0),
+    App.Vector(-0.2, 24.0, 0.0),
+    App.Vector(-2.0, 16.0, 0.0),
+    App.Vector(-5.0, 13.5, 0.0),
     App.Vector(-11.0, 8.5, 0.0),
     p_spring_end,
 ]
@@ -170,8 +170,8 @@ rocker_solid = rocker_solid.cut(Part.makeCylinder(1.55, 10.0, App.Vector(0.0, 10
 # Spring Boss at (-14.0, 8.5)
 rocker_solid = rocker_solid.fuse(Part.makeCylinder(1.50, 2.5, App.Vector(-14.0, 8.5, 0.0), App.Vector(0, 1, 0)))
 
-# M2 Set Screw Pocket at (4.3, 32.5)
-rocker_solid = rocker_solid.cut(Part.makeCylinder(1.00, 6.0, App.Vector(4.3, 32.5, 0.0), App.Vector(-1, 0, 0)))
+# M2 Set Screw Pocket at (-0.2, 32.5)
+rocker_solid = rocker_solid.cut(Part.makeCylinder(1.00, 6.0, App.Vector(2.6, 32.5, 0.0), App.Vector(-1, 0, 0)))
 
 obj_rocker = doc_rocker.addObject("Part::Feature", "Tibia_Foot_Rocker")
 obj_rocker.Label = "Tibia Foot Rocker Lever (Organic Bionic Tarsus Wippe)"
@@ -210,19 +210,19 @@ pts_shank = [
 shank_wire = Part.makePolygon(pts_shank)
 shank_solid = Part.Face(shank_wire).extrude(App.Vector(0.0, 0.0, 11.0)).translate(App.Vector(0.0, 0.0, -5.5))
 
-slot_upper = Part.makeBox(12.0, 35.0, 6.0, App.Vector(-2.0, 8.0, -3.0))
+slot_upper = Part.makeBox(6.5, 30.0, 6.0, App.Vector(-2.5, 8.0, -3.0))
 slot_claw = Part.makeBox(45.0, 48.0, 6.0, App.Vector(-40.0, -32.0, -3.0))
-sw_pocket = Part.makeBox(10.5, 16.5, 6.0, App.Vector(-5.5, 22.0, -3.0))
+sw_pocket = Part.makeBox(10.5, 16.5, 6.0, App.Vector(-10.0, 22.0, -3.0))
 # Spring pocket with integrated solid stop pillar (D=2.4 mm) leaving exactly 0.60 mm compression travel:
 pocket_cyl = Part.makeCylinder(2.40, 8.5, App.Vector(-14.0, 11.0, 0.0), App.Vector(0, 1, 0))
 stop_pillar = Part.makeCylinder(1.20, 8.0, App.Vector(-14.0, 11.6, 0.0), App.Vector(0, 1, 0))
 spring_pocket = pocket_cyl.cut(stop_pillar)
-cable_conduit = Part.makeCylinder(1.80, 45.0, App.Vector(0.0, 35.0, 0.0), App.Vector(-0.15, 1.0, 0.0))
+cable_conduit = Part.makeCylinder(1.80, 45.0, App.Vector(-4.5, 35.0, 0.0), App.Vector(-0.15, 1.0, 0.0))
 pivot_bore = Part.makeCylinder(1.60, 20.0, App.Vector(0.0, 10.0, -10.0), App.Vector(0, 0, 1))
 pivot_cbore = Part.makeCylinder(3.00, 3.0, App.Vector(0.0, 10.0, 3.5), App.Vector(0, 0, 1))
 pivot_ruthex = Part.makeCylinder(2.10, 4.0, App.Vector(0.0, 10.0, -5.5), App.Vector(0, 0, 1))
-sw_hole1 = Part.makeCylinder(1.10, 20.0, App.Vector(2.1, 25.5, -10.0), App.Vector(0, 0, 1))
-sw_hole2 = Part.makeCylinder(1.10, 20.0, App.Vector(2.1, 32.0, -10.0), App.Vector(0, 0, 1))
+sw_hole1 = Part.makeCylinder(1.10, 20.0, App.Vector(-2.4, 25.5, -10.0), App.Vector(0, 0, 1))
+sw_hole2 = Part.makeCylinder(1.10, 20.0, App.Vector(-2.4, 32.0, -10.0), App.Vector(0, 0, 1))
 
 shank_solid = shank_solid.cut(slot_upper).cut(slot_claw).cut(sw_pocket).cut(spring_pocket).cut(cable_conduit).cut(pivot_bore).cut(pivot_cbore).cut(pivot_ruthex).cut(sw_hole1).cut(sw_hole2)
 
@@ -272,7 +272,7 @@ p_shank = App.Placement(App.Vector(0, 0, 0), App.Rotation())
 make_link("Tibia_Foot_Shank", "1. Tibia Foot Clevis Shank", obj_shank, p_shank, COLOR_CFRP)
 make_link("Tibia_Foot_Rocker", "2. Organic Bionic Rocker Foot", obj_rocker, p_shank, COLOR_ALU_ORANGE)
 
-p_sw = App.Placement(App.Vector(4.3 - 6.7, 23.0, 0.0), App.Rotation())
+p_sw = App.Placement(App.Vector(-6.9, 23.0, 0.0), App.Rotation())
 make_link("Microswitch", "3. Subminiature Microswitch (COTS)", obj_sw, p_sw, COLOR_SWITCH)
 
 p_sp = App.Placement(App.Vector(-14.0, 8.5, 0.0), App.Rotation())
