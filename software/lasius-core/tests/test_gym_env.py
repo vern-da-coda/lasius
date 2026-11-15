@@ -2,16 +2,17 @@
 Unit tests for Lasius Hexapod Gymnasium Environment (`lasius.core.sim.gym_env`).
 """
 
-import numpy as np
 import pytest
 
 try:
+    import numpy as np
     import gymnasium as gym
     import pybullet
     from lasius.core.sim.gym_env import LasiusGymEnv
     RL_AVAILABLE = True
 except ImportError:
     RL_AVAILABLE = False
+    np = None
 
 
 @pytest.mark.skipif(not RL_AVAILABLE, reason="Gymnasium or PyBullet not installed")

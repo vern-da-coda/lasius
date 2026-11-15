@@ -406,9 +406,7 @@ export class DemoGaitEngine {
       this.phase = (this.phase + 0.02 * this.gaitSpeed) % 1.0;
     }
 
-    // World displacement components
-    const dxWalkW = this.currWalkX * this.stepLength;
-    const dyWalkW = -this.currWalkY * this.stepLength;
+    // Turn stride scaling
     const turnStride = this.stepLength * 0.75;
 
     const allLegs: LegKey[] = ['left_front', 'left_middle', 'left_rear', 'right_front', 'right_middle', 'right_rear'];
@@ -427,6 +425,9 @@ export class DemoGaitEngine {
         rawY = neutral.y;
         rawZ = stanceZ;
       } else {
+        const offset = phaseOffsets[legKey] ?? 0.0;
+        const legPhase = (this.phase + offset) % 1.0;
+
         let strideNorm: number;
         if (legPhase < swingFrac) {
           const norm = legPhase / swingFrac; // 0.0 to 1.0
