@@ -49,6 +49,7 @@ COLOR_SWITCH = (0.15, 0.15, 0.15)      # Matte black switch
 COLOR_SPRING = (0.85, 0.85, 0.88)      # Stainless spring
 COLOR_BRASS = (0.85, 0.70, 0.20)       # Brass hardware
 COLOR_STEEL = (0.80, 0.80, 0.82)       # Steel fasteners
+COLOR_TOP_CAGE = (0.20, 0.48, 0.68)    # Anodized metallic blue top cage accent
 
 # =============================================================================
 # 1. Build Slender Organic Outer Contour of Unified Tibia Body
@@ -195,14 +196,9 @@ claw_base = claw_base.fuse(ear_bosses)
 truss_cage = generate_tibia.build_triangulated_truss_servo_cage()
 tibia_base = claw_base.fuse(truss_cage).cut(cutout_prism)
 
-# Cut servo body pocket, cable slot, counter bearing, ear holes
+# Cut servo body pocket, counter bearing, ear holes (solid mounting pads without cutout)
 servo_pocket = Part.makeBox(40.80, 20.30, 28.00, App.Vector(-31.65, -10.15, -20.00))
 tibia_base = tibia_base.cut(servo_pocket)
-
-map_slot = lambda p: App.Vector(p.x, p.y, -20.00)
-slot_pts = [(9.0, -4.5, 0.0), (15.5, -4.5, 1.0), (15.5, 4.5, 1.0), (9.0, 4.5, 0.0)]
-cable_slot = Part.Face(generate_tibia.make_rounded_polygon_wire_2d(slot_pts, map_slot)).extrude(App.Vector(0, 0, 28.00))
-tibia_base = tibia_base.cut(cable_slot)
 
 screw_bore = Part.makeCylinder(2.05, 6.0, App.Vector(0.0, 0.0, -24.0))
 nut_pocket = generate_tibia.make_hex_nut_pocket_z(0.0, 0.0, -22.40, -19.50, sw=7.10)
@@ -237,7 +233,12 @@ p_shank = App.Placement(base_pos, rot_foot)
 slot_upper = Part.makeBox(12.0, 35.0, 6.0, App.Vector(-2.0, 8.0, -3.0))
 slot_claw = Part.makeBox(45.0, 48.0, 6.0, App.Vector(-40.0, -32.0, -3.0))
 sw_pocket = Part.makeBox(10.5, 16.5, 6.0, App.Vector(-5.5, 22.0, -3.0))
-spring_pocket = Part.makeCylinder(2.40, 12.0, App.Vector(-14.0, 11.0, 0.0), App.Vector(0, 1, 0))
+
+# Spring pocket with integrated solid stop pillar (D=2.4 mm) leaving exactly 0.60 mm compression travel:
+pocket_cyl = Part.makeCylinder(2.40, 8.5, App.Vector(-14.0, 11.0, 0.0), App.Vector(0, 1, 0))
+stop_pillar = Part.makeCylinder(1.20, 8.0, App.Vector(-14.0, 11.6, 0.0), App.Vector(0, 1, 0))
+spring_pocket = pocket_cyl.cut(stop_pillar)
+
 cable_conduit = Part.makeCylinder(1.80, 50.0, App.Vector(0.0, 35.0, 0.0), App.Vector(-0.15, 1.0, 0.0))
 
 for c in [slot_upper, slot_claw, sw_pocket, spring_pocket, cable_conduit]:
@@ -317,6 +318,69 @@ doc_cover.recompute()
 doc_cover.saveAs(fcstd_cover_path)
 print(f"✔ Saved: {fcstd_cover_path} (Valid={cover.isValid()}, Volume={cover.Volume:.1f} mm3)")
 
+# Build & Save Top-Truss Clamping Cage
+def build_servo_top_cage():
+    """
+    Build the removable Top-Truss Clamping Cage ("Obergurt-Fachwerkkäfig")
+    for the upper part of the Torcster NR-645 knee servo (Z in [+7.00, +19.50] mm).
+    - Mates flush with the Tibia servo mounting pads at Z = +7.00 mm.
+    - Clamps the servo mounting tabs rigidly down against the Tibia pads via 4x M2.5 screws.
+    - Forms a torsion-stiff closed box section with the lower Warren truss cage, shielding
+      the servo gear casing completely from twisting and shear forces.
+    - Features matching 45-degree Warren truss cutouts on both lateral flanks and end wall.
+    - Clearance cutout around (0, 0) (R = 16.5 mm) ensures collision-free 360-deg rotation
+      for the Femur servo horn boss.
+    """
+    z_min, z_max = 7.00, 19.50
+    dz = z_max - z_min
+
+    base_box = Part.makeBox(17.80 - (-38.60), 25.60, dz, App.Vector(-38.60, -12.80, z_min))
+    edges_to_fillet = [e for e in base_box.Edges if abs(e.BoundBox.XMin - e.BoundBox.XMax) < 1e-3 and abs(e.BoundBox.YMin - e.BoundBox.YMax) < 1e-3]
+    base_box = base_box.makeFillet(2.5, edges_to_fillet)
+
+    inner_pocket = Part.makeBox(40.80, 20.30, dz + 2.0, App.Vector(-31.65, -10.15, z_min - 1.0))
+    horn_clearance = Part.makeCylinder(16.5, dz + 2.0, App.Vector(0.0, 0.0, z_min - 1.0), App.Vector(0, 0, 1))
+
+    holes = []
+    for sx, sy in [(13.00, 5.00), (13.00, -5.00), (-35.50, 5.00), (-35.50, -5.00)]:
+        hole = Part.makeCylinder(1.40, dz + 4.0, App.Vector(sx, sy, z_min - 2.0), App.Vector(0, 0, 1))
+        cbore = Part.makeCylinder(2.60, dz - 3.0, App.Vector(sx, sy, z_min + 3.0), App.Vector(0, 0, 1))
+        holes.append(hole)
+        holes.append(cbore)
+
+    map_xz_top = lambda p: App.Vector(p.x, -20.0, p.y)
+    tri1 = [(-30.0, 10.0, 1.2), (-18.0, 10.0, 1.2), (-30.0, 17.5, 1.2)]
+    tri2 = [(-16.0, 10.0, 1.2), (-16.0, 17.5, 1.2), (-28.0, 17.5, 1.2)]
+    w_t1 = generate_tibia.make_rounded_polygon_wire_2d(tri1, map_xz_top)
+    cut_t1 = Part.Face(w_t1).extrude(App.Vector(0, 40.0, 0))
+    w_t2 = generate_tibia.make_rounded_polygon_wire_2d(tri2, map_xz_top)
+    cut_t2 = Part.Face(w_t2).extrude(App.Vector(0, 40.0, 0))
+
+    map_yz_top = lambda p: App.Vector(-40.0, p.x, p.y)
+    end_pts = [(-5.0, 10.5, 1.2), (5.0, 10.5, 1.2), (5.0, 17.0, 1.2), (-5.0, 17.0, 1.2)]
+    w_end = generate_tibia.make_rounded_polygon_wire_2d(end_pts, map_yz_top)
+    cut_end = Part.Face(w_end).extrude(App.Vector(10.0, 0, 0))
+
+    cage = base_box.cut(inner_pocket).cut(horn_clearance)
+    for h in holes:
+        cage = cage.cut(h)
+    cage = cage.cut(cut_t1).cut(cut_t2).cut(cut_end)
+    return cage
+
+top_cage_solid = build_servo_top_cage()
+fcstd_cage_path = f"{concept_dir}/tibia_servo_top_cage.FCStd"
+try:
+    App.closeDocument("tibia_servo_top_cage")
+except Exception:
+    pass
+doc_cage = App.newDocument("tibia_servo_top_cage")
+obj_cage = doc_cage.addObject("Part::Feature", "Tibia_Servo_Top_Cage")
+obj_cage.Label = "Tibia v2 Top-Truss Clamping Cage (Obergurt-Fachwerkkäfig)"
+obj_cage.Shape = top_cage_solid
+doc_cage.recompute()
+doc_cage.saveAs(fcstd_cage_path)
+print(f"✔ Saved: {fcstd_cage_path} (Valid={top_cage_solid.isValid()}, Volume={top_cage_solid.Volume:.1f} mm3)")
+
 # =============================================================================
 # 3. Build Full Subsystem Assembly: tibia_assembly.FCStd
 # =============================================================================
@@ -365,23 +429,26 @@ make_link("Tibia_Body", "1. Tibia v2 Monocoque (Warren Truss + Fixed Cheek A)", 
 p_servo = App.Placement(App.Vector(0.0, 0.0, 18.8), App.Rotation(App.Vector(0, 0, 1), 180.0))
 make_link("Knee_Servo", "2. Knee Servo (Torcster NR-645 COTS)", doc_servo.Objects[0], p_servo, COLOR_SERVO)
 
-# 3. Bionic Foot Rocker (Outward Tarsus)
-make_link("Tibia_Foot_Rocker", "3. Bionic Tarsus Rocker Foot (+52% Lever)", doc_rocker.Objects[0], p_shank, COLOR_ORANGE)
+# 3. Top-Truss Clamping Cage (Obergurt-Fachwerkkäfig)
+make_link("Tibia_Servo_Top_Cage", "3. Top-Truss Clamping Cage (Obergurt-Fachwerkkäfig)", obj_cage, App.Placement(), COLOR_TOP_CAGE)
 
-# 4. Microswitch
+# 4. Bionic Foot Rocker (Outward Tarsus)
+make_link("Tibia_Foot_Rocker", "4. Bionic Tarsus Rocker Foot (+52% Lever)", doc_rocker.Objects[0], p_shank, COLOR_ORANGE)
+
+# 5. Microswitch
 p_sw_local = App.Placement(App.Vector(4.3 - 6.7, 23.0, 0.0), App.Rotation())
-make_link("Microswitch", "4. Subminiature Microswitch (COTS)", doc_sw.Objects[0], p_shank.multiply(p_sw_local), COLOR_SWITCH)
+make_link("Microswitch", "5. Subminiature Microswitch (COTS)", doc_sw.Objects[0], p_shank.multiply(p_sw_local), COLOR_SWITCH)
 
-# 5. Compression Spring
+# 6. Compression Spring
 p_sp_local = App.Placement(App.Vector(-14.0, 8.5, 0.0), App.Rotation())
-make_link("Compression_Spring", "5. Stainless Preload Spring (COTS)", doc_sp.Objects[0], p_shank.multiply(p_sp_local), COLOR_SPRING)
+make_link("Compression_Spring", "6. Stainless Preload Spring (COTS)", doc_sp.Objects[0], p_shank.multiply(p_sp_local), COLOR_SPRING)
 
-# 6. Removable Service Cover (Cheek B)
-make_link("Tibia_Foot_Cover", "6. Removable Service Cover (Cheek B Form-Fit)", obj_cover, App.Placement(), COLOR_COVER)
+# 7. Removable Service Cover (Cheek B)
+make_link("Tibia_Foot_Cover", "7. Removable Service Cover (Cheek B Form-Fit)", obj_cover, App.Placement(), COLOR_COVER)
 
-# 7. M3 Hardened Pivot Pin & Ruthex
+# 8. M3 Hardened Pivot Pin & Ruthex
 pin_obj = doc_asm.addObject("Part::Feature", "Pivot_Pin_Assembly")
-pin_obj.Label = "7. M3 Hardened Pivot Pin & Ruthex"
+pin_obj.Label = "8. M3 Hardened Pivot Pin & Ruthex"
 pin_head = Part.makeCylinder(2.8, 1.5, App.Vector(-122.0, -14.0, 4.5), App.Vector(0, 0, 1))
 pin_shaft = Part.makeCylinder(1.5, 11.0, App.Vector(-122.0, -14.0, -5.0), App.Vector(0, 0, 1))
 ruthex = Part.makeCylinder(2.1, 4.0, App.Vector(-122.0, -14.0, -5.0), App.Vector(0, 0, 1))
@@ -393,9 +460,9 @@ if hasattr(pin_obj, "ViewObject") and pin_obj.ViewObject:
     except Exception:
         pass
 
-# 8. M2 DIN 7991 Flush Countersunk Screw
+# 9. M2 DIN 7991 Flush Countersunk Screw
 screw_m2 = doc_asm.addObject("Part::Feature", "Cover_Retaining_Screw_M2")
-screw_m2.Label = "8. M2x6 Flush Countersunk Retaining Screw"
+screw_m2.Label = "9. M2x6 Flush Countersunk Retaining Screw"
 head_m2 = Part.makeCone(1.1, 2.2, 1.1, App.Vector(-100.0, -3.0, 4.9), App.Vector(0, 0, 1))
 shank_m2 = Part.makeCylinder(1.0, 6.0, App.Vector(-100.0, -3.0, 0.0), App.Vector(0, 0, 1))
 ruthex_m2 = Part.makeCylinder(1.7, 4.0, App.Vector(-100.0, -3.0, 0.0), App.Vector(0, 0, 1))
@@ -418,7 +485,7 @@ print("3. Exporting STEP and STL...")
 step_asm_path = f"{export_step_dir}/tibia_assembly.step"
 stl_asm_path = f"{export_stl_dir}/tibia_assembly.stl"
 
-export_objs = [obj_mono, obj_cover, doc_servo.Objects[0], doc_rocker.Objects[0], doc_sw.Objects[0], doc_sp.Objects[0], pin_obj, screw_m2]
+export_objs = [obj_mono, obj_cover, obj_cage, doc_servo.Objects[0], doc_rocker.Objects[0], doc_sw.Objects[0], doc_sp.Objects[0], pin_obj, screw_m2]
 Part.export(export_objs, step_asm_path)
 print(f"✔ Exported STEP: {step_asm_path}")
 
@@ -431,6 +498,8 @@ obj_mono.Shape.exportStep(f"{export_step_dir}/tibia_sensor_monocoque.step")
 obj_mono.Shape.exportStl(f"{export_stl_dir}/tibia_sensor_monocoque.stl")
 obj_cover.Shape.exportStep(f"{export_step_dir}/tibia_foot_cover.step")
 obj_cover.Shape.exportStl(f"{export_stl_dir}/tibia_foot_cover.stl")
-print("✔ Exported individual STEP & STL for Monocoque & Cover")
+obj_cage.Shape.exportStep(f"{export_step_dir}/tibia_servo_top_cage.step")
+obj_cage.Shape.exportStl(f"{export_stl_dir}/tibia_servo_top_cage.stl")
+print("✔ Exported individual STEP & STL for Monocoque, Cover & Top Cage")
 
 print("=== Tibia Assembly Generation Complete! ===")

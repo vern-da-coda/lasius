@@ -516,17 +516,8 @@ def build_tibia_v2_shape():
     servo_pocket = Part.makeBox(40.80, 20.30, 28.00, App.Vector(-31.65, -10.15, -20.00))
     tibia_v2 = tibia_v2.cut(servo_pocket)
 
-    # 5. Servo Cable Exit Slot at upper end (+X in [9.00, 15.50], Y in [-4.50, +4.50], Z in [-20.00, +8.00])
-    #    with slightly rounded outer corners (R = 1.00 mm at X = 15.50) away from the servo:
-    map_slot = lambda p: App.Vector(p.x, p.y, -20.00)
-    slot_pts = [
-        ( 9.00, -4.50, 0.00),
-        (15.50, -4.50, 1.00),
-        (15.50,  4.50, 1.00),
-        ( 9.00,  4.50, 0.00),
-    ]
-    cable_slot = Part.Face(make_rounded_polygon_wire_2d(slot_pts, map_slot)).extrude(App.Vector(0, 0, 28.00))
-    tibia_v2 = tibia_v2.cut(cable_slot)
+    # Note: Both mounting pads (-X and +X) are solid without cable slot cutout,
+    # each featuring two separate M2.5 mounting bores.
 
     # 6. Inverted Coaxial Knee Counter-Bearing Seat at (0.00, 0.00):
     #    - M4 through-bore (D = 4.10 mm, R = 2.05 mm) through the entire floor (Z in [-24.0, -19.0])
