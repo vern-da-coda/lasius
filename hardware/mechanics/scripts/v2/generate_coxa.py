@@ -170,6 +170,18 @@ def build_coxa_bracket_v2_shape():
     core = core.fuse(plug_shelf_top)
 
     # -------------------------------------------------------------
+    # 0b. Front-Bottom Nose Corner: Update Middle Core (Y in [5.0, 25.5]) from R = 2.0 to R = 4.50 mm
+    # -------------------------------------------------------------
+    # In v1, the bottom nose edge was filleted with R = 2.0 mm.
+    # To match the front and rear cheeks (which have R_FRONT = 4.50 mm),
+    # cut away the corner material outside the R = 4.50 mm cylinder centered at (4.50, Y, 4.50).
+    R_FRONT = 4.50
+    box_nose_cut = Part.makeBox(R_FRONT + 1.0, 33.7, R_FRONT + 1.0, App.Vector(-1.0, -1.0, -1.0))
+    cyl_nose_round = Part.makeCylinder(R_FRONT, 35.7, App.Vector(R_FRONT, -2.0, R_FRONT), App.Vector(0, 1, 0))
+    cutter_nose = box_nose_cut.cut(cyl_nose_round)
+    core = core.cut(cutter_nose)
+
+    # -------------------------------------------------------------
     # 1. Option A Inverted M4 Counter-Bearing Seat (X = 18.20, Y = 15.25)
     # -------------------------------------------------------------
     cx, cy = 18.20, 15.25
