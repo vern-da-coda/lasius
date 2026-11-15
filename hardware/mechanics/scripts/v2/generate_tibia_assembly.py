@@ -208,16 +208,35 @@ tibia_base = tibia_base.cut(screw_bore).cut(nut_pocket)
 for sx, sy in [(13.00, 5.00), (13.00, -5.00), (-35.50, 5.00), (-35.50, -5.00)]:
     tibia_base = tibia_base.cut(Part.makeCylinder(1.25, 25.0, App.Vector(sx, sy, -3.20)))
 
-# 2.2 Extend Fork Cheeks to 11.0 mm total width (Z in [-5.0, +6.0] mm) at X < -72.0 mm
-X_SPLIT = -72.0
-DX_TONGUE = 3.0
+# 2.2 Extend Fork Cheeks to 11.0 mm total width (Z in [-5.0, +6.0] mm) and taper gently to 7.0 mm body
+X_SPLIT = -92.0
+X_RAMP_END = -82.0
+DX_TONGUE = 3.5
 
-# Fixed Cheek A on back (-Z side): Z in [-5.0, -3.0] mm
-pad_back = Part.Face(outer_wire).extrude(App.Vector(0, 0, 2.0)).translate(App.Vector(0, 0, -5.0))
-clip_back = Part.makeBox(150.0 + X_SPLIT, 80.0, 20.0, App.Vector(-150.0, -40.0, -10.0))
-pad_back = pad_back.common(clip_back)
+prism_outer = Part.Face(outer_wire).extrude(App.Vector(0, 0, 40.0)).translate(App.Vector(0, 0, -20.0))
 
-tibia_base = tibia_base.fuse(pad_back)
+# Fixed Cheek A with gentle 11.3° transition ramp from Z = -5.0 to -3.0 mm:
+pts_back = [
+    App.Vector(-150.0, -40.0, -5.0),
+    App.Vector(X_SPLIT, -40.0, -5.0),
+    App.Vector(X_RAMP_END, -40.0, -3.0),
+    App.Vector(-150.0, -40.0, -3.0),
+    App.Vector(-150.0, -40.0, -5.0),
+]
+w_back_xz = Part.makePolygon(pts_back)
+wedge_back = Part.Face(w_back_xz).extrude(App.Vector(0.0, 80.0, 0.0)).common(prism_outer)
+tibia_base = tibia_base.fuse(wedge_back)
+
+# Front ramp on monolithic body with gentle 11.3° transition from Z = 6.0 down to 4.0 mm:
+pts_front = [
+    App.Vector(X_SPLIT, -40.0, 4.0),
+    App.Vector(X_SPLIT, -40.0, 6.0),
+    App.Vector(X_RAMP_END, -40.0, 4.0),
+    App.Vector(X_SPLIT, -40.0, 4.0),
+]
+w_front_xz = Part.makePolygon(pts_front)
+ramp_front = Part.Face(w_front_xz).extrude(App.Vector(0.0, 80.0, 0.0)).common(prism_outer)
+tibia_base = tibia_base.fuse(ramp_front)
 
 # 2.3 Cut Internal Clevis Slot & Sensor Bays (Shifted -4.5 mm inwards to eliminate protrusion)
 rot_deg = -67.59
@@ -249,13 +268,14 @@ pivot_ruthex = Part.makeCylinder(2.10, 4.0, App.Vector(-122.0, -14.0, -5.0), App
 tibia_cut = tibia_base.cut(slot_upper).cut(slot_claw).cut(sw_pocket).cut(spring_pocket).cut(cable_conduit).cut(pivot_bore).cut(pivot_ruthex)
 
 # 2.4 Formschluss Rebate in Tibia for Removable Cover:
-# Cover sits in Z in [3.5, 6.0] mm for X < X_SPLIT
+# Cover sits in Z in [3.5, 6.0] mm for X < X_SPLIT (-92.0 mm)
 # Interlocking groove at X in [X_SPLIT, X_SPLIT + DX_TONGUE] in Z in [3.0, 3.8] mm
 cut_main = Part.makeBox(150.0 + X_SPLIT, 80.0, 3.5, App.Vector(-150.0, -40.0, 3.5))
 tongue_pocket = Part.makeBox(DX_TONGUE, 80.0, 0.8, App.Vector(X_SPLIT, -40.0, 3.0))
 
-# M2 brass Ruthex pocket in Monolithic Tibia at (-100.0, -3.0)
-m2_ruthex_mono = Part.makeCylinder(1.70, 5.0, App.Vector(-100.0, -3.0, 0.0), App.Vector(0, 0, 1))
+# M2 brass Ruthex pocket in Monolithic Tibia at (-96.0, -4.0)
+p_m2 = App.Vector(-96.0, -4.0, 0.0)
+m2_ruthex_mono = Part.makeCylinder(1.70, 5.0, App.Vector(p_m2.x, p_m2.y, 0.0), App.Vector(0, 0, 1))
 
 tibia_mono_solid = tibia_cut.cut(cut_main).cut(tongue_pocket).cut(m2_ruthex_mono)
 
@@ -264,7 +284,7 @@ try:
 except Exception:
     pass
 
-# 2.5 Build Removable Cover: tibia_foot_cover.FCStd
+# 2.5 Build Removable Cover: tibia_foot_cover.FCStd (Shortened to X_SPLIT = -92.0 mm, clears cutout by >12 mm)
 box_cover = Part.makeBox(150.0 + X_SPLIT, 80.0, 3.5, App.Vector(-150.0, -40.0, 3.5))
 cover = Part.Face(outer_wire).extrude(App.Vector(0, 0, 2.5)).translate(App.Vector(0, 0, 3.5)).common(box_cover)
 
@@ -279,9 +299,9 @@ m3_hole_cover = Part.makeCylinder(1.60, 10.0, App.Vector(-122.0, -14.0, 0.0), Ap
 m3_cbore_cover = Part.makeCylinder(3.10, 1.5, App.Vector(-122.0, -14.0, 4.5), App.Vector(0, 0, 1))
 cover = cover.cut(m3_hole_cover).cut(m3_cbore_cover)
 
-# 1x M2 retaining screw countersink at (-100.0, -3.0)
-m2_hole_cover = Part.makeCylinder(1.10, 10.0, App.Vector(-100.0, -3.0, 0.0), App.Vector(0, 0, 1))
-m2_csink_cover = Part.makeCone(2.2, 1.1, 1.1, App.Vector(-100.0, -3.0, 4.9), App.Vector(0, 0, 1))
+# 1x M2 retaining screw countersink at (-96.0, -4.0)
+m2_hole_cover = Part.makeCylinder(1.10, 10.0, App.Vector(p_m2.x, p_m2.y, 0.0), App.Vector(0, 0, 1))
+m2_csink_cover = Part.makeCone(2.2, 1.1, 1.1, App.Vector(p_m2.x, p_m2.y, 4.9), App.Vector(0, 0, 1))
 cover = cover.cut(m2_hole_cover).cut(m2_csink_cover)
 
 try:
@@ -396,9 +416,9 @@ if hasattr(pin_obj, "ViewObject") and pin_obj.ViewObject:
 # 8. M2 DIN 7991 Flush Countersunk Screw
 screw_m2 = doc_asm.addObject("Part::Feature", "Cover_Retaining_Screw_M2")
 screw_m2.Label = "8. M2x6 Flush Countersunk Retaining Screw"
-head_m2 = Part.makeCone(1.1, 2.2, 1.1, App.Vector(-100.0, -3.0, 4.9), App.Vector(0, 0, 1))
-shank_m2 = Part.makeCylinder(1.0, 6.0, App.Vector(-100.0, -3.0, 0.0), App.Vector(0, 0, 1))
-ruthex_m2 = Part.makeCylinder(1.7, 4.0, App.Vector(-100.0, -3.0, 0.0), App.Vector(0, 0, 1))
+head_m2 = Part.makeCone(1.1, 2.2, 1.1, App.Vector(-96.0, -4.0, 4.9), App.Vector(0, 0, 1))
+shank_m2 = Part.makeCylinder(1.0, 6.0, App.Vector(-96.0, -4.0, 0.0), App.Vector(0, 0, 1))
+ruthex_m2 = Part.makeCylinder(1.7, 4.0, App.Vector(-96.0, -4.0, 0.0), App.Vector(0, 0, 1))
 screw_m2.Shape = head_m2.fuse(shank_m2).fuse(ruthex_m2)
 asm_part.addObject(screw_m2)
 if hasattr(screw_m2, "ViewObject") and screw_m2.ViewObject:
