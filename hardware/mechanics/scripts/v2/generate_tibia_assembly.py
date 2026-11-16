@@ -464,54 +464,9 @@ def build_organic_tibia_outer_wire():
 outer_wire = build_organic_tibia_outer_wire()
 
 # 1. Bionic Tibia-Servo-Käfig (Analogous to Coxa's Femur-Servo-Käfig)
-w_cheek = generate_tibia.build_tibia_servo_cage_cheek_wire()
-f_cheek = Part.Face(w_cheek)
-
-# Extrude the two lateral cheeks:
-# Upper / Dorsal cheek: Y in [+10.15, +16.35] (6.20 mm)
-s_cheek_upper = f_cheek.extrude(App.Vector(0.0, 6.20, 0.0)).translate(App.Vector(0.0, 10.15, 0.0))
-# Lower / Ventral cheek: Y in [-16.35, -10.15] (6.20 mm)
-s_cheek_lower = f_cheek.extrude(App.Vector(0.0, 6.20, 0.0)).translate(App.Vector(0.0, -16.35, 0.0))
-
-# Bottom Counter-Bearing Tab Plate connecting the two cheeks at Z in [-23.00, -20.00]
-s_tab_bottom = Part.makeBox(9.00 - (-5.50), 2.0 * 16.35, 3.00, App.Vector(-5.50, -16.35, -23.00))
-
-# Raised Servo Ear Bosses at Z in [3.00, 7.00] mm
-ear_bosses = generate_tibia.build_servo_ear_bosses()
-
-# 2. Central Claw Blade (Z in [-3.00, +4.00], centered at Z = +0.50 mm)
-# Teardrop window is CLOSED solid!
-claw_central = Part.Face(outer_wire).extrude(App.Vector(0, 0, 7.0)).translate(App.Vector(0, 0, -3.0))
-
-# Cut away legacy beak horns extending forward into the servo cage / knee joint (X > -31.65 mm)
-box_front_cut = Part.makeBox(100.0, 120.0, 30.0, App.Vector(-31.65, -60.0, -15.0))
-claw_central = claw_central.cut(box_front_cut)
-
-# Fuse base
-tibia_base = claw_central.fuse(s_cheek_upper).fuse(s_cheek_lower).fuse(s_tab_bottom).fuse(ear_bosses)
-
-# Cut Servo Pocket & Hardware Seats
-servo_pocket = Part.makeBox(40.80, 20.30, 48.00, App.Vector(-31.65, -10.15, -20.00))
-servo_cable_slot = Part.makeBox(7.50, 7.20, 5.00, App.Vector(9.00, -3.60, -20.00))
-screw_bore = Part.makeCylinder(2.05, 6.0, App.Vector(0.0, 0.0, -24.0))
-nut_pocket = generate_tibia.make_hex_nut_pocket_z(0.0, 0.0, -22.40, -19.50, sw=7.10)
-tibia_base = tibia_base.cut(servo_pocket).cut(servo_cable_slot).cut(screw_bore).cut(nut_pocket)
-
-for sx, sy in [(13.00, 5.00), (13.00, -5.00), (-35.50, 5.00), (-35.50, -5.00)]:
-    tibia_base = tibia_base.cut(Part.makeCylinder(1.25, 25.0, App.Vector(sx, sy, -3.20)))
-
-# Cheek 45-deg Warren Truss Cutouts (Style Guide compliant)
-map_xz = lambda p: App.Vector(p.x, 0.0, p.y)
-tri1 = [(-5.00, 8.00, 1.40), (7.50, 8.00, 1.40), (-5.00, 20.50, 1.40)]
-tri2 = [(-5.00, -7.00, 1.40), (7.50, -7.00, 1.40), (-5.00, -19.50, 1.40)]
-tri3 = [(-26.00, 8.00, 1.40), (-7.50, 8.00, 1.40), (-26.00, 20.50, 1.40)]
-tri4 = [(-26.00, -7.00, 1.40), (-7.50, -7.00, 1.40), (-26.00, -19.50, 1.40)]
-
-for tri in (tri1, tri2, tri3, tri4):
-    w_t = generate_tibia.make_rounded_polygon_wire_2d(tri, map_xz)
-    cut_u = Part.Face(w_t).extrude(App.Vector(0.0, 10.0, 0.0)).translate(App.Vector(0.0, 9.0, 0.0))
-    cut_l = Part.Face(w_t).extrude(App.Vector(0.0, -10.0, 0.0)).translate(App.Vector(0.0, -9.0, 0.0))
-    tibia_base = tibia_base.cut(cut_u).cut(cut_l)
+# Solid equal-height mounting blocks (Z = +7.00 mm), harmonic cheek tapering to apex (-58.00, 0.50),
+# and 6 bionic truss windows mapped 1:1 from Coxa's Femur-Servo cage:
+tibia_base = generate_tibia.build_tibia_base_shape()
 
 # Extend Fork Cheeks to 11.0 mm total width (Z in [-5.0, +6.0] mm) and taper gently to 7.0 mm body
 X_SPLIT = -92.0
