@@ -4,10 +4,11 @@ Generate Lasius Monolithic Tibia v2
 ===================================
 - Bionic Tibia-Servo-Käfig created analogously to Coxa's Femur-Servo-Käfig:
   * Two lateral cheeks flanking the Torcster NR-645 Knee Servo (Y in [+10.15, +16.35] and [-16.35, -10.15])
-  * Rounded nose apex (R = 4.50 mm) around Knee pivot (0, 0) extending into Femur Knee U-jaw
-  * Symmetrical sagittal profile with harmonic G1 S-curves tapering seamlessly into the Tibia trunk at X = -58.00 mm (Z = +0.50 mm)
-  * Solid equal-height servo mounting blocks at front (+X) and rear (-X) flush at Z = +7.00 mm (matching Coxa's Femur-Servo shelf)
-  * Exact 1:1 mapped 6 bionic truss windows from Coxa's Femur-Servo cage:
+  * Cheek tip overhang removed: front of cheeks terminates flush at X = 9.15 mm and merges directly into the claw
+  * Outer cheek walls taper in width (in Y) into the central claw trunk at X in [-31.65, -45.00] mm
+  * Exact Knie-Servo mounting pads: 4.0 mm bosses at Z in [3.00, 7.00] mm flush with servo ears (Z = +7.00 mm)
+  * Cable exit at Z = -20.00 mm 100% unobstructed
+  * 6 bionic truss windows mapped 1:1 from Coxa's Femur-Servo cage:
     1. Upper Flank Window (p_fl_t)
     2. Lower Flank Window (p_fl_b)
     3. Inner Upper Triangle (p_chev_t, 45° Chevron half)
@@ -17,10 +18,10 @@ Generate Lasius Monolithic Tibia v2
   * Inverted Knee counter-bearing seat: internal M4 DIN 439 low-profile hex nut pocket (SW = 7.10 mm)
     with solid retaining shoulder at Z in [-23.00, -22.20] mm
 - Centrally mounted Tibia sickle claw (Tibia-Kralle):
-  * Central blade thickness 7.00 mm (Z in [-3.00, +4.00] mm), mathematically centered at Z = +0.50 mm
-    (Y_leg = +2.50 mm, matching Femur symmetry plane)
+  * Central blade thickness 7.00 mm (Z in [-3.00, +4.00] mm), centered at Z = +0.50 mm
+  * Full organic contour restored with both beak horns intact
+  * Upper horn and U-throat shifted towards the outside (+Y) for full servo swing clearance
   * Teardrop cutout window closed solid for high-torsion shear resistance
-  * Monolithic integration between the central claw blade and the flanking servo cage cheeks
 """
 
 import math
@@ -167,26 +168,29 @@ def make_s_curve_edges_xz(p1, p2):
     return [Part.Edge(Part.Arc(p1, pm1, p_inf)), Part.Edge(Part.Arc(p_inf, pm2, p2))]
 
 
-def build_organic_tibia_outer_wire():
+def build_organic_tibia_outer_wire(horn_shift_y=5.0, throat_clearance=4.0):
     """
     Build the complete G1-continuous organic sickle claw outline (at Z = 0),
-    adapted around the Knee joint and distal foot sensor chamber with 0.00 deg tangent kink.
+    adapted with upper horn and U-throat shifted towards the outside (+Y) for full
+    servo swing clearance, keeping the lower horn and distal foot sensor chamber intact.
     """
-    c2 = App.Vector(17.271, 36.152, 0.0)
+    # Upper horn shifted towards the outside (+Y)
+    c2 = App.Vector(17.271, 36.152 + horn_shift_y, 0.0)
     r2 = 1.489
-    a2_s = math.atan2(37.610 - c2.y, 17.570 - c2.x)
+    a2_s = math.atan2(37.610 + horn_shift_y - c2.y, 17.570 - c2.x)
     a2_m = 0.05
-    a2_e = math.atan2(34.780 - c2.y, 17.850 - c2.x)
+    a2_e = math.atan2(34.780 + horn_shift_y - c2.y, 17.850 - c2.x)
     p2_s = App.Vector(c2.x + r2 * math.cos(a2_s), c2.y + r2 * math.sin(a2_s), 0.0)
     p2_m = App.Vector(c2.x + r2 * math.cos(a2_m), c2.y + r2 * math.sin(a2_m), 0.0)
     p2_e = App.Vector(c2.x + r2 * math.cos(a2_e), c2.y + r2 * math.sin(a2_e), 0.0)
     e2 = Part.Arc(p2_s, p2_m, p2_e).toShape()
 
-    c4 = App.Vector(38.692, 19.268, 0.0)
+    # Lower knee horn
+    c4 = App.Vector(38.692 + 2.0, 19.268 + 2.0, 0.0)
     r4 = 2.458
-    a4_s = math.atan2(21.650 - c4.y, 39.300 - c4.x)
+    a4_s = math.atan2(21.650 + 2.0 - c4.y, 39.300 + 2.0 - c4.x)
     a4_m = 0.15
-    a4_e = math.atan2(17.350 - c4.y, 40.230 - c4.x)
+    a4_e = math.atan2(17.350 + 2.0 - c4.y, 40.230 + 2.0 - c4.x)
     p4_s = App.Vector(c4.x + r4 * math.cos(a4_s), c4.y + r4 * math.sin(a4_s), 0.0)
     p4_m = App.Vector(c4.x + r4 * math.cos(a4_m), c4.y + r4 * math.sin(a4_m), 0.0)
     p4_e = App.Vector(c4.x + r4 * math.cos(a4_e), c4.y + r4 * math.sin(a4_e), 0.0)
@@ -202,19 +206,38 @@ def build_organic_tibia_outer_wire():
     p56_e = App.Vector(c56.x + r56 * math.cos(a56_e), c56.y + r56 * math.sin(a56_e), 0.0)
     e5b = Part.Arc(p56_s, p56_m, p56_e).toShape()
 
+    # Throat poles opened up with throat_clearance along +Y
     poles3 = [
-        p2_e, (17.012, 34.366), (13.720, 32.826), (9.038, 30.847), (5.089, 28.080),
-        (2.350, 25.600), (2.433, 22.498), (2.550, 19.300), (3.400, 16.800),
-        (6.685, 15.880), (10.500, 16.100), (16.500, 16.900), (23.500, 18.100),
-        (30.500, 19.800), (36.800, 21.300), p4_s,
+        p2_e,
+        (17.012, 34.366 + horn_shift_y),
+        (13.720, 32.826 + horn_shift_y),
+        (9.038, 30.847 + horn_shift_y * 0.8),
+        (5.089, 28.080 + throat_clearance),
+        (3.500, 25.600 + throat_clearance),
+        (4.000, 22.498 + throat_clearance),
+        (4.500, 19.300 + throat_clearance),
+        (5.500, 16.800 + throat_clearance * 0.5),
+        (7.500, 15.880 + 2.0),
+        (11.500, 16.100 + 2.0),
+        (17.500, 16.900 + 2.0),
+        (24.500, 18.100 + 2.0),
+        (31.500, 19.800 + 2.0),
+        (37.500, 21.300 + 2.0),
+        p4_s,
     ]
     e3 = make_g1_cubic_bspline(
         poles3, circle_tangent_cw(c2, p2_e), circle_tangent_cw(c4, p4_s)
     )
 
     poles5 = [
-        p4_e, (38.50, 16.20), (33.50, 12.80), (27.20, 7.80), (22.40, 2.20),
-        (20.10, -2.80), (19.50, -6.50), p56_s,
+        p4_e,
+        (39.00, 16.20 + 2.0),
+        (34.00, 12.80 + 1.5),
+        (27.50, 7.80 + 1.0),
+        (22.50, 2.20 + 0.5),
+        (20.10, -2.80),
+        (19.50, -6.50),
+        p56_s,
     ]
     e5 = make_g1_cubic_bspline(
         poles5, circle_tangent_cw(c4, p4_e), circle_tangent_cw(c56, p56_s)
@@ -231,18 +254,40 @@ def build_organic_tibia_outer_wire():
     arc_pivot_bot = Part.Arc(p_hub_left, App.Vector(-126.0, -20.2, 0.0), p_hub_bot).toShape()
 
     poles1 = [
-        p_spring_cheek, (-129.5, -0.2), (-124.5, 2.5), (-116.0, 5.8), (-106.0, 8.8),
-        (-92.0, 12.5), (-78.200, 16.948), (-62.257, 22.984), (-49.101, 28.027),
-        (-35.845, 31.870), (-23.493, 34.775), (-10.498, 36.789), (-0.008, 37.954),
-        (7.477, 38.458), (12.888, 38.362), (15.874, 37.981), p2_s,
+        p_spring_cheek,
+        (-129.5, -0.2),
+        (-124.5, 2.5),
+        (-116.0, 5.8),
+        (-106.0, 8.8),
+        (-92.0, 12.5),
+        (-78.200, 16.948),
+        (-62.257, 22.984),
+        (-49.101, 28.027),
+        (-35.845, 31.870),
+        (-23.493, 34.775),
+        (-10.498, 36.789 + horn_shift_y * 0.3),
+        (-0.008, 37.954 + horn_shift_y * 0.5),
+        (7.477, 38.458 + horn_shift_y * 0.8),
+        (12.888, 38.362 + horn_shift_y),
+        (15.874, 37.981 + horn_shift_y),
+        p2_s,
     ]
     t_dorsal_start = App.Vector(1.0, 0.5, 0.0)
     e1 = make_g1_cubic_bspline(poles1, t_dorsal_start, circle_tangent_cw(c2, p2_s))
 
     poles7 = [
-        p6_e, (-39.50, -14.25), (-44.00, -12.80), (-52.50, -9.40), (-61.50, -6.80),
-        (-69.50, -5.75), (-77.50, -6.50), (-87.00, -9.50), (-96.50, -12.50),
-        (-106.50, -16.00), (-115.00, -19.50), p_hub_bot,
+        p6_e,
+        (-39.50, -14.25),
+        (-44.00, -12.80),
+        (-52.50, -9.40),
+        (-61.50, -6.80),
+        (-69.50, -5.75),
+        (-77.50, -6.50),
+        (-87.00, -9.50),
+        (-96.50, -12.50),
+        (-106.50, -16.00),
+        (-115.00, -19.50),
+        p_hub_bot,
     ]
     t_ventral_end = App.Vector(-1.0, -0.2, 0.0)
     e7 = make_g1_cubic_bspline(poles7, App.Vector(-1.0, 0.0, 0.0), t_ventral_end)
@@ -250,98 +295,66 @@ def build_organic_tibia_outer_wire():
     return Part.Wire([arc_cheek_tip, arc_pivot_bot, e7, e6, e5b, e5, e4, e3, e2, e1])
 
 
-def build_tibia_servo_cage_cheek_wire():
+def build_tibia_servo_cage_cheek_wire(x_front=9.15, x_rear=-45.0):
     """
-    Construct the bionic symmetrical cheek wire in the X-Z plane of Tibia:
-    - Symmetrical around midline Z = +0.50 mm (Y_leg = +2.50 mm).
-    - Rounded nose apex (R = 4.50 mm) around Knee pivot (0, 0) extending to X = +18.20 mm.
-    - Symmetrical flat crest (Z = +24.00) and tab (Z = -23.00) from X = +9.00 to X = -5.50 mm.
-    - Harmonic G1 S-curves tapering seamlessly into the Tibia trunk at X = -58.00 mm (Z = +0.50 mm).
+    Construct the bionic symmetrical cheek wire in the X-Z plane:
+    - Tip overhang removed: terminates flush at X = x_front (9.15 mm) to merge directly into the claw.
+    - Symmetrical flat crest (Z = +24.00) and tab (Z = -23.00) up to X = -5.50 mm.
+    - Harmonic G1 S-curves tapering into apex at X = x_rear (-45.00 mm, Z = +0.50 mm).
     """
-    R_FRONT = 4.50
     Z_MID = 0.50
     Z_TAB = -23.00
     Z_CREST = +24.00
-    X_NOSE = 18.20
-    X_TAB_FRONT = 9.00
     X_TAB_END = -5.50
-    X_REAR_APEX = -58.00
 
-    p_front_top = App.Vector(X_NOSE, 0.0, Z_MID + R_FRONT)
-    p_front_bot = App.Vector(X_NOSE, 0.0, Z_MID - R_FRONT)
-    e_front_mid = [Part.makeLine(p_front_bot, p_front_top)]
-
-    p_nose_top_end = App.Vector(X_NOSE - R_FRONT, 0.0, Z_MID + 2.0 * R_FRONT)
-    p_nose_top_mid = App.Vector(
-        X_NOSE - R_FRONT * (1.0 - math.cos(math.pi / 4)),
-        0.0,
-        Z_MID + R_FRONT + R_FRONT * math.sin(math.pi / 4),
-    )
-    e_arc_top = Part.Edge(Part.Arc(p_front_top, p_nose_top_mid, p_nose_top_end))
-
-    p_nose_bot_end = App.Vector(X_NOSE - R_FRONT, 0.0, Z_MID - 2.0 * R_FRONT)
-    p_nose_bot_mid = App.Vector(
-        X_NOSE - R_FRONT * (1.0 - math.cos(math.pi / 4)),
-        0.0,
-        Z_MID - R_FRONT - R_FRONT * math.sin(math.pi / 4),
-    )
-    e_arc_bot = Part.Edge(Part.Arc(p_nose_bot_end, p_nose_bot_mid, p_front_bot))
-
-    p_step_top_front = App.Vector(11.00, 0.0, Z_MID + 2.0 * R_FRONT)
-    e_step_top_h = [Part.makeLine(p_nose_top_end, p_step_top_front)]
-
-    p_step_bot_front = App.Vector(11.00, 0.0, Z_MID - 2.0 * R_FRONT)
-    e_step_bot_h = [Part.makeLine(p_step_bot_front, p_nose_bot_end)]
-
-    p_step_top_up = App.Vector(11.00, 0.0, Z_CREST - 2.0)
-    e_step_top_v = [Part.makeLine(p_step_top_front, p_step_top_up)]
-
-    p_step_bot_down = App.Vector(11.00, 0.0, Z_TAB + 2.0)
-    e_step_bot_v = [Part.makeLine(p_step_bot_down, p_step_bot_front)]
-
-    p_crest_start = App.Vector(X_TAB_FRONT, 0.0, Z_CREST)
-    p_crest_f_mid = App.Vector(
-        11.00 - 2.0 * (1.0 - math.cos(math.pi / 4)),
-        0.0,
-        Z_CREST - 2.0 * (1.0 - math.sin(math.pi / 4)),
-    )
-    e_crest_fillet = [Part.Edge(Part.Arc(p_step_top_up, p_crest_f_mid, p_crest_start))]
-
-    p_tab_start = App.Vector(X_TAB_FRONT, 0.0, Z_TAB)
-    p_tab_f_mid = App.Vector(
-        11.00 - 2.0 * (1.0 - math.cos(math.pi / 4)),
-        0.0,
-        Z_TAB + 2.0 * (1.0 - math.sin(math.pi / 4)),
-    )
-    e_tab_fillet = [Part.Edge(Part.Arc(p_tab_start, p_tab_f_mid, p_step_bot_down))]
+    p_front_top = App.Vector(x_front, 0.0, Z_CREST)
+    p_front_bot = App.Vector(x_front, 0.0, Z_TAB)
+    e_front_v = [Part.makeLine(p_front_bot, p_front_top)]
 
     p_crest_end = App.Vector(X_TAB_END, 0.0, Z_CREST)
-    e_crest_flat = [Part.makeLine(p_crest_start, p_crest_end)]
+    e_crest_flat = [Part.makeLine(p_front_top, p_crest_end)]
 
     p_tab_end = App.Vector(X_TAB_END, 0.0, Z_TAB)
-    e_tab_flat = [Part.makeLine(p_tab_end, p_tab_start)]
+    e_tab_flat = [Part.makeLine(p_tab_end, p_front_bot)]
 
-    p_apex = App.Vector(X_REAR_APEX, 0.0, Z_MID)
+    p_apex = App.Vector(x_rear, 0.0, Z_MID)
     e_top_s = make_s_curve_edges_xz(p_crest_end, p_apex)
     e_bot_s = make_s_curve_edges_xz(p_apex, p_tab_end)
 
-    all_edges_cheek = (
-        e_front_mid
-        + [e_arc_top]
-        + e_step_top_h
-        + e_step_top_v
-        + e_crest_fillet
-        + e_crest_flat
-        + e_top_s
-        + e_bot_s
-        + e_tab_flat
-        + e_tab_fillet
-        + e_step_bot_v
-        + e_step_bot_h
-        + [e_arc_bot]
-    )
+    all_edges = e_front_v + e_crest_flat + e_top_s + e_bot_s + e_tab_flat
+    return Part.Wire(all_edges)
 
-    return Part.Wire(all_edges_cheek)
+
+def build_servo_ear_bosses():
+    """
+    Exact Knie-Servo-Käfig geometry:
+    Raised Servo Mounting Pads (Z in [+3.00, +7.00] mm, rising 4.00 mm to mate flush with servo tabs).
+    Leaves the bottom cable exit at Z = -20.00 mm 100% free and unobstructed.
+    """
+    z0, dz = 3.00, 4.00
+    map_xy = lambda v: App.Vector(v.x, v.y, z0)
+
+    # Lower servo mount (-X): X in [-38.60, -31.65], Y in [-10.15, +10.15]
+    pts_lower = [
+        (-31.65, -10.15, 0.00),
+        (-38.60, -10.15, 2.60),
+        (-38.60, 10.15, 2.60),
+        (-31.65, 10.15, 0.00),
+    ]
+    w_lower = make_rounded_polygon_wire_2d(pts_lower, map_xy)
+    boss_lower = Part.Face(w_lower).extrude(App.Vector(0, 0, dz))
+
+    # Upper servo mount (+X): X in [+9.15, +17.80], Y in [-10.15, +10.15]
+    pts_upper = [
+        (9.15, 10.15, 0.00),
+        (17.80, 10.15, 2.60),
+        (17.80, -10.15, 2.60),
+        (9.15, -10.15, 0.00),
+    ]
+    w_upper = make_rounded_polygon_wire_2d(pts_upper, map_xy)
+    boss_upper = Part.Face(w_upper).extrude(App.Vector(0, 0, dz))
+
+    return boss_lower.fuse(boss_upper)
 
 
 def make_hex_nut_pocket_z(cx, cy, z_bottom, z_top, sw=7.10):
@@ -369,13 +382,13 @@ def build_tibia_base_shape():
     """
     Build the canonical monolithic Tibia base shape:
     - Twin servo cage analogous to Coxa's Femur-Servo-Käfig
-    - Solid equal-height servo mounting blocks (front and rear flush at Z = +7.00 mm)
-    - Harmonic G1 S-curve cheek tapering to apex (-58.00, 0.50)
+    - Exact Knie-Servo mounting bosses at Z in [3.00, 7.00] mm (bündig mit Servolasche bei Z = +7.00 mm)
+    - Cheek nose overhang removed (flush at X = 9.15 mm merging into claw)
+    - Cheek outer walls tapered in width (Y) into the claw trunk
+    - Full organic claw shape restored with both beak horns and widened U-throat
     - 6 Coxa-mapped bionic truss windows
-    - Central sickle-claw blade (Z in [-3.00, +4.00], centered at Z = +0.50 mm)
-    - Closed teardrop window
     """
-    w_cheek = build_tibia_servo_cage_cheek_wire()
+    w_cheek = build_tibia_servo_cage_cheek_wire(x_front=9.15, x_rear=-45.0)
     f_cheek = Part.Face(w_cheek)
 
     # Upper / Dorsal cheek: Y in [+10.15, +16.35] (6.20 mm)
@@ -384,19 +397,15 @@ def build_tibia_base_shape():
     s_cheek_lower = f_cheek.extrude(App.Vector(0.0, 6.20, 0.0)).translate(App.Vector(0.0, -16.35, 0.0))
 
     # Bottom Counter-Bearing Tab Plate connecting the two cheeks at Z in [-23.00, -20.00]
-    s_tab_bottom = Part.makeBox(9.00 - (-5.50), 2.0 * 16.35, 3.00, App.Vector(-5.50, -16.35, -23.00))
+    s_tab_bottom = Part.makeBox(9.15 - (-5.50), 2.0 * 16.35, 3.00, App.Vector(-5.50, -16.35, -23.00))
 
-    # Solid Servo Mounting Blocks (Both flush at Z = +7.00 mm across full cage width Y in [-10.15, +10.15])
-    front_mount_block = Part.makeBox(17.80 - 9.15, 20.30, 27.00, App.Vector(9.15, -10.15, -20.00))
-    rear_mount_block = Part.makeBox(39.20 - 31.65, 20.30, 27.00, App.Vector(-39.20, -10.15, -20.00))
+    # Exact Knie-Servo mounting bosses at Z in [3.00, 7.00] mm
+    ear_bosses = build_servo_ear_bosses()
 
     # Central Claw Blade (Z in [-3.00, +4.00], centered at Z = +0.50 mm)
-    outer_wire = build_organic_tibia_outer_wire()
+    # Full organic contour restored with widened U-throat
+    outer_wire = build_organic_tibia_outer_wire(horn_shift_y=5.0, throat_clearance=4.0)
     claw_central = Part.Face(outer_wire).extrude(App.Vector(0, 0, 7.0)).translate(App.Vector(0, 0, -3.0))
-
-    # Cut away legacy beak horns extending forward into the servo cage / knee joint (X > -31.65 mm)
-    box_front_cut = Part.makeBox(100.0, 120.0, 30.0, App.Vector(-31.65, -60.0, -15.0))
-    claw_central = claw_central.cut(box_front_cut)
 
     # Fuse base solid
     tibia_base = (
@@ -404,14 +413,13 @@ def build_tibia_base_shape():
         .fuse(s_cheek_upper)
         .fuse(s_cheek_lower)
         .fuse(s_tab_bottom)
-        .fuse(front_mount_block)
-        .fuse(rear_mount_block)
+        .fuse(ear_bosses)
     )
 
     # Cut Servo Pocket & Seats
     servo_pocket = Part.makeBox(40.80, 20.30, 48.00, App.Vector(-31.65, -10.15, -20.00))
-    # Extended cable exit slot along +X guaranteeing 0.0000 mm^3 clearance
-    servo_cable_slot = Part.makeBox(20.00, 7.20, 5.00, App.Vector(9.00, -3.60, -20.00))
+    # Cable exit slot along +X guaranteeing full clearance
+    servo_cable_slot = Part.makeBox(12.00, 7.20, 5.00, App.Vector(9.00, -3.60, -20.00))
     screw_bore = Part.makeCylinder(2.05, 6.0, App.Vector(0.0, 0.0, -24.0))
     nut_pocket = make_hex_nut_pocket_z(0.0, 0.0, -22.40, -19.50, sw=7.10)
     tibia_base = tibia_base.cut(servo_pocket).cut(servo_cable_slot).cut(screw_bore).cut(nut_pocket)
@@ -434,6 +442,29 @@ def build_tibia_base_shape():
         cut_u = f_win.extrude(App.Vector(0.0, 10.0, 0.0)).translate(App.Vector(0.0, 9.0, 0.0))
         cut_l = f_win.extrude(App.Vector(0.0, -10.0, 0.0)).translate(App.Vector(0.0, -9.0, 0.0))
         tibia_base = tibia_base.cut(cut_u).cut(cut_l)
+
+    # Taper cheeks in width (Y) into claw trunk at X in [-31.65, -45.00]
+    pts_taper_u = [
+        App.Vector(-31.65, 16.35, 0.0),
+        App.Vector(-31.65, 25.00, 0.0),
+        App.Vector(-50.00, 25.00, 0.0),
+        App.Vector(-45.00, 3.50, 0.0),
+        App.Vector(-31.65, 16.35, 0.0),
+    ]
+    w_taper_u = Part.makePolygon(pts_taper_u)
+    cut_taper_u_cheek = Part.Face(w_taper_u).extrude(App.Vector(0, 0, 21.0)).translate(App.Vector(0, 0, 4.0))
+
+    pts_taper_l = [
+        App.Vector(-31.65, -16.35, 0.0),
+        App.Vector(-31.65, -25.00, 0.0),
+        App.Vector(-50.00, -25.00, 0.0),
+        App.Vector(-45.00, -3.50, 0.0),
+        App.Vector(-31.65, -16.35, 0.0),
+    ]
+    w_taper_l = Part.makePolygon(pts_taper_l)
+    cut_taper_l_cheek = Part.Face(w_taper_l).extrude(App.Vector(0, 0, 22.0)).translate(App.Vector(0, 0, -25.0))
+
+    tibia_base = tibia_base.cut(cut_taper_u_cheek).cut(cut_taper_l_cheek)
 
     try:
         tibia_base = tibia_base.removeSplitter()

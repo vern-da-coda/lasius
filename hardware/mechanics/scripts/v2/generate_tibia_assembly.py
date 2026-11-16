@@ -461,7 +461,7 @@ def build_organic_tibia_outer_wire():
     return Part.Wire([arc_cheek_tip, arc_pivot_bot, e7, e6, e5b, e5, e4, e3, e2, e1])
 
 
-outer_wire = build_organic_tibia_outer_wire()
+outer_wire = generate_tibia.build_organic_tibia_outer_wire(horn_shift_y=5.0, throat_clearance=4.0)
 
 # 1. Bionic Tibia-Servo-Käfig (Analogous to Coxa's Femur-Servo-Käfig)
 # Solid equal-height mounting blocks (Z = +7.00 mm), harmonic cheek tapering to apex (-58.00, 0.50),
