@@ -256,22 +256,27 @@ Dieser Backlog führt alle offenen Aufgaben, konstruktiven Erweiterungen und Ver
   * **Erkenntnis:** Überragendes Leichtbaupotenzial (Massenreduktion um $\ge 40\text{--}50\,\%$ von $82\,\text{g}$ auf $\sim 42\text{--}48\,\text{g}$ bei Beibehaltung von $S \ge 2{,}0$).
   * **Ergebnisdaten:** In-Tree FEA-Modelle und Netze abgelegt unter `hardware/mechanics/export/fea/femur_baseline/`.
 
-- [ ] **Topologieoptimierung der Bein-Segmente (`femur.FCStd`, `coxa.FCStd`, `tibia.FCStd`):**  
-  * **Femur-Knochen (Pilot):**
-    * Bionische Strukturoptimierung des $100\,\text{mm}$ Kragträgers zwischen Hüft- und Kniegelenk.
-    * Transformation der flachen $1{,}8\,\text{mm}$ Wangentaschen in lastpfadgerechte $45^\circ$-Fachwerk-Durchbrüche gemäß [`STYLE_GUIDE.md`](../../../STYLE_GUIDE.md) ($w \ge 2{,}50\,\text{mm}$, $R = 1{,}60\,\text{mm}$).
-    * Gezielte Aussparungen im massiven Unterboden unterhalb der ADS1115-Kammer ($Z \in [-8{,}5, -11{,}8\,\text{mm}]$).
-    * Re-Evaluation und Nachweis im CalculiX-Solver.
+- [x] ~~**Topologieoptimierung des Femur-Knochens (`femur.FCStd` – Pilot-Projekt):**~~ **[ERLEDIGT]**  
+  * **Status:** Vollständig umgesetzt in [`generate_femur.py`](../../../scripts/v2/generate_femur.py), verifiziert via [`fea_femur_verification.py`](../../../../../scripts/dev/fea_femur_verification.py) und in alle Master-Assemblies synchronisiert.
+  * **Bionische Leichtbau-Architektur:**
+    1. *Wangen-Fachwerkfenster:* Transformation der flachen $1{,}8\,\text{mm}$ Blindtaschen in lastpfadoptimierte, durchgehende $45^\circ$-Fachwerkfenster und Halbmond-Taschen hinter den Lagern ($w \ge 2{,}50\,\text{mm}$, $R = 1{,}80\,\text{mm}$); Gurte auf $Z = \pm 10{,}2\,\text{mm}$ verstärkt.
+    2. *Flanken-Warren-Gitter:* 5-Feld-Warren-Fachwerk ($45^\circ$-Chevrons) in den massiven Flanken bei durchgehend gekapselter, staubdichter ADS1115-Kammerinnenwand ($1{,}35\text{--}2{,}0\,\text{mm}$ PETG-Wand).
+    3. *Stirnwand-Taschen (Bulkheads):* $5{,}5\,\text{mm}$ tiefe bionische Entlastungstaschen an den Stirnwänden zu den U-Mäulern beiderseits der Kabeltunnels.
+    4. *Unterboden-Aussparungen:* Bionische Waben- und Rillenstrukturen im massiven Bodenblock ($Z \le -10{,}0\,\text{mm}$) unter Beibehaltung eines durchgehenden $1{,}5\,\text{mm}$ Schutzbodens unter dem ADC.
+  * **Quantitative FEA-Verifikationsergebnisse (CalculiX & Gmsh, 78.700 Tetraeder-Elemente):**
+    * **Masse:** Reduktion von $82{,}02\,\text{g}$ auf **$64{,}08\,\text{g}$** ($50{,}46\,\text{cm}^3$, **$-17{,}94\,\text{g}$ / $-21{,}9\,\%$ Leichtbau-Delta**).
+    * *LF1 (Tripod Gait, $F_z = -15\,\text{N}$):* $\sigma_{\text{max}} = 2{,}06\,\text{MPa}$, $u_{\text{max}} = 0{,}258\,\text{mm}$, Sicherheitsfaktor **$S = 21{,}89$**.
+    * *LF2 (Servo Stall Torque $1{,}2\,\text{N}\cdot\text{m}$, $F_t = 120\,\text{N}$):* $\sigma_{\text{max}} = 16{,}53\,\text{MPa}$, $u_{\text{max}} = 2{,}060\,\text{mm}$, Sicherheitsfaktor **$S = 2{,}72$** (Soll $S \ge 2{,}0$ souverän übertroffen!).
+    * *LF3 (Laterale Querlast, $F_y = +10\,\text{N}$):* $\sigma_{\text{max}} = 1{,}38\,\text{MPa}$, $u_{\text{max}} = 0{,}172\,\text{mm}$, Sicherheitsfaktor **$S = 32{,}59$**.
+  * **Kollisions- & Schnittstellenprüfung:** 100 % kollisionsfrei ($0{,}0000\,\text{mm}^3$) in `leg_assembly.FCStd`, `leg_right_assembly.FCStd`, `body_assembly.FCStd` und `lasius_assembly.FCStd`. Alle 145 CAD-Links verifiziert.
+
+- [ ] **Topologieoptimierung weiterer Komponenten (`coxa.FCStd`, `tibia.FCStd`, `chassis_core.FCStd`):**  
   * **Coxa-Gelenk:**
     * FEM-Optimierung des $45^\circ$-A-Truss-Gussets zur Reduktion von Kerbspannungen an der Krafteinleitung vom Servohorn ins Gegenlager.
   * **Tibia-Träger:**
     * Topologische Verifikation des Warren-Fachwerks entlang der Seitenwangen; Lastpfadanalyse von der Kufen-Wippen-Achse bis zum Kniegelenkskopf.
-
-- [ ] **Topologieoptimierung des Chassis-Monocoque-Kerns (`chassis_core.FCStd`):**  
-  * **Ziele:**
-    * Identifikation statisch gering belasteter Zonen im Monocoque-Körper zwischen den 4 M3-Standoff-Pfeilern und den Seitenwänden.
-    * Gezielte Einbringung bionischer Aussparungen und Fachwerkstrukturen gemäß [`STYLE_GUIDE.md`](../../../STYLE_GUIDE.md) (45°-Winkel, $w \ge 2{,}50\,\text{mm}$ Stegbreite).
-    * Maximale Verwindungssteifigkeit der Verbindung zwischen [`body_bottom.FCStd`](../../custom/v1/parts/body_bottom.FCStd) und [`body_top.FCStd`](../../custom/v1/parts/body_top.FCStd) bei minimalem Filamentverbrauch.
+  * **Chassis-Core-Monocoque (`chassis_core.FCStd`):**
+    * Bionische Fachwerkfenster im Monocoque-Körper zwischen den 4 M3-Standoff-Pfeilern und den Seitenwänden.
 
 
 

@@ -304,69 +304,79 @@ def build_femur_shapes():
         base_solid = base_solid.fuse(collar)
 
     # =========================================================================
-    # 5. 45-Degree Truss Pockets in Cheeks & Symmetrical Flank A-Truss Pockets
+    # 5. 45-Degree Truss Windows in Cheeks & Bionic Flank A-Truss Lattice
     # =========================================================================
-    # A. 45-Degree Cheek Truss Pockets (Non-Through, 1.80 mm deep):
-    # Instead of simple horizontal teardrops, we carve upper and lower triangulated
-    # pockets leaving a 45-degree chevron diagonal rib directly connecting the
-    # U-throat bulkheads (X = 26 and X = 74) to the bearing/horn bosses (X = 0 and X = 100).
-    # Leaves a solid, continuous 4.20 mm structural inner web!
-    p_u1 = App.Vector(13.00, 2.50, 0.0)
-    p_u2 = App.Vector(24.50, 11.50, 0.0)
-    p_u3 = App.Vector(13.00, 11.50, 0.0)
-    fu_left = make_filleted_polygon_2d([p_u1, p_u2, p_u3], 1.60)
+    # A. 45-Degree Cheek Truss Windows (Through-Cut, w >= 2.50 mm, R = 1.80 mm):
+    # Triangulated through-cut truss windows leaving a 45-degree chevron diagonal rib
+    # directly connecting the U-throat bulkheads (X = 26 and X = 74) to the
+    # bearing and horn hubs (X = 0 and X = 100).
+    # Chords reinforced to Z = +-10.20 mm for optimal stress flow under stall torque.
+    p_u1 = App.Vector(11.50, 2.50, 0.0)
+    p_u2 = App.Vector(23.50, 10.20, 0.0)
+    p_u3 = App.Vector(11.50, 10.20, 0.0)
+    fu_left = make_filleted_polygon_2d([p_u1, p_u2, p_u3], 1.80)
 
-    p_d1 = App.Vector(13.00, -2.50, 0.0)
-    p_d2 = App.Vector(13.00, -11.50, 0.0)
-    p_d3 = App.Vector(24.50, -11.50, 0.0)
-    fd_left = make_filleted_polygon_2d([p_d1, p_d2, p_d3], 1.60)
+    p_d1 = App.Vector(11.50, -2.50, 0.0)
+    p_d2 = App.Vector(11.50, -10.20, 0.0)
+    p_d3 = App.Vector(23.50, -10.20, 0.0)
+    fd_left = make_filleted_polygon_2d([p_d1, p_d2, p_d3], 1.80)
 
-    p_ru1 = App.Vector(87.00, 2.50, 0.0)
-    p_ru2 = App.Vector(87.00, 11.50, 0.0)
-    p_ru3 = App.Vector(75.50, 11.50, 0.0)
-    fu_right = make_filleted_polygon_2d([p_ru1, p_ru2, p_ru3], 1.60)
+    p_ru1 = App.Vector(88.50, 2.50, 0.0)
+    p_ru2 = App.Vector(88.50, 10.20, 0.0)
+    p_ru3 = App.Vector(76.50, 10.20, 0.0)
+    fu_right = make_filleted_polygon_2d([p_ru1, p_ru2, p_ru3], 1.80)
 
-    p_rd1 = App.Vector(87.00, -2.50, 0.0)
-    p_rd2 = App.Vector(75.50, -11.50, 0.0)
-    p_rd3 = App.Vector(87.00, -11.50, 0.0)
-    fd_right = make_filleted_polygon_2d([p_rd1, p_rd2, p_rd3], 1.60)
+    p_rd1 = App.Vector(88.50, -2.50, 0.0)
+    p_rd2 = App.Vector(76.50, -10.20, 0.0)
+    p_rd3 = App.Vector(88.50, -10.20, 0.0)
+    fd_right = make_filleted_polygon_2d([p_rd1, p_rd2, p_rd3], 1.80)
 
-    # Cut 1.80 mm deep pockets into Front Cheeks (outer face is Y = 35.30):
-    for f in [fu_left, fd_left, fu_right, fd_right]:
-        base_solid = base_solid.cut(extrude_face_xz(f, 33.50, 5.0))
+    # Bionic crescent windows behind the pivots (X in [-13.5, -7.5] and [107.5, 113.5]):
+    p_cres_l = make_filleted_polygon_2d([
+        App.Vector(-13.5, 7.5, 0),
+        App.Vector(-7.5, 7.5, 0),
+        App.Vector(-7.5, -7.5, 0),
+        App.Vector(-13.5, -7.5, 0)
+    ], 2.0)
+    p_cres_r = make_filleted_polygon_2d([
+        App.Vector(107.5, 7.5, 0),
+        App.Vector(113.5, 7.5, 0),
+        App.Vector(113.5, -7.5, 0),
+        App.Vector(107.5, -7.5, 0)
+    ], 2.0)
 
-    # Cut 1.80 mm deep pockets into Rear Cheeks (outer face is Y = -28.00):
-    for f in [fu_left, fd_left, fu_right, fd_right]:
-        base_solid = base_solid.cut(extrude_face_xz(f, -30.00, 3.80))
+    # Cut Through-Windows in Front Cheeks (Y in [29.30, 35.30]):
+    for f in [fu_left, fd_left, fu_right, fd_right, p_cres_l, p_cres_r]:
+        base_solid = base_solid.cut(extrude_face_xz(f, 28.00, 10.0))
 
-    # B. Central Flank Symmetrical 45-Degree A-Truss Pockets:
-    # Sculpted into the massive 9.65 mm outer walls flanking the ADS1115 chamber.
-    # Leaves a solid 3.35 mm inner chamber wall to keep the ADC chamber 100% sealed.
-    # 1. Central triangle (apex up at X = 50.00, Z = 3.80)
-    p_c1 = App.Vector(38.00, -8.50, 0.0)
-    p_c2 = App.Vector(62.00, -8.50, 0.0)
-    p_c3 = App.Vector(50.00, 3.80, 0.0)
-    fc_flank = make_filleted_polygon_2d([p_c1, p_c2, p_c3], 1.60)
+    # Cut Through-Windows in Rear Cheeks (Y in [-28.00, -22.00]):
+    for f in [fu_left, fd_left, fu_right, fd_right, p_cres_l, p_cres_r]:
+        base_solid = base_solid.cut(extrude_face_xz(f, -30.00, 10.0))
 
-    # 2. Left corner triangle (hypotenuse at 45 deg, strut width = 3.20 mm)
-    p_l1 = App.Vector(34.50, -7.00, 0.0)
-    p_l2 = App.Vector(46.00, 5.00, 0.0)
-    p_l3 = App.Vector(34.50, 5.00, 0.0)
-    fl_flank = make_filleted_polygon_2d([p_l1, p_l2, p_l3], 1.60)
+    # B. Central Flank Symmetrical 45-Degree A-Truss Lattice (Front & Rear Flanks):
+    # Multi-bay Warren/A-Truss with 5 triangulated bays carved into the flank walls.
+    # Leaves a solid, continuous inner chamber wall to keep the ADC chamber 100% sealed.
+    p_f1 = [App.Vector(33.0, -7.5, 0), App.Vector(43.0, -7.5, 0), App.Vector(33.0, 5.5, 0)]
+    f_bay1 = make_filleted_polygon_2d(p_f1, 1.60)
 
-    # 3. Right corner triangle (mirror across X = 50.0)
-    p_r1 = App.Vector(54.00, 5.00, 0.0)
-    p_r2 = App.Vector(65.50, -7.00, 0.0)
-    p_r3 = App.Vector(65.50, 5.00, 0.0)
-    fr_flank = make_filleted_polygon_2d([p_r1, p_r2, p_r3], 1.60)
+    p_f2 = [App.Vector(34.5, 6.5, 0), App.Vector(45.5, 6.5, 0), App.Vector(44.0, -5.0, 0)]
+    f_bay2 = make_filleted_polygon_2d(p_f2, 1.60)
 
-    # Cut Front Flank (pocket floor at Y = +20.50, inner chamber wall remains 3.35 mm solid):
-    for f in [fc_flank, fl_flank, fr_flank]:
-        base_solid = base_solid.cut(extrude_face_xz(f, 20.50, 20.00))
+    p_f3 = [App.Vector(44.0, -7.5, 0), App.Vector(56.0, -7.5, 0), App.Vector(50.0, 4.5, 0)]
+    f_bay3 = make_filleted_polygon_2d(p_f3, 1.60)
 
-    # Cut Rear Flank (pocket floor at Y = -13.20, inner chamber wall remains 3.35 mm solid):
-    for f in [fc_flank, fl_flank, fr_flank]:
-        base_solid = base_solid.cut(extrude_face_xz(f, -35.00, 21.80))
+    p_f4 = [App.Vector(54.5, 6.5, 0), App.Vector(65.5, 6.5, 0), App.Vector(56.0, -5.0, 0)]
+    f_bay4 = make_filleted_polygon_2d(p_f4, 1.60)
+
+    p_f5 = [App.Vector(57.0, -7.5, 0), App.Vector(67.0, -7.5, 0), App.Vector(67.0, 5.5, 0)]
+    f_bay5 = make_filleted_polygon_2d(p_f5, 1.60)
+
+    flank_bays = [f_bay1, f_bay2, f_bay3, f_bay4, f_bay5]
+    for fb in flank_bays:
+        # Cut Front Flank (pocket floor at Y = +18.50, extends past outer face):
+        base_solid = base_solid.cut(extrude_face_xz(fb, 18.50, 20.00))
+        # Cut Rear Flank (pocket floor at Y = -11.20, extends past outer face):
+        base_solid = base_solid.cut(extrude_face_xz(fb, -35.00, 23.80))
 
     # =========================================================================
     # 6. Pivot Hub Bores (2x Ø8.0 mm), Reinforced Horn Bosses & Bearing Seats
@@ -512,6 +522,34 @@ def build_femur_shapes():
     s_femur_r1 = Part.makeBox(1.30, 2.80, 10.0, App.Vector(68.5, Y_mid - 1.40, -10.0))
     s_femur_r2 = Part.makeBox(1.30, 2.80, 10.0, App.Vector(71.5, Y_mid - 1.40, -10.0))
     base_solid = base_solid.cut(s_femur_l1).cut(s_femur_l2).cut(s_femur_r1).cut(s_femur_r2)
+
+    # =========================================================================
+    # 9. Bulkhead Weight Relief Pockets & Underside Bionic Recesses (Leightbau)
+    # =========================================================================
+    # A. Bulkhead U-Throat Weight Relief Pockets:
+    # Carved into the thick bulkheads flanking the central cable tunnels,
+    # facing the U-openings (depth = 5.5 mm from throat face, R = 2.0 mm):
+    p_b_fl = make_rounded_rect_wire_z(25.0, 31.0, Y_mid + 8.0, Y_mid + 20.0, 2.0, -8.0)
+    box_b_fl = Part.Face(p_b_fl).extrude(App.Vector(0, 0, 16.0))
+
+    p_b_rl = make_rounded_rect_wire_z(25.0, 31.0, Y_mid - 20.0, Y_mid - 8.0, 2.0, -8.0)
+    box_b_rl = Part.Face(p_b_rl).extrude(App.Vector(0, 0, 16.0))
+
+    p_b_fr = make_rounded_rect_wire_z(69.0, 75.0, Y_mid + 8.0, Y_mid + 20.0, 2.0, -8.0)
+    box_b_fr = Part.Face(p_b_fr).extrude(App.Vector(0, 0, 16.0))
+
+    p_b_rr = make_rounded_rect_wire_z(69.0, 75.0, Y_mid - 20.0, Y_mid - 8.0, 2.0, -8.0)
+    box_b_rr = Part.Face(p_b_rr).extrude(App.Vector(0, 0, 16.0))
+
+    base_solid = base_solid.cut(box_b_fl).cut(box_b_rl).cut(box_b_fr).cut(box_b_rr)
+
+    # B. Underside Bionic Recesses (Z < -10.0 mm):
+    # Relieves the solid bottom slab below the ADC chamber while maintaining
+    # a sealed 1.50 mm solid floor (Z = -8.50 down to -10.00 mm):
+    p_bot_l = make_rounded_rect_z(26.5, 43.5, Y_mid - 13.0, Y_mid + 13.0, 3.5, -25.0, -10.00)
+    p_bot_c = make_rounded_rect_z(44.5, 55.5, Y_mid - 11.0, Y_mid + 11.0, 3.0, -25.0, -10.00)
+    p_bot_r = make_rounded_rect_z(56.5, 73.5, Y_mid - 13.0, Y_mid + 13.0, 3.5, -25.0, -10.00)
+    base_solid = base_solid.cut(p_bot_l).cut(p_bot_c).cut(p_bot_r)
 
     base_solid = base_solid.removeSplitter()
     return base_solid
