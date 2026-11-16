@@ -16,6 +16,7 @@ import math
 import os
 import sys
 import zipfile
+import xml.etree.ElementTree as ET
 import FreeCAD as App
 import Part
 
@@ -64,7 +65,8 @@ rot_down_negz = App.Rotation()
 rot_negy_posz = App.Rotation(App.Vector(1, 0, 0), 90.0)
 rot_negy_negz = App.Rotation(App.Vector(1, 0, 0), -90.0)
 
-theta = math.radians(50.0)
+# Fully stretched leg pose (all elements on one straight horizontal line: Coxa, Femur, Tibia)
+theta = math.radians(0.0)
 c = math.cos(theta)
 s = math.sin(theta)
 
@@ -199,7 +201,7 @@ make_link(doc_l, asm_l, "Femur_Nut",     "Femur M4 Low-Profile Nut (DIN 439)",  
 make_link(doc_l, asm_l, "Femur_Screw",   "Femur M4 Countersunk Screw",          doc_s.M4_Senkkopfschraube,  App.Placement(App.Vector(56.50, -28.00, 0.00), rot_negy_posz))
 
 # C. Knee Pivot Bearing Set (Horizontal axis at X=156.50, Z=0.00 along -Y)
-rot_knee_nut_l = rot_negy_negz.multiply(App.Rotation(App.Vector(0, 0, 1), 50.0))
+rot_knee_nut_l = rot_negy_negz.multiply(App.Rotation(App.Vector(0, 0, 1), math.degrees(theta)))
 make_link(doc_l, asm_l, "Knee_Washer",  "Knee Shim Washer (s0.3)",            doc_w.Passscheibe_M4,       App.Placement(App.Vector(156.50, -21.00, 0.00), rot_negy_posz))
 make_link(doc_l, asm_l, "Knee_Bearing", "Knee Ball Bearing (D8 H3)",          doc_b.Kugellager_6x3x4,     App.Placement(App.Vector(156.50, -21.65, 0.00), rot_negy_posz))
 make_link(doc_l, asm_l, "Knee_Nut",     "Knee M4 Low-Profile Nut (DIN 439)",  doc_n_low.M4_Mutter_DIN439, App.Placement(App.Vector(156.50, -20.40, 0.00), rot_knee_nut_l))
@@ -420,7 +422,7 @@ make_link(doc_r, asm_r, "Femur_Bearing", "Femur Ball Bearing (D8 H3)",          
 make_link(doc_r, asm_r, "Femur_Nut",     "Femur M4 Low-Profile Nut (DIN 439)",  doc_n_low.M4_Mutter_DIN439, App.Placement(App.Vector(56.50, 20.20, 0.00), rot_negy_posz))
 make_link(doc_r, asm_r, "Femur_Screw",   "Femur M4 Countersunk Screw",          doc_s.M4_Senkkopfschraube,  App.Placement(App.Vector(56.50, 28.00, 0.00), rot_negy_negz))
 
-rot_knee_nut_r = rot_negy_posz.multiply(App.Rotation(App.Vector(0, 0, 1), -50.0))
+rot_knee_nut_r = rot_negy_posz.multiply(App.Rotation(App.Vector(0, 0, 1), -math.degrees(theta)))
 make_link(doc_r, asm_r, "Knee_Washer",  "Knee Shim Washer (s0.3)",            doc_w.Passscheibe_M4,       App.Placement(App.Vector(156.50, 21.00, 0.00), rot_negy_negz))
 make_link(doc_r, asm_r, "Knee_Bearing", "Knee Ball Bearing (D8 H3)",          doc_b.Kugellager_6x3x4,     App.Placement(App.Vector(156.50, 21.65, 0.00), rot_negy_negz))
 make_link(doc_r, asm_r, "Knee_Nut",     "Knee M4 Low-Profile Nut (DIN 439)",  doc_n_low.M4_Mutter_DIN439, App.Placement(App.Vector(156.50, 20.40, 0.00), rot_knee_nut_r))
@@ -441,6 +443,43 @@ for d in list(App.listDocuments().values()):
         App.closeDocument(d.Name)
     except Exception:
         pass
+
+def patch_fcstd_visibility(filepath):
+    temp_zip = filepath + ".tmp"
+    with zipfile.ZipFile(filepath, "r") as zin:
+        names = zin.namelist()
+        if "GuiDocument.xml" in names:
+            xml_str = zin.read("GuiDocument.xml").decode("utf-8")
+            xml_str = xml_str.replace('<Bool value="false"/>', '<Bool value="true"/>')
+            gui_xml = xml_str.encode("utf-8")
+        else:
+            root = ET.fromstring(zin.read("Document.xml"))
+            objs = []
+            for obj in root.find("Objects"):
+                name = obj.attrib.get("name") or obj.attrib.get("Name")
+                if name and name not in objs:
+                    objs.append(name)
+            doc_elem = ET.Element("Document", SchemaVersion="1", HasExpansion="1")
+            vp_data = ET.SubElement(doc_elem, "ViewProviderData", Count=str(len(objs)))
+            for name in objs:
+                vp = ET.SubElement(vp_data, "ViewProvider", name=name)
+                props = ET.SubElement(vp, "Properties", Count="1")
+                is_hidden = any(h in name for h in ["Origin", "Axis", "Plane"])
+                val = "false" if is_hidden else "true"
+                prop = ET.SubElement(props, "Property", name="Visibility", type="App::PropertyBool", status="1")
+                ET.SubElement(prop, "Bool", value=val)
+            gui_xml = ET.tostring(doc_elem, encoding="utf-8", xml_declaration=True)
+
+        with zipfile.ZipFile(temp_zip, "w", compression=zipfile.ZIP_DEFLATED) as zout:
+            for item in zin.infolist():
+                if item.filename != "GuiDocument.xml":
+                    zout.writestr(item, zin.read(item.filename))
+            zout.writestr("GuiDocument.xml", gui_xml)
+    os.replace(temp_zip, filepath)
+
+patch_fcstd_visibility(fcstd_left)
+patch_fcstd_visibility(fcstd_right)
+print("✔ Patched GuiDocument.xml for full visibility (Left & Right Leg Assemblies)")
 
 print("--- Leg Assemblies v2 (Left & Right) Completed Successfully ---")
 sys.exit(0)

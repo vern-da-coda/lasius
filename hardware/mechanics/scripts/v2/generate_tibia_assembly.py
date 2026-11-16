@@ -20,6 +20,7 @@ import math
 import os
 import sys
 import zipfile
+import xml.etree.ElementTree as ET
 import FreeCAD as App
 import Part
 
@@ -798,4 +799,44 @@ for d in list(App.listDocuments().values()):
         App.closeDocument(d.Name)
     except Exception:
         pass
+
+def patch_fcstd_visibility(filepath):
+    temp_zip = filepath + ".tmp"
+    with zipfile.ZipFile(filepath, "r") as zin:
+        names = zin.namelist()
+        if "GuiDocument.xml" in names:
+            xml_str = zin.read("GuiDocument.xml").decode("utf-8")
+            xml_str = xml_str.replace('<Bool value="false"/>', '<Bool value="true"/>')
+            gui_xml = xml_str.encode("utf-8")
+        else:
+            root = ET.fromstring(zin.read("Document.xml"))
+            objs = []
+            for obj in root.find("Objects"):
+                name = obj.attrib.get("name") or obj.attrib.get("Name")
+                if name and name not in objs:
+                    objs.append(name)
+            doc_elem = ET.Element("Document", SchemaVersion="1", HasExpansion="1")
+            vp_data = ET.SubElement(doc_elem, "ViewProviderData", Count=str(len(objs)))
+            for name in objs:
+                vp = ET.SubElement(vp_data, "ViewProvider", name=name)
+                props = ET.SubElement(vp, "Properties", Count="1")
+                is_hidden = any(h in name for h in ["Origin", "Axis", "Plane"])
+                val = "false" if is_hidden else "true"
+                prop = ET.SubElement(props, "Property", name="Visibility", type="App::PropertyBool", status="1")
+                ET.SubElement(prop, "Bool", value=val)
+            gui_xml = ET.tostring(doc_elem, encoding="utf-8", xml_declaration=True)
+
+        with zipfile.ZipFile(temp_zip, "w", compression=zipfile.ZIP_DEFLATED) as zout:
+            for item in zin.infolist():
+                if item.filename != "GuiDocument.xml":
+                    zout.writestr(item, zin.read(item.filename))
+            zout.writestr("GuiDocument.xml", gui_xml)
+    os.replace(temp_zip, filepath)
+
+patch_fcstd_visibility(fcstd_asm_path)
+for p_path in [fcstd_mono_path, fcstd_cover_path, fcstd_rocker_path, fcstd_shoe_path]:
+    if os.path.exists(p_path):
+        patch_fcstd_visibility(p_path)
+print("✔ Patched GuiDocument.xml for full visibility (Tibia Assembly & Parts)")
+
 sys.exit(0)
