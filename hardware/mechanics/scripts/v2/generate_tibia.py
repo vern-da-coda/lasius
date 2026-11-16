@@ -291,6 +291,89 @@ def build_tibia_servo_cage_cheek_wire(x_front=9.15, x_rear=-45.0):
     return Part.Wire(all_edges)
 
 
+def build_tibia_upper_cheek_wire(x_tab=17.80, x_front=9.15, x_flat=-7.00, x_apex=-58.00):
+    """
+    Construct the expanded bionic upper cheek wire in the X-Z plane:
+    - Extended towards foot (-X) past the knee servo body (X in [9.15, -31.65]).
+    - Harmonic G1 S-curves taper smoothly from flat crest/tab at X = x_flat (-7.00 mm)
+      down to the central claw blade side faces at X = x_apex (-58.00 mm, Z in [-3.00, +4.00]).
+    - Front tab at X in [9.15, 17.80] flanks the servo mounting boss with R = 2.60 mm filleted corners.
+    """
+    z_crest = 24.00
+    z_tab = -23.00
+    z_tab_top = 10.15
+    z_tab_bot = -10.15
+    r_tab = 2.60
+
+    # 1. Apex vertical edge connecting to claw blade
+    p_apex_bot = App.Vector(x_apex, 0.0, -3.00)
+    p_apex_top = App.Vector(x_apex, 0.0, 4.00)
+    e_apex = Part.makeLine(p_apex_bot, p_apex_top)
+
+    # 2. Top S-curve from flat crest to apex top
+    p_crest_end = App.Vector(x_flat, 0.0, z_crest)
+    e_top_s = make_s_curve_edges_xz(p_apex_top, p_crest_end)
+
+    # 3. Flat top crest
+    p_front_top = App.Vector(x_front, 0.0, z_crest)
+    e_crest_flat = Part.makeLine(p_crest_end, p_front_top)
+
+    # 4. Front wall from crest down to tab top
+    p_wall_top = App.Vector(x_front, 0.0, z_tab_top)
+    e_wall_top = Part.makeLine(p_front_top, p_wall_top)
+
+    # 5. Tab top line
+    p_tab_top_corner = App.Vector(x_tab - r_tab, 0.0, z_tab_top)
+    e_tab_top_line = Part.makeLine(p_wall_top, p_tab_top_corner)
+
+    # 6. Tab top corner arc
+    c_tab_top = App.Vector(x_tab - r_tab, 0.0, z_tab_top - r_tab)
+    p_tab_top_mid = App.Vector(c_tab_top.x + r_tab * math.cos(math.pi / 4), 0.0, c_tab_top.z + r_tab * math.sin(math.pi / 4))
+    p_tab_top_end = App.Vector(x_tab, 0.0, z_tab_top - r_tab)
+    arc_tab_top = Part.Edge(Part.Arc(p_tab_top_corner, p_tab_top_mid, p_tab_top_end))
+
+    # 7. Tab front vertical edge
+    p_tab_bot_arc_start = App.Vector(x_tab, 0.0, z_tab_bot + r_tab)
+    e_tab_front = Part.makeLine(p_tab_top_end, p_tab_bot_arc_start)
+
+    # 8. Tab bottom corner arc
+    c_tab_bot = App.Vector(x_tab - r_tab, 0.0, z_tab_bot + r_tab)
+    p_tab_bot_mid = App.Vector(c_tab_bot.x + r_tab * math.cos(math.pi / 4), 0.0, c_tab_bot.z - r_tab * math.sin(math.pi / 4))
+    p_tab_bot_end = App.Vector(x_tab - r_tab, 0.0, z_tab_bot)
+    arc_tab_bot = Part.Edge(Part.Arc(p_tab_bot_arc_start, p_tab_bot_mid, p_tab_bot_end))
+
+    # 9. Tab bottom line
+    p_wall_bot = App.Vector(x_front, 0.0, z_tab_bot)
+    e_tab_bot_line = Part.makeLine(p_tab_bot_end, p_wall_bot)
+
+    # 10. Front wall from tab bottom down to tab bottom corner
+    p_front_bot = App.Vector(x_front, 0.0, z_tab)
+    e_wall_bot = Part.makeLine(p_wall_bot, p_front_bot)
+
+    # 11. Flat bottom edge
+    p_tab_end = App.Vector(x_flat, 0.0, z_tab)
+    e_tab_flat = Part.makeLine(p_front_bot, p_tab_end)
+
+    # 12. Bottom S-curve from flat bottom to apex bot
+    e_bot_s = make_s_curve_edges_xz(p_tab_end, p_apex_bot)
+
+    edges = [
+        e_apex,
+        e_top_s[0], e_top_s[1],
+        e_crest_flat,
+        e_wall_top,
+        e_tab_top_line,
+        arc_tab_top,
+        e_tab_front,
+        arc_tab_bot,
+        e_tab_bot_line,
+        e_wall_bot,
+        e_tab_flat,
+        e_bot_s[0], e_bot_s[1],
+    ]
+    return Part.Wire(edges)
+
+
 def build_servo_ear_bosses():
     """
     Exact Knie-Servo-Käfig geometry:
@@ -354,13 +437,15 @@ def build_tibia_base_shape():
     - Full organic claw shape restored with both beak horns and widened U-throat
     - 6 Coxa-mapped bionic truss windows
     """
-    w_cheek = build_tibia_servo_cage_cheek_wire(x_front=9.15, x_rear=-45.0)
-    f_cheek = Part.Face(w_cheek)
+    # Lower / Ventral cheek: Y in [-16.35, -10.15] (6.20 mm) - unchanged baseline
+    w_cheek_lower = build_tibia_servo_cage_cheek_wire(x_front=9.15, x_rear=-45.0)
+    f_cheek_lower = Part.Face(w_cheek_lower)
+    s_cheek_lower = f_cheek_lower.extrude(App.Vector(0.0, 6.20, 0.0)).translate(App.Vector(0.0, -16.35, 0.0))
 
-    # Upper / Dorsal cheek: Y in [+10.15, +16.35] (6.20 mm)
-    s_cheek_upper = f_cheek.extrude(App.Vector(0.0, 6.20, 0.0)).translate(App.Vector(0.0, 10.15, 0.0))
-    # Lower / Ventral cheek: Y in [-16.35, -10.15] (6.20 mm)
-    s_cheek_lower = f_cheek.extrude(App.Vector(0.0, 6.20, 0.0)).translate(App.Vector(0.0, -16.35, 0.0))
+    # Upper / Dorsal cheek: Y in [+10.15, +16.35] (6.20 mm) - expanded bionic outline tapering to X = -58.00 mm
+    w_cheek_upper = build_tibia_upper_cheek_wire(x_tab=17.80, x_front=9.15, x_flat=-7.00, x_apex=-58.00)
+    f_cheek_upper = Part.Face(w_cheek_upper)
+    s_cheek_upper = f_cheek_upper.extrude(App.Vector(0.0, 6.20, 0.0)).translate(App.Vector(0.0, 10.15, 0.0))
 
     # Bottom Counter-Bearing Tab Plate connecting the two cheeks at Z in [-23.00, -20.00]
     s_tab_bottom = Part.makeBox(9.15 - (-5.50), 2.0 * 16.35, 3.00, App.Vector(-5.50, -16.35, -23.00))
@@ -409,17 +494,7 @@ def build_tibia_base_shape():
         cut_l = f_win.extrude(App.Vector(0.0, -10.0, 0.0)).translate(App.Vector(0.0, -9.0, 0.0))
         tibia_base = tibia_base.cut(cut_u).cut(cut_l)
 
-    # Taper cheeks in width (Y) into claw trunk at X in [-31.65, -45.00]
-    pts_taper_u = [
-        App.Vector(-31.65, 16.35, 0.0),
-        App.Vector(-31.65, 25.00, 0.0),
-        App.Vector(-50.00, 25.00, 0.0),
-        App.Vector(-45.00, 3.50, 0.0),
-        App.Vector(-31.65, 16.35, 0.0),
-    ]
-    w_taper_u = Part.makePolygon(pts_taper_u)
-    cut_taper_u_cheek = Part.Face(w_taper_u).extrude(App.Vector(0, 0, 21.0)).translate(App.Vector(0, 0, 4.0))
-
+    # Taper lower cheek in width into claw trunk at X in [-31.65, -45.00] (upper cheek has its exact organic taper in w_cheek_upper)
     pts_taper_l = [
         App.Vector(-31.65, -16.35, 0.0),
         App.Vector(-31.65, -25.00, 0.0),
@@ -430,7 +505,7 @@ def build_tibia_base_shape():
     w_taper_l = Part.makePolygon(pts_taper_l)
     cut_taper_l_cheek = Part.Face(w_taper_l).extrude(App.Vector(0, 0, 22.0)).translate(App.Vector(0, 0, -25.0))
 
-    tibia_base = tibia_base.cut(cut_taper_u_cheek).cut(cut_taper_l_cheek)
+    tibia_base = tibia_base.cut(cut_taper_l_cheek)
 
     try:
         tibia_base = tibia_base.removeSplitter()
