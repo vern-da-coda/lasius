@@ -304,19 +304,55 @@ def build_femur_shapes():
         base_solid = base_solid.fuse(collar)
 
     # =========================================================================
-    # 5. Bionic Monocoque Core & Non-Design Spaces (Style-Guide 5.1 & 5.2)
+    # 5. Bionic 45-Degree A-Truss Lattice (Waist Weight Relief Windows)
     # =========================================================================
-    # The Femur body is designed as an organic, monolithic Bionic Monocoque Box Girder:
-    # 1. Circular end bosses (R = 15.80 mm at Hip X = 0.0 and Knee X = 100.0) and
-    #    cantilever U-jaw cheeks (X in [-15.8, 26.0] and [74.0, 115.8]) remain 100%
-    #    SOLID. This provides continuous planar landing faces for 25T servo horns,
-    #    solid material around all 4x M2 screw counterbores (>= 4.0 mm clamping web),
-    #    and full cylindrical housings for 684ZZ bearings and M4 pivot screws.
-    # 2. Central waist core (X in [26.0, 74.0]) features continuous, smooth G1
-    #    outer flank walls, a solid 3.30 mm bottom tension/compression flange
-    #    (Z in [-11.80, -8.50]), and robust 4.5-5.0 mm throat bulkheads.
-    #    All arbitrary subtractive 2D pocket cuts have been eliminated to ensure
-    #    a pure, homogeneous stress flow and maximum torsional stiffness (Bredt).
+    # Implements Style-Guide Section 3 compliant 45.0-degree A-truss windows across
+    # the front flank (Y in [16.0, 38.0]) and rear flank (Y in [-38.0, -8.5]),
+    # harmonizing the visual signature with Coxa (generate_coxa.py) and Tibia
+    # (generate_tibia.py) while cutting moving mass and preserving high stiffness:
+    # 1. Non-Design Spaces (Style-Guide 5.1 & 5.2):
+    #    - Circular end bosses (R = 15.80 mm at Hip X = 0.0 and Knee X = 100.0) and
+    #      jaw cheeks (X in [-15.8, 26.0] and [74.0, 115.8]) remain 100% SOLID.
+    #    - Throat bulkheads (X in [26.0, 34.0] and [66.0, 74.0]) remain 100% solid,
+    #      housing the 4x M2 cover screw pillars without notches.
+    # 2. Continuous Chords:
+    #    - Bottom tension/compression flange (Z in [-11.80, -7.50 mm], t >= 4.30 mm)
+    #      remains unbroken along the entire span.
+    #    - Top chord (Z in [+7.50, +11.80 mm], t >= 4.30 mm) remains solid.
+    # 3. 45-Degree A-Truss Geometry:
+    #    - Uniform strut width w_strut = 2.50 mm (delta_x_45 = 3.536 mm).
+    #    - Exact 45.0-degree diagonal struts meeting at the central apex (X = 50.0, Z = +4.96 mm).
+    #    - R = 1.40 mm notch-stress-relief fillets at all window corners.
+    R_FILLET = 1.40
+
+    # Window 1: Left Upper 45-deg Right Triangle
+    p_w1 = [
+        App.Vector(34.00, -7.50, 0.0),
+        App.Vector(49.00,  7.50, 0.0),
+        App.Vector(34.00,  7.50, 0.0),
+    ]
+    f_w1 = make_filleted_polygon_2d(p_w1, R_FILLET)
+
+    # Window 2: Center 45-deg Isosceles Triangle (A-truss apex pointing up)
+    p_w2 = [
+        App.Vector(37.54, -7.50, 0.0),
+        App.Vector(62.46, -7.50, 0.0),
+        App.Vector(50.00,  4.96, 0.0),
+    ]
+    f_w2 = make_filleted_polygon_2d(p_w2, R_FILLET)
+
+    # Window 3: Right Upper 45-deg Right Triangle
+    p_w3 = [
+        App.Vector(51.00,  7.50, 0.0),
+        App.Vector(66.00, -7.50, 0.0),
+        App.Vector(66.00,  7.50, 0.0),
+    ]
+    f_w3 = make_filleted_polygon_2d(p_w3, R_FILLET)
+
+    for fw in [f_w1, f_w2, f_w3]:
+        cut_f = extrude_face_xz(fw, 16.0, 22.0)
+        cut_r = extrude_face_xz(fw, -38.0, 29.5)
+        base_solid = base_solid.cut(cut_f).cut(cut_r)
 
     # =========================================================================
     # 6. Pivot Hub Bores (2x Ø8.0 mm), Reinforced Horn Bosses & Bearing Seats

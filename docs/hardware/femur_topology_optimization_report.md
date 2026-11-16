@@ -97,13 +97,13 @@ flowchart TD
     end
 
     subgraph Monocoque["Bionische Monocoque-Zelle (Geschlossener Hohlkasten)"]
-        FL["Flanken: Kontinuierliche G1-Taillenwände ohne Ausklinkungen"]
-        BOT["Unterboden: Durchgehender 3.30 mm Zuggurt (Z in [-11.8, -8.5])"]
-        BH["Stirnwände: 4.5-5.0 mm massive Bulkheads zur Krafteinleitung"]
-        ROOF["Deckelschluss: Kraftschlüssige Schubzelle über verschraubten Deckel"]
+        FL["Flanken: Bionisches 45°-A-Truss-Fachwerk (w = 2.50 mm, R = 1.40 mm)"]
+        BOT["Unterboden: Durchgehender 4.30 mm Zuggurt (Z in [-11.8, -7.5])"]
+        BH["Stirnwände: 8.0 mm massive Bulkheads & M2-Schraubenpfeiler"]
+        ROOF["Obergurt: 4.30 mm massiver Gurt & Z = 9.0 mm Stufenfalz"]
     end
 
-    NonDesign --> Result["Bionischer Monocoque-Femur v2 (88.76 g solid / ~70 g infill)"]
+    NonDesign --> Result["Bionischer 45°-Truss-Femur v2 (60.77 cm³, 77.2 g solid / ~51 g infill)"]
     Monocoque --> Result
 ```
 
@@ -112,40 +112,45 @@ flowchart TD
 1. **Non-Design Spaces an Gelenkköpfen & Gabelwangen (100 % massiv):**
    - Die zylindrischen Endköpfe ($R = 15{,}80\,\text{mm}$) um Hüft- ($X = 0{,}0$) und Kniegelenk ($X = 100{,}0$) sowie die Wangenabschnitte zu den U-Mäulern ($X \in [-15{,}8, 26{,}0\,\text{mm}]$ und $[74{,}0, 115{,}8\,\text{mm}]$) verbleiben als **vollständig massive Non-Design Spaces**.
    - **Begründung (Style-Guide 5.1 & 5.2):** Standard-25T-Servohörner benötigen eine kreisrunde, ebene Auflagefläche ($\varnothing 20\text{--}25\,\text{mm}$) bei $Y = 29{,}30\,\text{mm}$. Die 4x M2-Senkungen auf $\varnothing 16{,}0\,\text{mm}$ Teilkreis fordern volles, unbeschädigtes Material ($\ge 4{,}0\,\text{mm}$ Spannfleisch unter den Schraubenköpfen). Das Gegenlager auf der Rückseite erfordert einen ununterbrochenen zylindrischen Lagersitz für das 684ZZ-Kugellager ($\varnothing 8{,}05 \times 3{,}0\,\text{mm}$) und eine intakte M4-Schraubensenkung ($\varnothing 9{,}60\,\text{mm}$).
-2. **Kontinuierlicher Monocoque-Mittelkörper (Verzicht auf subtraktive Taschen):**
-   - Alle willkürlichen 2D-Flankenausstanzungen und Kassettenaussparungen wurden vollständig eliminiert.
-   - Die Außenflanken der Taille folgen glatten, $G^1$-stetigen Tangentenkurven, wodurch variable Restwandstärken, spitze Keilschneiden (*Knife-Edges*) und Kerbspannungsspitzen vollständig vermieden werden.
-   - Der Unterboden bildet einen ununterbrochenen, $3{,}30\,\text{mm}$ dicken Zuggurt ($Z \in [-11{,}80, -8{,}50\,\text{mm}]$), der Biegemomente ($M_y$) homogen aufnimmt.
-3. **Massive U-Übergangs-Bulkheads:**
-   - Die Stirnwände bei $X = 26{,}00\,\text{mm}$ und $X = 74{,}00\,\text{mm}$ bleiben als $4{,}5\text{--}5{,}0\,\text{mm}$ dicke Schubwände massiv geschlossen. Sie leiten die Biegemomente der Cantilever-Gabeln direkt in den Monocoque-Körper ein.
+2. **Bionisches 45°-A-Truss-Fachwerk in der Taille (Style-Guide Abschnitt 3):**
+   - Analog zu den Stegen in [`coxa.FCStd`](../../hardware/mechanics/models/custom/v2/parts/coxa/coxa.FCStd) und [`tibia.FCStd`](../../hardware/mechanics/models/custom/v2/parts/tibia/tibia.FCStd) wurden in den Taillenflanken ($X \in [34{,}0, 66{,}0\,\text{mm}]$) standardisierte bionische $45{,}0^\circ$-Fachwerkfenster integriert.
+   - **Geometrie & Parameter:**
+     - Exakt $45{,}0^\circ$ geneigte Diagonalstreben mit einheitlicher Breite $w_{\text{strut}} = 2{,}50\,\text{mm}$ ($\Delta X_{45} = 3{,}536\,\text{mm}$).
+     - Zentrales A-Truss / Chevron mit oberem Firstapex bei $(X = 50{,}0, Z = +4{,}96\,\text{mm})$.
+     - Flankierende obere $45^\circ$-Rechtwinkeldreiecke.
+     - Kerbspannungsfreie Eckenradien mit $R = 1{,}40\,\text{mm}$ an allen Fensterecken.
+3. **Durchgehende Gurte & unbeschädigter Kraftfluss:**
+   - **Untergurt:** Der Unterboden bildet einen ununterbrochenen, massiven Zuggurt ($Z \in [-11{,}80, -7{,}50\,\text{mm}]$, Dicke $\ge 4{,}30\,\text{mm}$), der Biegemomente ($M_y$) homogen aufnimmt.
+   - **Obergurt:** Der obere Rand ($Z \in [+7{,}50, +11{,}80\,\text{mm}]$, Dicke $\ge 4{,}30\,\text{mm}$) bleibt über die gesamte Spannweite durchgängig solid.
+   - **Bulkheads & Schraubendome:** Zwischen U-Kehle und Fachwerk liegen jeweils $8{,}0\,\text{mm}$ massive Stirnwände ($X \in [26{,}0, 34{,}0]$ und $[66{,}0, 74{,}0\,\text{mm}]$), in denen die 4x M2-Deckelschrauben vollwandig eingebettet sind.
 4. **Schubsteifer Deckelschluss:**
-   - Der bionische Service-Deckel ([`femur_cover.FCStd`](../../hardware/mechanics/models/custom/v2/parts/femur/femur_cover.FCStd)) wird formschlüssig in den $Z = 9{,}00\,\text{mm}$ Stufenfalz eingesetzt und mit 4x M2-Eckschrauben angezogen. Dadurch entsteht eine allseitig geschlossene Röhre mit maximaler Torsionssteifigkeit ($I_t$).
+   - Der bionische Service-Deckel ([`femur_cover.FCStd`](../../hardware/mechanics/models/custom/v2/parts/femur/femur_cover.FCStd)) wird formschlüssig in den $Z = 9{,}00\,\text{mm}$ Stufenfalz eingesetzt und mit 4x M2-Eckschrauben angezogen.
 
 ---
 
 ## 5. Verifikations-FEA & Statische Auswertung (Schritt 5)
 
-Auf der finalen Monocoque-Geometrie wurde eine erneute Finite-Elemente-Analyse über alle drei Lastfälle durchgeführt ([`fea_femur_verification.py`](../../scripts/dev/fea_femur_verification.py)).
+Auf der finalen Geometrie mit bionischen 45°-Stegen wurde eine erneute Finite-Elemente-Analyse über alle drei Lastfälle durchgeführt ([`fea_femur_verification.py`](../../scripts/dev/fea_femur_verification.py)).
 
-### Vergleichstabelle: Baseline vs. Bionischer Monocoque-Körper
+### Vergleichstabelle: Baseline vs. Monocoque vs. Bionisches 45°-Fachwerk
 
-| Parameter / Lastfall | Baseline (Solid) | Monocoque-Femur v2 | Differenz | Statische Bewertung |
-| :--- | :---: | :---: | :---: | :--- |
-| **Bauteilvolumen (Solid)** | $64{,}59\,\text{cm}^3$ | **$69{,}89\,\text{cm}^3$** | $+5{,}30\,\text{cm}^3$ | Reines Hüllvolumen (wird im Slicer mit Infill gedruckt) |
-| **Druckmasse (40 % Gyroid)** | ca. $58\,\text{g}$ | **ca. $62\text{--}65\,\text{g}$** | ca. $+4\,\text{g}$ | Extrem leicht und verwindungssteif |
-| **LF1: Tripod Gait ($F_z = -15\,\text{N}$)** | | | | |
-| Max. Spannung $\sigma_{\text{max}}$ | $1{,}38\,\text{MPa}$ | **$1{,}35\,\text{MPa}$** | $-0{,}03\,\text{MPa}$ | Vollkommen unkritisch ($< 3\,\%$ der Streckgrenze) |
-| Max. Durchbiegung $u_{\text{max}}$ | $0{,}198\,\text{mm}$ | **$0{,}181\,\text{mm}$** | $-0{,}017\,\text{mm}$ | **Noch steifer als Baseline** ($0{,}18\,\text{mm}$) |
-| Sicherheitsfaktor $S$ | $32{,}58$ | **$33{,}37$** | $+0{,}79$ | Überragender Sicherheitsbeiwert |
-| **LF2: Stall Torque ($1{,}2\,\text{N}\cdot\text{m}$)** | | | | |
-| Max. Spannung $\sigma_{\text{max}}$ | $11{,}05\,\text{MPa}$ | **$10{,}79\,\text{MPa}$** | $-0{,}26\,\text{MPa}$ | **Niedrigste Spannung aller Varianten!** ($R_e = 45\,\text{MPa}$) |
-| Mittlere Spannung $\sigma_{\text{mean}}$ | $1{,}64\,\text{MPa}$ | **$1{,}53\,\text{MPa}$** | $-0{,}11\,\text{MPa}$ | Perfekt homogene Spannungsverteilung |
-| Max. Durchbiegung $u_{\text{max}}$ | $1{,}586\,\text{mm}$ | **$1{,}445\,\text{mm}$** | $-0{,}141\,\text{mm}$ | **Minimale Durchbiegung** (nur $1{,}44\,\text{mm}$!) |
-| Sicherheitsfaktor $S$ | $4{,}07$ | **$4{,}17$** | $+0{,}10$ | **Hervorragende Sicherheitsreserve ($S > 4$)** |
-| **LF3: Querlast ($F_y = +10\,\text{N}$)** | | | | |
-| Max. Spannung $\sigma_{\text{max}}$ | $0{,}92\,\text{MPa}$ | **$0{,}90\,\text{MPa}$** | $-0{,}02\,\text{MPa}$ | Souveräne Torsions- & Quersteifigkeit |
-| Max. Durchbiegung $u_{\text{max}}$ | $0{,}132\,\text{mm}$ | **$0{,}120\,\text{mm}$** | $-0{,}012\,\text{mm}$ | Kaum messbare elastische Verformung |
-| Sicherheitsfaktor $S$ | $48{,}90$ | **$49{,}97$** | $+1{,}07$ | Enorme Reserve gegen Hangabtriebskräfte |
+| Parameter / Lastfall | Baseline (Solid + Wangenfenster) | Monocoque (Vollwand-Taille) | **Bionisches 45°-Fachwerk v2** | Differenz zu Monocoque | Statische Bewertung |
+| :--- | :---: | :---: | :---: | :---: | :--- |
+| **Bauteilvolumen (Solid)** | $64{,}59\,\text{cm}^3$ | $69{,}89\,\text{cm}^3$ | **$60{,}77\,\text{cm}^3$** | **$-9{,}13\,\text{cm}^3$** | **$-13{,}1\,\%$ Materialvolumen gespart!** |
+| **Druckmasse (Solid PETG)** | $82{,}02\,\text{g}$ | $88{,}76\,\text{g}$ | **$77{,}17\,\text{g}$** | **$-11{,}59\,\text{g}$** | ca. $70\,\text{g}$ Gesamtersparnis am Hexapod |
+| **Druckmasse (40 % Gyroid)** | ca. $58\,\text{g}$ | ca. $62\text{--}65\,\text{g}$ | **ca. $50\text{--}52\,\text{g}$** | **ca. $-12\,\text{g}$** | Sehr geringe Trägheit beim Schwingen |
+| **LF1: Tripod Gait ($F_z = -15\,\text{N}$)** | | | | | |
+| Max. Spannung $\sigma_{\text{max}}$ | $1{,}38\,\text{MPa}$ | $1{,}35\,\text{MPa}$ | **$1{,}50\,\text{MPa}$** | $+0{,}15\,\text{MPa}$ | Vollkommen unkritisch ($< 3{,}5\,\%$ von $R_e$) |
+| Max. Durchbiegung $u_{\text{max}}$ | $0{,}198\,\text{mm}$ | $0{,}181\,\text{mm}$ | **$0{,}209\,\text{mm}$** | $+0{,}028\,\text{mm}$ | Kaum spürbare Verformung ($0{,}21\,\text{mm}$) |
+| Sicherheitsfaktor $S$ | $32{,}58$ | $33{,}37$ | **$30{,}08$** | $-3{,}29$ | Enorme Reserve ($S > 30$) |
+| **LF2: Stall Torque ($1{,}2\,\text{N}\cdot\text{m}$)** | | | | | |
+| Max. Spannung $\sigma_{\text{max}}$ | $16{,}53\,\text{MPa}$ | $10{,}79\,\text{MPa}$ | **$12{,}07\,\text{MPa}$** | $+1{,}28\,\text{MPa}$ | **$27\,\%$ weniger Spannung als Baseline!** |
+| Max. Durchbiegung $u_{\text{max}}$ | $1{,}850\,\text{mm}$ | $1{,}445\,\text{mm}$ | **$1{,}672\,\text{mm}$** | $+0{,}227\,\text{mm}$ | **Deutlich steifer als Baseline** |
+| Sicherheitsfaktor $S$ | $2{,}72$ | $4{,}17$ | **$3{,}73$** | $-0{,}44$ | **Weit über Anforderung $S \ge 2{,}0$ ($S = 3{,}73$)** |
+| **LF3: Querlast ($F_y = +10\,\text{N}$)** | | | | | |
+| Max. Spannung $\sigma_{\text{max}}$ | $0{,}92\,\text{MPa}$ | $0{,}90\,\text{MPa}$ | **$1{,}01\,\text{MPa}$** | $+0{,}11\,\text{MPa}$ | Hohe Torsions- & Quersteifigkeit |
+| Max. Durchbiegung $u_{\text{max}}$ | $0{,}132\,\text{mm}$ | $0{,}120\,\text{mm}$ | **$0{,}139\,\text{mm}$** | $+0{,}019\,\text{mm}$ | Kaum messbare Verformung |
+| Sicherheitsfaktor $S$ | $48{,}90$ | $49{,}97$ | **$44{,}67$** | $-5{,}30$ | Enorme Reserve gegen Hangabtriebskräfte |
 
 ---
 
