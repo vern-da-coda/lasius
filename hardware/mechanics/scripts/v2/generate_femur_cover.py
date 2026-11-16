@@ -39,7 +39,7 @@ os.makedirs(export_step_dir, exist_ok=True)
 os.makedirs(export_stl_dir, exist_ok=True)
 
 # Femur reference parameters
-Y_mid = 3.65
+Y_mid = 2.50
 lid_z_floor = 9.00
 cover_z_base = lid_z_floor + 0.05  # 9.05 mm
 

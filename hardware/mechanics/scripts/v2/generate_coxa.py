@@ -189,7 +189,7 @@ def build_coxa_bracket_v2_shape():
     core = core.fuse(heal_plug)
 
     screw_bore = Part.makeCylinder(2.05, 5.00, App.Vector(cx, cy, -15.50))
-    nut_pocket = make_hex_nut_pocket_z(cx, cy, -13.90, -11.50, sw=7.10)
+    nut_pocket = make_hex_nut_pocket_z(cx, cy, -13.70, -11.50, sw=7.10)
     core = core.cut(screw_bore).cut(nut_pocket)
 
     # -------------------------------------------------------------

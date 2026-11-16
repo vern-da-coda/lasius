@@ -100,8 +100,8 @@ COLOR_ADC_BLUE = (0.04, 0.38, 0.88)        # Adafruit Signal Blue PCB
 make_link("Femur_Body", "1. Femur Monolithic Housing (PETG)", doc_femur.Femur_Body, color=COLOR_FEMUR_BODY)
 
 # 2. Encapsulated COTS ADC board clamped in internal chamber
-# Sits at X=50.00, Y=3.65 (Y_mid), Z=-4.80 mm
-p_ads = App.Placement(App.Vector(50.00, 3.65, -4.80), App.Rotation())
+# Sits at X=50.00, Y=2.50 (Y_mid), Z=-4.80 mm
+p_ads = App.Placement(App.Vector(50.00, 2.50, -4.80), App.Rotation())
 make_link("ADS1115_Board", "2. Encapsulated Leg ADC (ADS1115 0x48)", doc_ads.ADS1115_Board, placement=p_ads, color=COLOR_ADC_BLUE)
 
 # 3. Monolithic Service Cover & Canopy (Draped Convex Eisblau 55%)

@@ -134,13 +134,14 @@ def build_femur_shapes():
     # - Inner U-opening faces remain at exact kinematic planes Y = -22.00 mm
     #   and Y = +29.30 mm (51.30 mm span).
     Y_rear_out = -28.00    # 6.00 mm solid rear jaw outer face
-    Y_rear_seat = -24.00   # Bearing / M4 nut seat plane
+    Y_rear_seat = -25.65   # Bearing seat depth 4.00 mm (Y in [-25.65, -21.65])
     Y_rear_in = -22.00     # Inner rear jaw face
     Y_rear_collar = -21.35 # Integrated inner bearing support collar (clears washer at -21.30)
-    Y_front_in = 29.30     # Inner front jaw face (mates flush with servo horn)
-    Y_front_seat = 33.30   # 4.00 mm clamping thickness under each M2 screw head
-    Y_front_out = 35.30    # 6.00 mm solid front jaw outer face
-    Y_mid = 0.5 * (Y_rear_in + Y_front_in)  # +3.65 mm symmetry plane in Y
+    Y_front_in = 27.00     # Inner front jaw face (recessed servo horn pocket)
+    Y_front_horn_seat = 29.30 # Bottom of circular servo horn pocket (depth 2.30 mm)
+    Y_front_seat = 31.50   # M2 counterbore seat plane
+    Y_front_out = 33.00    # 6.00 mm solid front jaw outer face
+    Y_mid = 0.5 * (Y_rear_in + Y_front_in)  # +2.50 mm symmetry plane in Y
 
     # =========================================================================
     # 2. Side Silhouette (X-Z Plane): Pure G1-Continuous Hourglass Profile
@@ -350,8 +351,8 @@ def build_femur_shapes():
     f_w3 = make_filleted_polygon_2d(p_w3, R_FILLET)
 
     for fw in [f_w1, f_w2, f_w3]:
-        cut_f = extrude_face_xz(fw, 16.0, 22.0)
-        cut_r = extrude_face_xz(fw, -38.0, 29.5)
+        cut_f = extrude_face_xz(fw, 15.0, 20.0)
+        cut_r = extrude_face_xz(fw, -35.0, 25.0)
         base_solid = base_solid.cut(cut_f).cut(cut_r)
 
     # =========================================================================
@@ -362,25 +363,33 @@ def build_femur_shapes():
         hub_front = Part.makeCylinder(4.00, 20.0, App.Vector(px, 20.0, 0.0), App.Vector(0.0, 1.0, 0.0))
         base_solid = base_solid.cut(hub_front)
 
-        # Front Jaw (Servo Horn Mount):
-        # Keep the ENTIRE Ø31.60 mm boss at full 6.00 mm thickness (Y = +29.30..+35.30),
-        # and only counterbore the 4 individual M2 screw heads (Ø4.30 mm to Y = +33.30),
-        # leaving 4.00 mm solid clamping material directly under each M2 screw head
-        # and 6.00 mm solid webs everywhere between the holes!
+        # Front Jaw (Servo Horn Pocket):
+        # Circular recess Ø25.30 mm (R = 12.65 mm) from Y = Y_front_in (27.00) to Y = Y_front_horn_seat (29.30)
+        # to pocket the servo horn by 2.30 mm into the jaw:
+        horn_pocket = Part.makeCylinder(
+            12.65,
+            Y_front_horn_seat - Y_front_in,
+            App.Vector(px, Y_front_in, 0.0),
+            App.Vector(0.0, 1.0, 0.0),
+        )
+        base_solid = base_solid.cut(horn_pocket)
+
+        # Front Jaw (Servo Horn Mount Screws):
+        # 4x M2 screw holes on Ø16.0 mm BCD with flush counterbores from outer face
         for dx, dz in [(8.0, 0.0), (-8.0, 0.0), (0.0, 8.0), (0.0, -8.0)]:
             horn_cyl = Part.makeCylinder(1.00, 20.0, App.Vector(px + dx, 20.0, dz), App.Vector(0.0, 1.0, 0.0))
-            m2_cbore = Part.makeCylinder(2.15, 5.0, App.Vector(px + dx, Y_front_seat, dz), App.Vector(0.0, 1.0, 0.0))
+            m2_cbore = Part.makeCylinder(2.15, Y_front_out - Y_front_seat + 0.1, App.Vector(px + dx, Y_front_seat, dz), App.Vector(0.0, 1.0, 0.0))
             base_solid = base_solid.cut(horn_cyl).cut(m2_cbore)
 
         # Rear Jaw (External-Entry Counter-Bearing Seat for Option A):
         # - Inner retention lip (Y in [-21.65, -21.35], Ø6.60 mm / R=3.30 mm) clears the Ø5.80 mm
         #   shim washer and bearing inner race while stopping the Ø8.00 mm bearing outer race.
-        # - Precision Ø8.00 mm bearing seat (Y in [-24.65, -21.65], 3.00 mm wide) pressed from outside.
-        # - Outer Ø9.60 mm access counterbore (Y in [-28.00, -24.65]) houses the external M4 screw head
+        # - Precision Ø8.05 mm bearing seat (Y in [-25.65, -21.65], 4.00 mm deep) pressed from outside.
+        # - Outer Ø9.60 mm access counterbore (Y in [-28.00, -25.65], 2.35 mm deep) houses the external M4 screw head
         #   completely recessed inside the rear jaw!
         rear_lip_bore = Part.makeCylinder(3.30, 10.0, App.Vector(px, -30.0, 0.0), App.Vector(0.0, 1.0, 0.0))
-        rear_bearing_seat = Part.makeCylinder(4.00, 8.35, App.Vector(px, -21.65, 0.0), App.Vector(0.0, -1.0, 0.0))
-        spot_rear = Part.makeCylinder(4.80, 5.0, App.Vector(px, -24.65, 0.0), App.Vector(0.0, -1.0, 0.0))
+        rear_bearing_seat = Part.makeCylinder(4.025, 4.00, App.Vector(px, -21.65, 0.0), App.Vector(0.0, -1.0, 0.0))
+        spot_rear = Part.makeCylinder(4.80, Y_rear_seat - Y_rear_out + 0.1, App.Vector(px, Y_rear_seat, 0.0), App.Vector(0.0, -1.0, 0.0))
         base_solid = base_solid.cut(rear_lip_bore).cut(rear_bearing_seat).cut(spot_rear)
 
     # =========================================================================

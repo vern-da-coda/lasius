@@ -195,15 +195,15 @@ make_link(doc_l, asm_l, "Chassis_Screw",   "Chassis M4 Countersunk Screw",      
 # B. Femur Pivot Bearing Set (Horizontal axis at X=56.50, Z=0.00 along -Y)
 make_link(doc_l, asm_l, "Femur_Washer",  "Femur Shim Washer (s0.3)",            doc_w.Passscheibe_M4,       App.Placement(App.Vector(56.50, -21.00, 0.00), rot_negy_posz))
 make_link(doc_l, asm_l, "Femur_Bearing", "Femur Ball Bearing (D8 H3)",          doc_b.Kugellager_6x3x4,     App.Placement(App.Vector(56.50, -21.65, 0.00), rot_negy_posz))
-make_link(doc_l, asm_l, "Femur_Nut",     "Femur M4 Low-Profile Nut (DIN 439)",  doc_n_low.M4_Mutter_DIN439, App.Placement(App.Vector(56.50, -20.40, 0.00), rot_negy_negz))
-make_link(doc_l, asm_l, "Femur_Screw",   "Femur M4 Countersunk Screw",          doc_s.M4_Senkkopfschraube,  App.Placement(App.Vector(56.50, -27.20, 0.00), rot_negy_posz))
+make_link(doc_l, asm_l, "Femur_Nut",     "Femur M4 Low-Profile Nut (DIN 439)",  doc_n_low.M4_Mutter_DIN439, App.Placement(App.Vector(56.50, -20.20, 0.00), rot_negy_negz))
+make_link(doc_l, asm_l, "Femur_Screw",   "Femur M4 Countersunk Screw",          doc_s.M4_Senkkopfschraube,  App.Placement(App.Vector(56.50, -28.00, 0.00), rot_negy_posz))
 
 # C. Knee Pivot Bearing Set (Horizontal axis at X=156.50, Z=0.00 along -Y)
 rot_knee_nut_l = rot_negy_negz.multiply(App.Rotation(App.Vector(0, 0, 1), 50.0))
 make_link(doc_l, asm_l, "Knee_Washer",  "Knee Shim Washer (s0.3)",            doc_w.Passscheibe_M4,       App.Placement(App.Vector(156.50, -21.00, 0.00), rot_negy_posz))
 make_link(doc_l, asm_l, "Knee_Bearing", "Knee Ball Bearing (D8 H3)",          doc_b.Kugellager_6x3x4,     App.Placement(App.Vector(156.50, -21.65, 0.00), rot_negy_posz))
 make_link(doc_l, asm_l, "Knee_Nut",     "Knee M4 Low-Profile Nut (DIN 439)",  doc_n_low.M4_Mutter_DIN439, App.Placement(App.Vector(156.50, -20.40, 0.00), rot_knee_nut_l))
-make_link(doc_l, asm_l, "Knee_Screw",   "Knee M4 Countersunk Screw",          doc_s.M4_Senkkopfschraube,  App.Placement(App.Vector(156.50, -27.20, 0.00), rot_negy_posz))
+make_link(doc_l, asm_l, "Knee_Screw",   "Knee M4 Countersunk Screw",          doc_s.M4_Senkkopfschraube,  App.Placement(App.Vector(156.50, -28.00, 0.00), rot_negy_posz))
 
 # 4. Leg Cable Harness & Kinematic Service Loops
 make_link(doc_l, asm_l, "Leg_Cable_Harness", "8. Leg Cable Harness & Strain Reliefs (v2)", doc_cables.Leg_Cable_Harness, App.Placement())
@@ -417,14 +417,14 @@ make_link(doc_r, asm_r, "Chassis_Screw",   "Chassis M4 Countersunk Screw",      
 
 make_link(doc_r, asm_r, "Femur_Washer",  "Femur Shim Washer (s0.3)",            doc_w.Passscheibe_M4,       App.Placement(App.Vector(56.50, 21.00, 0.00), rot_negy_negz))
 make_link(doc_r, asm_r, "Femur_Bearing", "Femur Ball Bearing (D8 H3)",          doc_b.Kugellager_6x3x4,     App.Placement(App.Vector(56.50, 21.65, 0.00), rot_negy_negz))
-make_link(doc_r, asm_r, "Femur_Nut",     "Femur M4 Low-Profile Nut (DIN 439)",  doc_n_low.M4_Mutter_DIN439, App.Placement(App.Vector(56.50, 20.40, 0.00), rot_negy_posz))
-make_link(doc_r, asm_r, "Femur_Screw",   "Femur M4 Countersunk Screw",          doc_s.M4_Senkkopfschraube,  App.Placement(App.Vector(56.50, 27.20, 0.00), rot_negy_negz))
+make_link(doc_r, asm_r, "Femur_Nut",     "Femur M4 Low-Profile Nut (DIN 439)",  doc_n_low.M4_Mutter_DIN439, App.Placement(App.Vector(56.50, 20.20, 0.00), rot_negy_posz))
+make_link(doc_r, asm_r, "Femur_Screw",   "Femur M4 Countersunk Screw",          doc_s.M4_Senkkopfschraube,  App.Placement(App.Vector(56.50, 28.00, 0.00), rot_negy_negz))
 
 rot_knee_nut_r = rot_negy_posz.multiply(App.Rotation(App.Vector(0, 0, 1), -50.0))
 make_link(doc_r, asm_r, "Knee_Washer",  "Knee Shim Washer (s0.3)",            doc_w.Passscheibe_M4,       App.Placement(App.Vector(156.50, 21.00, 0.00), rot_negy_negz))
 make_link(doc_r, asm_r, "Knee_Bearing", "Knee Ball Bearing (D8 H3)",          doc_b.Kugellager_6x3x4,     App.Placement(App.Vector(156.50, 21.65, 0.00), rot_negy_negz))
 make_link(doc_r, asm_r, "Knee_Nut",     "Knee M4 Low-Profile Nut (DIN 439)",  doc_n_low.M4_Mutter_DIN439, App.Placement(App.Vector(156.50, 20.40, 0.00), rot_knee_nut_r))
-make_link(doc_r, asm_r, "Knee_Screw",   "Knee M4 Countersunk Screw",          doc_s.M4_Senkkopfschraube,  App.Placement(App.Vector(156.50, 27.20, 0.00), rot_negy_negz))
+make_link(doc_r, asm_r, "Knee_Screw",   "Knee M4 Countersunk Screw",          doc_s.M4_Senkkopfschraube,  App.Placement(App.Vector(156.50, 28.00, 0.00), rot_negy_negz))
 
 # 6. Leg Cable Harness Right (True Mirrored Geometry Y -> -Y)
 make_link(doc_r, asm_r, "Leg_Cable_Harness", "8. Leg Cable Harness & Strain Reliefs Right", doc_cables_r.Leg_Cable_Harness, App.Placement())

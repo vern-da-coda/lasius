@@ -22,8 +22,8 @@ flowchart LR
 - **Bionische Monocoque-Architektur:** Der Femur ist als geschlossener, organischer **Monocoque-Hohlkastenträger** konstruiert. Alle willkürlichen subtraktiven Taschen (Wangen-Durchbrüche, Flanken-Dreiecke, Kassetten-Bodenfächer) wurden eliminiert.
 - **Homogener Kraftfluss & Torsionssteifigkeit (Bredt):** Die Taillenflanken ($X \in [26{,}0, 74{,}0\,\text{mm}]$) bilden eine kontinuierliche, $G^1$-stetige Außenwand. Der Unterboden fungiert als massiver $3{,}30\,\text{mm}$ dicker Zuggurt. Die U-Übergangs-Bulkheads ($4{,}5\text{--}5{,}0\,\text{mm}$) leiten die Gabelbiegung kerbfrei in die Zelle ein. Der verschraubte Deckel schließt die Zelle oben schubsteif ab.
 - **Strukturelle Integrität & Robustheit:** Unter dem extremen Missbrauchs- und Blockierlastfall aller Knie-Servos ($M_{\text{stall}} = 1{,}2\,\text{N}\cdot\text{m} \rightarrow F_t = 120\,\text{N}$) beträgt die Maximalspannung lediglich **$\sigma_{\text{max}} = 10{,}79\,\text{MPa}$**. Der Sicherheitsbeiwert erreicht hervorragende **$S = 4{,}17$** bei einer minimalen elastischen Durchbiegung von nur **$1{,}44\,\text{mm}$**.
-- **Garantierte Non-Design Spaces an den Servo- & Lageraufnahmen:** Die zylindrischen Endköpfe ($R = 15{,}80\,\text{mm}$) an Hüfte ($X = 0{,}0$) und Knie ($X = 100{,}0$) sowie die Wangenstege ($6{,}00\,\text{mm}$ Vollmaterial) verbleiben zu **100 % massiv und ungebrochen**. Dies garantiert eine durchgehend ebene Auflagefläche für 25T-Metallservohörner ($\varnothing 20\text{--}25\,\text{mm}$), unbeschädigte M2-Schraubensenkungen mit $\ge 4{,}0\,\text{mm}$ Spannfleisch und intakte zylindrische Passungen für die 684ZZ-Gegenlager.
-- **Funktions- & Kapselungserhalt:** Alle Sensor- und Kabelstrukturen (ADS1115-Kammer mit Zentrierpins, Kabeltunnels mit Kabelbindersätteln und Deckel-Stufenfalz) bleiben absolut maßhaltig und hermetisch gegen Staub/Schmutz gekapselt.
+- **Garantierte Non-Design Spaces an den Servo- & Lageraufnahmen:** Die zylindrischen Endköpfe ($R = 15{,}80\,\text{mm}$) an Hüfte ($X = 0{,}0$) und Knie ($X = 100{,}0$) sowie die Wangenstege ($6{,}00\,\text{mm}$ Vollmaterial) verbleiben zu **100 % massiv und ungebrochen**. Die Servohörner sind formschlüssig in kreisrunden Taschen ($\varnothing 25{,}30 \times 2{,}30\,\text{mm}$) eingelassen, wodurch die Femurbreite schlank auf $61{,}00\,\text{mm}$ schrumpft ($Y \in [-28{,}00, +33{,}00\,\text{mm}]$) und die Coxa mit exakt $1{,}00\,\text{mm}$ symmetrischem Spaltmaß perfekt zentriert in der Gabel sitzt ($Y_{\text{mid}} = +2{,}50\,\text{mm}$). Die M2-Schraubenköpfe sind bündig versenkt ($2{,}20\,\text{mm}$ Spannfleisch), und der Gegenlagersitz ist auf volle $4{,}00\,\text{mm}$ Tiefe mit bündiger M4-Senkung erweitert.
+- **Funktions- & Kapselungserhalt:** Alle Sensor- und Kabelstrukturen (ADS1115-Kammer mit Zentrierpins, Kabeltunnels mit Kabelbindersätteln und Deckel-Stufenfalz) sind exakt auf die neue Symmetrieachse $Y_{\text{mid}} = +2{,}50\,\text{mm}$ angepasst und bleiben hermetisch gegen Staub/Schmutz gekapselt.
 - **Kollisionsfreiheit:** Exakt **$0{,}0000\,\text{mm}^3$** Schnittvolumen in allen Assemblies ([`leg_assembly.FCStd`](../../hardware/mechanics/models/custom/v2/leg_assembly.FCStd), [`leg_right_assembly.FCStd`](../../hardware/mechanics/models/custom/v2/leg_right_assembly.FCStd), [`body_assembly.FCStd`](../../hardware/mechanics/models/custom/v2/body_assembly.FCStd) und [`lasius_assembly.FCStd`](../../hardware/mechanics/models/custom/v2/lasius_assembly.FCStd)).
 
 ---
@@ -103,15 +103,18 @@ flowchart TD
         ROOF["Obergurt: 4.30 mm massiver Gurt & Z = 9.0 mm Stufenfalz"]
     end
 
-    NonDesign --> Result["Bionischer 45°-Truss-Femur v2 (60.77 cm³, 77.2 g solid / ~51 g infill)"]
+    NonDesign --> Result["Bionischer 45°-Truss-Femur v2 (56.99 cm³, 72.38 g solid / ~48 g infill)"]
     Monocoque --> Result
 ```
 
 ### Konstruktive Umsetzung in [`generate_femur.py`](../../hardware/mechanics/scripts/v2/generate_femur.py)
 
-1. **Non-Design Spaces an Gelenkköpfen & Gabelwangen (100 % massiv):**
+1. **Non-Design Spaces an Gelenkköpfen & Gabelwangen (100 % massiv & eingelassene Servohörner):**
    - Die zylindrischen Endköpfe ($R = 15{,}80\,\text{mm}$) um Hüft- ($X = 0{,}0$) und Kniegelenk ($X = 100{,}0$) sowie die Wangenabschnitte zu den U-Mäulern ($X \in [-15{,}8, 26{,}0\,\text{mm}]$ und $[74{,}0, 115{,}8\,\text{mm}]$) verbleiben als **vollständig massive Non-Design Spaces**.
-   - **Begründung (Style-Guide 5.1 & 5.2):** Standard-25T-Servohörner benötigen eine kreisrunde, ebene Auflagefläche ($\varnothing 20\text{--}25\,\text{mm}$) bei $Y = 29{,}30\,\text{mm}$. Die 4x M2-Senkungen auf $\varnothing 16{,}0\,\text{mm}$ Teilkreis fordern volles, unbeschädigtes Material ($\ge 4{,}0\,\text{mm}$ Spannfleisch unter den Schraubenköpfen). Das Gegenlager auf der Rückseite erfordert einen ununterbrochenen zylindrischen Lagersitz für das 684ZZ-Kugellager ($\varnothing 8{,}05 \times 3{,}0\,\text{mm}$) und eine intakte M4-Schraubensenkung ($\varnothing 9{,}60\,\text{mm}$).
+   - **Formschlüssige Servohorn-Taschen:** An der vorderen Wange sind kreisrunde Taschen ($\varnothing 25{,}30\,\text{mm}$, Tiefe $2{,}30\,\text{mm}$, $Y \in [27{,}00, 29{,}30\,\text{mm}]$) eingelassen. Das Servohorn sitzt bündig im Bauteil. Dadurch reduziert sich die Femur-Gesamtbreite von $63{,}30\,\text{mm}$ auf schlanke **$61{,}00\,\text{mm}$** ($Y \in [-28{,}00, +33{,}00\,\text{mm}]$).
+   - **Perfekte Coxa-Zentrierung:** Durch den Einlass wandert die innere vordere Gabelkante auf $Y = +27{,}00\,\text{mm}$ (vorher $+29{,}30\,\text{mm}$). Die Gabelmitte liegt damit exakt bei $Y_{\text{mid}} = +2{,}50\,\text{mm}$ und fluchtet 1:1 mit der Coxa-Mitte ($Y = +2{,}50\,\text{mm}$). Auf beiden Seiten (vorne und hinten) entsteht ein absolut symmetrisches Spaltmaß von exakt **$1{,}00\,\text{mm}$**.
+   - **Optimierter Gegenlagersitz & bündige Verschraubung:** Der Lagersitz auf der Rückseite wurde auf volle **$4{,}00\,\text{mm}$ Tiefe** ($\varnothing 8{,}05\,\text{mm}$) erweitert, um 684ZZ-Lager vollständig kippspielfrei aufzunehmen. Die äußere Schraubensenkung ($\varnothing 9{,}60 \times 2{,}35\,\text{mm}$) schließt den M4-Senkkopf bündig mit der Wangenaußenfläche ab ($Y = -28{,}00\,\text{mm}$).
+   - **Verstärkte Coxa-Gegenlagerlasche:** In [`coxa.FCStd`](../../hardware/mechanics/models/custom/v2/parts/coxa/coxa.FCStd) nimmt die Sechskanttasche die DIN 439 M4-Flachmutter (Höhe $2{,}20\,\text{mm}$) voll auf, während die verbleibende Rückhalteschulter um $+33\,\%$ auf solide **$0{,}80\,\text{mm}$** verstärkt wurde.
 2. **Bionisches 45°-A-Truss-Fachwerk in der Taille (Style-Guide Abschnitt 3):**
    - Analog zu den Stegen in [`coxa.FCStd`](../../hardware/mechanics/models/custom/v2/parts/coxa/coxa.FCStd) und [`tibia.FCStd`](../../hardware/mechanics/models/custom/v2/parts/tibia/tibia.FCStd) wurden in den Taillenflanken ($X \in [34{,}0, 66{,}0\,\text{mm}]$) standardisierte bionische $45{,}0^\circ$-Fachwerkfenster integriert.
    - **Geometrie & Parameter:**
@@ -158,9 +161,9 @@ Auf der finalen Geometrie mit bionischen 45°-Stegen wurde eine erneute Finite-E
 
 Die optimierte Geometrie erfüllt alle Anforderungen an die additive Fertigung im FDM-Verfahren:
 1. **Druckbett-Kompatibilität:**  
-   Die Bauteil-Bounding-Box misst $131{,}60 \times 63{,}30 \times 31{,}60\,\text{mm}$. Sie passt problemlos flach auf alle gängigen Druckbetten (Bambu Lab X1/P1/A1 mit $256 \times 256\,\text{mm}$ und A1 mini mit $180 \times 180\,\text{mm}$).
+   Die Bauteil-Bounding-Box misst $131{,}60 \times 61{,}00 \times 31{,}60\,\text{mm}$. Sie passt problemlos flach auf alle gängigen Druckbetten (Bambu Lab X1/P1/A1 mit $256 \times 256\,\text{mm}$ und A1 mini mit $180 \times 180\,\text{mm}$).
 2. **Stützstrukturfreier Druck:**  
-   Alle Fachwerk- und Fensterwinkel sind strikt mit $45^\circ$-Überhangschrägen konstruiert. Das Bauteil kann auf der ebenen Seitenwange ($Y = 29{,}30\,\text{mm}$ oder $Y = -22{,}00\,\text{mm}$) ohne innere Stützstrukturen gedruckt werden.
+   Alle Fachwerk- und Fensterwinkel sind strikt mit $45^\circ$-Überhangschrägen konstruiert. Das Bauteil kann auf der ebenen Seitenwange ($Y = 33{,}00\,\text{mm}$ oder $Y = -28{,}00\,\text{mm}$) ohne innere Stützstrukturen gedruckt werden.
 3. **Empfohlene Slicer-Parameter (Bambu Studio / PrusaSlicer):**
    - **Material:** PETG (z. B. Prusament PETG, Bambu PETG Basic).
    - **Schichthöhe:** $0{,}16\text{--}0{,}20\,\text{mm}$ mit $0{,}4\,\text{mm}$ Nozzle.
