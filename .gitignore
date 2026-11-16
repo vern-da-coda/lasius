@@ -158,3 +158,6 @@ hardware/mechanics/export/blender/*.glb
 hardware/mechanics/export/blender/*.obj
 hardware/mechanics/export/blender/*.mtl
 
+# FEA solver outputs and meshes are reproducible via scripts/dev/fea_*.py
+hardware/mechanics/export/fea/
+

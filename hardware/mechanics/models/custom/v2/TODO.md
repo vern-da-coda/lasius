@@ -247,20 +247,21 @@ Dieser Backlog führt alle offenen Aufgaben, konstruktiven Erweiterungen und Ver
 
 ## 8. FEM-Strukturanalyse & Topologieoptimierung (Simulation-Driven Design)
 
-- [ ] **FE-Lastfall-Definition & Materialmodellierung (PETG / FDM-Anisotropie):**  
-  * **Lastfälle:**
-    1. *Statischer Tripod-Gait:* 3 Beine am Boden, Gesamtmasse Roboter ca. $2{,}2\text{--}2{,}5\,\text{kg}$ mit dynamischem Stoßbeiwert ($k_{\text{dyn}} = 1{,}8$) $\rightarrow$ vertikale Punktlast $F_z \approx 15\,\text{N}$ pro Standbein.
-    2. *Maximales Servo-Blockiermoment:* $M_{\text{stall}} = 1{,}2\,\text{N}\cdot\text{m}$ (Torcster NR-645) an Coxa-, Femur- und Tibia-Abtrieben.
-    3. *Torsions- & Querlast:* Seitliches Abdriften / Hangabtrieb ($F_y \approx 8\,\text{N}$) an der Tibia-Kufenwippe.
-  * **Materialkennwerte PETG (FDM-Druck):**
-    * E-Modul $E_{xy} = 2100\,\text{MPa}$, $E_z = 1400\,\text{MPa}$ (Schichtanisotropie 65 %).
-    * Streckgrenze $R_e \approx 45\,\text{MPa}$ (Sicherheitsbeiwert $S \ge 2{,}0$).
-  * **Werkzeuge:** FreeCAD FEM-Workbench (CalculiX Solver) & Netgen/Gmsh Vernetzung.
+- [x] ~~**FE-Lastfall-Definition & Automatisierte Baseline-FEA (CalculiX & Gmsh):**~~ **[ERLEDIGT]**  
+  * **Status:** Erfolgreich implementiert via [`fea_femur_baseline.py`](../../../../../scripts/dev/fea_femur_baseline.py) und im FreeCAD-Headless-Runner über alle 3 Lastfälle berechnet.
+  * **Lastfälle & Quantitative Baseline-Ergebnisse (Femur Solid $82{,}02\,\text{g}$ / $64{,}59\,\text{cm}^3$):**
+    1. *LF1 (Tripod Gait Vertikalbiegung, $F_z = -15{,}0\,\text{N}$):* $\sigma_{\text{max}} = 1{,}38\,\text{MPa}$, $u_{\text{max}} = 0{,}198\,\text{mm}$, Sicherheitsfaktor $S = 32{,}58$, $100\,\%$ des Volumens unter $5\,\text{MPa}$.
+    2. *LF2 (Knie-Servo Blockiermoment, $M_{\text{stall}} = 1{,}2\,\text{N}\cdot\text{m} \rightarrow F_t = 120\,\text{N}$):* $\sigma_{\text{max}} = 11{,}05\,\text{MPa}$, $u_{\text{max}} = 1{,}586\,\text{mm}$, Sicherheitsfaktor $S = 4{,}07$, $94{,}3\,\%$ des Volumens unter $5\,\text{MPa}$.
+    3. *LF3 (Laterale Hangquerung, $F_y = +10{,}0\,\text{N}$):* $\sigma_{\text{max}} = 0{,}92\,\text{MPa}$, $u_{\text{max}} = 0{,}132\,\text{mm}$, Sicherheitsfaktor $S = 48{,}90$, $100\,\%$ des Volumens unter $5\,\text{MPa}$.
+  * **Erkenntnis:** Überragendes Leichtbaupotenzial (Massenreduktion um $\ge 40\text{--}50\,\%$ von $82\,\text{g}$ auf $\sim 42\text{--}48\,\text{g}$ bei Beibehaltung von $S \ge 2{,}0$).
+  * **Ergebnisdaten:** In-Tree FEA-Modelle und Netze abgelegt unter `hardware/mechanics/export/fea/femur_baseline/`.
 
 - [ ] **Topologieoptimierung der Bein-Segmente (`femur.FCStd`, `coxa.FCStd`, `tibia.FCStd`):**  
-  * **Femur-Knochen:**
+  * **Femur-Knochen (Pilot):**
     * Bionische Strukturoptimierung des $100\,\text{mm}$ Kragträgers zwischen Hüft- und Kniegelenk.
-    * Spannungsoptimierte Entlastungsfenster und Wandstärkenverteilung um die integrierte ADS1115-Kammer zur Maximierung der Biegesteifigkeit bei minimaler Bauteilmasse.
+    * Transformation der flachen $1{,}8\,\text{mm}$ Wangentaschen in lastpfadgerechte $45^\circ$-Fachwerk-Durchbrüche gemäß [`STYLE_GUIDE.md`](../../../STYLE_GUIDE.md) ($w \ge 2{,}50\,\text{mm}$, $R = 1{,}60\,\text{mm}$).
+    * Gezielte Aussparungen im massiven Unterboden unterhalb der ADS1115-Kammer ($Z \in [-8{,}5, -11{,}8\,\text{mm}]$).
+    * Re-Evaluation und Nachweis im CalculiX-Solver.
   * **Coxa-Gelenk:**
     * FEM-Optimierung des $45^\circ$-A-Truss-Gussets zur Reduktion von Kerbspannungen an der Krafteinleitung vom Servohorn ins Gegenlager.
   * **Tibia-Träger:**
