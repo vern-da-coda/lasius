@@ -304,56 +304,17 @@ def build_femur_shapes():
         base_solid = base_solid.fuse(collar)
 
     # =========================================================================
-    # 5. 45-Degree Truss Windows in Cheeks & Bionic Flank A-Truss Lattice
+    # 5. Bionic Flank A-Truss Lattice (Flank Weight Relief Pockets)
     # =========================================================================
-    # A. 45-Degree Cheek Truss Windows (Through-Cut, w >= 2.50 mm, R = 1.80 mm):
-    # Triangulated through-cut truss windows leaving a 45-degree chevron diagonal rib
-    # directly connecting the U-throat bulkheads (X = 26 and X = 74) to the
-    # bearing and horn hubs (X = 0 and X = 100).
-    # Chords reinforced to Z = +-10.20 mm for optimal stress flow under stall torque.
-    p_u1 = App.Vector(11.50, 2.50, 0.0)
-    p_u2 = App.Vector(23.50, 10.20, 0.0)
-    p_u3 = App.Vector(11.50, 10.20, 0.0)
-    fu_left = make_filleted_polygon_2d([p_u1, p_u2, p_u3], 1.80)
-
-    p_d1 = App.Vector(11.50, -2.50, 0.0)
-    p_d2 = App.Vector(11.50, -10.20, 0.0)
-    p_d3 = App.Vector(23.50, -10.20, 0.0)
-    fd_left = make_filleted_polygon_2d([p_d1, p_d2, p_d3], 1.80)
-
-    p_ru1 = App.Vector(88.50, 2.50, 0.0)
-    p_ru2 = App.Vector(88.50, 10.20, 0.0)
-    p_ru3 = App.Vector(76.50, 10.20, 0.0)
-    fu_right = make_filleted_polygon_2d([p_ru1, p_ru2, p_ru3], 1.80)
-
-    p_rd1 = App.Vector(88.50, -2.50, 0.0)
-    p_rd2 = App.Vector(76.50, -10.20, 0.0)
-    p_rd3 = App.Vector(88.50, -10.20, 0.0)
-    fd_right = make_filleted_polygon_2d([p_rd1, p_rd2, p_rd3], 1.80)
-
-    # Bionic crescent windows behind the pivots (X in [-13.5, -7.5] and [107.5, 113.5]):
-    p_cres_l = make_filleted_polygon_2d([
-        App.Vector(-13.5, 7.5, 0),
-        App.Vector(-7.5, 7.5, 0),
-        App.Vector(-7.5, -7.5, 0),
-        App.Vector(-13.5, -7.5, 0)
-    ], 2.0)
-    p_cres_r = make_filleted_polygon_2d([
-        App.Vector(107.5, 7.5, 0),
-        App.Vector(113.5, 7.5, 0),
-        App.Vector(113.5, -7.5, 0),
-        App.Vector(107.5, -7.5, 0)
-    ], 2.0)
-
-    # Cut Through-Windows in Front Cheeks (Y in [29.30, 35.30]):
-    for f in [fu_left, fd_left, fu_right, fd_right, p_cres_l, p_cres_r]:
-        base_solid = base_solid.cut(extrude_face_xz(f, 28.00, 10.0))
-
-    # Cut Through-Windows in Rear Cheeks (Y in [-28.00, -22.00]):
-    for f in [fu_left, fd_left, fu_right, fd_right, p_cres_l, p_cres_r]:
-        base_solid = base_solid.cut(extrude_face_xz(f, -30.00, 10.0))
-
-    # B. Central Flank Symmetrical 45-Degree A-Truss Lattice (Front & Rear Flanks):
+    # Note on Non-Design Spaces (Style-Guide 5.1 & 5.2):
+    # The circular end bosses (R = 15.80 mm around Hip X = 0.0 and Knee X = 100.0)
+    # and connecting U-jaw cheeks (X in [-15.8, 26.0] and [74.0, 115.8]) remain
+    # 100% SOLID and unbroken. This ensures continuous, unbroken planar landing
+    # surfaces for the 25T servo horns (Ø25 mm), full solid material around the
+    # 4x M2 screw counterbores, and complete cylindrical housing for the 684ZZ
+    # counter-bearings and M4 pivot screws.
+    #
+    # Central Flank Symmetrical 45-Degree A-Truss Lattice (Front & Rear Flanks):
     # Multi-bay Warren/A-Truss with 5 triangulated bays carved into the flank walls.
     # Leaves a solid, continuous inner chamber wall to keep the ADC chamber 100% sealed.
     p_f1 = [App.Vector(33.0, -7.5, 0), App.Vector(43.0, -7.5, 0), App.Vector(33.0, 5.5, 0)]

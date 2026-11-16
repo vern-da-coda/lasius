@@ -15,13 +15,14 @@ Im Rahmen des Leichtbau- und Simulations-Pipelines (*Simulation-Driven Design*) 
 flowchart LR
     A["Baseline Solid FEM\n(82.02 g / 64.59 cm³)"] -->|"CalculiX FEA\n(3 Lastfälle)"| B["Erkenntnis:\n94.3% unterlastet\n(S = 4.07 unter Stall)"]
     B -->|"DfAM TopOpt\n(Style Guide w=2.5mm)"| C["Bionische CAD-Synthese\n(generate_femur.py)"]
-    C -->|"Verifikations-FEA\n(78.700 Elemente)"| D["Optimierter Femur v2\n(64.08 g, -21.9% Masse,\nS = 2.72 unter Stall)"]
+    C -->|"Verifikations-FEA\n(60.100 Elemente)"| D["Optimierter Femur v2\n(69.38 g, -15.4% Masse,\nS = 3.68 unter Stall)"]
 ```
 
 ### Kernergebnisse auf einen Blick
-- **Massenreduktion:** Die Bauteilmasse sinkt von **$82{,}02\,\text{g}$ auf $64{,}08\,\text{g}$** (**$-17{,}94\,\text{g}$ / $-21{,}9\,\%$** pro Bein). Für den gesamten Roboter (6 Beine) bedeutet dies eine Netto-Masseneinsparung von **$107{,}64\,\text{g}$** an bewegter Beinmasse.
-- **Strukturelle Integrität:** Unter dem extremen Missbrauchs- und Blockierlastfall aller Knie-Servos ($M_{\text{stall}} = 1{,}2\,\text{N}\cdot\text{m} \rightarrow F_t = 120\,\text{N}$) beträgt die Maximalspannung **$\sigma_{\text{max}} = 16{,}53\,\text{MPa}$**. Der Sicherheitsbeiwert liegt bei hervorragenden **$S = 2{,}72$** (Sollvorgabe $S \ge 2{,}0$ weit übertroffen).
-- **Funktions- & Kapselungserhalt:** 100 % der Non-Design Spaces (Kugellager-Sitze 684ZZ, M4-Flachmuttertaschen, ADS1115-Kammer mit Zentrierpins, Kabeltunnels und Deckel-Stufenfalz) bleiben absolut maßhaltig und hermetisch gegen Staub/Schmutz gekapselt.
+- **Massenreduktion:** Die Bauteilmasse sinkt von **$82{,}02\,\text{g}$ auf $69{,}38\,\text{g}$** (**$-12{,}64\,\text{g}$ / $-15{,}4\,\%$** pro Bein). Für den gesamten Roboter (6 Beine) bedeutet dies eine Netto-Masseneinsparung von **$75{,}84\,\text{g}$** an bewegter Beinmasse.
+- **Strukturelle Integrität & Robustheit:** Unter dem extremen Missbrauchs- und Blockierlastfall aller Knie-Servos ($M_{\text{stall}} = 1{,}2\,\text{N}\cdot\text{m} \rightarrow F_t = 120\,\text{N}$) beträgt die Maximalspannung lediglich **$\sigma_{\text{max}} = 12{,}22\,\text{MPa}$**. Der Sicherheitsbeiwert liegt bei hervorragenden **$S = 3{,}68$** (Sollvorgabe $S \ge 2{,}0$ weit übertroffen).
+- **Garantierte Non-Design Spaces an den Servo- & Lageraufnahmen:** Die zylindrischen Endköpfe ($R = 15{,}80\,\text{mm}$) an Hüfte ($X = 0{,}0$) und Knie ($X = 100{,}0$) sowie die Wangenstege ($6{,}00\,\text{mm}$ Vollmaterial) verbleiben zu **100 % massiv und ungebrochen**. Dies garantiert eine durchgehend ebene Auflagefläche für 25T-Metallservohörner ($\varnothing 20\text{--}25\,\text{mm}$), unbeschädigte M2-Schraubensenkungen mit $\ge 4{,}0\,\text{mm}$ Spannfleisch und intakte zylindrische Passungen für die 684ZZ-Gegenlager.
+- **Funktions- & Kapselungserhalt:** Alle Sensor- und Kabelstrukturen (ADS1115-Kammer mit Zentrierpins, Kabeltunnels mit Kabelbindersätteln und Deckel-Stufenfalz) bleiben absolut maßhaltig und hermetisch gegen Staub/Schmutz gekapselt.
 - **Kollisionsfreiheit:** Exakt **$0{,}0000\,\text{mm}^3$** Schnittvolumen in allen Assemblies ([`leg_assembly.FCStd`](../../hardware/mechanics/models/custom/v2/leg_assembly.FCStd), [`leg_right_assembly.FCStd`](../../hardware/mechanics/models/custom/v2/leg_right_assembly.FCStd), [`body_assembly.FCStd`](../../hardware/mechanics/models/custom/v2/body_assembly.FCStd) und [`lasius_assembly.FCStd`](../../hardware/mechanics/models/custom/v2/lasius_assembly.FCStd)).
 
 ---
@@ -86,37 +87,35 @@ Vor der Topologieoptimierung wurde die ursprüngliche v2-Vollkörper-Konstruktio
 ```mermaid
 flowchart TD
     subgraph NonDesign["Non-Design Space (100% Frozen Interfaces)"]
-        H["Hüft-Lagersitz Ø8.05 mm, M4-Tasche SW 7.1 & Horn-Bohrungen"]
-        K["Knie-Lagersitz Ø8.05 mm, M4-Tasche SW 7.1 & Horn-Bohrungen"]
+        H["Hüftkopf R=15.8 mm massiv: Ø8.00 mm Bohrung, 4x M2 Senkungen & Ø8.05 mm Lagersitz"]
+        K["Kniekopf R=15.8 mm massiv: Ø8.00 mm Bohrung, 4x M2 Senkungen & Ø8.05 mm Lagersitz"]
+        CH["Gabelwangen X in [-15.8..26.0] & [74.0..115.8]: 6.0 mm Vollmaterial ohne Durchbrüche"]
         ADC["ADS1115-Kammer (28x17 mm Platine) & Zentrierstifte"]
         CAB["Kabeltunnels 14x7 mm Stadionprofil & Kabelbinder-Sättel"]
         COV["4x M2 Deckel-Dome & Z = 9.0 mm Stufenfalz"]
     end
 
     subgraph Design["Design Space (Leichtbau-Synthese)"]
-        W["Wangen: 45° Durchgangsfenster + Halbmondtaschen (w >= 2.5 mm)"]
         FL["Flanken: 5-Feld Warren-Fachwerkgitter (1.35 mm Kapselwand)"]
         BH["Stirnwände: 5.5 mm tiefe bionische Entlastungstaschen"]
         BOT["Unterboden: Organische Rillen (Z <= -10.0 mm, 1.5 mm Boden)"]
     end
 
-    NonDesign --> Result["Optimierter Bionischer Femur v2 (64.08 g)"]
+    NonDesign --> Result["Optimierter Bionischer Femur v2 (69.38 g)"]
     Design --> Result
 ```
 
 ### Konstruktive Umsetzung in [`generate_femur.py`](../../hardware/mechanics/scripts/v2/generate_femur.py)
 
-1. **Bionische $45^\circ$-Fachwerkfenster in den Gabelwangen:**
-   - Die bisherigen flachen Taschen wurden in **vollständige Durchgangsfenster** (`fu_left`, `fd_left`, `fu_right`, `fd_right`) transformiert.
-   - Stegbreite $w \ge 2{,}50\,\text{mm}$, Eckenradien $R = 1{,}80\,\text{mm}$ gemäß Style-Guide.
-   - Die oberen und unteren Gurte wurden auf $Z = \pm 10{,}20\,\text{mm}$ verstärkt, um Biegemomente ohne Spannungsspitzen aufzunehmen.
-   - Hinter den Hüft- und Knie-Drehpunkten wurden bionische Halbmond-Fenster (`p_cres_l`, `p_cres_r`) eingebracht ($X \in [-13{,}5, -7{,}5\,\text{mm}]$ und $[107{,}5, 113{,}5\,\text{mm}]$), die unbelastetes Material hinter den Lagern entfernen.
+1. **Non-Design Spaces an Gelenkköpfen & Gabelwangen (100 % massiv):**
+   - Die zylindrischen Endköpfe ($R = 15{,}80\,\text{mm}$) um Hüft- ($X = 0{,}0$) und Kniegelenk ($X = 100{,}0$) sowie die Wangenabschnitte zu den U-Mäulern ($X \in [-15{,}8, 26{,}0\,\text{mm}]$ und $[74{,}0, 115{,}8\,\text{mm}]$) verbleiben als **vollständig massive Non-Design Spaces**.
+   - **Begründung (Style-Guide 5.1 & 5.2):** Standard-25T-Servohörner benötigen eine kreisrunde, ebene Auflagefläche ($\varnothing 20\text{--}25\,\text{mm}$) bei $Y = 29{,}30\,\text{mm}$. Die 4x M2-Senkungen auf $\varnothing 16{,}0\,\text{mm}$ Teilkreis fordern volles, unbeschädigtes Material ($\ge 4{,}0\,\text{mm}$ Spannfleisch unter den Schraubenköpfen). Das Gegenlager auf der Rückseite erfordert einen ununterbrochenen zylindrischen Lagersitz für das 684ZZ-Kugellager ($\varnothing 8{,}05 \times 3{,}0\,\text{mm}$) und eine intakte M4-Schraubensenkung ($\varnothing 9{,}60\,\text{mm}$). Jegliche Durchgangs- oder Halbmondfenster in diesen Zonen wurden eliminiert.
 2. **5-Feld Warren-Fachwerkgitter an den Flanken:**
-   - Entlang der $33\,\text{mm}$ langen Außenflanken der ADC-Kammer wurden 5 triangulierte Warren-Fachwerkfelder eingefräst (`f_bay1` bis `f_bay5`).
-   - Die innere Trennwand zur ADC-Kammer verbleibt mit $1{,}35\text{--}2{,}00\,\text{mm}$ Wandstärke durchgehend solide, wodurch die Elektronik 100 % gekapselt bleibt.
+   - Entlang der Außenflanken der zentralen Sensorkammer wurden 5 triangulierte Warren-Fachwerkfelder eingebracht (`f_bay1` bis `f_bay5`, $w \ge 2{,}50\,\text{mm}$, $R = 1{,}60\,\text{mm}$).
+   - Die innere Trennwand zur ADC-Kammer verbleibt mit $1{,}35\text{--}2{,}00\,\text{mm}$ Wandstärke durchgehend solide, wodurch die Elektronik 100 % staub- und feuchtigkeitsdicht gekapselt bleibt.
 3. **Stirnwand-Entlastungstaschen (Bulkhead Pockets):**
    - Beiderseits der zentralen $14 \times 7\,\text{mm}$ Kabeltunnels wurden $5{,}5\,\text{mm}$ tiefe bionische Taschen (`box_b_fl`, `box_b_rl`, `box_b_fr`, `box_b_rr`) von den U-Mäulern her eingebracht.
-   - Schützt die M2-Verschraubungsdome und spart massives Volumen an den Stirnseiten.
+   - Schützt die M2-Verschraubungsdome und spart massives Volumen an den Stirnseiten ein.
 4. **Bionische Unterboden-Aussparungen:**
    - Unterhalb von $Z \le -10{,}0\,\text{mm}$ wurden drei großflächige bionische Taschen (`p_bot_l`, `p_bot_c`, `p_bot_r`) eingebracht.
    - Ein $1{,}50\,\text{mm}$ dicker, geschlossener Boden unterhalb der Platine schützt die Sensorik zuverlässig vor Steinschlag und Schmutz.
@@ -131,22 +130,21 @@ Auf der final optimierten B-Rep-Geometrie wurde eine erneute Finite-Elemente-Ana
 
 | Parameter / Lastfall | Baseline (Solid) | Optimiert (Bionisch) | Differenz | Bewertung |
 | :--- | :---: | :---: | :---: | :--- |
-| **Bauteilmasse** | **$82{,}02\,\text{g}$** | **$64{,}08\,\text{g}$** | **$-17{,}94\,\text{g}$ ($-21{,}9\,\%$)** | Massiver Leichtbau-Gewinn |
-| **Solid-Volumen** | $64{,}59\,\text{cm}^3$ | $50{,}46\,\text{cm}^3$ | $-14{,}13\,\text{cm}^3$ | Erheblich weniger Druckzeit & Filament |
+| **Bauteilmasse** | **$82{,}02\,\text{g}$** | **$69{,}38\,\text{g}$** | **$-12{,}64\,\text{g}$ ($-15{,}4\,\%$)** | Ausgezeichneter Leichtbau-Gewinn bei voller Robustheit |
+| **Solid-Volumen** | $64{,}59\,\text{cm}^3$ | $54{,}63\,\text{cm}^3$ | $-9{,}96\,\text{cm}^3$ | Erheblich weniger Druckzeit & Filament |
 | **LF1: Tripod Gait ($F_z = -15\,\text{N}$)** | | | | |
-| Max. Spannung $\sigma_{\text{max}}$ | $1{,}38\,\text{MPa}$ | **$2{,}06\,\text{MPa}$** | $+0{,}68\,\text{MPa}$ | Vollkommen unkritisch ($< 5\,\%$ der Streckgrenze) |
-| Max. Durchbiegung $u_{\text{max}}$ | $0{,}198\,\text{mm}$ | **$0{,}258\,\text{mm}$** | $+0{,}060\,\text{mm}$ | Extrem steif (nur $0{,}26\,\text{mm}$ Auslenkung) |
-| Sicherheitsfaktor $S$ | $32{,}58$ | **$21{,}89$** | $-10{,}69$ | Überragender Sicherheitsbeiwert |
+| Max. Spannung $\sigma_{\text{max}}$ | $1{,}38\,\text{MPa}$ | **$1{,}47\,\text{MPa}$** | $+0{,}09\,\text{MPa}$ | Vollkommen unkritisch ($< 3{,}5\,\%$ der Streckgrenze) |
+| Max. Durchbiegung $u_{\text{max}}$ | $0{,}198\,\text{mm}$ | **$0{,}232\,\text{mm}$** | $+0{,}034\,\text{mm}$ | Extrem steif (nur $0{,}23\,\text{mm}$ Auslenkung) |
+| Sicherheitsfaktor $S$ | $32{,}58$ | **$30{,}53$** | $-2{,}05$ | Überragender Sicherheitsbeiwert |
 | **LF2: Stall Torque ($1{,}2\,\text{N}\cdot\text{m}$)** | | | | |
-| Max. Spannung $\sigma_{\text{max}}$ | $11{,}05\,\text{MPa}$ | **$16{,}53\,\text{MPa}$** | $+5{,}48\,\text{MPa}$ | Weit unter Streckgrenze ($R_e = 45\,\text{MPa}$) |
-| 99. Perzentil-Spannung | $8{,}10\,\text{MPa}$ | **$9{,}33\,\text{MPa}$** | $+1{,}23\,\text{MPa}$ | $99\,\%$ aller Knoten unter $10\,\text{MPa}$! |
-| Mittlere Spannung $\sigma_{\text{mean}}$ | $1{,}64\,\text{MPa}$ | **$1{,}95\,\text{MPa}$** | $+0{,}31\,\text{MPa}$ | Äußerst homogene Spannungsverteilung |
-| Max. Durchbiegung $u_{\text{max}}$ | $1{,}586\,\text{mm}$ | **$2{,}060\,\text{mm}$** | $+0{,}474\,\text{mm}$ | Unkritisch für Servogetriebe |
-| Sicherheitsfaktor $S$ | $4{,}07$ | **$2{,}72$** | $-1{,}35$ | **Übertrifft $S \ge 2{,}0$ Vorgabe deutlich** |
+| Max. Spannung $\sigma_{\text{max}}$ | $11{,}05\,\text{MPa}$ | **$12{,}22\,\text{MPa}$** | $+1{,}17\,\text{MPa}$ | Weit unter Streckgrenze ($R_e = 45\,\text{MPa}$) |
+| Mittlere Spannung $\sigma_{\text{mean}}$ | $1{,}64\,\text{MPa}$ | **$1{,}79\,\text{MPa}$** | $+0{,}15\,\text{MPa}$ | Äußerst homogene Spannungsverteilung |
+| Max. Durchbiegung $u_{\text{max}}$ | $1{,}586\,\text{mm}$ | **$1{,}855\,\text{mm}$** | $+0{,}269\,\text{mm}$ | Unkritisch für Servogetriebe |
+| Sicherheitsfaktor $S$ | $4{,}07$ | **$3{,}68$** | $-0{,}39$ | **Übertrifft $S \ge 2{,}0$ Vorgabe deutlich** |
 | **LF3: Querlast ($F_y = +10\,\text{N}$)** | | | | |
-| Max. Spannung $\sigma_{\text{max}}$ | $0{,}92\,\text{MPa}$ | **$1{,}38\,\text{MPa}$** | $+0{,}46\,\text{MPa}$ | Souveräne Torsions- & Quersteifigkeit |
-| Max. Durchbiegung $u_{\text{max}}$ | $0{,}132\,\text{mm}$ | **$0{,}172\,\text{mm}$** | $+0{,}040\,\text{mm}$ | Kaum messbare elastische Verformung |
-| Sicherheitsfaktor $S$ | $48{,}90$ | **$32{,}59$** | $-16{,}31$ | Hohe Sicherheitsreserve bei Hangabtrieb |
+| Max. Spannung $\sigma_{\text{max}}$ | $0{,}92\,\text{MPa}$ | **$0{,}98\,\text{MPa}$** | $+0{,}06\,\text{MPa}$ | Souveräne Torsions- & Quersteifigkeit |
+| Max. Durchbiegung $u_{\text{max}}$ | $0{,}132\,\text{mm}$ | **$0{,}155\,\text{mm}$** | $+0{,}023\,\text{mm}$ | Kaum messbare elastische Verformung |
+| Sicherheitsfaktor $S$ | $48{,}90$ | **$45{,}90$** | $-3{,}00$ | Enorme Sicherheitsreserve bei Hangabtrieb |
 
 ---
 

@@ -22,7 +22,7 @@ from femmesh.gmshtools import GmshTools
 from femtools.ccxtools import CcxTools
 import feminout.importCcxFrdResults as importCcxFrdResults
 
-import test_femur_lightweight
+# import test_femur_lightweight
 
 WORK_DIR = os.path.join(REPO_ROOT, "hardware/mechanics/export/fea/femur_optimized")
 
@@ -32,7 +32,9 @@ def run_verification_fea():
     print("--- Lasius Femur v2: Verification FEA of Optimized Lightweight Solid ---")
     print("=" * 80)
 
-    femur_shape = test_femur_lightweight.build_lightweight_femur()
+    femur_path = os.path.join(REPO_ROOT, "hardware/mechanics/models/custom/v2/parts/femur/femur.FCStd")
+    femur_doc = App.openDocument(femur_path)
+    femur_shape = femur_doc.Femur_Body.Shape
 
     volume_cm3 = femur_shape.Volume / 1000.0
     mass_g = volume_cm3 * 1.27
