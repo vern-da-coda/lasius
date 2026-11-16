@@ -168,84 +168,13 @@ def make_s_curve_edges_xz(p1, p2):
     return [Part.Edge(Part.Arc(p1, pm1, p_inf)), Part.Edge(Part.Arc(p_inf, pm2, p2))]
 
 
-def build_organic_tibia_outer_wire(horn_shift_y=5.0, throat_clearance=4.0):
+def build_organic_tibia_outer_wire(horn_b_ext=15.0, throat_clearance=4.0, **kwargs):
     """
-    Build the complete G1-continuous organic sickle claw outline (at Z = 0),
-    adapted with upper horn and U-throat shifted towards the outside (+Y) for full
-    servo swing clearance, keeping the lower horn and distal foot sensor chamber intact.
+    Build the complete G1-continuous organic sickle claw outline (at Z = 0):
+    - Longer dorsal horn (Horn A) removed: dorsal arch rounds over the knee and flows into the throat.
+    - Shorter outer horn (Horn B) extended by horn_b_ext (15.0 mm) along its beak axis to match the
+      original length of the inner horn, fully clear of the servo and femur canopy.
     """
-    # Upper horn shifted towards the outside (+Y)
-    c2 = App.Vector(17.271, 36.152 + horn_shift_y, 0.0)
-    r2 = 1.489
-    a2_s = math.atan2(37.610 + horn_shift_y - c2.y, 17.570 - c2.x)
-    a2_m = 0.05
-    a2_e = math.atan2(34.780 + horn_shift_y - c2.y, 17.850 - c2.x)
-    p2_s = App.Vector(c2.x + r2 * math.cos(a2_s), c2.y + r2 * math.sin(a2_s), 0.0)
-    p2_m = App.Vector(c2.x + r2 * math.cos(a2_m), c2.y + r2 * math.sin(a2_m), 0.0)
-    p2_e = App.Vector(c2.x + r2 * math.cos(a2_e), c2.y + r2 * math.sin(a2_e), 0.0)
-    e2 = Part.Arc(p2_s, p2_m, p2_e).toShape()
-
-    # Lower knee horn
-    c4 = App.Vector(38.692 + 2.0, 19.268 + 2.0, 0.0)
-    r4 = 2.458
-    a4_s = math.atan2(21.650 + 2.0 - c4.y, 39.300 + 2.0 - c4.x)
-    a4_m = 0.15
-    a4_e = math.atan2(17.350 + 2.0 - c4.y, 40.230 + 2.0 - c4.x)
-    p4_s = App.Vector(c4.x + r4 * math.cos(a4_s), c4.y + r4 * math.sin(a4_s), 0.0)
-    p4_m = App.Vector(c4.x + r4 * math.cos(a4_m), c4.y + r4 * math.sin(a4_m), 0.0)
-    p4_e = App.Vector(c4.x + r4 * math.cos(a4_e), c4.y + r4 * math.sin(a4_e), 0.0)
-    e4 = Part.Arc(p4_s, p4_m, p4_e).toShape()
-
-    c56 = App.Vector(15.00, -10.00, 0.0)
-    r56 = 4.25
-    a56_s = 0.06 * math.pi
-    a56_m = -0.22 * math.pi
-    a56_e = -0.50 * math.pi
-    p56_s = App.Vector(c56.x + r56 * math.cos(a56_s), c56.y + r56 * math.sin(a56_s), 0.0)
-    p56_m = App.Vector(c56.x + r56 * math.cos(a56_m), c56.y + r56 * math.sin(a56_m), 0.0)
-    p56_e = App.Vector(c56.x + r56 * math.cos(a56_e), c56.y + r56 * math.sin(a56_e), 0.0)
-    e5b = Part.Arc(p56_s, p56_m, p56_e).toShape()
-
-    # Throat poles opened up with throat_clearance along +Y
-    poles3 = [
-        p2_e,
-        (17.012, 34.366 + horn_shift_y),
-        (13.720, 32.826 + horn_shift_y),
-        (9.038, 30.847 + horn_shift_y * 0.8),
-        (5.089, 28.080 + throat_clearance),
-        (3.500, 25.600 + throat_clearance),
-        (4.000, 22.498 + throat_clearance),
-        (4.500, 19.300 + throat_clearance),
-        (5.500, 16.800 + throat_clearance * 0.5),
-        (7.500, 15.880 + 2.0),
-        (11.500, 16.100 + 2.0),
-        (17.500, 16.900 + 2.0),
-        (24.500, 18.100 + 2.0),
-        (31.500, 19.800 + 2.0),
-        (37.500, 21.300 + 2.0),
-        p4_s,
-    ]
-    e3 = make_g1_cubic_bspline(
-        poles3, circle_tangent_cw(c2, p2_e), circle_tangent_cw(c4, p4_s)
-    )
-
-    poles5 = [
-        p4_e,
-        (39.00, 16.20 + 2.0),
-        (34.00, 12.80 + 1.5),
-        (27.50, 7.80 + 1.0),
-        (22.50, 2.20 + 0.5),
-        (20.10, -2.80),
-        (19.50, -6.50),
-        p56_s,
-    ]
-    e5 = make_g1_cubic_bspline(
-        poles5, circle_tangent_cw(c4, p4_e), circle_tangent_cw(c56, p56_s)
-    )
-
-    p6_e = App.Vector(-36.50, -14.25, 0.0)
-    e6 = Part.makeLine(p56_e, p6_e)
-
     p_spring_cheek = App.Vector(-132.0, -1.5, 0.0)
     p_hub_left = App.Vector(-128.5, -14.0, 0.0)
     p_hub_bot = App.Vector(-121.0, -21.5, 0.0)
@@ -253,28 +182,7 @@ def build_organic_tibia_outer_wire(horn_shift_y=5.0, throat_clearance=4.0):
     arc_cheek_tip = Part.Arc(p_spring_cheek, App.Vector(-132.2, -7.8, 0.0), p_hub_left).toShape()
     arc_pivot_bot = Part.Arc(p_hub_left, App.Vector(-126.0, -20.2, 0.0), p_hub_bot).toShape()
 
-    poles1 = [
-        p_spring_cheek,
-        (-129.5, -0.2),
-        (-124.5, 2.5),
-        (-116.0, 5.8),
-        (-106.0, 8.8),
-        (-92.0, 12.5),
-        (-78.200, 16.948),
-        (-62.257, 22.984),
-        (-49.101, 28.027),
-        (-35.845, 31.870),
-        (-23.493, 34.775),
-        (-10.498, 36.789 + horn_shift_y * 0.3),
-        (-0.008, 37.954 + horn_shift_y * 0.5),
-        (7.477, 38.458 + horn_shift_y * 0.8),
-        (12.888, 38.362 + horn_shift_y),
-        (15.874, 37.981 + horn_shift_y),
-        p2_s,
-    ]
-    t_dorsal_start = App.Vector(1.0, 0.5, 0.0)
-    e1 = make_g1_cubic_bspline(poles1, t_dorsal_start, circle_tangent_cw(c2, p2_s))
-
+    p6_e = App.Vector(-36.50, -14.25, 0.0)
     poles7 = [
         p6_e,
         (-39.50, -14.25),
@@ -289,10 +197,76 @@ def build_organic_tibia_outer_wire(horn_shift_y=5.0, throat_clearance=4.0):
         (-115.00, -19.50),
         p_hub_bot,
     ]
-    t_ventral_end = App.Vector(-1.0, -0.2, 0.0)
-    e7 = make_g1_cubic_bspline(poles7, App.Vector(-1.0, 0.0, 0.0), t_ventral_end)
+    e7 = make_g1_cubic_bspline(poles7, App.Vector(-1.0, 0.0, 0.0), App.Vector(-1.0, -0.2, 0.0))
 
-    return Part.Wire([arc_cheek_tip, arc_pivot_bot, e7, e6, e5b, e5, e4, e3, e2, e1])
+    c56 = App.Vector(15.00, -10.00, 0.0)
+    r56 = 4.25
+    a56_s = 0.06 * math.pi
+    a56_m = -0.22 * math.pi
+    a56_e = -0.50 * math.pi
+    p56_s = App.Vector(c56.x + r56 * math.cos(a56_s), c56.y + r56 * math.sin(a56_s), 0.0)
+    p56_m = App.Vector(c56.x + r56 * math.cos(a56_m), c56.y + r56 * math.sin(a56_m), 0.0)
+    p56_e = App.Vector(c56.x + r56 * math.cos(a56_e), c56.y + r56 * math.sin(a56_e), 0.0)
+    e5b = Part.Arc(p56_s, p56_m, p56_e).toShape()
+    e6 = Part.makeLine(p56_e, p6_e)
+
+    # Horn B (Outer Horn): Lengthened to match original inner horn length
+    dx = horn_b_ext
+    dy = horn_b_ext * 0.25
+    c4 = App.Vector(38.692 + dx, 19.268 + dy, 0.0)
+    r4 = 2.00
+    a4_s = math.atan2(21.650 + dy - c4.y, 39.300 + dx - c4.x)
+    a4_m = 0.15
+    a4_e = math.atan2(17.350 + dy - c4.y, 40.230 + dx - c4.x)
+    p4_s = App.Vector(c4.x + r4 * math.cos(a4_s), c4.y + r4 * math.sin(a4_s), 0.0)
+    p4_m = App.Vector(c4.x + r4 * math.cos(a4_m), c4.y + r4 * math.sin(a4_m), 0.0)
+    p4_e = App.Vector(c4.x + r4 * math.cos(a4_e), c4.y + r4 * math.sin(a4_e), 0.0)
+    e4 = Part.Arc(p4_s, p4_m, p4_e).toShape()
+
+    poles5 = [
+        p4_e,
+        (39.00 + dx * 0.7, 16.20 + dy * 0.7),
+        (34.00 + dx * 0.4, 12.80 + dy * 0.4),
+        (27.50 + dx * 0.2, 7.80 + dy * 0.2),
+        (22.50, 2.20),
+        (20.10, -2.80),
+        (19.50, -6.50),
+        p56_s,
+    ]
+    e5 = make_g1_cubic_bspline(poles5, circle_tangent_cw(c4, p4_e), circle_tangent_cw(c56, p56_s))
+
+    # Dorsal spine flows smoothly over knee (flush at x=9.15 mm) into throat leading to Horn B
+    poles_dorsal_to_throat = [
+        p_spring_cheek,
+        (-129.5, -0.2),
+        (-124.5, 2.5),
+        (-116.0, 5.8),
+        (-106.0, 8.8),
+        (-92.0, 12.5),
+        (-78.200, 16.948),
+        (-62.257, 22.984),
+        (-49.101, 28.027),
+        (-35.845, 31.870),
+        (-23.493, 34.775),
+        (-10.498, 36.789),
+        (-0.008, 37.954),
+        (5.000, 36.500),
+        (9.150, 32.500),
+        (12.000, 26.500),
+        (15.000, 21.000 + throat_clearance * 0.5),
+        (20.000, 19.500 + dy * 0.2),
+        (28.000, 20.000 + dy * 0.4),
+        (38.000 + dx * 0.4, 21.200 + dy * 0.6),
+        (46.000 + dx * 0.7, 22.200 + dy * 0.8),
+        p4_s,
+    ]
+    e_dorsal_throat = make_g1_cubic_bspline(
+        poles_dorsal_to_throat,
+        App.Vector(1.0, 0.5, 0.0),
+        circle_tangent_cw(c4, p4_s)
+    )
+
+    return Part.Wire([arc_cheek_tip, arc_pivot_bot, e7, e6, e5b, e5, e4, e_dorsal_throat])
 
 
 def build_tibia_servo_cage_cheek_wire(x_front=9.15, x_rear=-45.0):
@@ -403,8 +377,8 @@ def build_tibia_base_shape():
     ear_bosses = build_servo_ear_bosses()
 
     # Central Claw Blade (Z in [-3.00, +4.00], centered at Z = +0.50 mm)
-    # Full organic contour restored with widened U-throat
-    outer_wire = build_organic_tibia_outer_wire(horn_shift_y=5.0, throat_clearance=4.0)
+    # Single bionic predatory horn (Horn A removed, Horn B extended to original length)
+    outer_wire = build_organic_tibia_outer_wire(horn_b_ext=15.0, throat_clearance=4.0)
     claw_central = Part.Face(outer_wire).extrude(App.Vector(0, 0, 7.0)).translate(App.Vector(0, 0, -3.0))
 
     # Fuse base solid
