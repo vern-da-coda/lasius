@@ -291,19 +291,19 @@ def build_tibia_servo_cage_cheek_wire(x_front=9.15, x_rear=-45.0):
     return Part.Wire(all_edges)
 
 
-def build_tibia_upper_cheek_wire(x_tab=17.80, x_front=9.15, x_flat=-7.00, x_apex=-58.00):
+def build_tibia_upper_cheek_wire(x_tab=18.20, x_front=9.15, x_flat=-7.00, x_apex=-58.00):
     """
     Construct the expanded bionic upper cheek wire in the X-Z plane:
     - Extended towards foot (-X) past the knee servo body (X in [9.15, -31.65]).
     - Harmonic G1 S-curves taper smoothly from flat crest/tab at X = x_flat (-7.00 mm)
       down to the central claw blade side faces at X = x_apex (-58.00 mm, Z in [-3.00, +4.00]).
-    - Front tab at X in [9.15, 17.80] flanks the servo mounting boss with R = 2.60 mm filleted corners.
+    - Front tab at X in [9.15, 18.20] flanks the servo mounting boss with R = 4.50 mm filleted corners (matching Coxa).
     """
     z_crest = 24.00
     z_tab = -23.00
     z_tab_top = 10.15
     z_tab_bot = -10.15
-    r_tab = 2.60
+    r_tab = 4.50
 
     # 1. Apex vertical edge connecting to claw blade
     p_apex_bot = App.Vector(x_apex, 0.0, -3.00)
@@ -393,11 +393,11 @@ def build_servo_ear_bosses():
     w_lower = make_rounded_polygon_wire_2d(pts_lower, map_xy)
     boss_lower = Part.Face(w_lower).extrude(App.Vector(0, 0, dz))
 
-    # Upper servo mount (+X): X in [+9.15, +17.80], Y in [-10.15, +10.15]
+    # Upper servo mount (+X): X in [+9.15, +18.20], Y in [-10.15, +10.15]
     pts_upper = [
         (9.15, 10.15, 0.00),
-        (17.80, 10.15, 2.60),
-        (17.80, -10.15, 2.60),
+        (18.20, 10.15, 4.50),
+        (18.20, -10.15, 4.50),
         (9.15, -10.15, 0.00),
     ]
     w_upper = make_rounded_polygon_wire_2d(pts_upper, map_xy)
@@ -443,7 +443,7 @@ def build_tibia_base_shape():
     s_cheek_lower = f_cheek_lower.extrude(App.Vector(0.0, 6.20, 0.0)).translate(App.Vector(0.0, -16.35, 0.0))
 
     # Upper / Dorsal cheek: Y in [+10.15, +16.35] (6.20 mm) - expanded bionic outline tapering to X = -58.00 mm
-    w_cheek_upper = build_tibia_upper_cheek_wire(x_tab=17.80, x_front=9.15, x_flat=-7.00, x_apex=-58.00)
+    w_cheek_upper = build_tibia_upper_cheek_wire(x_tab=18.20, x_front=9.15, x_flat=-7.00, x_apex=-58.00)
     f_cheek_upper = Part.Face(w_cheek_upper)
     s_cheek_upper = f_cheek_upper.extrude(App.Vector(0.0, 6.20, 0.0)).translate(App.Vector(0.0, 10.15, 0.0))
 
