@@ -483,16 +483,30 @@ def build_tibia_base_shape():
     R_FILLET = 1.40
     p_fl_t = [App.Vector(8.50, 0.0, 12.00), App.Vector(-3.00, 0.0, 12.00), App.Vector(-3.00, 0.0, 21.50), App.Vector(-1.00, 0.0, 21.50)]
     p_fl_b = [App.Vector(8.50, 0.0, -11.00), App.Vector(-1.00, 0.0, -20.50), App.Vector(-3.00, 0.0, -20.50), App.Vector(-3.00, 0.0, -11.00)]
-    p_chev_t = [App.Vector(-8.80, 0.0, 1.75), App.Vector(-26.55, 0.0, 1.75), App.Vector(-8.80, 0.0, 19.50)]
-    p_chev_b = [App.Vector(-8.80, 0.0, -18.50), App.Vector(-26.55, 0.0, -0.75), App.Vector(-8.80, 0.0, -0.75)]
-    p_br_t = [App.Vector(-10.80, 0.0, 21.04), App.Vector(-30.09, 0.0, 1.75), App.Vector(-33.30, 0.0, 1.75), App.Vector(-33.30, 0.0, 11.30)]
-    p_br_b = [App.Vector(-10.80, 0.0, -20.04), App.Vector(-33.30, 0.0, -10.30), App.Vector(-33.30, 0.0, -2.00), App.Vector(-30.09, 0.0, -2.00)]
 
-    for pts in [p_fl_t, p_fl_b, p_chev_t, p_chev_b, p_br_t, p_br_b]:
+    # Lower cheek windows (baseline: central strut Z in [-0.75, +1.75])
+    p_chev_t_l = [App.Vector(-8.80, 0.0, 1.75), App.Vector(-26.55, 0.0, 1.75), App.Vector(-8.80, 0.0, 19.50)]
+    p_chev_b_l = [App.Vector(-8.80, 0.0, -18.50), App.Vector(-26.55, 0.0, -0.75), App.Vector(-8.80, 0.0, -0.75)]
+    p_br_t_l = [App.Vector(-10.80, 0.0, 21.04), App.Vector(-30.09, 0.0, 1.75), App.Vector(-33.30, 0.0, 1.75), App.Vector(-33.30, 0.0, 11.30)]
+    p_br_b_l = [App.Vector(-10.80, 0.0, -20.04), App.Vector(-33.30, 0.0, -10.30), App.Vector(-33.30, 0.0, -2.00), App.Vector(-30.09, 0.0, -2.00)]
+
+    # Upper cheek windows: central strut expanded to 7.00 mm (Z in [-3.00, +4.00]) matching central claw blade
+    p_chev_t_u = [App.Vector(-8.80, 0.0, 4.00), App.Vector(-24.30, 0.0, 4.00), App.Vector(-8.80, 0.0, 19.50)]
+    p_chev_b_u = [App.Vector(-8.80, 0.0, -18.50), App.Vector(-24.30, 0.0, -3.00), App.Vector(-8.80, 0.0, -3.00)]
+    p_br_t_u = [App.Vector(-10.80, 0.0, 21.04), App.Vector(-27.84, 0.0, 4.00), App.Vector(-33.30, 0.0, 4.00), App.Vector(-33.30, 0.0, 11.30)]
+    p_br_b_u = [App.Vector(-10.80, 0.0, -20.04), App.Vector(-33.30, 0.0, -10.30), App.Vector(-33.30, 0.0, -3.00), App.Vector(-27.84, 0.0, -3.00)]
+
+    # Cut upper cheek windows
+    for pts in [p_fl_t, p_fl_b, p_chev_t_u, p_chev_b_u, p_br_t_u, p_br_b_u]:
         f_win = make_filleted_polygon_xz(pts, R_FILLET)
         cut_u = f_win.extrude(App.Vector(0.0, 10.0, 0.0)).translate(App.Vector(0.0, 9.0, 0.0))
+        tibia_base = tibia_base.cut(cut_u)
+
+    # Cut lower cheek windows
+    for pts in [p_fl_t, p_fl_b, p_chev_t_l, p_chev_b_l, p_br_t_l, p_br_b_l]:
+        f_win = make_filleted_polygon_xz(pts, R_FILLET)
         cut_l = f_win.extrude(App.Vector(0.0, -10.0, 0.0)).translate(App.Vector(0.0, -9.0, 0.0))
-        tibia_base = tibia_base.cut(cut_u).cut(cut_l)
+        tibia_base = tibia_base.cut(cut_l)
 
     # Taper lower cheek in width into claw trunk at X in [-31.65, -45.00] (upper cheek has its exact organic taper in w_cheek_upper)
     pts_taper_l = [
