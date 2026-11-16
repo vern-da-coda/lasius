@@ -70,11 +70,11 @@ CAD engineering, digital fabrication exports, and assembly models for the **Lasi
   - Modular leg subassembly combining the monolithic v2 [`coxa.FCStd`](models/custom/v2/parts/coxa/coxa.FCStd) with the v2 [`femur.FCStd`](models/custom/v2/parts/femur/femur.FCStd) and [`tibia.FCStd`](models/custom/v2/parts/tibia/tibia.FCStd).
 - **Complete Full-Body Assembly v2 ([`body_assembly.FCStd`](models/custom/v2/body_assembly.FCStd)):**
   - Master full-robot assembly (v2) integrating:
-    - Chassis structural plates ([`body_bottom.FCStd`](models/custom/v1/parts/body_bottom.FCStd), [`body_top.FCStd`](models/custom/v1/parts/body_top.FCStd)) and 8× standoff pillars ([`spacer_14x50.FCStd`](models/custom/v1/parts/spacer_14x50.FCStd)).
-    - 6× modular v2 leg assemblies ([`leg_assembly.FCStd`](models/custom/v2/leg_assembly.FCStd)).
-    - 3D-printed body parts: [`chassis_belly_pan.FCStd`](models/custom/v2/parts/chassis/chassis_belly_pan.FCStd) (with downward-facing VL53L5CX ToF terrain distance sensor) and [`chassis_top_cover.FCStd`](models/custom/v2/parts/chassis/chassis_top_cover.FCStd).
-    - Modular interior: [`electronics_tray_assembly.FCStd`](models/custom/v2/electronics_tray_assembly.FCStd) (tray + dual PCA9685 + TCA9548A + 2S LiPo battery).
-    - Top deck processing: Raspberry Pi 4 Model B mounted on the upper chassis deck directly under the ventilated carapace cover ([`chassis_top_cover.FCStd`](models/custom/v2/parts/chassis/chassis_top_cover.FCStd)).
+    - **Chassis-Platten (Hardware-Freeze):** Die beiden $2{,}0\,\text{mm}$ CFK-Carbonplatten ([`body_bottom.FCStd`](models/custom/v1/parts/body_bottom.FCStd) und [`body_top.FCStd`](models/custom/v1/parts/body_top.FCStd)) **existieren bereits als physische Teile** und sind das **einzige Artefakt, das aus v1 übernommen wird**. Alle anderen v1-Eigenkonstruktionen sind obsolet.
+    - 6× modulare v2 Beinbaugruppen ([`leg_assembly.FCStd`](models/custom/v2/leg_assembly.FCStd)).
+    - 3D-Druck-Rumpfkörper: Monocoque Central Core ([`chassis_core.FCStd`](models/custom/v2/parts/chassis/chassis_core.FCStd)), [`chassis_belly_pan.FCStd`](models/custom/v2/parts/chassis/chassis_belly_pan.FCStd) (mit nach unten gerichtetem VL53L5CX ToF-Sensor), Montageplatte ([`chassis_rpi_mount.FCStd`](models/custom/v2/parts/chassis/chassis_rpi_mount.FCStd)), Service-Abdeckung ([`chassis_service_cover.FCStd`](models/custom/v2/parts/chassis/chassis_service_cover.FCStd)) und Acryl-Canopy ([`chassis_canopy.FCStd`](models/custom/v2/parts/chassis/chassis_canopy.FCStd)).
+    - Modulares Innenleben: 2× PCA9685 + TCA9548A + 2S LiPo-Akku.
+    - Verarbeitungsplattform: Raspberry Pi 4 Model B zentriert auf der oberen Montageplatte unter dem Kamin-Wartungsdeckel.
 
 ---
 

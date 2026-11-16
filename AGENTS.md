@@ -18,7 +18,8 @@ Alle Modelle unter `hardware/mechanics/models/` und Fertigungsexporte unter `har
    - **Einzelteile** liegen gekapselt im Unterordner `custom/v{N}/parts/`.
 4. **Kanonische Dateinamen & Generations-Vererbung:**
    - Dateinamen sind **kanonisch und ohne Versions-Suffix** (z. B. `parts/femur.FCStd`, `parts/tibia.FCStd`, `leg_assembly.FCStd`), damit FreeCAD `App::Link`-Referenzen (`PropertyXLink`) und Git-Historien stabil bleiben.
-   - Unveränderte Bauteile aus einer früheren Generation werden nicht kopiert, sondern per relativem `App::Link` aus der Vorgängergeneration referenziert (z. B. `../v1/parts/coxa_bracket.FCStd`).
+   - **Chassis-Platten-Invariante (Hardware-Freeze):** Die beiden $2{,}0\,\text{mm}$ Carbonfaser-Platten ([`body_bottom.FCStd`](hardware/mechanics/models/custom/v1/parts/body_bottom.FCStd) und [`body_top.FCStd`](hardware/mechanics/models/custom/v1/parts/body_top.FCStd)) **existieren bereits als physische, fertig gefräste Hardware** und sind das **einzige Bauteil, das unverändert aus Generation `v1` in `v2` übernommen wird**. Alle anderen v1-Eigenkonstruktionen (v1-Beine, v1-Spacers) sind obsolet und werden in v2 durch bionische monolithische 3D-Druckteile ersetzt. Sämtliche v2-Neukonstruktionen (Monocoque-Zentralkern, Belly Pan, Canopy, Montageblöcke) müssen sich zwingend an das bestehende Kontur- und Bohrungsraster der physischen Carbonplatten anpassen.
+   - Unveränderte Bauteile aus einer früheren Generation werden nicht kopiert, sondern per relativem `App::Link` aus der Vorgängergeneration referenziert (z. B. `../v1/parts/body_bottom.FCStd`).
    - `export/{step,stl,dxf}/` spiegelt die Ordnerstruktur von `models/` 1:1.
    - Nach jeder Pfadänderung müssen alle Assembly-`XLink`-Pfade sowie `python3 scripts/dev/check_links.py` verifiziert werden.
 5. **Mechanik-Style-Guide & Bionische Formensprache:**

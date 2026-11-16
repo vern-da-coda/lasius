@@ -87,9 +87,10 @@ Elektronikkammern (BCM2711 SoC, Femur-ADC-Kammer) nutzen einheitliche bionische 
 
 ---
 
-## 5. Fertigungsgerechte Konstruktion (DfAM für PETG)
+## 5. Fertigungsgerechte Konstruktion (DfAM für PETG & CFK-Platten)
 
-Alle mechanischen Eigenkonstruktionen sind primär für den FDM-Druck aus **PETG** optimiert.
+* **Chassis-Platten (Hardware-Freeze):** Die beiden $2{,}0\,\text{mm}$ Kohlefaser-Platten ([`body_bottom.FCStd`](models/custom/v1/parts/body_bottom.FCStd) und [`body_top.FCStd`](models/custom/v1/parts/body_top.FCStd)) **existieren bereits als physische, fertig gefräste CFK-Hardware** und sind das **einzige Bauteil, das unverändert aus Generation `v1` in `v2` übernommen wird**. Sie definieren die geometrische Referenz (Bohrungsraster, Außenkontur) für alle v2-Rumpfkomponenten.
+* **FDM-3D-Druckteile:** Alle weiteren mechanischen Eigenkonstruktionen (Beine, Monocoque-Zentralkern, Belly Pan, Canopy, Deckel, Montageblöcke) sind primär für den FDM-Druck aus **PETG** (sowie TPU 95A für Kufen-Dämpfungsschuhe) auf Standard-Druckbetten ($256 \times 256\,\text{mm}$) optimiert.
 
 ### 5.1 Wandstärken-Klassen
 * **Klasse 1 – Leichte Abdeckungen & Hauben:** $1{,}60\text{--}2{,}00\,\text{mm}$ (4 Perimeter, formsteif durch Doppelkrümmung).

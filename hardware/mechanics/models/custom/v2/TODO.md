@@ -81,8 +81,10 @@ Dieser Backlog führt alle offenen Aufgaben, konstruktiven Erweiterungen und Ver
     * *Biegesteifigkeit unter Last:* Verzieht sich die Gegenlagerlasche bei dynamischer Gehbelastung, oder nimmt das 45°-Gusset die Axial- und Biegemomente steif auf?
 - [ ] **Bewegungsraum- und Kollisionsprüfung:**  
   * Kinematischen Freigang der v2-Beinbaugruppe über den vollen Arbeitsbereich ($\pm 60^\circ$ Coxa, $\pm 60^\circ$ Femur, $\pm 60^\circ$ Tibia) auf Kollisionen zwischen Kabelbaum, Deckel und Chassis prüfen.
-- [ ] **Generations-Vererbung & Link-Integrität:**  
-  * Sicherstellen, dass alle Zukaufteile sauber aus `models/cots/` und unveränderte Chassis-Teile aus `custom/v1/` referenziert bleiben (`check_links.py` und FreeCAD XLink-Check).
+- [ ] **Generations-Vererbung & Link-Integrität (Chassis-Platten-Invariante):**  
+  * **Hardware-Freeze:** Die beiden $2{,}0\,\text{mm}$ CFK-Carbonplatten ([`body_bottom.FCStd`](../../custom/v1/parts/body_bottom.FCStd) und [`body_top.FCStd`](../../custom/v1/parts/body_top.FCStd)) **existieren bereits als physische, fertig gefräste Hardware** und sind das **einzige Bauteil, das unverändert aus Generation `v1` in `v2` übernommen wird**.
+  * Alle anderen v1-Eigenkonstruktionen (v1-Beine, v1-Spacers) sind obsolet und werden durch v2-Monolithe ersetzt.
+  * Sämtliche Neukonstruktionen (Monocoque-Kern, Belly Pan, Canopy, Montageblöcke) müssen sich zwingend an das bestehende Kontur- und Bohrungsraster der physischen Carbonplatten anpassen (`check_links.py` und FreeCAD XLink-Check).
 
 ---
 

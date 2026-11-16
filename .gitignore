@@ -151,3 +151,10 @@ hardware/mechanics/scans/*
 # Assembly STLs are omitted from Git (Assemblies use STEP; STL is reserved for 3D-printable parts)
 hardware/mechanics/export/stl/**/*assembly*.stl
 hardware/mechanics/export/stl/*assembly*.stl
+
+# Blender generated exports (.blend, .glb, .obj) are generated via scripts/dev/export_to_blender.py
+hardware/mechanics/export/blender/*.blend
+hardware/mechanics/export/blender/*.glb
+hardware/mechanics/export/blender/*.obj
+hardware/mechanics/export/blender/*.mtl
+
