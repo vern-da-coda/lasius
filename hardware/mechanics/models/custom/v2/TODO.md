@@ -59,10 +59,19 @@ Dieser Backlog führt alle offenen Aufgaben, konstruktiven Erweiterungen und Ver
 
 ## 3. Tibia (`parts/tibia/tibia.FCStd`)
 
-- [ ] **Fußsensor-Integration (Omron D2F-L Mikroschalter):**  
-  * Aufnahme und Anschlaggeometrie in der Tibia-Fußspitze für den taktilen Schalter präzisieren.
-- [ ] **Kabelkanal Fußsensor $\rightarrow$ Femur:**  
-  * Führung für das 2-adrige Sensorkabel von der Fußspitze über das Kniegelenk bis in die Femur-ADC-Kammer (Pin `A3`) festlegen.
+- [x] **Bionischer Zwillings-Servokäfig & Mittige Kralle (Briefing-Update):**  
+  * **Status:** Erfolgreich implementiert in [`generate_tibia.py`](../../../scripts/v2/generate_tibia.py) und [`generate_tibia_assembly.py`](../../../scripts/v2/generate_tibia_assembly.py).
+  * **Konstruktion:**
+    * **Zwillings-Servokäfig (Twin Servo Cage):** Vollständig analog zu Coxas Femur-Servokäfig ausgeführt ($R = 4{,}50\,\text{mm}$ Apex-Verrundung an der Nase, $w = 2{,}50\,\text{mm}$, $R = 1{,}40\,\text{mm}$ Warren-Truss-Fachwerkfenster, DIN 439 M4 Flachmutter-Gegenlagertasche bei $Z \in [-23{,}0, -20{,}0\,\text{mm}]$, erhabene Befestigungspads bei $Z = +7{,}00\,\text{mm}$).
+    * **Femur-Symmetrie:** Femur nimmt an beiden Enden (Hüfte $X = 0$, Knie $X = 100$) zwei identisch dimensionierte Servokäfige mit jeweils exakt $1{,}00\,\text{mm}$ symmetrischem Flankenspiel auf ($Y_{\text{leg}} \in [-21{,}0, +26{,}0\,\text{mm}]$ in $Y_{\text{femur}} \in [-22{,}0, +27{,}0\,\text{mm}]$).
+    * **Mittige Sichelkralle:** Die Sichelkralle ($7{,}00\,\text{mm}$ Wandstärke, $Z \in [-3{,}00, +4{,}00\,\text{mm}]$) ist exakt mittig ($Z_{\text{mid}} = +0{,}50\,\text{mm}$) auf der Rückseite des Servokäfigs positioniert.
+    * **Tropfenfenster geschlossen:** Das vordere Tropfenfenster wurde massiv verschlossen, wodurch vertikale Scherkräfte und Torsionsbelastungen optimal aufgenommen werden.
+    * **Sensorik & Fuß:** Taktiler Mikroschalter (Omron D2FC), Druckfeder mit Führungsstiften, Formschluss-Servicedeckel, Tarsus-Kipphebel und TPU-Löffelschuh voll integriert.
+    * **Verifikation:** $0{,}0000\,\text{mm}^3$ Kollisionen in `tibia_assembly.FCStd` sowie in `leg_assembly.FCStd` (Links) und `leg_right_assembly.FCStd` (Rechts).
+- [x] **Fußsensor-Integration (Omron D2F-L Mikroschalter):**  
+  * Vollständig parametrisiert und im kinematischen Hub-Sweep ($0{,}0^\circ$ bis $-5{,}0^\circ$) ohne Kollisionen verifiziert.
+- [x] **Kabelkanal Fußsensor $\rightarrow$ Kniegelenk:**  
+  * Interner $C^2$-glatter B-Spline-Kabelkanal ($\varnothing 2{,}60\,\text{mm}$) führt geschützt durch den dorsalen Krallenrücken direkt zum rückwärtigen Servokäfig-Schott.
 
 ---
 

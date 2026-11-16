@@ -463,29 +463,55 @@ def build_organic_tibia_outer_wire():
 
 outer_wire = build_organic_tibia_outer_wire()
 
-# Base Tibia Claw Body (Z in [-3.0, +4.0] mm)
-claw_base = Part.Face(outer_wire).extrude(App.Vector(0, 0, 7.0)).translate(App.Vector(0, 0, -3.0))
-w_cutout = generate_tibia.build_g1_claw_cutout_wire()
-cutout_prism = Part.Face(w_cutout).extrude(App.Vector(0, 0, 60.0)).translate(App.Vector(0, 0, -30.0))
-claw_base = claw_base.cut(cutout_prism)
+# 1. Bionic Tibia-Servo-Käfig (Analogous to Coxa's Femur-Servo-Käfig)
+w_cheek = generate_tibia.build_tibia_servo_cage_cheek_wire()
+f_cheek = Part.Face(w_cheek)
 
-ear_bosses = generate_tibia.build_servo_ear_bosses().cut(cutout_prism)
-claw_base = claw_base.fuse(ear_bosses)
-truss_cage = generate_tibia.build_triangulated_truss_servo_cage()
-upper_cheeks = generate_tibia.build_upper_truss_cheeks()
-tibia_base = claw_base.fuse(truss_cage).fuse(upper_cheeks).cut(cutout_prism)
+# Extrude the two lateral cheeks:
+# Upper / Dorsal cheek: Y in [+10.15, +16.35] (6.20 mm)
+s_cheek_upper = f_cheek.extrude(App.Vector(0.0, 6.20, 0.0)).translate(App.Vector(0.0, 10.15, 0.0))
+# Lower / Ventral cheek: Y in [-16.35, -10.15] (6.20 mm)
+s_cheek_lower = f_cheek.extrude(App.Vector(0.0, 6.20, 0.0)).translate(App.Vector(0.0, -16.35, 0.0))
 
-# Servo body pocket + cable exit grommet relief at X in [9.00, 16.50], Y in [-3.60, +3.60], Z in [-20.00, -15.00]
+# Bottom Counter-Bearing Tab Plate connecting the two cheeks at Z in [-23.00, -20.00]
+s_tab_bottom = Part.makeBox(9.00 - (-5.50), 2.0 * 16.35, 3.00, App.Vector(-5.50, -16.35, -23.00))
+
+# Raised Servo Ear Bosses at Z in [3.00, 7.00] mm
+ear_bosses = generate_tibia.build_servo_ear_bosses()
+
+# 2. Central Claw Blade (Z in [-3.00, +4.00], centered at Z = +0.50 mm)
+# Teardrop window is CLOSED solid!
+claw_central = Part.Face(outer_wire).extrude(App.Vector(0, 0, 7.0)).translate(App.Vector(0, 0, -3.0))
+
+# Cut away legacy beak horns extending forward into the servo cage / knee joint (X > -31.65 mm)
+box_front_cut = Part.makeBox(100.0, 120.0, 30.0, App.Vector(-31.65, -60.0, -15.0))
+claw_central = claw_central.cut(box_front_cut)
+
+# Fuse base
+tibia_base = claw_central.fuse(s_cheek_upper).fuse(s_cheek_lower).fuse(s_tab_bottom).fuse(ear_bosses)
+
+# Cut Servo Pocket & Hardware Seats
 servo_pocket = Part.makeBox(40.80, 20.30, 48.00, App.Vector(-31.65, -10.15, -20.00))
 servo_cable_slot = Part.makeBox(7.50, 7.20, 5.00, App.Vector(9.00, -3.60, -20.00))
-tibia_base = tibia_base.cut(servo_pocket).cut(servo_cable_slot)
-
 screw_bore = Part.makeCylinder(2.05, 6.0, App.Vector(0.0, 0.0, -24.0))
 nut_pocket = generate_tibia.make_hex_nut_pocket_z(0.0, 0.0, -22.40, -19.50, sw=7.10)
-tibia_base = tibia_base.cut(screw_bore).cut(nut_pocket)
+tibia_base = tibia_base.cut(servo_pocket).cut(servo_cable_slot).cut(screw_bore).cut(nut_pocket)
 
 for sx, sy in [(13.00, 5.00), (13.00, -5.00), (-35.50, 5.00), (-35.50, -5.00)]:
     tibia_base = tibia_base.cut(Part.makeCylinder(1.25, 25.0, App.Vector(sx, sy, -3.20)))
+
+# Cheek 45-deg Warren Truss Cutouts (Style Guide compliant)
+map_xz = lambda p: App.Vector(p.x, 0.0, p.y)
+tri1 = [(-5.00, 8.00, 1.40), (7.50, 8.00, 1.40), (-5.00, 20.50, 1.40)]
+tri2 = [(-5.00, -7.00, 1.40), (7.50, -7.00, 1.40), (-5.00, -19.50, 1.40)]
+tri3 = [(-26.00, 8.00, 1.40), (-7.50, 8.00, 1.40), (-26.00, 20.50, 1.40)]
+tri4 = [(-26.00, -7.00, 1.40), (-7.50, -7.00, 1.40), (-26.00, -19.50, 1.40)]
+
+for tri in (tri1, tri2, tri3, tri4):
+    w_t = generate_tibia.make_rounded_polygon_wire_2d(tri, map_xz)
+    cut_u = Part.Face(w_t).extrude(App.Vector(0.0, 10.0, 0.0)).translate(App.Vector(0.0, 9.0, 0.0))
+    cut_l = Part.Face(w_t).extrude(App.Vector(0.0, -10.0, 0.0)).translate(App.Vector(0.0, -9.0, 0.0))
+    tibia_base = tibia_base.cut(cut_u).cut(cut_l)
 
 # Extend Fork Cheeks to 11.0 mm total width (Z in [-5.0, +6.0] mm) and taper gently to 7.0 mm body
 X_SPLIT = -92.0
@@ -555,7 +581,7 @@ for c in [slot_upper, slot_claw, sw_pocket, upper_spring_pin]:
     c.Placement = p_shank.multiply(c.Placement)
 
 # Internal C2-smooth B-Spline cable tunnel (D = 2.60 mm at Z = +0.50 mm) from sw_pocket (-101.5, 4.5)
-# completely enclosed inside the solid dorsal arch to exit right beside the Knee Servo cable slot at (+19.8, 2.5)!
+# completely enclosed inside the solid dorsal arch to exit at the rear servo cage bulkhead (-32.0, 26.8)!
 pts_cable = [
     App.Vector(-101.5, 4.5, 0.5),
     App.Vector(-95.0, 7.2, 0.5),
@@ -564,11 +590,6 @@ pts_cable = [
     App.Vector(-62.0, 18.8, 0.5),
     App.Vector(-48.0, 23.2, 0.5),
     App.Vector(-32.0, 26.8, 0.5),
-    App.Vector(-16.0, 23.2, 0.5),
-    App.Vector(-4.0, 16.8, 0.5),
-    App.Vector(7.5, 13.4, 0.5),
-    App.Vector(14.8, 9.2, 0.5),
-    App.Vector(19.8, 2.5, 0.5),
 ]
 bs_cable = Part.BSplineCurve()
 bs_cable.interpolate(pts_cable)
@@ -580,11 +601,6 @@ cable_conduit = spine_cable.makePipeShell([Part.Wire([circle_cable])], True, Fal
 # Encapsulated blind pivot seat in Fixed Cheek A at (-122.0, -14.0): Z in [-4.20, -2.40] (outer wall Z = -5.00..4.20 is 100% closed!)
 pivot_bore = Part.makeCylinder(1.55, 4.00, App.Vector(-122.0, -14.0, -4.20), App.Vector(0, 0, 1))
 
-# Station 1: Integrated Micro-Zip-Tie Saddle at Knee Cable Exit (for 2.5 mm cable ties)
-# Two parallel slots (1.30 mm along X, 2.80 mm along Y, 12.0 mm along Z) at X = 21.0 and X = 23.6, Y = 2.80
-tie_slot_tibia1 = Part.makeBox(1.30, 2.80, 12.0, App.Vector(21.0, 2.80, -5.0))
-tie_slot_tibia2 = Part.makeBox(1.30, 2.80, 12.0, App.Vector(23.6, 2.80, -5.0))
-
 tibia_cut = (
     tibia_base.cut(slot_upper)
     .cut(slot_claw)
@@ -592,8 +608,6 @@ tibia_cut = (
     .fuse(upper_spring_pin)
     .cut(cable_conduit)
     .cut(pivot_bore)
-    .cut(tie_slot_tibia1)
-    .cut(tie_slot_tibia2)
 )
 
 # Formschluss Rebate in Tibia for Removable Cover:
