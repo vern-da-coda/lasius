@@ -257,7 +257,7 @@ Dieser Backlog führt alle offenen Aufgaben, konstruktiven Erweiterungen und Ver
   * **Ergebnisdaten:** In-Tree FEA-Modelle und Netze abgelegt unter `hardware/mechanics/export/fea/femur_baseline/`.
 
 - [x] ~~**Topologieoptimierung des Femur-Knochens (`femur.FCStd` – Pilot-Projekt):**~~ **[ERLEDIGT]**  
-  * **Status:** Vollständig umgesetzt in [`generate_femur.py`](../../../scripts/v2/generate_femur.py), verifiziert via [`fea_femur_verification.py`](../../../../../scripts/dev/fea_femur_verification.py) und in alle Master-Assemblies synchronisiert.
+  * **Status:** Vollständig umgesetzt in [`generate_femur.py`](../../../scripts/v2/generate_femur.py), verifiziert via [`fea_femur_verification.py`](../../../../../scripts/dev/fea_femur_verification.py) und dokumentiert im [**Femur FEA-Topologieoptimierungsbericht**](../../../../../docs/hardware/femur_topology_optimization_report.md). In alle Master-Assemblies synchronisiert.
   * **Bionische Leichtbau-Architektur:**
     1. *Wangen-Fachwerkfenster:* Transformation der flachen $1{,}8\,\text{mm}$ Blindtaschen in lastpfadoptimierte, durchgehende $45^\circ$-Fachwerkfenster und Halbmond-Taschen hinter den Lagern ($w \ge 2{,}50\,\text{mm}$, $R = 1{,}80\,\text{mm}$); Gurte auf $Z = \pm 10{,}2\,\text{mm}$ verstärkt.
     2. *Flanken-Warren-Gitter:* 5-Feld-Warren-Fachwerk ($45^\circ$-Chevrons) in den massiven Flanken bei durchgehend gekapselter, staubdichter ADS1115-Kammerinnenwand ($1{,}35\text{--}2{,}0\,\text{mm}$ PETG-Wand).
