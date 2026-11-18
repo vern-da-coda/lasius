@@ -48,9 +48,9 @@ def run_freecad_export():
             return "mat_lasius_orange"
         if "femur_body" in n or "femur" in n and "servo" not in n and "cover" not in n and "bearing" not in n and "washer" not in n and "screw" not in n:
             return "mat_lasius_orange"
-        if "tibia_body" in n or "tibia" in n and "servo" not in n and "cover" not in n and "shoe" not in n and "bearing" not in n and "washer" not in n and "screw" not in n and "rocker" not in n:
+        if "tibia_body" in n or "tibia" in n and "servo" not in n and "cover" not in n and "shoe" not in n and "bearing" not in n and "washer" not in n and "screw" not in n and "rocker" not in n and "tarsus" not in n:
             return "mat_lasius_orange"
-        if "tibia_rocker" in n:
+        if "tibia_rocker" in n or "tarsus" in n:
             return "mat_rocker_runner"
         if "cover" in n or "shoe" in n:
             return "mat_petg_dark"

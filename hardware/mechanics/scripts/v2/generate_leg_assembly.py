@@ -43,8 +43,8 @@ doc_f_cover = App.openDocument(f"{v2_parts_dir}/femur/femur_cover.FCStd")
 doc_ads = App.openDocument(f"{hw_dir}/ads1115_board.FCStd")
 doc_tibia = App.openDocument(f"{v2_parts_dir}/tibia/tibia.FCStd")
 doc_t_cover = App.openDocument(f"{v2_parts_dir}/tibia/tibia_cover.FCStd")
-doc_t_rocker = App.openDocument(f"{v2_parts_dir}/tibia/tibia_rocker.FCStd")
-doc_t_shoe = App.openDocument(f"{v2_parts_dir}/tibia/tibia_shoe.FCStd")
+doc_tarsus = App.openDocument(f"{v2_parts_dir}/tarsus/tarsus.FCStd")
+doc_tarsus_shoe = App.openDocument(f"{v2_parts_dir}/tarsus/tarsus_shoe.FCStd")
 doc_cables = App.openDocument(f"{v2_parts_dir}/cables/leg_cable_harness.FCStd")
 doc_cables_r = App.openDocument(f"{v2_parts_dir}/cables/leg_cable_harness_right.FCStd")
 doc_sw = App.openDocument(f"{hw_dir}/microswitch_subminiature.FCStd")
@@ -335,9 +335,9 @@ p_rocker_shoe_r = App.Placement(App.Vector(149.445, -2.56232, -9.00), App.Rotati
 make_link(
     doc_r,
     tibia_part_r,
-    "Tibia_Rocker",
+    "Tarsus",
     "3. Bionic Tarsus Rocker Foot Right (Mirrored PETG)",
-    doc_t_rocker.Tibia_Rocker,
+    doc_tarsus.Tarsus,
     p_rocker_shoe_r,
     (0.92, 0.45, 0.10),
     scale=App.Vector(1.0, 1.0, -1.0),
@@ -345,9 +345,9 @@ make_link(
 make_link(
     doc_r,
     tibia_part_r,
-    "Tibia_Shoe",
+    "Tarsus_Shoe",
     "3b. Slip-On Bionic Spoon Shoe Right (Mirrored TPU/PETG)",
-    doc_t_shoe.Tibia_Shoe,
+    doc_tarsus_shoe.Tarsus_Shoe,
     p_rocker_shoe_r,
     (0.18, 0.58, 0.68),
     scale=App.Vector(1.0, 1.0, -1.0),
