@@ -25,8 +25,6 @@ asm_dir = f"{models_base}/custom/v1"
 export_dir = "/home/bjoern/Workspace/Hexapods/lasius/hardware/mechanics/export"
 
 fcstd_path = f"{asm_dir}/body_assembly.FCStd"
-step_path = f"{export_dir}/step/custom/v1/body_assembly.step"
-stl_path = f"{export_dir}/stl/custom/v1/body_assembly.stl"
 
 # Close any open document with same name
 try:
@@ -37,8 +35,6 @@ except Exception:
 # Create and immediately save new assembly document (required for App::Link resolution)
 doc = App.newDocument(doc_name)
 os.makedirs(asm_dir, exist_ok=True)
-os.makedirs(f"{export_dir}/step/custom/v1", exist_ok=True)
-os.makedirs(f"{export_dir}/stl/custom/v1", exist_ok=True)
 doc.saveAs(fcstd_path)
 
 # Open source master documents
@@ -159,15 +155,8 @@ print(f"Assembly Compound Valid: {asm_part.Shape.isValid()}")
 print(f"Bounding Box: X=[{bbox.XMin:.2f}, {bbox.XMax:.2f}], Y=[{bbox.YMin:.2f}, {bbox.YMax:.2f}], Z=[{bbox.ZMin:.2f}, {bbox.ZMax:.2f}]")
 print(f"Total Width (Y): {bbox.YLength:.2f} mm, Length (X): {bbox.XLength:.2f} mm, Height (Z): {bbox.ZLength:.2f} mm")
 
-# Export STEP
-try:
-    asm_part.Shape.exportStep(step_path)
-    print(f"Exported STEP: {step_path}")
-except Exception as e:
-    print(f"STEP export error: {e}")
-
-# Full assembly STL export omitted (exceeds 100 MB GitHub limit; use individual component STLs for manufacturing and STEP for CAD)
-# asm_part.Shape.exportStl(stl_path)
+# Assemblies are logical structures, not exported to STEP/STL (never manufactured in one piece)
+print(f"✔ Saved Body Assembly v1: {fcstd_path}")
 
 # Close helper documents
 for d in [doc_bottom, doc_top, doc_spacer, doc_leg]:

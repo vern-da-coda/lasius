@@ -10,8 +10,6 @@ v1_parts_dir = f"{models_dir}/custom/v1/parts"
 v1_asm_dir = f"{models_dir}/custom/v1"
 hw_dir = f"{models_dir}/cots"
 fcstd_path = f"{v1_asm_dir}/leg_assembly.FCStd"
-step_path = "/home/bjoern/Workspace/Hexapods/lasius/hardware/mechanics/export/step/custom/v1/leg_assembly.step"
-stl_path = "/home/bjoern/Workspace/Hexapods/lasius/hardware/mechanics/export/stl/custom/v1/leg_assembly.stl"
 
 try:
     App.closeDocument(doc_name)
@@ -143,10 +141,8 @@ make_link("Knee_Screw",   "Knee M4 Countersunk Screw",     doc_s.M4_Senkkopfschr
 doc.recompute()
 doc.save()
 
-# Export STEP & STL
-asm_part.Shape.exportStep(step_path)
-asm_part.Shape.exportStl(stl_path)
-print("Updated STEP and STL files!")
+# Assemblies are logical structures, not exported to STEP/STL (never manufactured in one piece)
+print(f"✔ Saved Leg Assembly v1: {fcstd_path}")
 
 for d in list(App.listDocuments().values()):
     App.closeDocument(d.Name)

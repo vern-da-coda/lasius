@@ -226,8 +226,7 @@ asm_obj.Shape = Part.makeCompound(asm_compound_list)
 doc_asm.recompute()
 fcstd_asm = f"{asm_dir}/electronics_tray_assembly_opt_b.FCStd"
 doc_asm.saveAs(fcstd_asm)
-asm_obj.Shape.exportStep(f"{export_asm_step_dir}/electronics_tray_assembly_opt_b.step")
-# Assembly STL omitted (assemblies use STEP for CAD; STL is reserved for 3D-printable parts)
+# Assemblies are logical structures, not exported to STEP/STL (never manufactured in one piece)
 print(f"✔ Saved Electronics Tray Assembly Opt B -> {fcstd_asm}")
 
 App.closeDocument(doc_tray_name)

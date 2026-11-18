@@ -25,8 +25,6 @@ cots_dir = f"{models_base}/cots"
 export_dir = "/home/bjoern/Workspace/Hexapods/lasius/hardware/mechanics/export"
 
 fcstd_path = f"{v2_asm_dir}/electronics_tray_assembly.FCStd"
-step_path = f"{export_dir}/step/custom/v2/electronics_tray_assembly.step"
-stl_path = f"{export_dir}/stl/custom/v2/electronics_tray_assembly.stl"
 
 # Close any open document with same name
 try:
@@ -127,13 +125,8 @@ print(f"Assembly Compound Valid: {asm_part.Shape.isValid()}")
 print(f"Bounding Box: X=[{bbox.XMin:.2f}, {bbox.XMax:.2f}], Y=[{bbox.YMin:.2f}, {bbox.YMax:.2f}], Z=[{bbox.ZMin:.2f}, {bbox.ZMax:.2f}]")
 print(f"Total Width (Y): {bbox.YLength:.2f} mm, Length (X): {bbox.XLength:.2f} mm, Height (Z): {bbox.ZLength:.2f} mm")
 
-try:
-    asm_part.Shape.exportStep(step_path)
-    print(f"Exported STEP: {step_path}")
-except Exception as e:
-    print(f"STEP export error: {e}")
-
-# Assembly STL omitted (assemblies use STEP for CAD; STL is reserved for 3D-printable parts)
+# Assemblies are logical structures, not exported to STEP/STL (never manufactured in one piece)
+print(f"✔ Saved Electronics Tray Assembly: {fcstd_path}")
 
 for d in list(App.listDocuments().values()):
     try:

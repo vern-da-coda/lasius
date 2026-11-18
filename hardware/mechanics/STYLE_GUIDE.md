@@ -135,4 +135,4 @@ Jedes CAD-Generatorskript in `hardware/mechanics/scripts/v2/` folgt dieser Struk
    * `make_s_curve_edges(p1, p2)` für $G^1$-stetige S-Kurven.
    * `make_filleted_polygon_2d(pts, r_list)` für verrundete Fachwerkfenster.
    * `make_hex_nut_pocket_z(cx, cy, z1, z2, sw)` für Mutternsitze.
-3. **Synchroner Export:** Jedes Skript speichert das FreeCAD-Dokument (`.FCStd`) und exportiert im selben Durchlauf synchrone `.step`- und `.stl`-Dateien in die korrespondierenden Ordner unter `hardware/mechanics/export/`.
+3. **Synchroner Export für Einzelteile:** Jedes Skript für ein fertigbares Einzelteil speichert das FreeCAD-Dokument (`.FCStd`) und exportiert im selben Durchlauf synchrone `.step`- und `.stl`-Dateien in die korrespondierenden Ordner unter `hardware/mechanics/export/`. Assemblies (`*_assembly`) erhalten **keine** Exporte, da sie logische Baugruppen sind und niemals als monolithisches Bauteil gefertigt werden.

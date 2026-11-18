@@ -247,9 +247,8 @@ make_link("Battery_LiPo_2S", "5. 2S 7.4V LiPo Battery Pack", doc_bat.Battery_LiP
 
 doc_asm.recompute()
 doc_asm.save()
-asm_part.Shape.exportStep(f"{export_step_dir}/chassis_core_assembly.step")
-# Assembly STL omitted (assemblies use STEP for CAD; STL is reserved for 3D-printable parts)
-print(f"✔ Saved & Exported Monocoque Assembly -> {fcstd_asm_path}")
+# Assemblies are logical structures, not exported to STEP/STL (never manufactured in one piece)
+print(f"✔ Saved Monocoque Assembly -> {fcstd_asm_path}")
 
 # Verify 0.0000 mm^3 collisions
 items = [(o.Name, o.Shape) for o in asm_part.Group if hasattr(o, "Shape") and not o.Shape.isNull()]

@@ -65,8 +65,8 @@ rot_down_negz = App.Rotation()
 rot_negy_posz = App.Rotation(App.Vector(1, 0, 0), 90.0)
 rot_negy_negz = App.Rotation(App.Vector(1, 0, 0), -90.0)
 
-# Fully stretched leg pose (all elements on one straight horizontal line: Coxa, Femur, Tibia)
-theta = math.radians(0.0)
+# Standard stance pose: Femur horizontal (0 deg), Knee bent down by theta = 50.0 deg
+theta = math.radians(50.0)
 c = math.cos(theta)
 s = math.sin(theta)
 
@@ -130,8 +130,6 @@ def check_leg_collisions(asm_part, title):
 # 1. Generate Left Leg Assembly: custom/v2/leg_assembly.FCStd
 # =============================================================================
 fcstd_left = f"{v2_asm_dir}/leg_assembly.FCStd"
-step_left = f"{export_step_dir}/leg_assembly.step"
-stl_left = f"{export_stl_dir}/leg_assembly.stl"
 
 try:
     App.closeDocument("leg_assembly")
@@ -163,14 +161,21 @@ make_link(
     p_femur_l,
 )
 
-tibia_mat_l = App.Matrix(-c, s, 0, 156.50, 0, 0, 1, 2.00, s, c, 0, 0.00, 0, 0, 0, 1.0)
+# Knee pivot bore in Tibia_Body is at (18.20, 15.25, 0.00).
+# In standard stance (theta = 50 deg downward bend around Y_leg):
+# Rotation: App.Rotation(0.0, 50.0, 90.0) -> R_Y(50 deg) * R_X(90 deg)
+# Pivot continuous translation:
+# T_X = 156.50 - (18.20 * c + 15.25 * s) = 133.119088 mm
+# T_Y = 11.50 mm (centered in Femur knee fork)
+# T_Z = 18.20 * s - 15.25 * c = 4.139498 mm
+p_tibia_l = App.Placement(App.Vector(133.119088, 11.50, 4.139498), App.Rotation(0.0, 50.0, 90.0))
 make_link(
     doc_l,
     asm_l,
     "Tibia_Assembly",
     "7. Tibia Subassembly v2 (Monocoque + Kufe Foot Sensor + Knee Servo)",
     doc_tibia_asm.getObject("Tibia_Assembly"),
-    App.Placement(tibia_mat_l),
+    p_tibia_l,
 )
 
 # 2. Actuators (Coxa Servo at Y_c = 42.75 mm -> Z_leg = 27.50 mm, horn top at Z_leg = 36.00 mm = Z_world 53.25 mm)
@@ -212,9 +217,8 @@ make_link(doc_l, asm_l, "Leg_Cable_Harness", "8. Leg Cable Harness & Strain Reli
 
 doc_l.recompute()
 doc_l.save()
-asm_l.Shape.exportStep(step_left)
-# Assembly STL omitted (assemblies use STEP for CAD; STL is reserved for 3D-printable parts)
-print(f"✔ Saved & Exported Left Leg Assembly: {fcstd_left}")
+# Assemblies are logical structures, not exported to STEP/STL (never manufactured in one piece)
+print(f"✔ Saved Left Leg Assembly: {fcstd_left}")
 check_leg_collisions(asm_l, "leg_assembly.FCStd (Left)")
 
 # =============================================================================
@@ -222,8 +226,6 @@ check_leg_collisions(asm_l, "leg_assembly.FCStd (Left)")
 #    (Mirrored Custom 3D-Printed Parts + Unmirrored Real COTS Parts!)
 # =============================================================================
 fcstd_right = f"{v2_asm_dir}/leg_right_assembly.FCStd"
-step_right = f"{export_step_dir}/leg_right_assembly.step"
-stl_right = f"{export_stl_dir}/leg_right_assembly.stl"
 
 try:
     App.closeDocument("leg_right_assembly")
@@ -297,25 +299,17 @@ make_link(
     scale=App.Vector(1.0, -1.0, 1.0),
 )
 
-# 3. Tibia Subassembly Right (Mirrored Tibia_Body, Tibia_Cover, Tibia_Rocker; Unmirrored Knee_Servo, Microswitch, Spring)
+# 3. Tibia Subassembly Right (Mirrored Tibia_Body, Tibia_Cover, Tibia_Rocker, Tibia_Shoe; Unmirrored Knee_Servo, Microswitch, Spring)
 tibia_part_r = doc_r.addObject("App::Part", "Tibia_Assembly")
 tibia_part_r.Label = "7. Tibia Subassembly v2 Right (Mirrored Monocoque + Unmirrored COTS)"
-tibia_mat_r = App.Matrix(-c, s, 0, 156.50, 0, 0, 1, -2.00, s, c, 0, 0.00, 0, 0, 0, 1.0)
-tibia_part_r.Placement = App.Placement(tibia_mat_r)
+p_tibia_r = App.Placement(App.Vector(133.119088, -11.50, 4.139498), App.Rotation(0.0, 50.0, 90.0))
+tibia_part_r.Placement = p_tibia_r
 for o in tibia_part_r.Origin.OutList:
     if hasattr(o, "Visibility"):
         o.Visibility = False
 tibia_part_r.Origin.Visibility = False
 tibia_part_r.Visibility = True
 asm_r.addObject(tibia_part_r)
-
-rot_deg = -67.59
-rot_rad = math.radians(rot_deg)
-rot_foot = App.Rotation(App.Vector(0, 0, 1), rot_deg)
-px = -10.0 * math.sin(rot_rad)
-py = 10.0 * math.cos(rot_rad)
-p_shank_r = App.Placement(App.Vector(-122.0 - px, -14.0 - py, -0.50), rot_foot)
-p_m2 = p_shank_r.multVec(App.Vector(-2.40, 32.00, 0.0))
 
 make_link(
     doc_r,
@@ -327,8 +321,7 @@ make_link(
     (0.22, 0.22, 0.24),
     scale=App.Vector(1.0, 1.0, -1.0),
 )
-# Unmirrored Knee_Servo rotated 180 deg around Y_tibia so horn faces -Z_tibia (-Y_leg) while body stays along -X_tibia
-p_k_servo_r = App.Placement(App.Vector(0.0, 0.0, -18.80), App.Rotation(App.Vector(0, 1, 0), 180.0))
+p_k_servo_r = App.Placement(App.Vector(18.20, 15.25, 9.30), App.Rotation())
 make_link(
     doc_r,
     tibia_part_r,
@@ -338,13 +331,14 @@ make_link(
     p_k_servo_r,
     (0.12, 0.12, 0.12),
 )
+p_rocker_shoe_r = App.Placement(App.Vector(149.445, -2.56232, -9.00), App.Rotation(-112.41, 0.0, -180.0))
 make_link(
     doc_r,
     tibia_part_r,
     "Tibia_Rocker",
     "3. Bionic Tarsus Rocker Foot Right (Mirrored PETG)",
     doc_t_rocker.Tibia_Rocker,
-    p_shank_r,
+    p_rocker_shoe_r,
     (0.92, 0.45, 0.10),
     scale=App.Vector(1.0, 1.0, -1.0),
 )
@@ -354,52 +348,55 @@ make_link(
     "Tibia_Shoe",
     "3b. Slip-On Bionic Spoon Shoe Right (Mirrored TPU/PETG)",
     doc_t_shoe.Tibia_Shoe,
-    p_shank_r,
+    p_rocker_shoe_r,
     (0.18, 0.58, 0.68),
     scale=App.Vector(1.0, 1.0, -1.0),
 )
+p_switch_r = App.Placement(App.Vector(130.812, 12.5849, -9.00), App.Rotation(-112.41, 0.0, -180.0))
 make_link(
     doc_r,
     tibia_part_r,
     "Microswitch",
     "4. Subminiature Microswitch (Unmirrored COTS)",
     doc_sw.Microswitch_Subminiature,
-    p_shank_r.multiply(App.Placement(App.Vector(-6.9, 23.0, 0.0), App.Rotation())),
+    p_switch_r,
     (0.15, 0.15, 0.15),
 )
+p_spring_r = App.Placement(App.Vector(143.488, 10.9275, -9.00), App.Rotation(-112.41, 0.0, -180.0))
 make_link(
     doc_r,
     tibia_part_r,
     "Compression_Spring",
     "5. Stainless Preload Spring (Unmirrored COTS)",
     doc_sp.Compression_Spring,
-    p_shank_r.multiply(App.Placement(App.Vector(-10.2, 10.65, 0.0), App.Rotation())),
+    p_spring_r,
     (0.85, 0.85, 0.88),
 )
+p_cover_r = App.Placement(App.Vector(18.20, 15.25, 0.00), App.Rotation(180.0, 0.0, 0.0))
 make_link(
     doc_r,
     tibia_part_r,
     "Tibia_Cover",
     "6. Removable Service Cover Right (Mirrored PETG)",
     doc_t_cover.Tibia_Cover,
-    App.Placement(),
+    p_cover_r,
     (0.28, 0.28, 0.32),
     scale=App.Vector(1.0, 1.0, -1.0),
 )
 
 pin_obj_r = doc_r.addObject("Part::Feature", "Pivot_Pin_Assembly")
 pin_obj_r.Label = "7. M3 Hardened Pivot Pin & Ruthex"
-pin_head_r = Part.makeCylinder(2.80, 1.45, App.Vector(-122.0, -14.0, -6.00), App.Vector(0, 0, 1))
-pin_shaft_r = Part.makeCylinder(1.50, 9.55, App.Vector(-122.0, -14.0, -4.55), App.Vector(0, 0, 1))
-ruthex_r = Part.makeCylinder(2.10, 2.45, App.Vector(-122.0, -14.0, 2.55), App.Vector(0, 0, 1))
+pin_head_r = Part.makeCylinder(2.80, 1.45, App.Vector(149.445, -2.56232, -6.00), App.Vector(0, 0, 1))
+pin_shaft_r = Part.makeCylinder(1.50, 9.55, App.Vector(149.445, -2.56232, -4.55), App.Vector(0, 0, 1))
+ruthex_r = Part.makeCylinder(2.10, 2.45, App.Vector(149.445, -2.56232, 2.55), App.Vector(0, 0, 1))
 pin_obj_r.Shape = pin_head_r.fuse(pin_shaft_r).fuse(ruthex_r)
 tibia_part_r.addObject(pin_obj_r)
 
 screw_m2_r = doc_r.addObject("Part::Feature", "Cover_Retaining_Screw_M2")
 screw_m2_r.Label = "8. M2x10 Flush Countersunk Retaining Screw & Ruthex"
-head_m2_r = Part.makeCone(2.10, 1.00, 1.10, App.Vector(p_m2.x, p_m2.y, -6.00), App.Vector(0, 0, 1))
-shank_m2_r = Part.makeCylinder(0.98, 9.90, App.Vector(p_m2.x, p_m2.y, -4.90), App.Vector(0, 0, 1))
-ruthex_m2_r = Part.makeCylinder(1.60, 2.45, App.Vector(p_m2.x, p_m2.y, 2.55), App.Vector(0, 0, 1))
+head_m2_r = Part.makeCone(2.10, 1.00, 1.10, App.Vector(149.445, -2.56232, -6.00), App.Vector(0, 0, 1))
+shank_m2_r = Part.makeCylinder(0.98, 9.90, App.Vector(149.445, -2.56232, -4.90), App.Vector(0, 0, 1))
+ruthex_m2_r = Part.makeCylinder(1.60, 2.45, App.Vector(149.445, -2.56232, 2.55), App.Vector(0, 0, 1))
 screw_m2_r.Shape = head_m2_r.fuse(shank_m2_r).fuse(ruthex_m2_r)
 tibia_part_r.addObject(screw_m2_r)
 
@@ -433,9 +430,8 @@ make_link(doc_r, asm_r, "Leg_Cable_Harness", "8. Leg Cable Harness & Strain Reli
 
 doc_r.recompute()
 doc_r.save()
-asm_r.Shape.exportStep(step_right)
-# Assembly STL omitted (assemblies use STEP for CAD; STL is reserved for 3D-printable parts)
-print(f"✔ Saved & Exported Right Leg Assembly: {fcstd_right}")
+# Assemblies are logical structures, not exported to STEP/STL (never manufactured in one piece)
+print(f"✔ Saved Right Leg Assembly: {fcstd_right}")
 check_leg_collisions(asm_r, "leg_right_assembly.FCStd (Right)")
 
 for d in list(App.listDocuments().values()):

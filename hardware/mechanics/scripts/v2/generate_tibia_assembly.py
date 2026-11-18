@@ -745,13 +745,8 @@ if hasattr(screw_m2, "ViewObject") and screw_m2.ViewObject:
 
 doc_asm.recompute()
 doc_asm.save()
+# Assemblies are logical structures, not exported to STEP/STL (never manufactured in one piece)
 print(f"✔ Saved Canonical Assembly: {fcstd_asm_path}")
-
-# Export STEP
-step_asm_path = f"{export_step_v2}/tibia_assembly.step"
-asm_part.Shape.exportStep(step_asm_path)
-# Assembly STL omitted (assemblies use STEP for CAD; STL is reserved for 3D-printable parts)
-print(f"✔ Exported STEP: {step_asm_path}")
 
 # =============================================================================
 # 5. Pairwise 3D B-Rep Collision Verification

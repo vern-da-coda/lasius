@@ -25,8 +25,6 @@ v2_asm_dir = f"{models_base}/custom/v2"
 export_dir = "/home/bjoern/Workspace/Hexapods/lasius/hardware/mechanics/export"
 
 fcstd_path = f"{v2_asm_dir}/body_assembly.FCStd"
-step_path = f"{export_dir}/step/custom/v2/body_assembly.step"
-stl_path = f"{export_dir}/stl/custom/v2/body_assembly.stl"
 
 import zipfile
 
@@ -55,8 +53,6 @@ except Exception:
 # Create and immediately save new assembly document (required for App::Link resolution)
 doc = App.newDocument(doc_name)
 os.makedirs(v2_asm_dir, exist_ok=True)
-os.makedirs(f"{export_dir}/step/custom/v2", exist_ok=True)
-os.makedirs(f"{export_dir}/stl/custom/v2", exist_ok=True)
 doc.saveAs(fcstd_path)
 
 # Open source master documents
@@ -199,17 +195,8 @@ print(f"Assembly Compound Valid: {asm_part.Shape.isValid()}")
 print(f"Bounding Box: X=[{bbox.XMin:.2f}, {bbox.XMax:.2f}], Y=[{bbox.YMin:.2f}, {bbox.YMax:.2f}], Z=[{bbox.ZMin:.2f}, {bbox.ZMax:.2f}]")
 print(f"Total Width (Y): {bbox.YLength:.2f} mm, Length (X): {bbox.XLength:.2f} mm, Height (Z): {bbox.ZLength:.2f} mm")
 
-# Build compound shape for digital export
-shapes = []
-for obj in asm_part.Group:
-    if hasattr(obj, "Shape") and not obj.Shape.isNull():
-        shapes.append(obj.Shape)
-
-if shapes:
-    compound = Part.makeCompound(shapes)
-    compound.exportStep(step_path)
-    # Assembly STL omitted (assemblies use STEP for CAD; STL is reserved for 3D-printable parts)
-    print(f"✔ Exported STEP: {step_path}")
+# Assemblies are logical structures, not exported to STEP/STL (never manufactured in one piece)
+print(f"✔ Saved Body Assembly: {fcstd_path}")
 
 for d in list(App.listDocuments().values()):
     try:

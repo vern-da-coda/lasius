@@ -26,12 +26,8 @@ export_stl_dir = f"{repo_root}/hardware/mechanics/export/stl/custom/v2"
 
 doc_name = "femur_assembly"
 fcstd_path = f"{v2_dir}/femur_assembly.FCStd"
-step_path = f"{export_step_dir}/femur_assembly.step"
-stl_path = f"{export_stl_dir}/femur_assembly.stl"
 
 os.makedirs(v2_dir, exist_ok=True)
-os.makedirs(export_step_dir, exist_ok=True)
-os.makedirs(export_stl_dir, exist_ok=True)
 
 # Backup existing GuiDocument.xml if present to survive headless console saves
 fallback_gui_xml = None
@@ -109,18 +105,8 @@ make_link("Femur_Cover", "3. Femur Service Cover & Canopy (Monolithic Eisblau 55
 
 doc.recompute()
 doc.save()
-
-# Build compound shape for digital export
-shapes = []
-for obj in asm_part.Group:
-    if hasattr(obj, "Shape") and not obj.Shape.isNull():
-        shapes.append(obj.Shape)
-
-if shapes:
-    compound = Part.makeCompound(shapes)
-    compound.exportStep(step_path)
-    # Assembly STL omitted (assemblies use STEP for CAD; STL is reserved for 3D-printable parts)
-    print(f"✔ Exported STEP: {step_path}")
+# Assemblies are logical structures, not exported to STEP/STL (never manufactured in one piece)
+print(f"✔ Saved Femur Assembly: {fcstd_path}")
 
 App.closeDocument(doc_femur.Name)
 App.closeDocument(doc_cover.Name)
