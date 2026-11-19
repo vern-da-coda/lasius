@@ -23,6 +23,8 @@ import Part
 print("--- Generating Lasius Leg Assemblies v2 (Left & Right with Unmirrored COTS) ---")
 
 repo_root = "/home/bjoern/Workspace/Hexapods/lasius"
+sys.path.append(f"{repo_root}/hardware/mechanics/scripts/v2")
+import generate_tibia as gt
 models_dir = f"{repo_root}/hardware/mechanics/models"
 v2_parts_dir = f"{models_dir}/custom/v2/parts"
 v2_asm_dir = f"{models_dir}/custom/v2"
@@ -45,8 +47,6 @@ doc_tibia = App.openDocument(f"{v2_parts_dir}/tibia/tibia.FCStd")
 doc_t_cover = App.openDocument(f"{v2_parts_dir}/tibia/tibia_cover.FCStd")
 doc_tarsus = App.openDocument(f"{v2_parts_dir}/tarsus/tarsus.FCStd")
 doc_tarsus_shoe = App.openDocument(f"{v2_parts_dir}/tarsus/tarsus_shoe.FCStd")
-doc_cables = App.openDocument(f"{v2_parts_dir}/cables/leg_cable_harness.FCStd")
-doc_cables_r = App.openDocument(f"{v2_parts_dir}/cables/leg_cable_harness_right.FCStd")
 doc_sw = App.openDocument(f"{hw_dir}/microswitch_subminiature.FCStd")
 doc_sp = App.openDocument(f"{hw_dir}/compression_spring_4x12.FCStd")
 doc_servo = App.openDocument(f"{hw_dir}/servo_nr645.FCStd")
@@ -65,10 +65,23 @@ rot_down_negz = App.Rotation()
 rot_negy_posz = App.Rotation(App.Vector(1, 0, 0), 90.0)
 rot_negy_negz = App.Rotation(App.Vector(1, 0, 0), -90.0)
 
-# Standard stance pose: Femur horizontal (0 deg), Knee bent down by theta = 50.0 deg
-theta = math.radians(50.0)
-c = math.cos(theta)
-s = math.sin(theta)
+# Standard stance pose: Profil B (Authentic Ant Stance)
+# Femur elevated by alpha = 25.0 deg upward, Knee bent down by theta = 80.0 deg relative to Femur
+# Effective Tibia descent angle to horizontal: theta_leg = theta - alpha = 55.0 deg
+alpha_deg = 25.0
+theta_deg = 80.0
+theta_leg_deg = theta_deg - alpha_deg  # 55.0 deg
+
+alpha = math.radians(alpha_deg)
+theta_leg = math.radians(theta_leg_deg)
+c_a = math.cos(alpha)
+s_a = math.sin(alpha)
+
+# Femur pivot is at X = 56.50, Y = 0.00, Z = 0.00.
+# Femur length is 100.00 mm.
+# Knee pivot axis in leg coordinate frame:
+kx = 56.50 + 100.00 * c_a  # 147.130779 mm
+kz = 100.00 * s_a           # 42.261826 mm
 
 
 def make_link(doc, parent, name, label, target_obj, placement, color=None, transparency=0, scale=None):
@@ -103,10 +116,9 @@ def check_leg_collisions(asm_part, title):
             if child.TypeId == "App::Part":
                 collect_leaves(child, pl)
             elif hasattr(child, "Shape") and not child.Shape.isNull():
-                if "Cable" not in child.Name:
-                    sh = child.Shape.copy()
-                    sh.Placement = pl.multiply(sh.Placement)
-                    leaf_items.append((f"{obj.Name}.{child.Name}", sh))
+                sh = child.Shape.copy()
+                sh.Placement = pl.multiply(sh.Placement)
+                leaf_items.append((f"{obj.Name}.{child.Name}", sh))
 
     collect_leaves(asm_part)
     max_coll = 0.0
@@ -129,6 +141,15 @@ def check_leg_collisions(asm_part, title):
 # =============================================================================
 fcstd_left = f"{v2_asm_dir}/leg_assembly.FCStd"
 
+fallback_gui_xml_l = None
+if os.path.exists(fcstd_left):
+    try:
+        with zipfile.ZipFile(fcstd_left, "r") as zin:
+            if "GuiDocument.xml" in zin.namelist():
+                fallback_gui_xml_l = zin.read("GuiDocument.xml")
+    except Exception:
+        pass
+
 try:
     App.closeDocument("leg_assembly")
 except Exception:
@@ -149,7 +170,8 @@ asm_l.Visibility = True
 p_coxa_l = App.Placement(App.Vector(74.70, -6.50, -15.25), rot_c)
 make_link(doc_l, asm_l, "Coxa", "1. Coxa (Monolithic Joint Segment, PETG)", doc_coxa.Coxa, p_coxa_l, (0.15, 0.65, 0.45))
 
-p_femur_l = App.Placement(App.Vector(56.50, 0.00, 0.00), App.Rotation())
+rot_femur_l = App.Rotation(App.Vector(0, 1, 0), -alpha_deg)
+p_femur_l = App.Placement(App.Vector(56.50, 0.00, 0.00), rot_femur_l)
 make_link(
     doc_l,
     asm_l,
@@ -160,13 +182,10 @@ make_link(
 )
 
 # Knee pivot bore in Tibia_Body is at (18.20, 15.25, 0.00).
-# In standard stance (theta = 50 deg downward bend around Y_leg):
-# Rotation: App.Rotation(0.0, 50.0, 90.0) -> R_Y(50 deg) * R_X(90 deg)
-# Pivot continuous translation:
-# T_X = 156.50 - (18.20 * c + 15.25 * s) = 133.119088 mm
-# T_Y = 11.50 mm (centered in Femur knee fork)
-# T_Z = 18.20 * s - 15.25 * c = 4.139498 mm
-p_tibia_l = App.Placement(App.Vector(133.119088, 11.50, 4.139498), App.Rotation(0.0, 50.0, 90.0))
+# In standard stance (theta_leg = 55 deg downward bend around Y_leg):
+rot_tibia_l = App.Rotation(0.0, theta_leg_deg, 90.0)
+v_bore_l = rot_tibia_l.multVec(App.Vector(18.20, 15.25, 0.0))
+p_tibia_l = App.Placement(App.Vector(kx - v_bore_l.x, 11.50 - v_bore_l.y, kz - v_bore_l.z), rot_tibia_l)
 make_link(
     doc_l,
     asm_l,
@@ -203,18 +222,23 @@ make_link(doc_l, asm_l, "Femur_Bearing", "Femur Ball Bearing (D8 H3)",          
 make_link(doc_l, asm_l, "Femur_Nut",     "Femur M4 Low-Profile Nut (DIN 439)",  doc_n_low.M4_Mutter_DIN439, App.Placement(App.Vector(56.50, -20.20, 0.00), rot_negy_negz))
 make_link(doc_l, asm_l, "Femur_Screw",   "Femur M4 Countersunk Screw",          doc_s.M4_Senkkopfschraube,  App.Placement(App.Vector(56.50, -28.00, 0.00), rot_negy_posz))
 
-# C. Knee Pivot Bearing Set (Horizontal axis at X=156.50, Z=0.00 along -Y)
-rot_knee_nut_l = rot_negy_negz.multiply(App.Rotation(App.Vector(0, 0, 1), math.degrees(theta)))
-make_link(doc_l, asm_l, "Knee_Washer",  "Knee Shim Washer (s0.3)",            doc_w.Passscheibe_M4,       App.Placement(App.Vector(156.50, -21.00, 0.00), rot_negy_posz))
-make_link(doc_l, asm_l, "Knee_Bearing", "Knee Ball Bearing (D8 H3)",          doc_b.Kugellager_6x3x4,     App.Placement(App.Vector(156.50, -21.65, 0.00), rot_negy_posz))
-make_link(doc_l, asm_l, "Knee_Nut",     "Knee M4 Low-Profile Nut (DIN 439)",  doc_n_low.M4_Mutter_DIN439, App.Placement(App.Vector(156.50, -20.40, 0.00), rot_knee_nut_l))
-make_link(doc_l, asm_l, "Knee_Screw",   "Knee M4 Countersunk Screw",          doc_s.M4_Senkkopfschraube,  App.Placement(App.Vector(156.50, -28.00, 0.00), rot_negy_posz))
-
-# 4. Leg Cable Harness & Kinematic Service Loops
-make_link(doc_l, asm_l, "Leg_Cable_Harness", "8. Leg Cable Harness & Strain Reliefs (v2)", doc_cables.Leg_Cable_Harness, App.Placement())
+# C. Knee Pivot Bearing Set (Horizontal axis at X=kx, Z=kz along -Y)
+rot_knee_nut_l = rot_negy_negz.multiply(App.Rotation(App.Vector(0, 0, 1), theta_leg_deg))
+make_link(doc_l, asm_l, "Knee_Washer",  "Knee Shim Washer (s0.3)",            doc_w.Passscheibe_M4,       App.Placement(App.Vector(kx, -21.00, kz), rot_negy_posz))
+make_link(doc_l, asm_l, "Knee_Bearing", "Knee Ball Bearing (D8 H3)",          doc_b.Kugellager_6x3x4,     App.Placement(App.Vector(kx, -21.65, kz), rot_negy_posz))
+make_link(doc_l, asm_l, "Knee_Nut",     "Knee M4 Low-Profile Nut (DIN 439)",  doc_n_low.M4_Mutter_DIN439, App.Placement(App.Vector(kx, -20.20, kz), rot_knee_nut_l))
+make_link(doc_l, asm_l, "Knee_Screw",   "Knee M4 Countersunk Screw",          doc_s.M4_Senkkopfschraube,  App.Placement(App.Vector(kx, -28.00, kz), rot_negy_posz))
 
 doc_l.recompute()
 doc_l.save()
+
+if fallback_gui_xml_l:
+    try:
+        with zipfile.ZipFile(fcstd_left, "a") as zout:
+            zout.writestr("GuiDocument.xml", fallback_gui_xml_l)
+    except Exception:
+        pass
+
 # Assemblies are logical structures, not exported to STEP/STL (never manufactured in one piece)
 print(f"✔ Saved Left Leg Assembly: {fcstd_left}")
 check_leg_collisions(asm_l, "leg_assembly.FCStd (Left)")
@@ -224,6 +248,15 @@ check_leg_collisions(asm_l, "leg_assembly.FCStd (Left)")
 #    (Mirrored Custom 3D-Printed Parts + Unmirrored Real COTS Parts!)
 # =============================================================================
 fcstd_right = f"{v2_asm_dir}/leg_right_assembly.FCStd"
+
+fallback_gui_xml_r = None
+if os.path.exists(fcstd_right):
+    try:
+        with zipfile.ZipFile(fcstd_right, "r") as zin:
+            if "GuiDocument.xml" in zin.namelist():
+                fallback_gui_xml_r = zin.read("GuiDocument.xml")
+    except Exception:
+        pass
 
 try:
     App.closeDocument("leg_right_assembly")
@@ -257,7 +290,7 @@ make_link(
 # 2. Femur Subassembly Right (Mirrored Femur_Body & Femur_Cover, Unmirrored ADS1115_Board rotated 180 deg in XY!)
 femur_part_r = doc_r.addObject("App::Part", "Femur_Assembly")
 femur_part_r.Label = "4. Femur Subassembly v2 Right (Mirrored Bone & Canopy + Unmirrored ADC)"
-femur_part_r.Placement = App.Placement(App.Vector(56.50, 0.00, 0.00), App.Rotation())
+femur_part_r.Placement = p_femur_l
 for o in femur_part_r.Origin.OutList:
     if hasattr(o, "Visibility"):
         o.Visibility = False
@@ -275,7 +308,7 @@ make_link(
     (0.12, 0.35, 0.65),
     scale=App.Vector(1.0, -1.0, 1.0),
 )
-p_ads_r = App.Placement(App.Vector(50.00, -3.65, -4.80), App.Rotation(App.Vector(0, 0, 1), 180.0))
+p_ads_r = App.Placement(App.Vector(50.00, -2.50, -4.80), App.Rotation(App.Vector(0, 0, 1), 180.0))
 make_link(
     doc_r,
     femur_part_r,
@@ -300,7 +333,9 @@ make_link(
 # 3. Tibia Subassembly Right (Mirrored Tibia_Body, Tibia_Cover, Tibia_Rocker, Tibia_Shoe; Unmirrored Knee_Servo, Microswitch, Spring)
 tibia_part_r = doc_r.addObject("App::Part", "Tibia_Assembly")
 tibia_part_r.Label = "7. Tibia Subassembly v2 Right (Mirrored Monocoque + Unmirrored COTS)"
-p_tibia_r = App.Placement(App.Vector(133.119088, -11.50, 4.139498), App.Rotation(0.0, 50.0, 90.0))
+rot_tibia_r = App.Rotation(0.0, theta_leg_deg, 90.0)
+v_bore_r = rot_tibia_r.multVec(App.Vector(18.20, 15.25, 0.0))
+p_tibia_r = App.Placement(App.Vector(kx - v_bore_r.x, -11.50 - v_bore_r.y, kz - v_bore_r.z), rot_tibia_r)
 tibia_part_r.Placement = p_tibia_r
 for o in tibia_part_r.Origin.OutList:
     if hasattr(o, "Visibility"):
@@ -330,17 +365,16 @@ make_link(
     (0.12, 0.12, 0.12),
 )
 
-# Foot Contact Sensor Subsystem (Right Mirrored Kinematics across Z=0)
-rot_shank = App.Rotation(App.Vector(0, 0, 1), -112.4100084) * App.Rotation(App.Vector(1, 0, 0), 180.0)
-p_shank_r = App.Placement(App.Vector(149.445, -2.56232, -9.00), rot_shank)
+# Foot Contact Sensor Subsystem (Right Mirrored Kinematics across Z=0 — Option 2c-V2)
+p_tarsus_r = App.Placement(App.Vector(gt.TARSUS_PIV_X, gt.TARSUS_PIV_Y, -gt.Z_MID), App.Rotation())
 
 make_link(
     doc_r,
     tibia_part_r,
     "Tarsus",
-    "3. Bionic Tarsus Rocker Foot Right (Mirrored PETG)",
+    "3. Bionic Curved Tarsus Lever Right (Mirrored PETG)",
     doc_tarsus.Tarsus,
-    p_shank_r,
+    p_tarsus_r,
     (0.92, 0.45, 0.10),
     scale=App.Vector(1.0, 1.0, -1.0),
 )
@@ -350,23 +384,23 @@ make_link(
     "Tarsus_Shoe",
     "3b. Slip-On Bionic Spoon Shoe Right (Mirrored TPU/PETG)",
     doc_tarsus_shoe.Tarsus_Shoe,
-    p_shank_r,
+    p_tarsus_r,
     (0.18, 0.58, 0.68),
     scale=App.Vector(1.0, 1.0, -1.0),
 )
 
-p_switch_r = p_shank_r.multiply(App.Placement(App.Vector(-6.9, 23.0, 0.0), App.Rotation()))
+p_switch_r = App.Placement(App.Vector(gt.SW_ORIGIN.x, gt.SW_ORIGIN.y, -gt.Z_MID), gt.SW_ROT)
 make_link(
     doc_r,
     tibia_part_r,
     "Microswitch",
-    "4. Subminiature Microswitch (Unmirrored COTS)",
+    "4. Subminiature NC Microswitch (Unmirrored COTS)",
     doc_sw.Microswitch_Subminiature,
     p_switch_r,
     (0.15, 0.15, 0.15),
 )
 
-p_spring_r = p_shank_r.multiply(App.Placement(App.Vector(-10.2, 10.65, 0.0), App.Rotation()))
+p_spring_r = App.Placement(App.Vector(gt.SPRING_X, gt.SPRING_FLOOR_Y + 0.05, -gt.Z_MID), App.Rotation())
 make_link(
     doc_r,
     tibia_part_r,
@@ -384,14 +418,14 @@ make_link(
     "6. Removable Service Cover Right (Mirrored PETG)",
     doc_t_cover.Tibia_Cover,
     App.Placement(),
-    (0.28, 0.28, 0.32),
+    (0.15, 0.15, 0.18),
     scale=App.Vector(1.0, 1.0, -1.0),
 )
 
-# 7. Encapsulated 3x8 mm Hardened Stainless Dowel Pin (ISO 2338) Right
+# 7. Encapsulated Ø3x8.8 mm Hardened Stainless Dowel Pin (ISO 2338) Right
 pin_obj_r = doc_r.addObject("Part::Feature", "Pivot_Pin_Assembly")
-pin_obj_r.Label = "7. Encapsulated 3x8 mm Hardened Dowel Pin (ISO 2338) Right"
-pin_obj_r.Shape = Part.makeCylinder(1.50, 8.00, App.Vector(140.20, 1.25, -12.50), App.Vector(0, 0, 1))
+pin_obj_r.Label = "7. Encapsulated Ø3x8.8 mm Hardened Dowel Pin (ISO 2338) Right"
+pin_obj_r.Shape = Part.makeCylinder(1.50, 8.80, App.Vector(gt.TARSUS_PIV_X, gt.TARSUS_PIV_Y, -13.42), App.Vector(0, 0, 1))
 tibia_part_r.addObject(pin_obj_r)
 if hasattr(pin_obj_r, "ViewObject") and pin_obj_r.ViewObject:
     try:
@@ -399,15 +433,15 @@ if hasattr(pin_obj_r, "ViewObject") and pin_obj_r.ViewObject:
     except Exception:
         pass
 
-# 8. 3x M2 DIN 7991 Flush Countersunk Retaining Screws Right
+# 8. 2x M2x5 DIN 7991 Flush Countersunk Retaining Screws Right (+ 2x Bayonet Tabs)
 screws_r = []
-for pt in [App.Vector(111.5, 8.5, -12.4), App.Vector(127.0, 20.5, -12.4), App.Vector(135.0, -4.0, -12.4)]:
-    cone = Part.makeCone(2.00, 1.00, 1.00, App.Vector(pt.x, pt.y, -14.30))
-    shank = Part.makeCylinder(1.00, 4.00, App.Vector(pt.x, pt.y, -13.30))
+for bx, by in gt.COVER_SCREW_PTS:
+    cone = Part.makeCone(2.00, 1.00, 1.00, App.Vector(bx, by, -gt.COVER_Z_MAX))
+    shank = Part.makeCylinder(1.00, 4.20, App.Vector(bx, by, -gt.COVER_Z_MAX + 1.00))
     screws_r.append(cone.fuse(shank))
 
 screw_m2_r = doc_r.addObject("Part::Feature", "Cover_Retaining_Screw_M2")
-screw_m2_r.Label = "8. 3x M2x5 Flush Countersunk Retaining Screws (DIN 7991) Right"
+screw_m2_r.Label = "8. 2x M2x5 Flush Countersunk Retaining Screws (DIN 7991) Right"
 screw_m2_r.Shape = Part.Compound(screws_r)
 tibia_part_r.addObject(screw_m2_r)
 if hasattr(screw_m2_r, "ViewObject") and screw_m2_r.ViewObject:
@@ -435,17 +469,22 @@ make_link(doc_r, asm_r, "Femur_Bearing", "Femur Ball Bearing (D8 H3)",          
 make_link(doc_r, asm_r, "Femur_Nut",     "Femur M4 Low-Profile Nut (DIN 439)",  doc_n_low.M4_Mutter_DIN439, App.Placement(App.Vector(56.50, 20.20, 0.00), rot_negy_posz))
 make_link(doc_r, asm_r, "Femur_Screw",   "Femur M4 Countersunk Screw",          doc_s.M4_Senkkopfschraube,  App.Placement(App.Vector(56.50, 28.00, 0.00), rot_negy_negz))
 
-rot_knee_nut_r = rot_negy_posz.multiply(App.Rotation(App.Vector(0, 0, 1), -math.degrees(theta)))
-make_link(doc_r, asm_r, "Knee_Washer",  "Knee Shim Washer (s0.3)",            doc_w.Passscheibe_M4,       App.Placement(App.Vector(156.50, 21.00, 0.00), rot_negy_negz))
-make_link(doc_r, asm_r, "Knee_Bearing", "Knee Ball Bearing (D8 H3)",          doc_b.Kugellager_6x3x4,     App.Placement(App.Vector(156.50, 21.65, 0.00), rot_negy_negz))
-make_link(doc_r, asm_r, "Knee_Nut",     "Knee M4 Low-Profile Nut (DIN 439)",  doc_n_low.M4_Mutter_DIN439, App.Placement(App.Vector(156.50, 20.40, 0.00), rot_knee_nut_r))
-make_link(doc_r, asm_r, "Knee_Screw",   "Knee M4 Countersunk Screw",          doc_s.M4_Senkkopfschraube,  App.Placement(App.Vector(156.50, 28.00, 0.00), rot_negy_negz))
-
-# 6. Leg Cable Harness Right (True Mirrored Geometry Y -> -Y)
-make_link(doc_r, asm_r, "Leg_Cable_Harness", "8. Leg Cable Harness & Strain Reliefs Right", doc_cables_r.Leg_Cable_Harness, App.Placement())
+rot_knee_nut_r = rot_negy_posz.multiply(App.Rotation(App.Vector(0, 0, 1), -theta_leg_deg))
+make_link(doc_r, asm_r, "Knee_Washer",  "Knee Shim Washer (s0.3)",            doc_w.Passscheibe_M4,       App.Placement(App.Vector(kx, 21.00, kz), rot_negy_negz))
+make_link(doc_r, asm_r, "Knee_Bearing", "Knee Ball Bearing (D8 H3)",          doc_b.Kugellager_6x3x4,     App.Placement(App.Vector(kx, 21.65, kz), rot_negy_negz))
+make_link(doc_r, asm_r, "Knee_Nut",     "Knee M4 Low-Profile Nut (DIN 439)",  doc_n_low.M4_Mutter_DIN439, App.Placement(App.Vector(kx, 20.20, kz), rot_knee_nut_r))
+make_link(doc_r, asm_r, "Knee_Screw",   "Knee M4 Countersunk Screw",          doc_s.M4_Senkkopfschraube,  App.Placement(App.Vector(kx, 28.00, kz), rot_negy_negz))
 
 doc_r.recompute()
 doc_r.save()
+
+if fallback_gui_xml_r:
+    try:
+        with zipfile.ZipFile(fcstd_right, "a") as zout:
+            zout.writestr("GuiDocument.xml", fallback_gui_xml_r)
+    except Exception:
+        pass
+
 # Assemblies are logical structures, not exported to STEP/STL (never manufactured in one piece)
 print(f"✔ Saved Right Leg Assembly: {fcstd_right}")
 check_leg_collisions(asm_r, "leg_right_assembly.FCStd (Right)")
