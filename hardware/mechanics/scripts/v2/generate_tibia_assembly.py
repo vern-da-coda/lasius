@@ -177,8 +177,8 @@ def make_link(name, label, target_obj, placement, color=None):
 make_link("Tibia_Body", "1. Tibia v2 Monocoque (Warren Truss + Fixed Cheek A)", obj_mono, App.Placement(), COLOR_CFRP)
 
 # 2. Knee Servo
-p_servo = App.Placement(App.Vector(18.20, 15.25, -9.30), App.Rotation(App.Vector(0, 0, 1), 180.0))
-make_link("Knee_Servo", "2. Knee Servo (Torcster NR-645 COTS)", doc_servo.Servo_Body, p_servo, COLOR_SERVO)
+p_servo = App.Placement(App.Vector(18.20, 15.25, -9.30), App.Rotation(App.Vector(1, 0, 0), 180.0))
+make_link("Knee_Servo", "2. Knee Servo (Torcster NR-645 COTS)", doc_servo.Servo_Complete, p_servo, COLOR_SERVO)
 
 # 3. Tarsus Subsystem Assembly (incorporating Tarsus Rocker Lever and Spoon Shoe)
 # Exact verified foot placement in Tibia coordinate frame

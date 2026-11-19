@@ -105,15 +105,7 @@ def check_leg_collisions(asm_part, title):
             elif hasattr(child, "Shape") and not child.Shape.isNull():
                 if "Cable" not in child.Name:
                     sh = child.Shape.copy()
-                    if hasattr(child, "ScaleVector") and child.ScaleVector != App.Vector(1, 1, 1):
-                        m_scale = App.Matrix(
-                            child.ScaleVector.x, 0, 0, 0,
-                            0, child.ScaleVector.y, 0, 0,
-                            0, 0, child.ScaleVector.z, 0,
-                            0, 0, 0, 1
-                        )
-                        sh = sh.transformGeometry(m_scale)
-                    sh.Placement = pl.multiply(child.Placement)
+                    sh.Placement = pl.multiply(sh.Placement)
                     leaf_items.append((f"{obj.Name}.{child.Name}", sh))
 
     collect_leaves(asm_part)
