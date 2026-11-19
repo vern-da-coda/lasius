@@ -1,12 +1,10 @@
 #!/usr/bin/env python3
 """
-Generate Lasius Hexapod URDF (Unified Robot Description Format) model
-for physics simulation (PyBullet, MuJoCo, Webots, ROS/Gazebo).
+Generate Lasius Hexapod v2 URDF (`body_assembly.FCStd`) for PyBullet / MuJoCo Physics Simulation.
 
 Reads:
-- Robot geometry & joint parameters: software/lasius-core/src/lasius/core/config.yaml
-- Physical inertias & masses: hardware/mechanics/export/inertias.json
-- 3D CAD meshes: hardware/mechanics/export/stl/
+- Physical inertias, masses & geometry: hardware/mechanics/export/inertias.json
+- PyBullet-ready Binary STL meshes (in link-local meters): hardware/mechanics/export/urdf/meshes/*.stl
 
 Outputs:
 - hardware/mechanics/export/urdf/lasius.urdf
@@ -17,16 +15,12 @@ import math
 import os
 import xml.dom.minidom
 import xml.etree.ElementTree as ET
-import yaml
 
 REPO_ROOT = "/home/bjoern/Workspace/Hexapods/lasius"
-CONFIG_PATH = f"{REPO_ROOT}/software/lasius-core/src/lasius/core/config.yaml"
 INERTIAS_PATH = f"{REPO_ROOT}/hardware/mechanics/export/inertias.json"
 URDF_OUT_DIR = f"{REPO_ROOT}/hardware/mechanics/export/urdf"
 URDF_OUT_PATH = f"{URDF_OUT_DIR}/lasius.urdf"
-
-# Meshes base path relative to the URDF directory
-MESH_REL_DIR = "../stl"
+MESH_REL_DIR = "meshes"
 
 
 def format_vec3(v):
@@ -53,11 +47,12 @@ def create_inertial(parent_elem, mass_kg, com_m, inertia_dict):
     )
 
 
-def create_mesh_visual(parent_elem, mesh_path, origin_xyz, origin_rpy, scale_xyz, material_name):
+def create_mesh_visual(parent_elem, mesh_file, material_name):
+    """Attach a link-local meter-scaled Binary STL visual mesh (zero RPY / negative-scale artifacts!)."""
     visual = ET.SubElement(parent_elem, "visual")
-    ET.SubElement(visual, "origin", xyz=format_vec3(origin_xyz), rpy=format_rpy(*origin_rpy))
+    ET.SubElement(visual, "origin", xyz="0 0 0", rpy="0 0 0")
     geom = ET.SubElement(visual, "geometry")
-    ET.SubElement(geom, "mesh", filename=mesh_path, scale=format_vec3(scale_xyz))
+    ET.SubElement(geom, "mesh", filename=f"{MESH_REL_DIR}/{mesh_file}", scale="1 1 1")
     ET.SubElement(visual, "material", name=material_name)
 
 
@@ -76,147 +71,138 @@ def create_collision_sphere(parent_elem, origin_xyz, radius):
 
 
 def build_urdf():
-    print(f"--- Generating Lasius Hexapod URDF: {URDF_OUT_PATH} ---")
-    
-    with open(CONFIG_PATH, "r") as f:
-        config = yaml.safe_load(f)
-    geom_cfg = config.get("geometry", {})
-    limbs = geom_cfg.get("limbs", {})
-    coxa_len = 0.056500                            # Exact FreeCAD axis distance: 56.50 mm (nominal 60.0 mm)
-    femur_len = limbs.get("femur", 100.0) * 1e-3   # 100.00 mm
-    tibia_len = limbs.get("tibia", 130.0) * 1e-3   # 130.00 mm
-    
+    print(f"--- Generating Lasius v2 Body Assembly URDF for PyBullet: {URDF_OUT_PATH} ---")
+
     with open(INERTIAS_PATH, "r") as f:
         inertias = json.load(f)
-        
-    robot = ET.Element("robot", name="lasius_hexapod")
-    
+
+    geom = inertias["_geometry"]
+    coxa_len = geom["coxa_len_m"]            # 0.0565 m
+    femur_len = geom["femur_len_m"]          # 0.1000 m
+    foot_pos_l = geom["foot_pos_left_m"]     # Exact compact Kufe sole center (Left)
+    foot_pos_r = geom["foot_pos_right_m"]    # Exact compact Kufe sole center (Right)
+
+    robot = ET.Element("robot", name="lasius_hexapod_v2")
+
     # -------------------------------------------------------------
-    # Materials Definitions
+    # Visual Materials (matching FreeCAD v2 Style Guide palette)
     # -------------------------------------------------------------
     materials = [
-        ("carbon_dark", "0.15 0.15 0.17 1.0"),
-        ("lasius_orange", "0.95 0.39 0.10 1.0"),
-        ("coxa_teal", "0.11 0.60 0.55 1.0"),
-        ("femur_blue", "0.10 0.45 0.85 1.0"),
-        ("servo_metal", "0.28 0.30 0.36 1.0"),
-        ("foot_rubber", "0.10 0.10 0.10 1.0"),
+        ("carbon_dark",      "0.16 0.16 0.18 1.0"),
+        ("petg_anthracite",  "0.22 0.24 0.27 1.0"),
+        ("petg_graphite",    "0.15 0.17 0.21 1.0"),
+        ("canopy_iceblue",   "0.82 0.90 0.98 0.45"),
+        ("coxa_teal",        "0.15 0.65 0.45 1.0"),
+        ("femur_blue",       "0.12 0.35 0.65 1.0"),
+        ("tarsus_orange",    "0.92 0.45 0.10 1.0"),
+        ("kufe_cyan",        "0.14 0.56 0.66 1.0"),
+        ("servo_matte",      "0.14 0.15 0.18 1.0"),
+        ("pcb_green",        "0.08 0.52 0.24 1.0"),
+        ("pcb_red",          "0.75 0.15 0.15 1.0"),
     ]
     for mat_name, rgba in materials:
         mat_elem = ET.SubElement(robot, "material", name=mat_name)
         ET.SubElement(mat_elem, "color", rgba=rgba)
-        
+
     # -------------------------------------------------------------
-    # 1. Base Link (Chassis: Plates, Spacers, Battery & Electronics)
+    # 1. Base Link (Full v2 Monocoque Chassis from body_assembly.FCStd)
     # -------------------------------------------------------------
     base_link = ET.SubElement(robot, "link", name="base_link")
-    
-    # Mass calculation for chassis:
-    # 2x carbon plates (65.4g each) + 8x aluminum spacers (20.9g each) + Pi4 + 2x PCA + UBECs + Battery (~650g)
-    chassis_mass_kg = 0.06545 * 2 + 0.0209 * 8 + 0.650 # ~0.95 kg total
-    chassis_com = [0.0, 0.0, 0.027] # Mid-height between plates
+
+    chassis_parts_mass_g = sum(
+        inertias[k]["mass_g"]
+        for k in [
+            "body_bottom", "body_top", "chassis_core", "chassis_belly_pan",
+            "chassis_rpi_mount", "chassis_canopy", "chassis_service_cover",
+            "rpi4_model_b", "vl53l5cx_board",
+        ]
+    )
+    # Add 2S LiPo (165g) + 2x PCA9685 + TCA9548A + UBECs + fasteners (95g)
+    chassis_mass_kg = (chassis_parts_mass_g + 165.0 + 95.0) * 1e-3
+    chassis_com = [0.0, 0.0, 0.032]
     chassis_inertia = {
-        "ixx": 0.0035, "iyy": 0.0075, "izz": 0.0105,
-        "ixy": 0.0, "ixz": 0.0, "iyz": 0.0
+        "ixx": 0.0042, "iyy": 0.0085, "izz": 0.0115,
+        "ixy": 0.0, "ixz": 0.0, "iyz": 0.0,
     }
     create_inertial(base_link, chassis_mass_kg, chassis_com, chassis_inertia)
-    
-    # Visual: Bottom plate
-    create_mesh_visual(
-        base_link,
-        f"{MESH_REL_DIR}/custom/v1/parts/body_bottom.stl",
-        [0.0, 0.0, 0.0],
-        [0.0, 0.0, 0.0],
-        [0.001, 0.001, 0.001],
-        "carbon_dark"
-    )
-    # Visual: Top plate (at Z = 53.3 mm)
-    create_mesh_visual(
-        base_link,
-        f"{MESH_REL_DIR}/custom/v1/parts/body_top.stl",
-        [0.0, 0.0, 0.0533],
-        [0.0, 0.0, 0.0],
-        [0.001, 0.001, 0.001],
-        "carbon_dark"
-    )
-    
-    # Visual: 8x Aluminum Standoff Pillars (Spacers D14 x 51.3 mm, spanning Z = 2.0 .. 53.3 mm)
-    spacers = [
-        (0.045, 0.030), (0.045, -0.030), (-0.045, 0.030), (-0.045, -0.030),
-        (0.128, 0.012), (0.128, -0.012), (-0.090, 0.0), (-0.120, 0.0)
-    ]
-    for sp_x, sp_y in spacers:
-        create_mesh_visual(
-            base_link,
-            f"{MESH_REL_DIR}/custom/v1/parts/spacer_14x50.stl",
-            [sp_x, sp_y, 0.002],
-            [0.0, 0.0, 0.0],
-            [0.001, 0.001, 0.001],
-            "servo_metal"
-        )
-    
-    # Collision: Chassis box bounding volume (267 x 177 x 55 mm)
+
+    create_mesh_visual(base_link, "body_bottom.stl",           "carbon_dark")
+    create_mesh_visual(base_link, "body_top.stl",              "carbon_dark")
+    create_mesh_visual(base_link, "chassis_core.stl",          "petg_anthracite")
+    create_mesh_visual(base_link, "chassis_belly_pan.stl",     "petg_graphite")
+    create_mesh_visual(base_link, "chassis_rpi_mount.stl",     "petg_anthracite")
+    create_mesh_visual(base_link, "chassis_canopy.stl",        "canopy_iceblue")
+    create_mesh_visual(base_link, "chassis_service_cover.stl", "petg_graphite")
+    create_mesh_visual(base_link, "rpi4_model_b.stl",          "pcb_green")
+    create_mesh_visual(base_link, "vl53l5cx_board.stl",        "pcb_red")
+
+    # Compact chassis collision volume (strictly inside leg mount radius to avoid false self-collision!)
     create_collision_box(
         base_link,
-        [0.0, 0.0, 0.027],
+        [0.0, 0.0, 0.036],
         [0.0, 0.0, 0.0],
-        [0.267, 0.177, 0.055]
+        [0.240, 0.120, 0.092],
     )
 
     # -------------------------------------------------------------
-    # 2. Six Legs Configuration
+    # 2. Six Modular v2 Legs (Exact body_assembly.FCStd mount points)
     # -------------------------------------------------------------
-    # Mount points and mounting yaw angles (radians)
-    # Leg indices: LF, LM, LR (left) / RF, RM, RR (right)
     legs_info = [
         # id, name, x_m, y_m, z_m, yaw_rad, is_right
-        ("lf", "left_front",   0.086,  0.065, 0.01725,  math.radians(45.0), False),
-        ("lm", "left_middle",  0.000,  0.075, 0.01725,  math.radians(90.0), False),
-        ("lr", "left_rear",   -0.086,  0.065, 0.01725,  math.radians(135.0), False),
-        ("rf", "right_front",  0.086, -0.065, 0.01725, -math.radians(45.0), True),
-        ("rm", "right_middle", 0.000, -0.075, 0.01725, -math.radians(90.0), True),
-        ("rr", "right_rear",  -0.086, -0.065, 0.01725, -math.radians(135.0), True),
+        ("lf", "left_front",    0.086,  0.065, 0.01725,  math.radians(45.0),  False),
+        ("lm", "left_middle",   0.000,  0.075, 0.01725,  math.radians(90.0),  False),
+        ("lr", "left_rear",    -0.086,  0.065, 0.01725,  math.radians(135.0), False),
+        ("rf", "right_front",   0.086, -0.065, 0.01725, -math.radians(45.0),  True),
+        ("rm", "right_middle",  0.000, -0.075, 0.01725, -math.radians(90.0),  True),
+        ("rr", "right_rear",   -0.086, -0.065, 0.01725, -math.radians(135.0), True),
     ]
 
-    # Segment masses & inertias from FreeCAD extraction + Servo masses:
-    # Coxa: Segment (53.7g) + Coxa Servo (56g) = 109.7g
-    coxa_key = "coxa" if "coxa" in inertias else "coxa_bracket"
-    coxa_mass = (inertias[coxa_key]["mass_g"] + 56.0) * 1e-3
-    coxa_com = [0.030, 0.0, 0.0]
+    # Segment masses & inertias directly from CAD extraction + real COTS servo masses
+    coxa_mass = (inertias["coxa"]["mass_g"] + 2.0 * 56.0) * 1e-3  # Coxa + Coxa_Servo + Femur_Servo
+    coxa_com = [0.032, 0.0, 0.004]
     coxa_inertia = {
-        "ixx": inertias[coxa_key]["inertia_kg_m2"]["ixx"] + 2e-5,
-        "iyy": inertias[coxa_key]["inertia_kg_m2"]["iyy"] + 4e-5,
-        "izz": inertias[coxa_key]["inertia_kg_m2"]["izz"] + 4e-5,
-        "ixy": 0.0, "ixz": 0.0, "iyz": 0.0
+        "ixx": inertias["coxa"]["inertia_kg_m2"]["ixx"] + 3.5e-5,
+        "iyy": inertias["coxa"]["inertia_kg_m2"]["iyy"] + 6.5e-5,
+        "izz": inertias["coxa"]["inertia_kg_m2"]["izz"] + 6.5e-5,
+        "ixy": 0.0, "ixz": 0.0, "iyz": 0.0,
     }
 
-    # Femur: Body (83.9g) + Cover (4.7g) + ADS1115 (3g) + Femur Servo (56g) = 147.6g
-    femur_mass = (inertias["femur_body"]["mass_g"] + inertias["femur_cover"]["mass_g"] + 3.0 + 56.0) * 1e-3
-    femur_com = [femur_len * 0.5, 0.0, 0.0]
+    femur_mass = (inertias["femur_body"]["mass_g"] + inertias["femur_cover"]["mass_g"] + 3.0) * 1e-3
+    femur_com = [femur_len * 0.50, 0.0, 0.0]
     femur_inertia = {
-        "ixx": inertias["femur_body"]["inertia_kg_m2"]["ixx"] + 4e-5,
-        "iyy": inertias["femur_body"]["inertia_kg_m2"]["iyy"] + 8e-5,
-        "izz": inertias["femur_body"]["inertia_kg_m2"]["izz"] + 1.2e-4,
-        "ixy": 0.0, "ixz": 0.0, "iyz": 0.0
+        "ixx": inertias["femur_body"]["inertia_kg_m2"]["ixx"] + 1.5e-5,
+        "iyy": inertias["femur_body"]["inertia_kg_m2"]["iyy"] + 5.0e-5,
+        "izz": inertias["femur_body"]["inertia_kg_m2"]["izz"] + 5.5e-5,
+        "ixy": 0.0, "ixz": 0.0, "iyz": 0.0,
     }
 
-    # Tibia: Monolithic Tibia v2 (39.5g) + Tibia Servo (56g) + Foot Switch (5g) = 100.5g
-    tibia_mass = (inertias["tibia"]["mass_g"] + 56.0 + 5.0) * 1e-3
-    tibia_com = [tibia_len * 0.35, 0.0, -tibia_len * 0.35]
+    tibia_mass = (
+        inertias["tibia"]["mass_g"]
+        + inertias["tibia_cover"]["mass_g"]
+        + inertias["tarsus"]["mass_g"]
+        + inertias["tarsus_shoe"]["mass_g"]
+        + 56.0   # Knee Servo (mounted inside Tibia!)
+        + 4.0    # Microswitch, spring, dowel pin, 2x M2 screws
+    ) * 1e-3
+    tibia_com = [0.052, 0.0, 0.005]
     tibia_inertia = {
-        "ixx": inertias["tibia"]["inertia_kg_m2"]["ixx"] + 3e-5,
-        "iyy": inertias["tibia"]["inertia_kg_m2"]["iyy"] + 7e-5,
-        "izz": inertias["tibia"]["inertia_kg_m2"]["izz"] + 7e-5,
-        "ixy": 0.0, "ixz": 0.0, "iyz": 0.0
+        "ixx": inertias["tibia"]["inertia_kg_m2"]["ixx"] + 3.5e-5,
+        "iyy": inertias["tibia"]["inertia_kg_m2"]["iyy"] + 9.0e-5,
+        "izz": inertias["tibia"]["inertia_kg_m2"]["izz"] + 9.0e-5,
+        "ixy": 0.0, "ixz": 0.0, "iyz": 0.0,
     }
+
+    total_robot_kg = chassis_mass_kg + 6.0 * (coxa_mass + femur_mass + tibia_mass + 0.002)
 
     for leg_id, leg_name, lx, ly, lz, lyaw, is_right in legs_info:
+        side = "right" if is_right else "left"
+
         # ---------------------------------------------------------
-        # Joint 1: Coxa Joint (Yaw around Z-axis)
+        # Joint 1: Coxa Joint (Yaw around +Z)
         # ---------------------------------------------------------
         coxa_joint_name = f"{leg_name}_coxa"
         coxa_link_name = f"link_{leg_id}_coxa"
-        
+
         j_coxa = ET.SubElement(robot, "joint", name=coxa_joint_name, type="revolute")
         ET.SubElement(j_coxa, "parent", link="base_link")
         ET.SubElement(j_coxa, "child", link=coxa_link_name)
@@ -225,38 +211,20 @@ def build_urdf():
         ET.SubElement(j_coxa, "limit", lower=f"{math.radians(-45.0):.6f}", upper=f"{math.radians(45.0):.6f}", effort="2.5", velocity="6.0")
         ET.SubElement(j_coxa, "dynamics", damping="0.1", friction="0.05")
 
-        # Relative transform definitions derived directly from FreeCAD leg_assembly.FCStd:
-        scale_mesh = [0.001, -0.001 if is_right else 0.001, 0.001]
-
-        # 1. Coxa Bracket mesh relative to Coxa pivot axis (X=0, Y=0, Z=0 in link frame):
-        # In FreeCAD: trans = (74.70, +/-9.00, -15.25) mm, rot = Yaw +/-180°, Roll +/-90°
-        coxa_pos = [0.074700, 0.009000 if is_right else -0.009000, -0.015250]
-        coxa_rpy = [-math.pi / 2.0 if is_right else math.pi / 2.0, 0.0, -math.pi if is_right else math.pi]
-
         link_coxa = ET.SubElement(robot, "link", name=coxa_link_name)
         create_inertial(link_coxa, coxa_mass, coxa_com, coxa_inertia)
-        create_mesh_visual(
-            link_coxa,
-            f"{MESH_REL_DIR}/custom/v2/parts/coxa/coxa.stl",
-            coxa_pos,
-            coxa_rpy,
-            scale_mesh,
-            "coxa_teal"
-        )
-        create_collision_box(
-            link_coxa,
-            [coxa_len * 0.5, 0.0, 0.0],
-            [0.0, 0.0, 0.0],
-            [coxa_len, 0.050, 0.045]
-        )
+        create_mesh_visual(link_coxa, f"coxa_{side}.stl",        "coxa_teal")
+        create_mesh_visual(link_coxa, f"coxa_servo_{side}.stl",  "servo_matte")
+        create_mesh_visual(link_coxa, f"femur_servo_{side}.stl", "servo_matte")
+        create_collision_box(link_coxa, [coxa_len * 0.5, 0.0, 0.0], [0.0, 0.0, 0.0], [0.044, 0.030, 0.030])
 
         # ---------------------------------------------------------
-        # Joint 2: Femur Joint (Pitch around Y-axis)
+        # Joint 2: Femur Joint (Pitch around +Y)
         # ---------------------------------------------------------
         femur_joint_name = f"{leg_name}_femur"
         femur_link_name = f"link_{leg_id}_femur"
         femur_offset_y = 0.002500 if is_right else -0.002500
-        
+
         j_femur = ET.SubElement(robot, "joint", name=femur_joint_name, type="revolute")
         ET.SubElement(j_femur, "parent", link=coxa_link_name)
         ET.SubElement(j_femur, "child", link=femur_link_name)
@@ -267,99 +235,67 @@ def build_urdf():
 
         link_femur = ET.SubElement(robot, "link", name=femur_link_name)
         create_inertial(link_femur, femur_mass, femur_com, femur_inertia)
-        
-        # 2. Femur mesh sits directly at the hip joint axis (X=56.5 mm), identity rotation
-        femur_pos = [0.0, 0.0, 0.0]
-        femur_rpy = [0.0, 0.0, 0.0]
-        create_mesh_visual(
-            link_femur,
-            f"{MESH_REL_DIR}/custom/v2/parts/femur/femur.stl",
-            femur_pos,
-            femur_rpy,
-            scale_mesh,
-            "femur_blue"
-        )
-        create_mesh_visual(
-            link_femur,
-            f"{MESH_REL_DIR}/custom/v2/parts/femur/femur_cover.stl",
-            femur_pos,
-            femur_rpy,
-            scale_mesh,
-            "carbon_dark"
-        )
-        create_collision_box(
-            link_femur,
-            [femur_len * 0.5, 0.0, 0.0],
-            [0.0, 0.0, 0.0],
-            [femur_len, 0.045, 0.035]
-        )
+        create_mesh_visual(link_femur, f"femur_{side}.stl",       "femur_blue")
+        create_mesh_visual(link_femur, f"femur_cover_{side}.stl", "canopy_iceblue")
+        create_collision_box(link_femur, [femur_len * 0.5, 0.0, 0.0], [0.0, 0.0, 0.0], [0.072, 0.026, 0.024])
 
         # ---------------------------------------------------------
-        # Joint 3: Tibia Joint (Pitch around Y-axis)
+        # Joint 3: Tibia Joint (Pitch around +Y)
         # ---------------------------------------------------------
         tibia_joint_name = f"{leg_name}_tibia"
         tibia_link_name = f"link_{leg_id}_tibia"
-        
+
         j_tibia = ET.SubElement(robot, "joint", name=tibia_joint_name, type="revolute")
         ET.SubElement(j_tibia, "parent", link=femur_link_name)
         ET.SubElement(j_tibia, "child", link=tibia_link_name)
         ET.SubElement(j_tibia, "origin", xyz=f"{femur_len:.6f} 0.000000 0.000000", rpy="0 0 0")
         ET.SubElement(j_tibia, "axis", xyz="0 1 0")
-        ET.SubElement(j_tibia, "limit", lower=f"{math.radians(-90.0):.6f}", upper=f"{math.radians(90.0):.6f}", effort="3.0", velocity="6.0")
+        ET.SubElement(j_tibia, "limit", lower=f"{math.radians(-45.0):.6f}", upper=f"{math.radians(150.0):.6f}", effort="3.0", velocity="6.0")
         ET.SubElement(j_tibia, "dynamics", damping="0.1", friction="0.05")
 
         link_tibia = ET.SubElement(robot, "link", name=tibia_link_name)
         create_inertial(link_tibia, tibia_mass, tibia_com, tibia_inertia)
-        
-        # 3. Tibia mesh relative to Knee joint axis at theta=0:
-        # In FreeCAD leg_assembly: base = (0.0, +/-2.0, 0.0) mm, rot = Yaw +/-180°, Roll +/-90°
-        tibia_pos = [0.0, -0.002000 if is_right else 0.002000, 0.0]
-        tibia_rpy = [-math.pi / 2.0 if is_right else math.pi / 2.0, 0.0, -math.pi if is_right else math.pi]
-        create_mesh_visual(
-            link_tibia,
-            f"{MESH_REL_DIR}/custom/v2/parts/tibia/tibia.stl",
-            tibia_pos,
-            tibia_rpy,
-            scale_mesh,
-            "lasius_orange"
-        )
-        create_collision_box(
-            link_tibia,
-            [tibia_len * 0.35, 0.0, -tibia_len * 0.35],
-            [0.0, math.radians(45.0), 0.0],
-            [tibia_len, 0.035, 0.025]
-        )
+        create_mesh_visual(link_tibia, f"tibia_{side}.stl",       "petg_anthracite")
+        create_mesh_visual(link_tibia, f"tibia_cover_{side}.stl", "petg_graphite")
+        create_mesh_visual(link_tibia, f"knee_servo_{side}.stl",  "servo_matte")
+        create_mesh_visual(link_tibia, f"tarsus_{side}.stl",      "tarsus_orange")
+        create_mesh_visual(link_tibia, f"tarsus_shoe_{side}.stl", "kufe_cyan")
+        # Slim structural collision box along Tibia shaft (well clear of Knee & Foot sphere)
+        y_blade = -0.0025 if is_right else 0.0025
+        create_collision_box(link_tibia, [0.070, y_blade, 0.005], [0.0, 0.0, 0.0], [0.090, 0.016, 0.022])
 
         # ---------------------------------------------------------
-        # Joint 4: Fixed Foot Contact Point (Sphere with friction)
+        # Joint 4: Fixed Foot Contact Point (Flush inside compact Kufe sole)
         # ---------------------------------------------------------
         foot_joint_name = f"{leg_name}_foot_joint"
         foot_link_name = f"link_{leg_id}_foot"
-        
-        # Exact claw tip position relative to knee joint at theta=0:
-        foot_pos = [0.123555, -0.002000 if is_right else 0.002000, -0.014602]
-        
+        foot_pos = foot_pos_r if is_right else foot_pos_l
+
         j_foot = ET.SubElement(robot, "joint", name=foot_joint_name, type="fixed")
         ET.SubElement(j_foot, "parent", link=tibia_link_name)
         ET.SubElement(j_foot, "child", link=foot_link_name)
         ET.SubElement(j_foot, "origin", xyz=format_vec3(foot_pos), rpy="0 0 0")
 
         link_foot = ET.SubElement(robot, "link", name=foot_link_name)
-        create_inertial(link_foot, 0.005, [0, 0, 0], {"ixx": 1e-6, "iyy": 1e-6, "izz": 1e-6})
-        create_collision_sphere(link_foot, [0, 0, 0], radius=0.006) # 6mm rubber foot ball
+        create_inertial(link_foot, 0.002, [0, 0, 0], {"ixx": 1e-6, "iyy": 1e-6, "izz": 1e-6})
+        # Tiny hidden visual inside Kufe sole suppresses PyBullet's white default collision-sphere proxy!
+        vis_f = ET.SubElement(link_foot, "visual")
+        ET.SubElement(vis_f, "origin", xyz="0 0 0", rpy="0 0 0")
+        ET.SubElement(ET.SubElement(vis_f, "geometry"), "sphere", radius="0.0005")
+        ET.SubElement(vis_f, "material", name="kufe_cyan")
+        create_collision_sphere(link_foot, [0, 0, 0], radius=0.0040)
 
-    # -------------------------------------------------------------
-    # Write and Pretty-Format XML
-    # -------------------------------------------------------------
+    # Write pretty-formatted URDF XML
     os.makedirs(URDF_OUT_DIR, exist_ok=True)
     raw_xml = ET.tostring(robot, encoding="utf-8")
     dom = xml.dom.minidom.parseString(raw_xml)
     pretty_xml = dom.toprettyxml(indent="  ")
-    
+
     with open(URDF_OUT_PATH, "w", encoding="utf-8") as f:
         f.write(pretty_xml)
-        
-    print(f"✅ Successfully exported URDF to: {URDF_OUT_PATH}")
+
+    print(f"✅ Successfully exported v2 Body Assembly URDF to: {URDF_OUT_PATH}")
+    print(f"   Estimated Total Robot Mass: {total_robot_kg:.3f} kg (Chassis {chassis_mass_kg:.3f} kg + 6x Legs)")
 
 
 if __name__ == "__main__":
