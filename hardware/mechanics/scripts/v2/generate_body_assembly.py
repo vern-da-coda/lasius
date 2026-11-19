@@ -196,34 +196,7 @@ print(f"Bounding Box: X=[{bbox.XMin:.2f}, {bbox.XMax:.2f}], Y=[{bbox.YMin:.2f}, 
 print(f"Total Width (Y): {bbox.YLength:.2f} mm, Length (X): {bbox.XLength:.2f} mm, Height (Z): {bbox.ZLength:.2f} mm")
 
 # Assemblies are logical structures, not exported to STEP/STL (never manufactured in one piece)
-print(f"✔ Saved Body Assembly: {fcstd_path}")
-
-for d in list(App.listDocuments().values()):
-    try:
-        App.closeDocument(d.Name)
-    except Exception:
-        pass
-
-def patch_fcstd_visibility(filepath, fallback_gui_data=None):
-    temp_zip = filepath + ".tmp"
-    with zipfile.ZipFile(filepath, "r") as zin:
-        has_gui = "GuiDocument.xml" in zin.namelist()
-        with zipfile.ZipFile(temp_zip, "w", compression=zipfile.ZIP_DEFLATED) as zout:
-            for item in zin.infolist():
-                data = zin.read(item.filename)
-                if item.filename == "GuiDocument.xml":
-                    xml_str = data.decode("utf-8")
-                    xml_str = xml_str.replace('<Bool value="false"/>', '<Bool value="true"/>')
-                    data = xml_str.encode("utf-8")
-                zout.writestr(item, data)
-            if not has_gui and fallback_gui_data:
-                xml_str = fallback_gui_data.decode("utf-8")
-                xml_str = xml_str.replace('<Bool value="false"/>', '<Bool value="true"/>')
-                zout.writestr("GuiDocument.xml", xml_str.encode("utf-8"))
-    os.replace(temp_zip, filepath)
-
-patch_fcstd_visibility(fcstd_path, fallback_gui_xml)
-print("✔ Patched GuiDocument.xml for full visibility")
+print("✔ Saved Body Assembly: " + fcstd_path)
 print("--- Done ---")
 import sys
 sys.exit(0)

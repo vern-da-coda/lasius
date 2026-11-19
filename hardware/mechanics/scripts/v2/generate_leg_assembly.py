@@ -98,17 +98,23 @@ def check_leg_collisions(asm_part, title):
     leaf_items = []
 
     def collect_leaves(obj, parent_pl=App.Placement()):
+        pl = parent_pl.multiply(obj.Placement)
         for child in getattr(obj, "Group", []):
-            if child.TypeId == "App::Part" or (
-                child.isDerivedFrom("App::Link")
-                and getattr(child, "LinkedObject", None) is not None
-                and child.LinkedObject.TypeId == "App::Part"
-            ):
-                # If it's a link to an App::Part or an App::Part itself, we can just use child.Shape directly at top level
-                pass
-            if hasattr(child, "Shape") and not child.Shape.isNull():
+            if child.TypeId == "App::Part":
+                collect_leaves(child, pl)
+            elif hasattr(child, "Shape") and not child.Shape.isNull():
                 if "Cable" not in child.Name:
-                    leaf_items.append((child.Name, child.Shape))
+                    sh = child.Shape.copy()
+                    if hasattr(child, "ScaleVector") and child.ScaleVector != App.Vector(1, 1, 1):
+                        m_scale = App.Matrix(
+                            child.ScaleVector.x, 0, 0, 0,
+                            0, child.ScaleVector.y, 0, 0,
+                            0, 0, child.ScaleVector.z, 0,
+                            0, 0, 0, 1
+                        )
+                        sh = sh.transformGeometry(m_scale)
+                    sh.Placement = pl.multiply(child.Placement)
+                    leaf_items.append((f"{obj.Name}.{child.Name}", sh))
 
     collect_leaves(asm_part)
     max_coll = 0.0
@@ -331,14 +337,18 @@ make_link(
     p_k_servo_r,
     (0.12, 0.12, 0.12),
 )
-p_rocker_shoe_r = App.Placement(App.Vector(149.445, -2.56232, -9.00), App.Rotation(-112.41, 0.0, -180.0))
+
+# Foot Contact Sensor Subsystem (Right Mirrored Kinematics across Z=0)
+rot_shank = App.Rotation(App.Vector(0, 0, 1), -112.4100084) * App.Rotation(App.Vector(1, 0, 0), 180.0)
+p_shank_r = App.Placement(App.Vector(149.445, -2.56232, -9.00), rot_shank)
+
 make_link(
     doc_r,
     tibia_part_r,
     "Tarsus",
     "3. Bionic Tarsus Rocker Foot Right (Mirrored PETG)",
     doc_tarsus.Tarsus,
-    p_rocker_shoe_r,
+    p_shank_r,
     (0.92, 0.45, 0.10),
     scale=App.Vector(1.0, 1.0, -1.0),
 )
@@ -348,11 +358,12 @@ make_link(
     "Tarsus_Shoe",
     "3b. Slip-On Bionic Spoon Shoe Right (Mirrored TPU/PETG)",
     doc_tarsus_shoe.Tarsus_Shoe,
-    p_rocker_shoe_r,
+    p_shank_r,
     (0.18, 0.58, 0.68),
     scale=App.Vector(1.0, 1.0, -1.0),
 )
-p_switch_r = App.Placement(App.Vector(130.812, 12.5849, -9.00), App.Rotation(-112.41, 0.0, -180.0))
+
+p_switch_r = p_shank_r.multiply(App.Placement(App.Vector(-6.9, 23.0, 0.0), App.Rotation()))
 make_link(
     doc_r,
     tibia_part_r,
@@ -362,7 +373,8 @@ make_link(
     p_switch_r,
     (0.15, 0.15, 0.15),
 )
-p_spring_r = App.Placement(App.Vector(143.488, 10.9275, -9.00), App.Rotation(-112.41, 0.0, -180.0))
+
+p_spring_r = p_shank_r.multiply(App.Placement(App.Vector(-10.2, 10.65, 0.0), App.Rotation()))
 make_link(
     doc_r,
     tibia_part_r,
@@ -372,33 +384,45 @@ make_link(
     p_spring_r,
     (0.85, 0.85, 0.88),
 )
-p_cover_r = App.Placement(App.Vector(18.20, 15.25, 0.00), App.Rotation(180.0, 0.0, 0.0))
+
 make_link(
     doc_r,
     tibia_part_r,
     "Tibia_Cover",
     "6. Removable Service Cover Right (Mirrored PETG)",
     doc_t_cover.Tibia_Cover,
-    p_cover_r,
+    App.Placement(),
     (0.28, 0.28, 0.32),
     scale=App.Vector(1.0, 1.0, -1.0),
 )
 
+# 7. Encapsulated 3x8 mm Hardened Stainless Dowel Pin (ISO 2338) Right
 pin_obj_r = doc_r.addObject("Part::Feature", "Pivot_Pin_Assembly")
-pin_obj_r.Label = "7. M3 Hardened Pivot Pin & Ruthex"
-pin_head_r = Part.makeCylinder(2.80, 1.45, App.Vector(149.445, -2.56232, -6.00), App.Vector(0, 0, 1))
-pin_shaft_r = Part.makeCylinder(1.50, 9.55, App.Vector(149.445, -2.56232, -4.55), App.Vector(0, 0, 1))
-ruthex_r = Part.makeCylinder(2.10, 2.45, App.Vector(149.445, -2.56232, 2.55), App.Vector(0, 0, 1))
-pin_obj_r.Shape = pin_head_r.fuse(pin_shaft_r).fuse(ruthex_r)
+pin_obj_r.Label = "7. Encapsulated 3x8 mm Hardened Dowel Pin (ISO 2338) Right"
+pin_obj_r.Shape = Part.makeCylinder(1.50, 8.00, App.Vector(140.20, 1.25, -12.50), App.Vector(0, 0, 1))
 tibia_part_r.addObject(pin_obj_r)
+if hasattr(pin_obj_r, "ViewObject") and pin_obj_r.ViewObject:
+    try:
+        pin_obj_r.ViewObject.ShapeColor = (0.85, 0.70, 0.20)
+    except Exception:
+        pass
+
+# 8. 3x M2 DIN 7991 Flush Countersunk Retaining Screws Right
+screws_r = []
+for pt in [App.Vector(111.5, 8.5, -12.4), App.Vector(127.0, 20.5, -12.4), App.Vector(135.0, -4.0, -12.4)]:
+    cone = Part.makeCone(2.00, 1.00, 1.00, App.Vector(pt.x, pt.y, -14.30))
+    shank = Part.makeCylinder(1.00, 4.00, App.Vector(pt.x, pt.y, -13.30))
+    screws_r.append(cone.fuse(shank))
 
 screw_m2_r = doc_r.addObject("Part::Feature", "Cover_Retaining_Screw_M2")
-screw_m2_r.Label = "8. M2x10 Flush Countersunk Retaining Screw & Ruthex"
-head_m2_r = Part.makeCone(2.10, 1.00, 1.10, App.Vector(149.445, -2.56232, -6.00), App.Vector(0, 0, 1))
-shank_m2_r = Part.makeCylinder(0.98, 9.90, App.Vector(149.445, -2.56232, -4.90), App.Vector(0, 0, 1))
-ruthex_m2_r = Part.makeCylinder(1.60, 2.45, App.Vector(149.445, -2.56232, 2.55), App.Vector(0, 0, 1))
-screw_m2_r.Shape = head_m2_r.fuse(shank_m2_r).fuse(ruthex_m2_r)
+screw_m2_r.Label = "8. 3x M2x5 Flush Countersunk Retaining Screws (DIN 7991) Right"
+screw_m2_r.Shape = Part.Compound(screws_r)
 tibia_part_r.addObject(screw_m2_r)
+if hasattr(screw_m2_r, "ViewObject") and screw_m2_r.ViewObject:
+    try:
+        screw_m2_r.ViewObject.ShapeColor = (0.80, 0.80, 0.82)
+    except Exception:
+        pass
 
 # 4. Actuators in Coxa (Unmirrored Real COTS Servos!)
 p_c_servo_r = App.Placement(App.Vector(0.00, -2.50, 27.50), App.Rotation(App.Vector(0, 0, 1), 180.0))
@@ -439,43 +463,6 @@ for d in list(App.listDocuments().values()):
         App.closeDocument(d.Name)
     except Exception:
         pass
-
-def patch_fcstd_visibility(filepath):
-    temp_zip = filepath + ".tmp"
-    with zipfile.ZipFile(filepath, "r") as zin:
-        names = zin.namelist()
-        if "GuiDocument.xml" in names:
-            xml_str = zin.read("GuiDocument.xml").decode("utf-8")
-            xml_str = xml_str.replace('<Bool value="false"/>', '<Bool value="true"/>')
-            gui_xml = xml_str.encode("utf-8")
-        else:
-            root = ET.fromstring(zin.read("Document.xml"))
-            objs = []
-            for obj in root.find("Objects"):
-                name = obj.attrib.get("name") or obj.attrib.get("Name")
-                if name and name not in objs:
-                    objs.append(name)
-            doc_elem = ET.Element("Document", SchemaVersion="1", HasExpansion="1")
-            vp_data = ET.SubElement(doc_elem, "ViewProviderData", Count=str(len(objs)))
-            for name in objs:
-                vp = ET.SubElement(vp_data, "ViewProvider", name=name)
-                props = ET.SubElement(vp, "Properties", Count="1")
-                is_hidden = any(h in name for h in ["Origin", "Axis", "Plane"])
-                val = "false" if is_hidden else "true"
-                prop = ET.SubElement(props, "Property", name="Visibility", type="App::PropertyBool", status="1")
-                ET.SubElement(prop, "Bool", value=val)
-            gui_xml = ET.tostring(doc_elem, encoding="utf-8", xml_declaration=True)
-
-        with zipfile.ZipFile(temp_zip, "w", compression=zipfile.ZIP_DEFLATED) as zout:
-            for item in zin.infolist():
-                if item.filename != "GuiDocument.xml":
-                    zout.writestr(item, zin.read(item.filename))
-            zout.writestr("GuiDocument.xml", gui_xml)
-    os.replace(temp_zip, filepath)
-
-patch_fcstd_visibility(fcstd_left)
-patch_fcstd_visibility(fcstd_right)
-print("✔ Patched GuiDocument.xml for full visibility (Left & Right Leg Assemblies)")
 
 print("--- Leg Assemblies v2 (Left & Right) Completed Successfully ---")
 sys.exit(0)

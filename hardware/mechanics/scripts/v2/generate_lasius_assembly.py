@@ -134,26 +134,5 @@ for d in [doc_body, doc_head, doc_gaster, doc]:
     except Exception:
         pass
 
-# Ensure GuiDocument.xml has Visibility="true"
-def patch_fcstd_visibility(filepath, fallback_gui_data=None):
-    temp_zip = filepath + ".tmp"
-    with zipfile.ZipFile(filepath, "r") as zin:
-        has_gui = "GuiDocument.xml" in zin.namelist()
-        with zipfile.ZipFile(temp_zip, "w", compression=zipfile.ZIP_DEFLATED) as zout:
-            for item in zin.infolist():
-                data = zin.read(item.filename)
-                if item.filename == "GuiDocument.xml":
-                    xml_str = data.decode("utf-8")
-                    xml_str = xml_str.replace('<Bool value="false"/>', '<Bool value="true"/>')
-                    data = xml_str.encode("utf-8")
-                zout.writestr(item, data)
-            if not has_gui and fallback_gui_data:
-                xml_str = fallback_gui_data.decode("utf-8")
-                xml_str = xml_str.replace('<Bool value="false"/>', '<Bool value="true"/>')
-                zout.writestr("GuiDocument.xml", xml_str.encode("utf-8"))
-    os.replace(temp_zip, filepath)
-
-patch_fcstd_visibility(fcstd_path, fallback_gui_xml)
-print("✔ Patched GuiDocument.xml for full visibility")
 print("--- Lasius Master Assembly Generation Complete ---")
 sys.exit(0)
