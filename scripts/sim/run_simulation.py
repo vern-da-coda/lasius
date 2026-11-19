@@ -44,12 +44,12 @@ DEFAULT_ROBOT_LAYOUT = {
         ],
     },
     "legs": {
-        "right_middle": {"mount_point": {"x": 75.0, "y": 0.0}, "base_angle": 0.0, "coxa": {"name": "right_middle_coxa", "length": 56.5}, "femur": {"name": "right_middle_femur", "length": 100.0}, "tibia": {"name": "right_middle_tibia", "length": 130.0}},
-        "right_rear": {"mount_point": {"x": 65.0, "y": 90.0}, "base_angle": 0.0, "coxa": {"name": "right_rear_coxa", "length": 56.5}, "femur": {"name": "right_rear_femur", "length": 100.0}, "tibia": {"name": "right_rear_tibia", "length": 130.0}},
-        "left_rear": {"mount_point": {"x": -65.0, "y": 90.0}, "base_angle": 3.141592653589793, "coxa": {"name": "left_rear_coxa", "length": 56.5}, "femur": {"name": "left_rear_femur", "length": 100.0}, "tibia": {"name": "left_rear_tibia", "length": 130.0}},
-        "left_middle": {"mount_point": {"x": -75.0, "y": 0.0}, "base_angle": 3.141592653589793, "coxa": {"name": "left_middle_coxa", "length": 56.5}, "femur": {"name": "left_middle_femur", "length": 100.0}, "tibia": {"name": "left_middle_tibia", "length": 130.0}},
-        "left_front": {"mount_point": {"x": -65.0, "y": -90.0}, "base_angle": 3.141592653589793, "coxa": {"name": "left_front_coxa", "length": 56.5}, "femur": {"name": "left_front_femur", "length": 100.0}, "tibia": {"name": "left_front_tibia", "length": 130.0}},
-        "right_front": {"mount_point": {"x": 65.0, "y": -90.0}, "base_angle": 0.0, "coxa": {"name": "right_front_coxa", "length": 56.5}, "femur": {"name": "right_front_femur", "length": 100.0}, "tibia": {"name": "right_front_tibia", "length": 130.0}},
+        "right_middle": {"mount_point": {"x": 75.0, "y": 0.0}, "base_angle": 0.0, "coxa": {"name": "right_middle_coxa", "length": 56.5}, "femur": {"name": "right_middle_femur", "length": 100.0}, "tibia": {"name": "right_middle_tibia", "length": 152.6}},
+        "right_rear": {"mount_point": {"x": 65.0, "y": 90.0}, "base_angle": 0.0, "coxa": {"name": "right_rear_coxa", "length": 56.5}, "femur": {"name": "right_rear_femur", "length": 100.0}, "tibia": {"name": "right_rear_tibia", "length": 152.6}},
+        "left_rear": {"mount_point": {"x": -65.0, "y": 90.0}, "base_angle": 3.141592653589793, "coxa": {"name": "left_rear_coxa", "length": 56.5}, "femur": {"name": "left_rear_femur", "length": 100.0}, "tibia": {"name": "left_rear_tibia", "length": 152.6}},
+        "left_middle": {"mount_point": {"x": -75.0, "y": 0.0}, "base_angle": 3.141592653589793, "coxa": {"name": "left_middle_coxa", "length": 56.5}, "femur": {"name": "left_middle_femur", "length": 100.0}, "tibia": {"name": "left_middle_tibia", "length": 152.6}},
+        "left_front": {"mount_point": {"x": -65.0, "y": -90.0}, "base_angle": 3.141592653589793, "coxa": {"name": "left_front_coxa", "length": 56.5}, "femur": {"name": "left_front_femur", "length": 100.0}, "tibia": {"name": "left_front_tibia", "length": 152.6}},
+        "right_front": {"mount_point": {"x": 65.0, "y": -90.0}, "base_angle": 0.0, "coxa": {"name": "right_front_coxa", "length": 56.5}, "femur": {"name": "right_front_femur", "length": 100.0}, "tibia": {"name": "right_front_tibia", "length": 152.6}},
     },
 }
 
@@ -445,8 +445,8 @@ class SimWebSocketServer:
                         phi = 2.0 * math.pi * (s / steps_per_cycle)
                         y = -stride_half * math.cos(phi)
                         z = -80.0 + (lift * math.sin(phi) if math.sin(phi) > 0 else 0.0)
-                        x = 150.0
-                        c_deg, f_deg, t_deg = calculate_leg_ik(x, y, z, coxa_len=56.5, femur_len=100.0, tibia_len=130.0)
+                        x = 230.0
+                        c_deg, f_deg, t_deg = calculate_leg_ik(x, y, z, coxa_len=56.5, femur_len=100.0, tibia_len=152.6)
                         self.joint_overrides[f"{leg_name}_coxa"] = round(c_deg, 2)
                         self.joint_overrides[f"{leg_name}_femur"] = round(f_deg, 2)
                         self.joint_overrides[f"{leg_name}_tibia"] = round(t_deg, 2)
@@ -614,8 +614,8 @@ def run_pybullet(gui=False, steps=240, walk=False, enable_ws=False, ws_port=8765
     plane_id = p.loadURDF("plane.urdf")
     p.changeDynamics(plane_id, -1, lateralFriction=1.2)
     
-    # Load Lasius URDF with initial drop height z = 0.12 m (120 mm)
-    start_pos = [0, 0, 0.12]
+    # Load Lasius URDF with initial drop height z = 0.095 m (95 mm, smooth settle into v2 stance)
+    start_pos = [0, 0, 0.095]
     start_orientation = p.getQuaternionFromEuler([0, 0, 0])
     
     print(f"Loading URDF: {URDF_PATH}")
@@ -668,7 +668,7 @@ def run_pybullet(gui=False, steps=240, walk=False, enable_ws=False, ws_port=8765
     coords_dict = gait.tick()
     for leg_id, (x, y, z) in coords_dict.items():
         prefix = leg_map[leg_id]
-        c_deg, f_deg, t_deg = calculate_leg_ik(x, y, z, coxa_len=56.5, femur_len=100.0, tibia_len=130.0)
+        c_deg, f_deg, t_deg = calculate_leg_ik(x, y, z, coxa_len=56.5, femur_len=100.0, tibia_len=152.6)
         p.resetJointState(robot_id, joint_indices[f"{prefix}_coxa"], math.radians(-c_deg))
         p.resetJointState(robot_id, joint_indices[f"{prefix}_femur"], math.radians(-f_deg))
         p.resetJointState(robot_id, joint_indices[f"{prefix}_tibia"], math.radians(t_deg + 90.0))
@@ -774,7 +774,7 @@ def run_pybullet(gui=False, steps=240, walk=False, enable_ws=False, ws_port=8765
                 for leg_id, (x, y, z) in coords_dict.items():
                     prefix = leg_map[leg_id]
                     try:
-                        c_deg, f_deg, t_deg = calculate_leg_ik(x, y, z, coxa_len=56.5, femur_len=100.0, tibia_len=130.0)
+                        c_deg, f_deg, t_deg = calculate_leg_ik(x, y, z, coxa_len=56.5, femur_len=100.0, tibia_len=152.6)
                         for j_name, base_deg in [("coxa", c_deg), ("femur", f_deg), ("tibia", t_deg)]:
                             servo_key = f"{prefix}_{j_name}"
                             j_idx = joint_indices[servo_key]
@@ -878,7 +878,7 @@ def run_pybullet(gui=False, steps=240, walk=False, enable_ws=False, ws_port=8765
             for leg_id, (x, y, z) in coords_dict.items():
                 prefix = leg_map[leg_id]
                 try:
-                    c_deg, f_deg, t_deg = calculate_leg_ik(x, y, z, coxa_len=56.5, femur_len=100.0, tibia_len=130.0)
+                    c_deg, f_deg, t_deg = calculate_leg_ik(x, y, z, coxa_len=56.5, femur_len=100.0, tibia_len=152.6)
                     for j_name, base_deg in [("coxa", c_deg), ("femur", f_deg), ("tibia", t_deg)]:
                         servo_key = f"{prefix}_{j_name}"
                         j_idx = joint_indices[servo_key]

@@ -12,7 +12,7 @@ geometry:
   limbs:
     coxa: 60.0    # Inner segment (Coxa)
     femur: 100.0  # Middle segment (Femur)
-    tibia: 130.0  # Outer segment (Tibia)
+    tibia: 152.6  # Outer segment (Tibia v2 + straight Tarsus + compact Kufe sole)
 
   # Chassis dimensions (mount points for the Coxa servos in mm)
   chassis:
@@ -20,11 +20,11 @@ geometry:
     width_middle: 150.0                # Distance between left & right coxa axes (middle)
     axis_distance_longitudinal: 90.0   # Distance along Y-axis between front-to-middle and middle-to-rear
 
-  # Default stance parameters (in mm)
+  # Default stance parameters (in mm) — v2 bionic ant stance (Femur +27.8 deg, Tibia 56.1 deg)
   default_stance:
     ground_clearance: 80.0             # Default body height above ground
     foot_radius_offset: 120.0          # Neutral foot radius from coxa joint
-    default_x: 160.0                   # Default radial reach X in leg frame
+    default_x: 230.0                   # Default radial reach X in leg frame (angled Tibia for reliable Tarsus switch trigger)
 
 
 # ==============================================================================

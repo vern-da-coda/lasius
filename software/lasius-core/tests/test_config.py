@@ -43,7 +43,7 @@ def test_load_default_config():
     geom = config.geometry
     assert geom.limbs.coxa == 60.0
     assert geom.limbs.femur == 100.0
-    assert geom.limbs.tibia == 130.0
+    assert geom.limbs.tibia == 152.6
 
     # Verify chassis dimensions
     assert geom.chassis.width_front_rear == 130.0

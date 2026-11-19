@@ -184,7 +184,7 @@ class OrderDispatcher:
         ):
             ds = self.robot.config.geometry.default_stance
             return float(ds.default_x), -abs(float(ds.ground_clearance))
-        return 160.0, -80.0
+        return 230.0, -80.0
 
     def _handle_immediate_command(self, order: Order, start_t: float) -> OrderResult:
         """Applies state changes immediately to server & robot locomotion."""

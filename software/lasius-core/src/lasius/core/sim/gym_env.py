@@ -173,7 +173,7 @@ class LasiusGymEnv(gym.Env):
         )
 
         # Robot URDF
-        start_pos = [0, 0, 0.120]
+        start_pos = [0, 0, 0.095]
         start_orn = p.getQuaternionFromEuler([0, 0, 0], physicsClientId=self.client_id)
         self.robot_id = p.loadURDF(
             self.urdf_path,
@@ -216,7 +216,7 @@ class LasiusGymEnv(gym.Env):
         for leg_id, prefix in LEG_ORDER:
             x, y, z = coords[leg_id]
             c_deg, f_deg, t_deg = calculate_leg_ik(
-                x, y, z, coxa_len=56.5, femur_len=100.0, tibia_len=130.0
+                x, y, z, coxa_len=56.5, femur_len=100.0, tibia_len=152.6
             )
             self.nominal_standing_angles[idx] = math.radians(-c_deg)
             self.nominal_standing_angles[idx + 1] = math.radians(-f_deg)
@@ -255,9 +255,9 @@ class LasiusGymEnv(gym.Env):
         self.gait.turn_z = float(self.current_cmd[2]) / 0.50  # Normalized yaw turn
         self.gait.tick_counter = 0
 
-        # Reset robot position & orientation with slight noise
+        # Reset robot position & orientation with slight noise (v2 ant stance standing height ~0.093 m)
         pos_noise = self.np_random.uniform(-0.01, 0.01, size=2)
-        start_pos = [pos_noise[0], pos_noise[1], 0.161]
+        start_pos = [pos_noise[0], pos_noise[1], 0.095]
         yaw_noise = self.np_random.uniform(-0.1, 0.1)
         start_orn = p.getQuaternionFromEuler([0, 0, yaw_noise], physicsClientId=self.client_id)
         p.resetBasePositionAndOrientation(
@@ -295,7 +295,7 @@ class LasiusGymEnv(gym.Env):
             for leg_id, prefix in LEG_ORDER:
                 x, y, z = coords[leg_id]
                 c_deg, f_deg, t_deg = calculate_leg_ik(
-                    x, y, z, coxa_len=56.5, femur_len=100.0, tibia_len=130.0
+                    x, y, z, coxa_len=56.5, femur_len=100.0, tibia_len=152.6
                 )
                 nominal_angles[idx] = math.radians(-c_deg)
                 nominal_angles[idx + 1] = math.radians(-f_deg)
@@ -414,8 +414,8 @@ class LasiusGymEnv(gym.Env):
         tilt_sq = rpy[0] ** 2 + rpy[1] ** 2
         r_upright = math.exp(-tilt_sq / 0.05)
 
-        # 4. Height maintenance: target standing height ~0.161 m
-        z_err_sq = (pos[2] - 0.161) ** 2
+        # 4. Height maintenance: target standing height ~0.093 m (v2 bionic ant stance, 75 mm belly clearance)
+        z_err_sq = (pos[2] - 0.093) ** 2
         r_height = math.exp(-z_err_sq / 0.002)
 
         # 5. Action smoothness penalty: ||a_t - a_{t-1}||^2
@@ -454,7 +454,7 @@ class LasiusGymEnv(gym.Env):
         pos, orn = p.getBasePositionAndOrientation(self.robot_id, physicsClientId=self.client_id)
         rpy = p.getEulerFromQuaternion(orn)
 
-        chassis_drop = pos[2] < 0.09  # Robot chassis dragging on ground
+        chassis_drop = pos[2] < 0.040  # Robot belly pan dragging on ground
         excessive_tilt = abs(rpy[0]) > 0.65 or abs(rpy[1]) > 0.65  # ~37 deg tilt
 
         terminated = chassis_drop or excessive_tilt

@@ -93,14 +93,15 @@ class OmniGait(GaitProtocol):
         LegIdentifier.RIGHT_REAR: -3.0 * math.pi / 4.0,# -135°
     }
 
-    # Natural neutral stances tailored to 6cm Coxa, 10cm Femur, 13cm Tibia
+    # Natural v2 bionic ant stances tailored to 56.5mm Coxa, 100mm Femur, 152.6mm Tibia+Tarsus
+    # Yields Femur +27.8 deg, Tibia 56.1 deg below horizontal (reliable Tarsus foot-switch trigger!)
     NEUTRAL_STANCES: Dict[LegIdentifier, Tuple[float, float, float]] = {
-        LegIdentifier.LEFT_FRONT: (160.0, 0.0, -80.0),
-        LegIdentifier.LEFT_MIDDLE: (160.0, 0.0, -80.0),
-        LegIdentifier.LEFT_REAR: (160.0, 0.0, -80.0),
-        LegIdentifier.RIGHT_FRONT: (160.0, 0.0, -80.0),
-        LegIdentifier.RIGHT_MIDDLE: (160.0, 0.0, -80.0),
-        LegIdentifier.RIGHT_REAR: (160.0, 0.0, -80.0),
+        LegIdentifier.LEFT_FRONT: (230.0, 0.0, -80.0),
+        LegIdentifier.LEFT_MIDDLE: (230.0, 0.0, -80.0),
+        LegIdentifier.LEFT_REAR: (230.0, 0.0, -80.0),
+        LegIdentifier.RIGHT_FRONT: (230.0, 0.0, -80.0),
+        LegIdentifier.RIGHT_MIDDLE: (230.0, 0.0, -80.0),
+        LegIdentifier.RIGHT_REAR: (230.0, 0.0, -80.0),
     }
 
     # Gait timing configurations: (swing_duration_fraction, phase_offsets_per_leg)

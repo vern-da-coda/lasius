@@ -30,7 +30,7 @@ class LimbConfig:
     """
     coxa: float = 60.0
     femur: float = 100.0
-    tibia: float = 130.0
+    tibia: float = 152.6
 
 
 @dataclass
@@ -67,7 +67,7 @@ class DefaultStanceConfig:
     """
     ground_clearance: float = 80.0
     foot_radius_offset: float = 120.0
-    default_x: float = 160.0
+    default_x: float = 230.0
 
 
 @dataclass
@@ -157,7 +157,7 @@ def load_config(config_path: Optional[Path] = None, apply_overlay: bool = True) 
     limbs = LimbConfig(
         coxa=float(limbs_data.get("coxa", 60.0)),
         femur=float(limbs_data.get("femur", 100.0)),
-        tibia=float(limbs_data.get("tibia", 130.0)),
+        tibia=float(limbs_data.get("tibia", 152.6)),
     )
     chassis = ChassisConfig(
         width_front_rear=float(chassis_data.get("width_front_rear", 130.0)),
@@ -167,7 +167,7 @@ def load_config(config_path: Optional[Path] = None, apply_overlay: bool = True) 
     default_stance = DefaultStanceConfig(
         ground_clearance=float(stance_data.get("ground_clearance", 80.0)),
         foot_radius_offset=float(stance_data.get("foot_radius_offset", 120.0)),
-        default_x=float(stance_data.get("default_x", 160.0)),
+        default_x=float(stance_data.get("default_x", 230.0)),
     )
     geometry = GeometryConfig(
         limbs=limbs,
