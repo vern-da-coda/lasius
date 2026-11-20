@@ -162,8 +162,8 @@
   <link name="link_lf_femur">
     <inertial>
       <origin xyz="0.050000 0.000000 0.000000" rpy="0 0 0"/>
-      <mass value="0.082189"/>
-      <inertia ixx="5.66074394e-05" iyy="1.28126341e-04" izz="1.65376345e-04" ixy="0.00000000e+00" ixz="0.00000000e+00" iyz="0.00000000e+00"/>
+      <mass value="0.082095"/>
+      <inertia ixx="5.66040690e-05" iyy="1.28085675e-04" izz="1.65334209e-04" ixy="0.00000000e+00" ixz="0.00000000e+00" iyz="0.00000000e+00"/>
     </inertial>
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>
@@ -320,8 +320,8 @@
   <link name="link_lm_femur">
     <inertial>
       <origin xyz="0.050000 0.000000 0.000000" rpy="0 0 0"/>
-      <mass value="0.082189"/>
-      <inertia ixx="5.66074394e-05" iyy="1.28126341e-04" izz="1.65376345e-04" ixy="0.00000000e+00" ixz="0.00000000e+00" iyz="0.00000000e+00"/>
+      <mass value="0.082095"/>
+      <inertia ixx="5.66040690e-05" iyy="1.28085675e-04" izz="1.65334209e-04" ixy="0.00000000e+00" ixz="0.00000000e+00" iyz="0.00000000e+00"/>
     </inertial>
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>
@@ -478,8 +478,8 @@
   <link name="link_lr_femur">
     <inertial>
       <origin xyz="0.050000 0.000000 0.000000" rpy="0 0 0"/>
-      <mass value="0.082189"/>
-      <inertia ixx="5.66074394e-05" iyy="1.28126341e-04" izz="1.65376345e-04" ixy="0.00000000e+00" ixz="0.00000000e+00" iyz="0.00000000e+00"/>
+      <mass value="0.082095"/>
+      <inertia ixx="5.66040690e-05" iyy="1.28085675e-04" izz="1.65334209e-04" ixy="0.00000000e+00" ixz="0.00000000e+00" iyz="0.00000000e+00"/>
     </inertial>
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>
@@ -636,8 +636,8 @@
   <link name="link_rf_femur">
     <inertial>
       <origin xyz="0.050000 0.000000 0.000000" rpy="0 0 0"/>
-      <mass value="0.082189"/>
-      <inertia ixx="5.66074394e-05" iyy="1.28126341e-04" izz="1.65376345e-04" ixy="0.00000000e+00" ixz="0.00000000e+00" iyz="0.00000000e+00"/>
+      <mass value="0.082095"/>
+      <inertia ixx="5.66040690e-05" iyy="1.28085675e-04" izz="1.65334209e-04" ixy="0.00000000e+00" ixz="0.00000000e+00" iyz="0.00000000e+00"/>
     </inertial>
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>
@@ -794,8 +794,8 @@
   <link name="link_rm_femur">
     <inertial>
       <origin xyz="0.050000 0.000000 0.000000" rpy="0 0 0"/>
-      <mass value="0.082189"/>
-      <inertia ixx="5.66074394e-05" iyy="1.28126341e-04" izz="1.65376345e-04" ixy="0.00000000e+00" ixz="0.00000000e+00" iyz="0.00000000e+00"/>
+      <mass value="0.082095"/>
+      <inertia ixx="5.66040690e-05" iyy="1.28085675e-04" izz="1.65334209e-04" ixy="0.00000000e+00" ixz="0.00000000e+00" iyz="0.00000000e+00"/>
     </inertial>
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>
@@ -952,8 +952,8 @@
   <link name="link_rr_femur">
     <inertial>
       <origin xyz="0.050000 0.000000 0.000000" rpy="0 0 0"/>
-      <mass value="0.082189"/>
-      <inertia ixx="5.66074394e-05" iyy="1.28126341e-04" izz="1.65376345e-04" ixy="0.00000000e+00" ixz="0.00000000e+00" iyz="0.00000000e+00"/>
+      <mass value="0.082095"/>
+      <inertia ixx="5.66040690e-05" iyy="1.28085675e-04" izz="1.65334209e-04" ixy="0.00000000e+00" ixz="0.00000000e+00" iyz="0.00000000e+00"/>
     </inertial>
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>

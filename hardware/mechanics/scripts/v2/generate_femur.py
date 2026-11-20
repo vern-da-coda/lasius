@@ -27,6 +27,7 @@ print("--- Generating Lasius Organic Femur with Encapsulated ADS1115 Chamber ---
 repo_root = "/home/bjoern/Workspace/Hexapods/lasius"
 models_dir = f"{repo_root}/hardware/mechanics/models/custom/v2/parts/femur"
 cots_dir = f"{repo_root}/hardware/mechanics/models/cots"
+DO_EXPORT = ("--export" in sys.argv)
 export_step_dir = f"{repo_root}/hardware/mechanics/export/step/custom/v2/parts/femur"
 export_stl_dir = f"{repo_root}/hardware/mechanics/export/stl/custom/v2/parts/femur"
 
@@ -499,13 +500,30 @@ def build_femur_shapes():
     tunnel_right = make_cable_tunnel_x(65.0, 75.0, Y_mid, -1.0, width_y=14.0, height_z=7.0)
     base_solid = base_solid.cut(tunnel_left).cut(tunnel_right)
 
-    # Station 2: Integrated Micro-Zip-Tie Saddles in Tunnel Floors (for 2.5 mm cable ties)
-    # Left (proximal Coxa side): X = 28.5 & 31.5 mm, Y centered on Y_mid
-    s_femur_l1 = Part.makeBox(1.30, 2.80, 10.0, App.Vector(28.5, Y_mid - 1.40, -10.0))
-    s_femur_l2 = Part.makeBox(1.30, 2.80, 10.0, App.Vector(31.5, Y_mid - 1.40, -10.0))
-    # Right (distal Knee side): X = 68.5 & 71.5 mm, Y centered on Y_mid
-    s_femur_r1 = Part.makeBox(1.30, 2.80, 10.0, App.Vector(68.5, Y_mid - 1.40, -10.0))
-    s_femur_r2 = Part.makeBox(1.30, 2.80, 10.0, App.Vector(71.5, Y_mid - 1.40, -10.0))
+    # Smooth chafe-prevention lead-in fillets (R = 1.50 mm >= 1.0 mm) on ALL 4 cable tunnel mouths
+    # (X = 26.00 & 74.00 at Hip/Knee U-openings; X = 33.50 & 66.50 inside the ADS1115 chamber):
+    mouth_xs = (26.00, 33.50, 66.50, 74.00)
+    tunnel_mouth_edges = []
+    for e in base_solid.Edges:
+        bb = e.BoundBox
+        if abs(bb.XMax - bb.XMin) < 0.05 and any(abs(bb.XMin - mx) < 0.08 for mx in mouth_xs):
+            if (bb.YMin >= Y_mid - 7.15 and bb.YMax <= Y_mid + 7.15 and
+                    bb.ZMin >= -4.65 and bb.ZMax <= 2.65):
+                tunnel_mouth_edges.append(e)
+    print(f"  Applying R = 1.50 mm chafe-prevention fillets to {len(tunnel_mouth_edges)} cable tunnel mouth edges...")
+    assert len(tunnel_mouth_edges) >= 16, f"Expected >= 16 tunnel mouth edges (4x4 stadium loops), got {len(tunnel_mouth_edges)}"
+    filleted = base_solid.makeFillet(1.50, tunnel_mouth_edges)
+    assert filleted.isValid() and len(filleted.Solids) == 1, "Cable tunnel mouth fillet produced invalid solid!"
+    base_solid = filleted
+
+    # Station 2: Integrated Micro-Zip-Tie Saddles centered in Tunnel Floors (for 2.5 mm cable ties)
+    # Centered symmetrically in each 7.50 mm bulkhead (leaving >= 1.70 mm clear of R = 1.50 mm mouth fillets!):
+    # Left (proximal Coxa side, X in [26.0, 33.5]): X = 28.0..29.3 & 30.5..31.8 mm
+    s_femur_l1 = Part.makeBox(1.30, 2.80, 10.0, App.Vector(28.0, Y_mid - 1.40, -10.0))
+    s_femur_l2 = Part.makeBox(1.30, 2.80, 10.0, App.Vector(30.5, Y_mid - 1.40, -10.0))
+    # Right (distal Knee side, X in [66.5, 74.0]): X = 68.2..69.5 & 70.7..72.0 mm
+    s_femur_r1 = Part.makeBox(1.30, 2.80, 10.0, App.Vector(68.2, Y_mid - 1.40, -10.0))
+    s_femur_r2 = Part.makeBox(1.30, 2.80, 10.0, App.Vector(70.7, Y_mid - 1.40, -10.0))
     base_solid = base_solid.cut(s_femur_l1).cut(s_femur_l2).cut(s_femur_r1).cut(s_femur_r2)
 
     base_solid = base_solid.removeSplitter()
@@ -518,8 +536,9 @@ if __name__ in ("__main__", "generate_femur"):
     print(f"Femur_Body Valid: {femur_body.isValid()}, Volume: {femur_body.Volume:.1f} mm^3, BB: {femur_body.BoundBox}")
 
     os.makedirs(models_dir, exist_ok=True)
-    os.makedirs(export_step_dir, exist_ok=True)
-    os.makedirs(export_stl_dir, exist_ok=True)
+    if DO_EXPORT:
+        os.makedirs(export_step_dir, exist_ok=True)
+        os.makedirs(export_stl_dir, exist_ok=True)
 
     try:
         App.closeDocument("femur")
@@ -539,10 +558,11 @@ if __name__ in ("__main__", "generate_femur"):
     doc.saveAs(fcstd_femur_path)
     print(f"Saved FreeCAD model: {fcstd_femur_path}")
 
-    femur_body.exportStep(step_femur_path)
-    femur_body.exportStl(stl_femur_path)
-    print(f"Exported STEP: {step_femur_path}")
-    print(f"Exported STL:  {stl_femur_path}")
+    if DO_EXPORT:
+        femur_body.exportStep(step_femur_path)
+        femur_body.exportStl(stl_femur_path)
+        print(f"Exported STEP: {step_femur_path}")
+        print(f"Exported STL:  {stl_femur_path}")
 
     App.closeDocument("femur")
     print("✔ Femur Monolithic Bone Generation Complete")

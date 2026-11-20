@@ -26,15 +26,10 @@ Dieser Backlog führt alle offenen Aufgaben, konstruktiven Erweiterungen und Ver
       1. `Femur_Cover_Frame`: Graphitschwarz PETG, bündig zur Oberschalen-Taillierung, 4× M2-Senkkopfverschraubung, $1.5\,\text{mm}$ Dichtlippen-Ring, zentrale Haltefassung.
       2. `Femur_Canopy`: Eisblau-Transluzent (55 % Alpha) Acryl-/Plexiglas-Optik, aerodynamisch doppelt gekrümmter Loft analog [`chassis_canopy.FCStd`](parts/chassis/chassis_canopy.FCStd), 3 bionische $45^\circ$-Chevron-Kühlschlitze (`>>>`).
     * Fertigungsexporte: `femur_cover_frame.stl`, `femur_canopy.stl`, `femur_cover.stl`, `femur.step`.
-- [ ] **Kantenverrundung an den Kabeldurchführungen:**  
-  * Ein- und Auslässe der beiden horizontalen Kabeltunnels ($14 \times 7\,\text{mm}$) zu den Hüft- und Knie-U-Mäulern mit vergrößerten Einlauffasen/Fillets ($R \ge 1.0\,\text{mm}$) versehen, um Scheuern der Servolitzen im Dauerbetrieb zu verhindern.
-- [ ] **Servohorn-Integration / Einlassen in die Femur-Wange:**  
-  * **Fragestellung:** Prüfen, ob die Metall-Servohörner (25T Standard) an den beiden U-Mäulern (Hüft- und Kniegelenk) formschlüssig in die innere Femur-Wange eingelassen (versenkt) werden sollten.
-  * **Vorteile:**
-    * Formschlüssige Drehmomentübertragung entlastet die M2-Befestigungsschrauben von Scherkräften.
-    * Bündiger Abschluss ohne zusätzlichen axialen Bauraumbedarf in Y-Richtung ($Y = 29.30\,\text{mm}$ Anlageebene).
-  * **Zu prüfen:** Verbleibende Restwandstärke der vorderen Wange ($Y_{\text{front\_seat}} = 33.30\,\text{mm}$ bis $Y_{\text{front\_out}} = 35.30\,\text{mm}$) bei z. B. $1.5 - 2.0\,\text{mm}$ Einlasstiefe für das Horn.
-  * **Betroffener Code:** [`generate_femur.py`](../../../scripts/v2/generate_femur.py) (Abschnitt `Cut the Two U-Openings`).
+- [x] **Kantenverrundung an den Kabeldurchführungen:**  
+  * **Umgesetzt in [`generate_femur.py`](../../../scripts/v2/generate_femur.py):** Alle 4 Stadion-Mündungen der horizontalen Kabeltunnels ($14 \times 7\,\text{mm}$ bei $X = 26{,}0 / 33{,}5$ und $66{,}5 / 74{,}0\,\text{mm}$, insgesamt 16 Kanten) sind mit **$R = 1{,}50\,\text{mm}$ Einlauffillets** verrundet; Kabelbinder-Sättel mittig in den $7{,}5\,\text{mm}$-Schotten zentriert ($\ge 1{,}70\,\text{mm}$ Abstand zu den Fillets).
+- [x] **Servohorn-Integration / Einlassen in die Femur-Wange:**  
+  * **Bereits umgesetzt & verifiziert in [`generate_femur.py`](../../../scripts/v2/generate_femur.py):** Beide vorderen U-Mäuler (Hüfte $X = 0$, Knie $X = 100$) besitzen formschlüssige $\varnothing 25{,}30\,\text{mm}$ Kreistaschen ($R = 12{,}65\,\text{mm}$, Einlasstiefe $2{,}30\,\text{mm}$ von $Y = 27{,}00$ bis $29{,}30\,\text{mm}$) mit massiver Restwandstärke von **$3{,}70\,\text{mm}$** ($2{,}20\,\text{mm}$ unter den M2-Senkungen) sowie $0{,}0000\,\text{mm}^3$ Kollision in `leg_assembly.FCStd` / `leg_right_assembly.FCStd`.
 - [ ] **Deckelpassung (`Femur_Cover`):**  
   * Reale Spaltmaße nach Testdruck verifizieren; Passung der 4× M2-Senkkopfschrauben mit Senkung im Deckel und Pilotlöchern im Gehäuse prüfen.
 
