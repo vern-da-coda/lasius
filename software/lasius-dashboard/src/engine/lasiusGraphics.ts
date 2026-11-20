@@ -662,7 +662,8 @@ export class LasiusGraphicsEngine {
     for (const legName in layout.legs) {
       const coxaGroup = this.createCoxaGroup();
       const femurGroup = this.createFemurGroup();
-      const tibiaGroup = this.createTibiaGroup();
+      const tibiaLen = layout.legs[legName]?.tibia?.length ?? TIBIA_SPECS.kinematicLength;
+      const tibiaGroup = this.createTibiaGroup(tibiaLen);
 
       [coxaGroup, femurGroup, tibiaGroup].forEach(g => {
         g.traverse(child => {
@@ -854,11 +855,13 @@ export class LasiusGraphicsEngine {
     return group;
   }
 
-  private createTibiaGroup(): THREE.Group {
+  private createTibiaGroup(tibiaLen = TIBIA_SPECS.kinematicLength): THREE.Group {
     const group = new THREE.Group();
 
-    // 7.0 mm solid sickle claw limb with internal weight-reduction cutout
+    // 7.0 mm solid sickle claw limb with internal weight-reduction cutout, scaled to effective kinematic length
     const blade = new THREE.Mesh(this.sharedTibiaGeo, this.legNeutralMat);
+    const lenScale = tibiaLen / TIBIA_SPECS.kinematicLength;
+    blade.scale.set(1.0, lenScale, 1.0);
     blade.userData = { jointType: 'tibia' };
     group.add(blade);
 

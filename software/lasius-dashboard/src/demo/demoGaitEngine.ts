@@ -53,15 +53,15 @@ export const DEFAULT_MOUNT_POINTS: Record<LegKey, MountPoint> = {
 
 /**
  * Natural neutral standing foot coordinates (mm) in local leg frames.
- * Tailored for 60 mm Coxa, 100 mm Femur, 130 mm Tibia at -80 mm ground clearance.
+ * Tailored for v2 bionic ant stance (60 mm Coxa, 100 mm Femur, 152.6 mm Tibia) at -80 mm ground clearance.
  */
 export const DEFAULT_NEUTRAL_STANCES: Record<LegKey, LegStance> = {
-  left_front: { x: 160.0, y: 0.0, z: -80.0 },
-  left_middle: { x: 160.0, y: 0.0, z: -80.0 },
-  left_rear: { x: 160.0, y: 0.0, z: -80.0 },
-  right_front: { x: 160.0, y: 0.0, z: -80.0 },
-  right_middle: { x: 160.0, y: 0.0, z: -80.0 },
-  right_rear: { x: 160.0, y: 0.0, z: -80.0 }
+  left_front: { x: 230.0, y: 0.0, z: -80.0 },
+  left_middle: { x: 230.0, y: 0.0, z: -80.0 },
+  left_rear: { x: 230.0, y: 0.0, z: -80.0 },
+  right_front: { x: 230.0, y: 0.0, z: -80.0 },
+  right_middle: { x: 230.0, y: 0.0, z: -80.0 },
+  right_rear: { x: 230.0, y: 0.0, z: -80.0 }
 };
 
 /**
@@ -126,7 +126,7 @@ export const GAIT_CONFIGS: Record<GaitPattern, GaitTimingConfig> = {
  *   z: Foot tip Z-coordinate relative to leg origin (mm, typically negative when touching ground).
  *   coxaLen: Coxa link length (default 60 mm).
  *   femurLen: Femur link length (default 100 mm).
- *   tibiaLen: Tibia link length (default 130 mm).
+ *   tibiaLen: Tibia link length (default 152.6 mm v2).
  *
  * Returns:
  *   { coxa, femur, tibia } angles in degrees.
@@ -137,7 +137,7 @@ export function calculateLegIK(
   z: number,
   coxaLen = 60.0,
   femurLen = 100.0,
-  tibiaLen = 130.0
+  tibiaLen = 152.6
 ): JointAngles {
   // 1. Coxa Angle (Top-down view)
   const coxa = (Math.atan2(y, x) * 180) / Math.PI;
@@ -225,7 +225,7 @@ export class DemoGaitEngine {
   public neutralStances: Record<LegKey, LegStance> = { ...DEFAULT_NEUTRAL_STANCES };
   public coxaLen = 60.0;
   public femurLen = 100.0;
-  public tibiaLen = 130.0;
+  public tibiaLen = 152.6;
   private layout: RobotLayout = DEFAULT_ROBOT_LAYOUT;
 
   constructor(layout?: RobotLayout) {

@@ -3,9 +3,10 @@
  *
  * Purpose & Role:
  *   Provides the canonical fallback `DEFAULT_ROBOT_LAYOUT` (60 mm Coxa, 100 mm Femur,
- *   130 mm Tibia; 130 mm front/rear width, 150 mm middle width, 90 mm longitudinal
- *   axis spacing) so the 3D Digital Twin and 2D orthographic projections can render
- *   immediately even before the WebSocket `layout` message arrives from `LasiusServer`.
+ *   152.6 mm v2 Tibia + Tarsus Kufe; 130 mm front/rear width, 150 mm middle width,
+ *   90 mm longitudinal axis spacing) so the 3D Digital Twin and 2D orthographic
+ *   projections can render immediately even before the WebSocket `layout` message
+ *   arrives from `LasiusServer`.
  */
 import type { RobotLayout } from '@/types';
 
@@ -29,44 +30,44 @@ export const DEFAULT_ROBOT_LAYOUT: RobotLayout = {
     right_middle: {
       mount_point: { x: 75.0, y: 0.0 },
       base_angle: 0.0,
-      coxa: { name: 'right_middle_coxa', length: 60.0, channel: 6 },
-      femur: { name: 'right_middle_femur', length: 100.0, channel: 7 },
-      tibia: { name: 'right_middle_tibia', length: 130.0, channel: 8 }
+      coxa: { name: 'right_middle_coxa', length: 60.0, channel: 4 },
+      femur: { name: 'right_middle_femur', length: 100.0, channel: 5 },
+      tibia: { name: 'right_middle_tibia', length: 152.6, channel: 6 }
     },
     right_rear: {
       mount_point: { x: 65.0, y: 86.0 },
       base_angle: 0.7853981633974483,
-      coxa: { name: 'right_rear_coxa', length: 60.0, channel: 3 },
-      femur: { name: 'right_rear_femur', length: 100.0, channel: 4 },
-      tibia: { name: 'right_rear_tibia', length: 130.0, channel: 5 }
+      coxa: { name: 'right_rear_coxa', length: 60.0, channel: 8 },
+      femur: { name: 'right_rear_femur', length: 100.0, channel: 9 },
+      tibia: { name: 'right_rear_tibia', length: 152.6, channel: 10 }
     },
     left_rear: {
       mount_point: { x: -65.0, y: 86.0 },
       base_angle: 2.356194490192345,
-      coxa: { name: 'left_rear_coxa', length: 60.0, channel: 9 },
-      femur: { name: 'left_rear_femur', length: 100.0, channel: 10 },
-      tibia: { name: 'left_rear_tibia', length: 130.0, channel: 11 }
+      coxa: { name: 'left_rear_coxa', length: 60.0, channel: 8 },
+      femur: { name: 'left_rear_femur', length: 100.0, channel: 9 },
+      tibia: { name: 'left_rear_tibia', length: 152.6, channel: 10 }
     },
     left_middle: {
       mount_point: { x: -75.0, y: 0.0 },
       base_angle: 3.141592653589793,
-      coxa: { name: 'left_middle_coxa', length: 60.0, channel: 12 },
-      femur: { name: 'left_middle_femur', length: 100.0, channel: 13 },
-      tibia: { name: 'left_middle_tibia', length: 130.0, channel: 14 }
+      coxa: { name: 'left_middle_coxa', length: 60.0, channel: 4 },
+      femur: { name: 'left_middle_femur', length: 100.0, channel: 5 },
+      tibia: { name: 'left_middle_tibia', length: 152.6, channel: 6 }
     },
     left_front: {
       mount_point: { x: -65.0, y: -86.0 },
       base_angle: 3.9269908169872414,
-      coxa: { name: 'left_front_coxa', length: 60.0, channel: 15 },
-      femur: { name: 'left_front_femur', length: 100.0, channel: 16 },
-      tibia: { name: 'left_front_tibia', length: 130.0, channel: 17 }
+      coxa: { name: 'left_front_coxa', length: 60.0, channel: 0 },
+      femur: { name: 'left_front_femur', length: 100.0, channel: 1 },
+      tibia: { name: 'left_front_tibia', length: 152.6, channel: 2 }
     },
     right_front: {
       mount_point: { x: 65.0, y: -86.0 },
       base_angle: 5.497787143782138,
       coxa: { name: 'right_front_coxa', length: 60.0, channel: 0 },
       femur: { name: 'right_front_femur', length: 100.0, channel: 1 },
-      tibia: { name: 'right_front_tibia', length: 130.0, channel: 2 }
+      tibia: { name: 'right_front_tibia', length: 152.6, channel: 2 }
     }
   }
 };

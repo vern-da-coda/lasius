@@ -515,16 +515,23 @@ export const useDashboardStore = defineStore('dashboard', () => {
     showToast(`Auto-saved ${sName} limits: [${minAngle}°, ${maxAngle}°]`, 'success');
   }
 
+  function defaultJointLimits(jointType: JointName, servoName: string): { min: number; max: number } {
+    if (jointType === 'tibia') return { min: -68, max: 29 };
+    if (jointType === 'coxa') return { min: -25, max: servoName.includes('front') ? 35 : 25 };
+    return { min: -90, max: 90 };
+  }
+
   function applyLiveTrimAbsolute(jointType: JointName, targetOffset: number, notify = true) {
     const names = getLegServoNames(selectedLegKey.value);
     const sName = names[jointType];
     const clamped = Math.max(-1000, Math.min(1000, targetOffset));
+    const fallback = defaultJointLimits(jointType, sName);
     const sData = calibrationData.value[sName] || {
       name: sName,
       center_offset_pulse: 0,
       orientation: 1,
-      min_angle: jointType === 'tibia' ? -60 : -45,
-      max_angle: jointType === 'tibia' ? 60 : 45,
+      min_angle: fallback.min,
+      max_angle: fallback.max,
       is_overridden: true
     };
     sData.center_offset_pulse = clamped;
@@ -559,12 +566,13 @@ export const useDashboardStore = defineStore('dashboard', () => {
     const names = getLegServoNames(selectedLegKey.value);
     const sName = names[jointType];
     const newOrient = isInverted ? -1 : 1;
+    const fallback = defaultJointLimits(jointType, sName);
     const sData = calibrationData.value[sName] || {
       name: sName,
       center_offset_pulse: 0,
       orientation: 1,
-      min_angle: jointType === 'tibia' ? -60 : -45,
-      max_angle: jointType === 'tibia' ? 60 : 45,
+      min_angle: fallback.min,
+      max_angle: fallback.max,
       is_overridden: true
     };
     sData.orientation = newOrient;
@@ -587,8 +595,9 @@ export const useDashboardStore = defineStore('dashboard', () => {
     const names = getLegServoNames(selectedLegKey.value);
     const sName = names[jointType];
     const sData = calibrationData.value[sName] || {};
-    const minVal = sData.min_angle !== undefined ? sData.min_angle : (jointType === 'tibia' ? -60 : -45);
-    const maxVal = sData.max_angle !== undefined ? sData.max_angle : (jointType === 'tibia' ? 60 : 45);
+    const fallback = defaultJointLimits(jointType, sName);
+    const minVal = sData.min_angle !== undefined ? sData.min_angle : fallback.min;
+    const maxVal = sData.max_angle !== undefined ? sData.max_angle : fallback.max;
 
     sendCommand({
       action: 'sweep_joint',
@@ -603,8 +612,9 @@ export const useDashboardStore = defineStore('dashboard', () => {
     const names = getLegServoNames(selectedLegKey.value);
     const sName = names[jointType];
     const sData = calibrationData.value[sName] || {};
-    const minVal = sData.min_angle !== undefined ? sData.min_angle : (jointType === 'coxa' ? -45 : -90);
-    const maxVal = sData.max_angle !== undefined ? sData.max_angle : (jointType === 'coxa' ? 45 : 90);
+    const fallback = defaultJointLimits(jointType, sName);
+    const minVal = sData.min_angle !== undefined ? sData.min_angle : fallback.min;
+    const maxVal = sData.max_angle !== undefined ? sData.max_angle : fallback.max;
 
     sendCommand({
       action: 'sweep_joint',
