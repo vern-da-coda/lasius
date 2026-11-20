@@ -88,7 +88,7 @@ servos:
 
   - name: "left_rear_coxa"
     board_address: 0x40
-    channel: 9
+    channel: 8
     center_offset_pulse: 440  # Stance calibration: +40° forward clockwise
     pulse_range: 2000
     min_angle: -25  # Safe swing backward towards chassis
@@ -96,7 +96,7 @@ servos:
     orientation: 1  # Positive angle swings forward
   - name: "left_rear_femur"
     board_address: 0x40
-    channel: 10
+    channel: 9
     center_offset_pulse: 0
     pulse_range: 2000
     min_angle: -90
@@ -104,7 +104,7 @@ servos:
     orientation: 1
   - name: "left_rear_tibia"
     board_address: 0x40
-    channel: 11
+    channel: 10
     center_offset_pulse: -420  # Stance calibration: Outstretched knee extension (~+38°)
     pulse_range: 2000
     min_angle: -68

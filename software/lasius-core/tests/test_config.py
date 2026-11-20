@@ -74,6 +74,22 @@ def test_servo_mechanical_safety_limits():
             assert sc.max_angle <= 90.0
 
 
+def test_servo_channel_symmetry():
+    """Verifies symmetric 4-block PCA9685 allocation (CH0-2, CH4-6, CH8-10) on 0x40 and 0x42."""
+    config = load_config(apply_overlay=False)
+    by_name = {sc.name: sc for sc in config.servos}
+    expected = [
+        ("front", (0, 1, 2)),
+        ("middle", (4, 5, 6)),
+        ("rear", (8, 9, 10)),
+    ]
+    for side, board in [("left", 0x40), ("right", 0x42)]:
+        for row, (c_ch, f_ch, t_ch) in expected:
+            assert (by_name[f"{side}_{row}_coxa"].board_address, by_name[f"{side}_{row}_coxa"].channel) == (board, c_ch)
+            assert (by_name[f"{side}_{row}_femur"].board_address, by_name[f"{side}_{row}_femur"].channel) == (board, f_ch)
+            assert (by_name[f"{side}_{row}_tibia"].board_address, by_name[f"{side}_{row}_tibia"].channel) == (board, t_ch)
+
+
 def test_chassis_mount_points_calculation():
     """Tests chassis mount point coordinate generation."""
     chassis = ChassisConfig(

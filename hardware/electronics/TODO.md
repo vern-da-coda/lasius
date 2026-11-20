@@ -76,8 +76,8 @@ Dieses Dokument bündelt den aktuellen Testbench-Stand, Hardware-Befunde, das ve
 - [x] **WireViz-Diagramme (`.svg`, `.png`, `.html`, `.bom.tsv`) neu gebaut** (`cd hardware/electronics/wiring && uv run wireviz ...`).
 - [ ] **Detail-Dokumentation in `docs/` nachziehen:**  
   * [`docs/hardware/wiring_plan.md`](../../docs/hardware/wiring_plan.md) & [`docs/hardware/testbench_bringup_status.md`](../../docs/hardware/testbench_bringup_status.md) auf den aktuellen Testbench-Stand (Stufe 1–3 abgeschlossen, `V280`, `3,3 V / GND`-Verteilerschiene) aktualisieren.
-- [ ] **Kanal-Mapping `LR` zwischen Doku & Software vereinheitlichen:**  
-  * Diskrepanz zwischen [`config.yaml`](../../software/lasius-core/src/lasius/core/config.yaml) (`left_rear_*` auf `CH9–11`) und [`04_pca9685_servo_distribution.yml`](wiring/04_pca9685_servo_distribution.yml) (`LR` auf `CH8–10`) auflösen.
+- [x] **Kanal-Mapping `LR` zwischen Doku & Software vereinheitlichen:**  
+  * [`config.yaml`](../../software/lasius-core/src/lasius/core/config.yaml) (`left_rear_*` jetzt symmetrisch auf `CH8–10`, identisch zu `right_rear_*` & [`04_pca9685_servo_distribution.yml`](wiring/04_pca9685_servo_distribution.yml)) inklusive Regressionstest `test_servo_channel_symmetry()` in [`test_config.py`](../../software/lasius-core/tests/test_config.py) vereinheitlicht.
 
 ### AP 3: Hardware-Ausbau Testbench & Serienaufbau (18 DOF)
 - [ ] **Vollständiges Testbein (`LF` auf `CH0`) am Wandler aufbauen:**  

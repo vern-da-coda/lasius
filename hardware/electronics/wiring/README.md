@@ -97,7 +97,7 @@ Standardized wire color allocation across all WireViz harnesses and bench wiring
 * **4-Block Symmetry & Expansion Strategy:**
   * **Block 0 (Front):** `CH0` (Coxa), `CH1` (Femur), `CH2` (Tibia) for `LF`/`RF` — **`CH3` reserved at front** (Mandible Left / Right).
   * **Block 1 (Front-Mid):** `CH4` (Coxa), `CH5` (Femur), `CH6` (Tibia) for `LM`/`RM` — **`CH7` reserved near front** (Camera Turret Pan / Tilt).
-  * **Block 2 (Rear):** `CH8` (Coxa), `CH9` (Femur), `CH10` (Tibia) for `LR`/`RR` — **`CH11` spare**. *(Note: `config.yaml` currently maps `LR` to `CH9–11` and is tracked in [`../TODO.md`](../TODO.md) for unification with `CH8–10`).*
+  * **Block 2 (Rear):** `CH8` (Coxa), `CH9` (Femur), `CH10` (Tibia) for `LR`/`RR` — **`CH11` spare** *(synchronized across `Controller_Left`, `Controller_Right`, and [`config.yaml`](../../../software/lasius-core/src/lasius/core/config.yaml))*.
   * **Block 3 (Aux Reserve):** **`CH12–CH15` completely free** (4 spare channels per board).
 
 <p align="center">

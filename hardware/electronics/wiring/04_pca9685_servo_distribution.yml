@@ -26,7 +26,7 @@ connectors:
       - CH14_AUX_SPARE
       - CH15_AUX_SPARE
     color: BU
-    notes: "Last pin of each 4-block (CH3, CH7, CH11) + CH12-15 kept free. Note: config.yaml currently maps LR to CH9-11."
+    notes: "Last pin of each 4-block (CH3, CH7, CH11) + CH12-15 kept free. Symmetric 4-block layout synchronized with Controller_Right and config.yaml (CH8-10)."
 
   Controller_Right:
     type: Controller Right (PCA9685 Addr 0x42 via A1)
