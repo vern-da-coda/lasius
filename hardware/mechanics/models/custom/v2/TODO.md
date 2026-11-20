@@ -57,21 +57,20 @@ Dieser Backlog führt alle offenen Aufgaben, konstruktiven Erweiterungen und Ver
 
 ---
 
-## 3. Tibia (`parts/tibia/tibia.FCStd`)
+## 3. Tibia & Tarsus (`parts/tibia/tibia.FCStd` & `parts/tarsus/tarsus.FCStd`)
 
-- [x] **Bionischer Zwillings-Servokäfig & Mittige Kralle (Briefing-Update):**  
-  * **Status:** Erfolgreich implementiert in [`generate_tibia.py`](../../../scripts/v2/generate_tibia.py) und [`generate_tibia_assembly.py`](../../../scripts/v2/generate_tibia_assembly.py).
+- [x] **Bionischer Zwillings-Servokäfig, SVG-Tropfenfenster & Bajonett-Servicedeckel (Option 2c-V2):**  
+  * **Status:** Vollständig implementiert in [`generate_tibia.py`](../../../scripts/v2/generate_tibia.py), [`generate_tibia_assembly.py`](../../../scripts/v2/generate_tibia_assembly.py) und [`generate_tarsus_assembly.py`](../../../scripts/v2/generate_tarsus_assembly.py).
   * **Konstruktion:**
-    * **Zwillings-Servokäfig (Twin Servo Cage):** Vollständig analog zu Coxas Femur-Servokäfig ausgeführt ($R = 4{,}50\,\text{mm}$ Apex-Verrundung an der Nase, $w = 2{,}50\,\text{mm}$, $R = 1{,}40\,\text{mm}$ Warren-Truss-Fachwerkfenster, DIN 439 M4 Flachmutter-Gegenlagertasche bei $Z \in [-23{,}0, -20{,}0\,\text{mm}]$, erhabene Befestigungspads bei $Z = +7{,}00\,\text{mm}$).
-    * **Femur-Symmetrie:** Femur nimmt an beiden Enden (Hüfte $X = 0$, Knie $X = 100$) zwei identisch dimensionierte Servokäfige mit jeweils exakt $1{,}00\,\text{mm}$ symmetrischem Flankenspiel auf ($Y_{\text{leg}} \in [-21{,}0, +26{,}0\,\text{mm}]$ in $Y_{\text{femur}} \in [-22{,}0, +27{,}0\,\text{mm}]$).
-    * **Mittige Sichelkralle:** Die Sichelkralle ($7{,}00\,\text{mm}$ Wandstärke, $Z \in [-3{,}00, +4{,}00\,\text{mm}]$) ist exakt mittig ($Z_{\text{mid}} = +0{,}50\,\text{mm}$) auf der Rückseite des Servokäfigs positioniert.
-    * **Tropfenfenster geschlossen:** Das vordere Tropfenfenster wurde massiv verschlossen, wodurch vertikale Scherkräfte und Torsionsbelastungen optimal aufgenommen werden.
-    * **Sensorik & Fuß:** Taktiler Mikroschalter (Omron D2FC), Druckfeder mit Führungsstiften, Formschluss-Servicedeckel, Tarsus-Kipphebel und TPU-Löffelschuh voll integriert.
-    * **Verifikation:** $0{,}0000\,\text{mm}^3$ Kollisionen in `tibia_assembly.FCStd` sowie in `leg_assembly.FCStd` (Links) und `leg_right_assembly.FCStd` (Rechts).
-- [x] **Fußsensor-Integration (Omron D2F-L Mikroschalter):**  
-  * Vollständig parametrisiert und im kinematischen Hub-Sweep ($0{,}0^\circ$ bis $-5{,}0^\circ$) ohne Kollisionen verifiziert.
+    * **Zwillings-Servokäfig (Twin Servo Cage):** Vollständig analog zu Coxas Femur-Servokäfig ausgeführt ($w = 2{,}50\,\text{mm}$, $R = 1{,}40\,\text{mm}$ Warren-Truss-Fachwerkfenster, DIN 439 M4 Flachmutter-Gegenlagertasche).
+    * **Organisches SVG-Tropfenfenster:** Monolithisch in `Tibia_Body` platziert ($X \in [38{,}5, 75{,}4]\,\text{mm}, Y \in [29{,}4, 45{,}4]\,\text{mm}$); obere linke Deckelschraube entfällt zugunsten von 2 integrierten Formschluss-Bajonettlaschen + 2× M2 DIN 7991 Senkschrauben am konturierten `Tibia_Cover`.
+    * **Lastfreie Mikroschalter-Auslösung & Staub-Labyrinth:** Horizontaler $0^\circ$-Omron D2FC-F-K NC-Mikroschalter; breite flache Deckenanschläge oberhalb der Feder und zwischen Schalter & Achse nehmen 100 % der Federkraft auf (Mikroschalter-Auslösung als reiner Nebeneffekt), konzentrische Labyrinth-Dichtung über der Nabe, $90^\circ$-eckig geöffneter distaler Unterrand bis zur Unterkante.
+    * **Verstärkter Bionischer Tarsus & Schlanker Kufenschuh:** Gerader, ab der Pivot-Achse um $+20\,\%$ verstärkter Schaft ($6{,}68\,\text{g}$ PETG, $5{,}60\,\text{mm}$ flach druckbar), kompakter nach außen gekrümmter Kufenfuß mit schlankem Formschluss-Schuh (`tarsus_shoe.FCStd`, $8{,}60\,\text{mm}$ breit, $1{,}52\,\text{g}$), integrierter gefaster Federführungsstift ($\varnothing 2{,}90 \times 3{,}20\,\text{mm}$), effektive Knie-Sohlen-Länge $152{,}6\,\text{mm}$.
+    * **Verifikation:** $0{,}0000\,\text{mm}^3$ Kollisionen über alle Baugruppen und den gesamten $0{,}0^\circ\text{--}+5{,}0^\circ$ Hub-Sweep; 2nd-Order `C3D10` CalculiX-FEA bestanden (Tibia $S \ge 3{,}58$ selbst bei $25\,\text{N}$ Querstoß / Tropfenfenster $S = 25{,}0$ im Tripod; Tarsus $S = 4{,}57$ im Tripod-Stoß, $S_{\text{Schaft}} = 2{,}24$ bei $35\,\text{N}$ Extremstoß).
+- [x] **Fußsensor-Integration (Omron D2FC-F-K Mikroschalter):**  
+  * Vollständig parametrisiert und im kinematischen Hub-Sweep ($0{,}0^\circ$ bis $+5{,}0^\circ$) ohne Kollisionen verifiziert.
 - [x] **Kabelkanal Fußsensor $\rightarrow$ Kniegelenk:**  
-  * Interner $C^2$-glatter B-Spline-Kabelkanal ($\varnothing 2{,}60\,\text{mm}$) führt geschützt durch den dorsalen Krallenrücken direkt zum rückwärtigen Servokäfig-Schott.
+  * Interner $C^2$-glatter B-Spline-Kabelkanal ($\varnothing 2{,}40\,\text{mm}$ auf $Z = 8{,}20\,\text{mm}$) führt geschützt oberhalb des Tropfenfensters zum Knie-U-Ausschnitt.
 
 ---
 
@@ -88,8 +87,12 @@ Dieser Backlog führt alle offenen Aufgaben, konstruktiven Erweiterungen und Ver
     * *Drehmomentsicherung:* Hält die gedruckte SW 7.10 mm Sechskanttasche die DIN 439 Flachmutter beim Festziehen der M4-Schraube verdrehsicher fest?
     * *Axiales Lagerspiel & Freilauf:* Gewährleistet der Bundkragen ($R = 3.30\,\text{mm}$) und die 0.3 mm Passscheibe, dass nur der Innenring des Kugellagers geklemmt wird und das Gelenk leichtgängig dreht?
     * *Biegesteifigkeit unter Last:* Verzieht sich die Gegenlagerlasche bei dynamischer Gehbelastung, oder nimmt das 45°-Gusset die Axial- und Biegemomente steif auf?
-- [ ] **Bewegungsraum- und Kollisionsprüfung:**  
-  * Kinematischen Freigang der v2-Beinbaugruppe über den vollen Arbeitsbereich ($\pm 60^\circ$ Coxa, $\pm 60^\circ$ Femur, $\pm 60^\circ$ Tibia) auf Kollisionen zwischen Kabelbaum, Deckel und Chassis prüfen.
+- [x] **Bewegungsraum- und Kollisionsprüfung:**  
+  * **Verifiziert via [`check_workspace_collisions.py`](../../../../../scripts/dev/check_workspace_collisions.py)** im echten 3D-B-Rep über die komplette Kinematikkette:
+    * **Hüfte (Femur Pitch):** Kollisionsfrei über `[-95°, +95°]`.
+    * **Knie (Tibia Bend):** Kollisionsfrei über `[+19°, +122°]` (`103°` Hub; Software-Limits in [`config.yaml`](../../../../../software/lasius-core/src/lasius/core/config.yaml) mit `3°` Sicherheitsabstand auf `[-68°, +29°]` abgesichert).
+    * **Coxa-Yaw vs. Chassis (Canopy, Belly Pan, Core, Carbonplatten):** `FL [-61°, +65°]`, `ML/RL [-65°, +65°]` über Stance, HighLift (`+50°`) und LowReach (`-30°`).
+    * **Nachbarbeine (`FL↔ML`, `ML↔RL`):** Kollisionsfrei bis `±26°` gleichzeitig gegenläufig (`52°` Relativwinkel) → Coxa-Softlimits auf `-25°..+25°` (`FL/FR` `+35°` nach vorn für `WAVE_HELLO`) abgesichert.
 - [ ] **Generations-Vererbung & Link-Integrität (Chassis-Platten-Invariante):**  
   * **Hardware-Freeze:** Die beiden $2{,}0\,\text{mm}$ CFK-Carbonplatten ([`body_bottom.FCStd`](../../custom/v1/parts/body_bottom.FCStd) und [`body_top.FCStd`](../../custom/v1/parts/body_top.FCStd)) **existieren bereits als physische, fertig gefräste Hardware** und sind das **einzige Bauteil, das unverändert aus Generation `v1` in `v2` übernommen wird**.
   * Alle anderen v1-Eigenkonstruktionen (v1-Beine, v1-Spacers) sind obsolet und werden durch v2-Monolithe ersetzt.
@@ -279,11 +282,14 @@ Dieser Backlog führt alle offenen Aufgaben, konstruktiven Erweiterungen und Ver
     * *LF3 (Laterale Querlast, $F_y = +10\,\text{N}$):* $\sigma_{\text{max}} = 1{,}38\,\text{MPa}$, $u_{\text{max}} = 0{,}172\,\text{mm}$, Sicherheitsfaktor **$S = 32{,}59$**.
   * **Kollisions- & Schnittstellenprüfung:** 100 % kollisionsfrei ($0{,}0000\,\text{mm}^3$) in `leg_assembly.FCStd`, `leg_right_assembly.FCStd`, `body_assembly.FCStd` und `lasius_assembly.FCStd`. Alle 145 CAD-Links verifiziert.
 
-- [ ] **Topologieoptimierung weiterer Komponenten (`coxa.FCStd`, `tibia.FCStd`, `chassis_core.FCStd`):**  
+- [x] **FEA-Strukturverifikation von Tibia v2 & verstärktem Tarsus v2 (`tibia.FCStd`, `tarsus.FCStd`):**  
+  * **Verifiziert via [`fea_tibia_tarsus_verification.py`](../../../../../scripts/dev/fea_tibia_tarsus_verification.py)** (CalculiX 2nd-Order `C3D10`, Gmsh, automatisches `*CLOAD`-Audit):
+    * **`tibia.FCStd` ($53{,}54\,\text{g}$, $58.500$ Knoten):** Tripod `56°` ($20\,\text{N}$ mit echter $2{,}71\times$ Hebelkraft) $\sigma_{\text{max}} = 6{,}27\,\text{MPa}$ ($S = 7{,}18$), Tropfenfenster-Stege nur $1{,}80\,\text{MPa}$ ($S = 25{,}0$); Knie-Stall $S = 11{,}39$; $25\,\text{N}$ Extremstoß & $12\,\text{N}$ Querlast $S = 3{,}58$ (ohne Deckel).
+    * **`tarsus.FCStd` ($6{,}68\,\text{g}$, $+20\,\%$ Schaft, $13.911$ Knoten):** Tripod `56°` ($20\,\text{N}$) $\sigma_{\text{max}} = 9{,}85\,\text{MPa}$ ($S = 4{,}57$, Schaft $S = 5{,}95$); $35\,\text{N}$ Extremstoß ($4{,}5\times$ Stall) Schaft $S = 2{,}24$ / Peak $S = 1{,}71$; $12\,\text{N}$ Querlast $S_{\text{Schaft}} = 3{,}49$.
+
+- [ ] **Topologieoptimierung weiterer Komponenten (`coxa.FCStd`, `chassis_core.FCStd`):**  
   * **Coxa-Gelenk:**
     * FEM-Optimierung des $45^\circ$-A-Truss-Gussets zur Reduktion von Kerbspannungen an der Krafteinleitung vom Servohorn ins Gegenlager.
-  * **Tibia-Träger:**
-    * Topologische Verifikation des Warren-Fachwerks entlang der Seitenwangen; Lastpfadanalyse von der Kufen-Wippen-Achse bis zum Kniegelenkskopf.
   * **Chassis-Core-Monocoque (`chassis_core.FCStd`):**
     * Bionische Fachwerkfenster im Monocoque-Körper zwischen den 4 M3-Standoff-Pfeilern und den Seitenwänden.
 
