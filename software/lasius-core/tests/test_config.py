@@ -53,6 +53,25 @@ def test_load_default_config():
     # Verify default stance
     assert geom.default_stance.ground_clearance == 80.0
     assert geom.default_stance.foot_radius_offset == 120.0
+    assert geom.default_stance.default_x == 230.0
+
+
+def test_servo_mechanical_safety_limits():
+    """Verifies that all default servo soft limits stay inside 3D B-Rep verified mechanical stops."""
+    config = load_config(apply_overlay=False)
+    for sc in config.servos:
+        if sc.name.endswith("_tibia"):
+            assert sc.min_angle >= -68.0
+            assert sc.max_angle <= 29.0
+        elif sc.name.endswith("_coxa"):
+            assert sc.min_angle >= -25.0
+            if "front" in sc.name:
+                assert sc.max_angle <= 35.0
+            else:
+                assert sc.max_angle <= 25.0
+        elif sc.name.endswith("_femur"):
+            assert sc.min_angle >= -90.0
+            assert sc.max_angle <= 90.0
 
 
 def test_chassis_mount_points_calculation():

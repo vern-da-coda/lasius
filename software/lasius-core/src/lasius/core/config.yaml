@@ -32,13 +32,17 @@ geometry:
 # ==============================================================================
 servos:
   # --- Left Side (Board 0x40) ---
+  # Mechanical limits verified via 3D B-Rep workspace sweep (scripts/dev/check_workspace_collisions.py):
+  #   - Hip (Femur): clear [-95°, +95°] -> soft limit [-90°, +90°]
+  #   - Knee (Tibia): clear knee_bend [+19°, +122°] = tibia_angle [-71°, +32°] -> soft limit [-68°, +29°] (3° margin)
+  #   - Coxa Yaw: chassis clear >= ±61°, adjacent legs clear ±26° counter-yaw -> [-25°, +25°] (front +35° forward for WAVE_HELLO)
   - name: "left_front_coxa"
     board_address: 0x40
     channel: 0
     center_offset_pulse: 0
     pulse_range: 2000
-    min_angle: -45
-    max_angle: 45
+    min_angle: -25  # Safe backward swing clear of middle leg (contact @ ±27°)
+    max_angle: 35   # Forward swing clear of chassis (up to +61°) & WAVE_HELLO (+32°)
     orientation: 1
   - name: "left_front_femur"
     board_address: 0x40
@@ -53,8 +57,8 @@ servos:
     channel: 2
     center_offset_pulse: 0
     pulse_range: 2000
-    min_angle: -90
-    max_angle: 90
+    min_angle: -68  # 3° margin before mechanical extension stop (-72° / knee_bend +18°)
+    max_angle: 29   # 3° margin before mechanical tuck stop (+33° / knee_bend +123°)
     orientation: 1
 
   - name: "left_middle_coxa"
@@ -62,8 +66,8 @@ servos:
     channel: 4
     center_offset_pulse: 0
     pulse_range: 2000
-    min_angle: -45
-    max_angle: 45
+    min_angle: -25  # Safe swing clear of adjacent legs (contact @ ±27°)
+    max_angle: 25
     orientation: 1
   - name: "left_middle_femur"
     board_address: 0x40
@@ -78,8 +82,8 @@ servos:
     channel: 6
     center_offset_pulse: 0
     pulse_range: 2000
-    min_angle: -90
-    max_angle: 90
+    min_angle: -68
+    max_angle: 29
     orientation: 1
 
   - name: "left_rear_coxa"
@@ -88,7 +92,7 @@ servos:
     center_offset_pulse: 440  # Stance calibration: +40° forward clockwise
     pulse_range: 2000
     min_angle: -25  # Safe swing backward towards chassis
-    max_angle: 25   # Safe swing forward
+    max_angle: 25   # Safe swing forward clear of middle leg
     orientation: 1  # Positive angle swings forward
   - name: "left_rear_femur"
     board_address: 0x40
@@ -103,8 +107,8 @@ servos:
     channel: 11
     center_offset_pulse: -420  # Stance calibration: Outstretched knee extension (~+38°)
     pulse_range: 2000
-    min_angle: -90
-    max_angle: 90
+    min_angle: -68
+    max_angle: 29
     orientation: 1
 
   # --- Right Side (Board 0x42) ---
@@ -113,8 +117,8 @@ servos:
     channel: 0
     center_offset_pulse: 0
     pulse_range: 2000
-    min_angle: -45
-    max_angle: 45
+    min_angle: -25  # Safe backward swing clear of middle leg (contact @ ±27°)
+    max_angle: 35   # Forward swing clear of chassis & WAVE_HELLO (+32°)
     orientation: -1 # Right side is often mirrored
   - name: "right_front_femur"
     board_address: 0x42
@@ -129,8 +133,8 @@ servos:
     channel: 2
     center_offset_pulse: 0
     pulse_range: 2000
-    min_angle: -90
-    max_angle: 90
+    min_angle: -68
+    max_angle: 29
     orientation: -1
 
   - name: "right_middle_coxa"
@@ -138,8 +142,8 @@ servos:
     channel: 4
     center_offset_pulse: 0
     pulse_range: 2000
-    min_angle: -45
-    max_angle: 45
+    min_angle: -25  # Safe swing clear of adjacent legs (contact @ ±27°)
+    max_angle: 25
     orientation: -1
   - name: "right_middle_femur"
     board_address: 0x42
@@ -154,8 +158,8 @@ servos:
     channel: 6
     center_offset_pulse: 0
     pulse_range: 2000
-    min_angle: -90
-    max_angle: 90
+    min_angle: -68
+    max_angle: 29
     orientation: -1
 
   - name: "right_rear_coxa"
@@ -163,8 +167,8 @@ servos:
     channel: 8
     center_offset_pulse: 0
     pulse_range: 2000
-    min_angle: -45
-    max_angle: 45
+    min_angle: -25  # Safe swing clear of adjacent legs (contact @ ±27°)
+    max_angle: 25
     orientation: -1
   - name: "right_rear_femur"
     board_address: 0x42
@@ -179,6 +183,6 @@ servos:
     channel: 10
     center_offset_pulse: 0
     pulse_range: 2000
-    min_angle: -90
-    max_angle: 90
+    min_angle: -68
+    max_angle: 29
     orientation: -1
