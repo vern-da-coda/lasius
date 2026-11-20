@@ -222,9 +222,15 @@ def build_bionic_tibia_outer_wire():
       - Deep ventral belly (X in [2.0, 69.5], Y = 0.0) housing the vertical spring
       - Sweeping ventral S-curve up to distal fork mouth (124.0, 12.6)
     """
-    p_mouth_top = App.Vector(124.00, 31.00, 0.0)
-    p_mouth_mid = App.Vector(125.50, 21.80, 0.0)
-    p_mouth_bot = App.Vector(124.00, 12.60, 0.0)
+    # Exact concentric R = 17.50 mm circular arc centered on Tarsus Pivot (109.00, 20.50)
+    # mates seamlessly across a constant 1.00 mm bionic joint gap with Tarsus shoulder R = 18.50 mm
+    # across the entire 0.0 deg .. +5.0 deg rocker swing!
+    R_MOUTH = 17.50
+    a_top = math.radians(34.5)
+    a_bot = math.radians(-26.8)
+    p_mouth_top = App.Vector(TARSUS_PIV_X + R_MOUTH * math.cos(a_top), TARSUS_PIV_Y + R_MOUTH * math.sin(a_top), 0.0)
+    p_mouth_mid = App.Vector(TARSUS_PIV_X + R_MOUTH, TARSUS_PIV_Y, 0.0)
+    p_mouth_bot = App.Vector(TARSUS_PIV_X + R_MOUTH * math.cos(a_bot), TARSUS_PIV_Y + R_MOUTH * math.sin(a_bot), 0.0)
     e_mouth = Part.Arc(p_mouth_top, p_mouth_mid, p_mouth_bot).toShape()
 
     # Ventral curve from distal mouth (124.0, 12.6) back to flat servo floor (69.5, 0.0)
@@ -509,7 +515,7 @@ def build_tibia_and_cover():
         (99.00, 15.29, 0.80),              # Right end of +5.0 deg Hard-Stop -> square clean drop to bottom edge!
         (99.00, 8.00, 0.00),               # Cleanly opens down past ventral Tibia edge (no pointy sliver!)
         (128.00, 8.00, 0.00),              # Distal lower fork exit (open to exterior!)
-        (128.00, 29.20, 0.00),             # Distal upper fork exit (leaves clean ~1.9 mm square lip at X=124!)
+        (128.00, 28.50, 0.00),             # Distal upper fork exit (leaves clean ~2.1 mm solid lip at R=17.5!)
         (113.50, 27.35, 1.50),             # Distal hub shoulder flare (+5 deg outward Tarsus swing room)
         (108.50, 26.35, 2.00),             # Concentric labyrinth dust-seal arch over pivot hub (0.4 mm gap!)
         (103.50, 24.90, 1.50),             # Curved dust-baffle step descending smoothly to secondary stop

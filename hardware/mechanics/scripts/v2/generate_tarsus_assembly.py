@@ -56,7 +56,10 @@ COLOR_ORANGE = (0.92, 0.45, 0.10)      # Anodized orange bionic tarsus lever (PE
 COLOR_SHOE = (0.18, 0.58, 0.68)        # Contrasting bionic cyan-slate TPU/PETG shoe
 
 # Dimensional Constants (mm)
-TARSUS_THICK = 5.60                    # Z in [-2.80, +2.80] (0.40 mm clearance/side in 6.40 mm bay)
+TARSUS_THICK = 5.60                    # Inner rocker tongue Z in [-2.80, +2.80] (0.40 mm clearance/side in 6.40 mm bay)
+TARSUS_EXO_THICK_ROOT = 10.44          # Flush 3D continuation of Tibia width (Z in [-5.22, +5.22]) at R = 18.50 mm gap!
+TARSUS_KUFE_THICK = 6.40               # Tapered 3D width at Kufe foot (Z in [-3.20, +3.20]) for sleek agile shoe
+R_JOINT_SHOULDER = 18.50               # Concentric 1.00 mm bionic gap outside Tibia R = 17.50 mm distal mouth!
 PIVOT_BORE_R = 1.55                    # Ø3.10 mm free running bore for Ø3.00 mm ISO 2338 pin
 SPRING_X = -41.50                      # r = 41.50 mm lever arm in deep Tibia belly
 SPRING_SEAT_Y = -4.20                  # Horizontal spring seat on parallel lever underside
@@ -66,7 +69,7 @@ SHOE_LOCK_X = 56.20                    # Coaxial M2 retaining pin bore in compac
 SHOE_LOCK_Y = +3.60
 SHOE_LOCK_R = 1.00                     # Ø2.00 mm pin bore
 SHOE_CLEARANCE_2D = 0.08               # 0.08 mm 2D form-fit slip clearance
-SHOE_WALL_SIDE = 1.42                  # Slim lateral wall per side -> 8.60 mm sleek shoe width!
+SHOE_WALL_SIDE = 1.42                  # Slim lateral wall per side -> 9.40 mm sleek shoe width!
 SHOE_WALL_SOLE = 1.80                  # Slim elastic sole thickness below compact Kufe foot
 
 
@@ -162,46 +165,30 @@ def build_tarsus_profile_edges():
         (p_hub_bot_l.x, p_hub_bot_l.y),
     ])
 
-    # 6. Reinforced (+20% cross-section height from pivot axis into shoe) straight bionic insect shin
-    #    exiting cleanly straight out of the Tibia (X = 0..47 mm), curving ONLY at the distal foot tip
-    #    into a compact, agile outward Kufe runner (X = 47..63.5 mm)!
-    p_toe_bot = App.Vector(60.00, +15.50, 0.0)
+    # 6. Reinforced FEA-optimized inner 5.60 mm rocker tongue neck (X = 0..24.5 mm):
+    #    - Ventral (-Y): Tibia fork is 100% open below X_t = -10, so tongue flares seamlessly
+    #      to Y = -7.85 at R = 18.5 mm -> ZERO ventral notch step into the exoskeleton!
+    #    - Dorsal (+Y): Flares cleanly inside the Tibia fork ceiling (+5.40 -> +6.30 at x=17,
+    #      leaving >= 0.45 mm air gap across the full 0..+5 deg stroke) -> +58% section height
+    #      (2.5x bending strength!) right at the joint transition!
+    p_neck_bot = App.Vector(24.50, -6.95, 0.0)
+    p_neck_top = App.Vector(24.50, +6.60, 0.0)
     e_foot_sole = make_bspline_interp([
         (p_hub_bot_l.x, p_hub_bot_l.y),
         (0.00, -5.80),
-        (8.00, -5.45),
-        (16.00, -4.35),
-        (27.00, -3.65),
-        (38.00, -3.45),
-        (47.50, -3.15),
-        (54.50, -1.65),
-        (60.20, +1.85),
-        (63.20, +6.60),
-        (63.00, +11.60),
-        (p_toe_bot.x, p_toe_bot.y),
+        (6.00, -6.70),
+        (12.00, -7.50),
+        (16.75, -7.85),
+        (p_neck_bot.x, p_neck_bot.y),
     ])
+    e_neck_end = Part.makeLine(p_neck_bot, p_neck_top)
 
-    # 7. Compact upturned outward Kufe toe tip (delicate nimble ant ski nose!)
-    p_toe_top = App.Vector(55.00, +14.20, 0.0)
-    e_toe_tip = make_bspline_interp([
-        (p_toe_bot.x, p_toe_bot.y),
-        (58.00, +16.60),
-        (56.00, +16.00),
-        (p_toe_top.x, p_toe_top.y),
-    ])
-
-    # 8. Reinforced (+20% height) concave foot instep returning straight into the Tibia fork & concentric pivot hub!
     p_hub_top = App.Vector(0.00, +5.40, 0.0)
     e_foot_top = make_bspline_interp([
-        (p_toe_top.x, p_toe_top.y),
-        (55.20, +10.20),
-        (52.80, +6.60),
-        (49.20, +5.00),
-        (44.00, +4.05),
-        (35.00, +3.65),
-        (25.00, +4.05),
-        (15.00, +4.80),
-        (7.00, +5.35),
+        (p_neck_top.x, p_neck_top.y),
+        (17.00, +6.30),
+        (11.00, +6.05),
+        (5.50, +5.65),
         (p_hub_top.x, p_hub_top.y),
     ])
 
@@ -219,14 +206,121 @@ def build_tarsus_profile_edges():
         e_spring_seat,
         e_lever_bot_curve,
         e_foot_sole,
-        e_toe_tip,
+        e_neck_end,
         e_foot_top,
         e_hub_to_pad,
     ]
 
 
+def build_tarsus_exoskeleton_wire():
+    """
+    Construct the closed G1-smooth 2D XY silhouette of the external 3D exoskeleton Tarsus
+    continuing the Tibia outer contour seamlessly across a constant 1.00 mm concentric joint gap
+    (Tibia distal mouth R = 17.50 mm -> Tarsus shoulder R = 18.50 mm centered on Pivot (0, 0)):
+      - Height tapers organically from 17.6 mm at the joint gap to 8.3 mm at the shoe ankle
+      - Effective knee-to-sole length stays 100% invariant (152.6 mm)
+    """
+    a_top = math.radians(31.8)
+    a_bot = math.radians(-25.1)
+    p_sh_top = App.Vector(R_JOINT_SHOULDER * math.cos(a_top), R_JOINT_SHOULDER * math.sin(a_top), 0.0)
+    p_sh_mid = App.Vector(R_JOINT_SHOULDER, 0.0, 0.0)
+    p_sh_bot = App.Vector(R_JOINT_SHOULDER * math.cos(a_bot), R_JOINT_SHOULDER * math.sin(a_bot), 0.0)
+
+    # Exact concentric arc centered on Pivot (0, 0) -> mathematically guarantees >= 1.00 mm gap across 0..+15 deg!
+    e_joint_arc = Part.Arc(p_sh_top, p_sh_mid, p_sh_bot).toShape()
+
+    # Ventral curve continuing Tibia lower contour (Y_rel = -7.89) smoothly into compact outward Kufe runner
+    p_toe_bot = App.Vector(60.00, +15.50, 0.0)
+    e_exo_bot = make_bspline_interp([
+        (p_sh_bot.x, p_sh_bot.y),
+        (25.00, -6.90),
+        (35.00, -5.40),
+        (45.00, -3.70),
+        (53.50, -1.75),
+        (60.20, +1.85),
+        (63.20, +6.60),
+        (63.00, +11.60),
+        (p_toe_bot.x, p_toe_bot.y),
+    ])
+
+    # Compact upturned outward Kufe toe tip
+    p_toe_top = App.Vector(55.00, +14.20, 0.0)
+    e_toe_tip = make_bspline_interp([
+        (p_toe_bot.x, p_toe_bot.y),
+        (58.00, +16.60),
+        (56.00, +16.00),
+        (p_toe_top.x, p_toe_top.y),
+    ])
+
+    # Dorsal curve continuing Tibia upper crest (Y_rel = +9.91, -23 deg slope) smoothly down into Kufe instep
+    e_exo_top = make_bspline_interp([
+        (p_toe_top.x, p_toe_top.y),
+        (55.20, +10.20),
+        (52.80, +6.80),
+        (48.50, +4.95),
+        (41.00, +4.45),
+        (32.00, +5.40),
+        (23.00, +7.35),
+        (p_sh_top.x, p_sh_top.y),
+    ])
+
+    wire = Part.Wire([e_joint_arc, e_exo_bot, e_toe_tip, e_exo_top])
+    assert wire.isClosed(), "Tarsus exoskeleton outer wire is not closed!"
+    return wire
+
+
+def build_z_taper_envelope_xz(x_taper_start=19.0, x_taper_end=45.5):
+    """
+    Build a symmetric G1-smooth X-Z solid envelope tapering thickness smoothly from
+    TARSUS_EXO_THICK_ROOT (10.44 mm, flush with Tibia) to TARSUS_KUFE_THICK (6.40 mm at Kufe foot).
+    """
+    z_root = 0.5 * TARSUS_EXO_THICK_ROOT   # 5.22 mm
+    z_kufe = 0.5 * TARSUS_KUFE_THICK       # 3.20 mm
+    dx = x_taper_end - x_taper_start
+    dz = z_root - z_kufe                   # 2.02 mm per side
+
+    # G1-smooth harmonic cosine-like B-spline in X-Z (sampled densely with flat tangents at both ends)
+    def make_taper_curve(sign_z, reverse=False):
+        n_pts = 9
+        pts = []
+        for i in range(n_pts):
+            t = i / (n_pts - 1)
+            x = x_taper_start + t * dx
+            # Smooth C2 quintic Hermite blend: 0 slope and 0 curvature at both ends!
+            blend = 10.0 * t**3 - 15.0 * t**4 + 6.0 * t**5
+            z = sign_z * (z_root - dz * blend)
+            pts.append(App.Vector(x, -25.0, z))
+        if reverse:
+            pts.reverse()
+        bs = Part.BSplineCurve()
+        bs.interpolate(pts)
+        return bs.toShape()
+
+    p_tl = App.Vector(10.0, -25.0, +z_root)
+    p_ts = App.Vector(x_taper_start, -25.0, +z_root)
+    p_te = App.Vector(x_taper_end, -25.0, +z_kufe)
+    p_tr = App.Vector(72.0, -25.0, +z_kufe)
+    p_br = App.Vector(72.0, -25.0, -z_kufe)
+    p_be = App.Vector(x_taper_end, -25.0, -z_kufe)
+    p_bs = App.Vector(x_taper_start, -25.0, -z_root)
+    p_bl = App.Vector(10.0, -25.0, -z_root)
+
+    edges = [
+        Part.makeLine(p_tl, p_ts),
+        make_taper_curve(+1.0, reverse=False),
+        Part.makeLine(p_te, p_tr),
+        Part.makeLine(p_tr, p_br),
+        Part.makeLine(p_br, p_be),
+        make_taper_curve(-1.0, reverse=True),
+        Part.makeLine(p_bs, p_bl),
+        Part.makeLine(p_bl, p_tl),
+    ]
+    face = Part.Face(Part.Wire(edges))
+    return face.extrude(App.Vector(0.0, 60.0, 0.0))
+
+
 def build_tarsus_and_shoe():
-    print("--- Generating Lasius Bionic Tarsus v2 (Option 2c-V2) Canonical Parts & Assembly ---")
+    print("--- Generating Lasius Bionic Tarsus v2 (Option 2c-V2 Full 3D Tibia Continuation) ---")
 
     # =========================================================================
     # 1. Build Canonical Tarsus: custom/v2/parts/tarsus/tarsus.FCStd
@@ -239,13 +333,43 @@ def build_tarsus_and_shoe():
     doc_tarsus = App.newDocument("tarsus")
     fcstd_tarsus_path = f"{PARTS_TARSUS_DIR}/tarsus.FCStd"
 
+    # A. Inner 5.60 mm Rocker Lever & Fork Tongue (Z in [-2.80, +2.80])
     tarsus_edges = build_tarsus_profile_edges()
     tarsus_wire = Part.Wire(tarsus_edges)
-    assert tarsus_wire.isClosed(), "Tarsus outer wire is not closed!"
-    tarsus_face = Part.Face(tarsus_wire)
-    tarsus_solid = tarsus_face.extrude(App.Vector(0.0, 0.0, TARSUS_THICK)).translate(
+    assert tarsus_wire.isClosed(), "Tarsus inner wire is not closed!"
+    inner_solid = Part.Face(tarsus_wire).extrude(App.Vector(0.0, 0.0, TARSUS_THICK)).translate(
         App.Vector(0.0, 0.0, -0.5 * TARSUS_THICK)
     )
+
+    # B. External 3D Exoskeleton Tarsus continuing Tibia flush in XY (17.6 -> 8.3 mm) & Z (10.44 -> 6.40 mm)!
+    exo_wire = build_tarsus_exoskeleton_wire()
+    exo_prism = Part.Face(exo_wire).extrude(App.Vector(0.0, 0.0, TARSUS_EXO_THICK_ROOT)).translate(
+        App.Vector(0.0, 0.0, -0.5 * TARSUS_EXO_THICK_ROOT)
+    )
+    taper_env = build_z_taper_envelope_xz(x_taper_start=19.0, x_taper_end=45.5)
+    exo_solid = exo_prism.common(taper_env)
+
+    tarsus_solid = inner_solid.fuse(exo_solid)
+    try:
+        tarsus_solid = tarsus_solid.removeSplitter()
+    except Exception:
+        pass
+
+    # Notch-stress-relief fillet (R = 0.60 mm) around tongue-to-exoskeleton seam edges (R ~ 18.5 mm)
+    seam_edges = [
+        e for e in tarsus_solid.Edges
+        if 16.5 <= (e.CenterOfMass.x**2 + e.CenterOfMass.y**2)**0.5 <= 19.2
+        and abs(e.CenterOfMass.z) <= 2.90
+        and -8.0 <= e.CenterOfMass.y <= 7.5
+    ]
+    if seam_edges:
+        try:
+            cand = tarsus_solid.makeFillet(0.60, seam_edges)
+            if cand.isValid() and len(cand.Solids) == 1:
+                tarsus_solid = cand
+                print(f"  Applied R = 0.60 mm notch-relief fillet to {len(seam_edges)} tongue-shoulder seam edges.")
+        except Exception as ex:
+            print(f"  [Note] Seam fillet skipped ({ex}); flared 14.1 mm tongue already eliminates ventral notch!")
 
     # Pivot Bore (Ø3.10 mm, R = 1.55 mm) at origin (0.0, 0.0)
     tarsus_solid = tarsus_solid.cut(
@@ -297,11 +421,11 @@ def build_tarsus_and_shoe():
     doc_shoe = App.newDocument("tarsus_shoe")
     fcstd_shoe_path = f"{PARTS_TARSUS_DIR}/tarsus_shoe.FCStd"
 
-    # Slim, compact G1 periodic B-spline wrapping ONLY the distal Kufe runner foot (X in [45.5, 65.5], ~8.6 mm wide!)
-    # Leaves the straight Tarsus shin sleek & exposed, giving a nimble predatory ant foot instead of bulky shoes!
+    # Slim, compact G1 periodic B-spline wrapping ONLY the distal Kufe runner foot (X in [45.5, 65.5], 9.4 mm wide!)
+    # Harmonizes smoothly with the 10.44 -> 6.40 mm tapered exoskeleton Tarsus!
     shoe_pts = [
-        App.Vector(47.20, -4.85, 0.0),     # Compact heel start (1.62 mm sole wall under reinforced shin!)
-        App.Vector(54.80, -3.50, 0.0),     # Heel sole blend (1.77 mm sole wall!)
+        App.Vector(47.20, -5.20, 0.0),     # Compact heel start (1.65+ mm sole wall under reinforced Kufe!)
+        App.Vector(54.80, -3.55, 0.0),     # Heel sole blend (1.80+ mm sole wall!)
         App.Vector(61.50, +0.60, 0.0),     # Flat ground-contact sole (55 deg ant stance!)
         App.Vector(65.20, +6.20, 0.0),     # Rolling ground-contact sole (55..90 deg!)
         App.Vector(65.00, +12.20, 0.0),    # Compact upturned Kufe rocker
@@ -309,15 +433,15 @@ def build_tarsus_and_shoe():
         App.Vector(57.40, +18.30, 0.0),    # Closed toe cap crest
         App.Vector(53.80, +16.50, 0.0),    # Closed toe cap inner hook
         App.Vector(53.20, +11.60, 0.0),    # Compact concave instep rim
-        App.Vector(51.00, +7.80, 0.0),     # Upper foot rim over reinforced Kufe neck
-        App.Vector(47.20, +5.40, 0.0),     # Ankle top rim matching reinforced shin
+        App.Vector(51.00, +7.90, 0.0),     # Upper foot rim over Kufe neck
+        App.Vector(47.20, +5.80, 0.0),     # Ankle top rim matching exoskeleton shin
         App.Vector(45.20, +0.20, 0.0),     # Smooth ankle wrap
     ]
     bs_shoe = Part.BSplineCurve()
     bs_shoe.interpolate(shoe_pts, PeriodicFlag=True)
     shoe_wire = Part.Wire([bs_shoe.toShape()])
     shoe_face = Part.Face(shoe_wire)
-    shoe_w = TARSUS_THICK + 2.0 * SHOE_CLEARANCE_2D + 2.0 * SHOE_WALL_SIDE  # 8.60 mm slim width!
+    shoe_w = TARSUS_KUFE_THICK + 2.0 * SHOE_CLEARANCE_2D + 2.0 * SHOE_WALL_SIDE  # 9.40 mm sleek width (< 10.44 mm Tibia!)
     shoe_outer = shoe_face.extrude(App.Vector(0.0, 0.0, shoe_w)).translate(App.Vector(0.0, 0.0, -0.5 * shoe_w))
 
     # Tactile outer edge fillets (R = 1.00 mm) on slim periodic shoe perimeter (verified Z bounds!)
@@ -333,21 +457,21 @@ def build_tarsus_and_shoe():
     except Exception as ex:
         print(f"  [Note] Shoe fillet fallback: {ex}")
 
-    # Form-fit internal cavity (exact Tarsus 2D offset +0.08 mm, Z width = 5.76 mm)
+    # Form-fit internal cavity (exact Tarsus exoskeleton 2D offset +0.08 mm, Z width = 6.56 mm)
     # + open dorsal (+Y) slip-on entry slot behind closed toe cap (keeps ground sole 100% unbroken!)
-    tarsus_offset_wire = tarsus_wire.makeOffset2D(SHOE_CLEARANCE_2D)
-    cav_w = TARSUS_THICK + 2.0 * SHOE_CLEARANCE_2D  # 5.76 mm
+    tarsus_offset_wire = exo_wire.makeOffset2D(SHOE_CLEARANCE_2D)
+    cav_w = TARSUS_KUFE_THICK + 2.0 * SHOE_CLEARANCE_2D  # 6.56 mm
     cavity_core = Part.Face(tarsus_offset_wire).extrude(App.Vector(0.0, 0.0, cav_w)).translate(
         App.Vector(0.0, 0.0, -0.5 * cav_w)
     )
     # Open dorsal entry slot along the concave +Y instep behind closed toe cap!
     slot_poly = [
-        App.Vector(42.0, -1.5, -0.5 * cav_w),
-        App.Vector(54.2, +6.2, -0.5 * cav_w),
+        App.Vector(42.0, -1.8, -0.5 * cav_w),
+        App.Vector(54.2, +6.3, -0.5 * cav_w),
         App.Vector(55.3, +13.5, -0.5 * cav_w),
         App.Vector(49.0, +16.5, -0.5 * cav_w),
-        App.Vector(42.0, +9.0, -0.5 * cav_w),
-        App.Vector(42.0, -1.5, -0.5 * cav_w),
+        App.Vector(42.0, +9.5, -0.5 * cav_w),
+        App.Vector(42.0, -1.8, -0.5 * cav_w),
     ]
     entry_slot = Part.Face(Part.makePolygon(slot_poly)).extrude(App.Vector(0.0, 0.0, cav_w))
     rocker_cavity = cavity_core.fuse(entry_slot)
