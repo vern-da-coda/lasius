@@ -69,14 +69,16 @@ EAR_PAD_Z_MIN = 2.75                   # Flush with NR-645 ears at Z = 2.70 (0.0
 EAR_PAD_Z_MAX = 15.25
 
 # Central Blade & Distal Fork Z-Stack (Centered at Z_MID = 9.00 mm)
-BLADE_Z_MIN = 5.50                     # 7.00 mm central blade around knee/window
+BLADE_Z_MIN = 5.50                     # 7.00 mm outer bionic claw & dorsal sickle arch thickness
 BLADE_Z_MAX = 12.50
+WEB_Z_MIN = 7.75                       # 2.50 mm lower web under teardrop (100% flush with cheek Mittelsteg!)
+WEB_Z_MAX = 10.25
 FORK_Z_MIN = 3.80                      # 2.00 mm Fixed Cheek A (Z in [3.80, 5.80])
 BAY_Z_MIN = 5.80                       # 6.40 mm internal mechanism bay (Z in [5.80, 12.20])
 BAY_Z_MAX = 12.20
 COVER_Z_MIN = 12.24                    # 0.04 mm axial clearance to bay step
 COVER_Z_MAX = 14.24                    # 2.00 mm Service Cover Cheek B
-X_FORK_RAMP_START = 54.00              # Smooth ramp from 7.00 mm blade to 10.44 mm fork housing
+X_FORK_RAMP_START = 54.00              # Smooth C2 flare 7.00 -> 10.44 mm into distal fork housing
 X_FORK_RAMP_END = 62.00
 X_COVER_SPLIT = 59.00                  # Contoured cover starts cleanly behind spring bay (with Bayonet Tab #1!)
 
@@ -265,27 +267,30 @@ def build_bionic_tibia_outer_wire():
     p_beak_top = App.Vector(-22.20, 33.40, 0.0)
     e_beak_nose = Part.Arc(p_beak_tip, App.Vector(-25.40, 31.80, 0.0), p_beak_top).toShape()
 
-    # Concave U-throat between lower knee beak and upper dorsal knee horn
-    p_horn_bot = App.Vector(-4.20, 48.20, 0.0)
+    # Concave U-throat between lower knee beak and upper dorsal knee horn (SVG-matched deep claw X=13.9!)
+    p_horn_bot = App.Vector(-2.80, 49.40, 0.0)
     e_throat = make_bspline_interp([
         (p_beak_top.x, p_beak_top.y),
-        (-12.50, 32.20),
-        (-2.50, 31.80),
-        (4.50, 32.80),
-        (6.80, 36.20),
-        (5.50, 41.20),
-        (1.00, 45.40),
+        (-12.50, 32.10),
+        (-2.00, 31.80),
+        (6.50, 31.80),
+        (11.80, 32.30),
+        (13.90, 34.80),
+        (13.90, 38.60),
+        (12.20, 42.30),
+        (8.60, 45.00),
+        (3.20, 47.25),
         (p_horn_bot.x, p_horn_bot.y),
     ])
 
-    # Rounded nose of upper dorsal knee horn
-    p_horn_top = App.Vector(-4.20, 52.20, 0.0)
-    e_horn_nose = Part.Arc(p_horn_bot, App.Vector(-6.20, 50.20, 0.0), p_horn_top).toShape()
+    # Rounded nose of upper dorsal knee horn (sleek SVG-matched sickle claw tip)
+    p_horn_top = App.Vector(-2.50, 52.60, 0.0)
+    e_horn_nose = Part.Arc(p_horn_bot, App.Vector(-4.20, 51.00, 0.0), p_horn_top).toShape()
 
-    # Sweeping continuous bionic dorsal crest from upper horn (-4.2, 52.2) to distal mouth (124.0, 31.0)
+    # Sweeping continuous bionic dorsal crest from upper horn (-2.5, 52.6) to distal mouth (124.0, 31.0)
     e_dorsal = make_bspline_interp([
         (p_horn_top.x, p_horn_top.y),
-        (4.50, 54.00),
+        (5.50, 54.15),
         (16.00, 54.60),
         (30.00, 53.80),
         (46.00, 51.80),
@@ -306,24 +311,35 @@ def build_bionic_tibia_outer_wire():
 
 def build_teardrop_window_wire():
     """
-    SVG-matched organic bionic teardrop window positioned cleanly over the Servo/Spring transition
-    (X in [38.5, 75.4], Y in [29.4, 45.4], 100% inside monolithic Tibia_Body!):
-      - >= 5.5 mm solid dorsal arch above window
-      - >= 4.2 mm solid vertical rib before horizontal microswitch solder bay (X >= 79.6)
-      - >= 5.6 mm solid horizontal beam above flat spring ceiling stop (Y = 23.76)
-      - >= 3.8 mm solid structural bridge above Knee Servo upper cheek (Y = 31.70, X <= 62.0)
+    Concentric bionic Claw-Sickle Teardrop Window extending deep into the upper Knee Claw:
+      - Upper edge runs mathematically concentric (~7.45 mm offset) beneath the outer dorsal crest e_dorsal,
+        echoing & reinforcing the outer claw silhouette from X = 15.5 mm to X = 76.0 mm
+      - Curved sleek proximal sickle tip at (15.5, 46.15) tucked cleanly inside the upper claw arch
+        (>= 4.78 mm solid bridge to deepened SVG claw throat X=13.9!)
+      - Generous round distal bulb at X = 76.0 (3.03 mm clear of Bayonet #2, 3.56 mm clear of switch bay)
+      - Flowing crescent lower sweep dipping deeply to (67.6, 25.95) (>= 2.19 mm above spring stop Y=23.76,
+        >= 3.26 mm clear of servo pocket/rear ear Y<=25.5!)
+      - Enclosed Ø2.40 mm cable conduit runs dead-center inside the 7.45 mm dorsal sickle rib (>= 2.33 mm PETG both sides)
     """
     pts = [
-        (38.50, 44.80),   # Sleek proximal teardrop tail following dorsal crest
-        (46.00, 45.40),   # Upper-left dorsal arch
-        (56.00, 44.20),   # Upper-mid dorsal arch
-        (66.00, 41.80),   # Upper-right arch
-        (73.20, 38.20),   # Right shoulder curving smoothly into rounded bulb
-        (75.40, 33.40),   # Bulbous distal nose (4.2 mm clear of switch bay!)
-        (72.20, 29.40),   # Rounded bottom belly (5.6 mm above spring ceiling stop!)
-        (65.50, 29.60),   # Lower-left belly past X=62 servo cheek end
-        (57.50, 35.50),   # Smooth sweep up clear of servo upper cheek (Y=31.70)
-        (48.00, 40.20),   # Sweeping concave underside back to sleek tail
+        (15.50, 46.15),   # Curved sickle tip extending deep into the upper knee claw!
+        (17.87, 47.06),   # Exact 7.45 mm concentric offset of dorsal crest peak
+        (23.55, 46.85),   # Concentric dorsal sickle arch
+        (31.27, 46.19),   # Concentric dorsal sickle arch
+        (41.04, 44.99),   # Concentric dorsal sickle arch
+        (50.83, 43.48),   # Concentric dorsal sickle arch
+        (60.55, 41.59),   # Concentric dorsal sickle arch
+        (68.20, 39.25),   # Smooth entry toward distal bulb
+        (73.10, 37.05),   # Upper bulb shoulder (3.03 mm clear of Bayonet #2 Y>=39.15!)
+        (76.00, 33.10),   # Full circular distal bulb apex (3.56 mm clear of switch bay X>=79.6!)
+        (74.20, 28.40),   # Lower bulb curve
+        (67.60, 25.95),   # Deep rounded teardrop belly (2.19 mm solid bridge above spring stop Y=23.76!)
+        (60.50, 27.90),   # Smooth crescent belly sweeping up past servo rear ear
+        (52.00, 32.80),   # Concave crescent underside echoing outer dorsal curve!
+        (42.00, 38.45),   # Flowing bionic sickle taper
+        (31.50, 42.90),   # Graceful sweep into knee claw arch
+        (22.50, 45.25),   # Concentric curve into claw tip
+        (17.50, 45.55),   # Sleek rounded underside into tip
     ]
     return Part.Wire([make_bspline_interp(pts, periodic=True)])
 
@@ -334,36 +350,43 @@ def build_teardrop_window_wire():
 def build_knee_servo_cage():
     """
     Build the twin-cheek bionic Knee Servo Cage (Z in [-14.50, +32.50], Y in [0.00, 31.70])
-    matching the exact NR-645 servo mounting pads, 6x 45 deg Warren/Chevron truss windows,
-    and inverted M4 DIN 439 counter-bearing nut pocket at (18.20, 15.25).
-    Tapers seamlessly via G1 S-curves into the distal fork Z-width [3.80, 14.24] at X = 62.0 mm!
+    unified 1:1 with Coxa v2 cheek morphology (R_FRONT = 4.50 mm, Z in [0.00, 18.00],
+    crest plateau X in [9.20, 23.70]) and inverted M4 DIN 439 counter-bearing nut pocket
+    at (18.20, 15.25). Tapers via G1 S-curves into distal fork Z in [3.80, 14.24] at X = 62.0 mm.
+    (Cheek truss windows are cut in build_tibia_and_cover() AFTER fusing blade_central so the
+    2.50 mm A-truss central spine is cleanly exposed on both cheeks!)
     """
-    R_FRONT = 3.20
+    R_FRONT = 4.50
+    NOSE_Z_MIN = 0.00
+    NOSE_Z_MAX = 18.00
+    X_CREST_REAR = 23.70
     X_REAR = 62.00
     Z_REAR_BOT = FORK_Z_MIN
     Z_REAR_TOP = COVER_Z_MAX
 
-    # Symmetrical Cheek Profile in X-Z plane (Y = 0)
-    p_nose_bot = App.Vector(R_FRONT, 0.0, EAR_PAD_Z_MIN)
-    p_nose_top = App.Vector(R_FRONT, 0.0, EAR_PAD_Z_MAX)
-    p_front_b_end = App.Vector(0.0, 0.0, EAR_PAD_Z_MIN + R_FRONT)
-    p_front_t_start = App.Vector(0.0, 0.0, EAR_PAD_Z_MAX - R_FRONT)
-    pm_b = App.Vector(R_FRONT * (1.0 - math.cos(math.pi / 4)), 0.0, EAR_PAD_Z_MIN + R_FRONT * (1.0 - math.sin(math.pi / 4)))
-    pm_t = App.Vector(R_FRONT * (1.0 - math.cos(math.pi / 4)), 0.0, EAR_PAD_Z_MAX - R_FRONT * (1.0 - math.sin(math.pi / 4)))
+    # Symmetrical Cheek Profile in X-Z plane (Y = 0) — 100% matched to Coxa v2 front & crest!
+    p_nose_bot = App.Vector(R_FRONT, 0.0, NOSE_Z_MIN)
+    p_nose_top = App.Vector(R_FRONT, 0.0, NOSE_Z_MAX)
+    p_front_b_end = App.Vector(0.0, 0.0, NOSE_Z_MIN + R_FRONT)
+    p_front_t_start = App.Vector(0.0, 0.0, NOSE_Z_MAX - R_FRONT)
+    k_f = R_FRONT * (1.0 - math.cos(math.pi / 4))
+    pm_b = App.Vector(k_f, 0.0, NOSE_Z_MIN + k_f)
+    pm_t = App.Vector(k_f, 0.0, NOSE_Z_MAX - k_f)
 
-    p_f_top_in = App.Vector(7.20, 0.0, EAR_PAD_Z_MAX)
+    p_f_top_in = App.Vector(7.20, 0.0, NOSE_Z_MAX)
     p_f_top_up = App.Vector(7.20, 0.0, Z_CAGE_MAX - 2.0)
     p_f_top_arc = App.Vector(9.20, 0.0, Z_CAGE_MAX)
-    pm_ct = App.Vector(7.20 + 2.0 * (1.0 - math.cos(math.pi / 4)), 0.0, Z_CAGE_MAX - 2.0 * (1.0 - math.sin(math.pi / 4)))
-    p_crest_r = App.Vector(25.50, 0.0, Z_CAGE_MAX)
+    k2 = 2.0 * (1.0 - math.cos(math.pi / 4))
+    pm_ct = App.Vector(7.20 + k2, 0.0, Z_CAGE_MAX - k2)
+    p_crest_r = App.Vector(X_CREST_REAR, 0.0, Z_CAGE_MAX)
     p_rear_top = App.Vector(X_REAR, 0.0, Z_REAR_TOP)
 
     p_rear_bot = App.Vector(X_REAR, 0.0, Z_REAR_BOT)
-    p_tab_r = App.Vector(25.50, 0.0, Z_CAGE_MIN)
+    p_tab_r = App.Vector(X_CREST_REAR, 0.0, Z_CAGE_MIN)
     p_f_bot_arc = App.Vector(9.20, 0.0, Z_CAGE_MIN)
     p_f_bot_dn = App.Vector(7.20, 0.0, Z_CAGE_MIN + 2.0)
-    pm_cb = App.Vector(7.20 + 2.0 * (1.0 - math.cos(math.pi / 4)), 0.0, Z_CAGE_MIN + 2.0 * (1.0 - math.sin(math.pi / 4)))
-    p_f_bot_in = App.Vector(7.20, 0.0, EAR_PAD_Z_MIN)
+    pm_cb = App.Vector(7.20 + k2, 0.0, Z_CAGE_MIN + k2)
+    p_f_bot_in = App.Vector(7.20, 0.0, NOSE_Z_MIN)
 
     edges_cheek = [
         Part.makeLine(p_nose_top, p_f_top_in),
@@ -388,41 +411,176 @@ def build_knee_servo_cage():
     s_cheek_top = cheek_face.extrude(App.Vector(0.0, 6.20, 0.0)).translate(App.Vector(0.0, 25.50, 0.0))
 
     # Front & Rear Servo Mounting Ear Blocks (Z in [2.75, 15.25], Y in [5.00, 25.50])
-    # Front block X in [0.00, 9.00] with matching R_FRONT X-Z nose corners
+    # Front block X in [0.00, 9.00] recessed cleanly inside R_FRONT=4.50 cheeks
+    R_EAR_BLK = 3.20
     map_xz = lambda v: App.Vector(v.x, 5.00, v.y)
     w_front_blk = make_rounded_polygon_wire_2d(
-        [(0.0, EAR_PAD_Z_MIN, R_FRONT), (9.0, EAR_PAD_Z_MIN, 0.0), (9.0, EAR_PAD_Z_MAX, 0.0), (0.0, EAR_PAD_Z_MAX, R_FRONT)],
+        [(0.0, EAR_PAD_Z_MIN, R_EAR_BLK), (9.0, EAR_PAD_Z_MIN, 0.0), (9.0, EAR_PAD_Z_MAX, 0.0), (0.0, EAR_PAD_Z_MAX, R_EAR_BLK)],
         map_xz,
     )
     blk_front = Part.Face(w_front_blk).extrude(App.Vector(0.0, 20.50, 0.0))
     blk_rear = Part.makeBox(8.20, 20.50, EAR_PAD_Z_MAX - EAR_PAD_Z_MIN, App.Vector(49.80, 5.00, EAR_PAD_Z_MIN))
 
-    # Counter-bearing Tab Plate on +Z side (Z in [29.55, 32.50], X in [7.20, 26.50], Y in [0.00, 31.70])
-    # Leaves 0.05 mm axial clearance to Knee_Servo top at Z = 29.50 and leaves cable exit (Z in [24, 29]) 100% open!
-    tab_plate = Part.makeBox(19.30, 31.70, 2.95, App.Vector(7.20, 0.00, 29.55))
+    # Counter-bearing Tab Plate on +Z side (Z in [29.55, 32.50], X in [7.20, 23.70], Y in [0.00, 31.70])
+    # Matches Coxa crest end X = 23.70; leaves 0.05 mm axial clearance to Knee_Servo top at Z = 29.50!
+    tab_plate = Part.makeBox(X_CREST_REAR - 7.20, 31.70, 2.95, App.Vector(7.20, 0.00, 29.55))
 
-    cage = s_cheek_bot.fuse(s_cheek_top).fuse(blk_front).fuse(blk_rear).fuse(tab_plate)
+    return s_cheek_bot.fuse(s_cheek_top).fuse(blk_front).fuse(blk_rear).fuse(tab_plate)
 
-    # Cut 4x Bionic 45 deg Warren/Chevron Truss Windows through both cheeks (Style Guide §3: w=2.50, R=1.40)
+
+def cut_unified_cheek_truss_windows(shape):
+    """
+    Cut the 6-window Coxa-matched 45-deg A-Truss & Flank Trapezoid schema (Style Guide §3:
+    w_strut = 2.50 mm, R_fillet = 1.40 mm, 100% symmetrical about Z = 9.00 mm) into both
+    Lower Cheek (Y in [0.00, 5.00]) and Upper Cheek (Y in [25.50, 31.70]):
+      - Zone 1 (X in [9.70, 21.20]): 2x 45-deg flank trapezoids (100% identical to Coxa v2!)
+      - Zone 2a (X in [27.00, 42.50]): 2x inner 45-deg A-truss triangles (2.50 mm central rib Z in [7.75, 10.25])
+      - Zone 2b (X in [30.50, 49.30]): 2x parallel outer 45-deg trapezoids (w = 2.50 mm diagonal, >= 2.50 mm rim)
+    """
     R_WIN = 1.40
     map_win = lambda v: App.Vector(v.x, -1.0, v.y)
     truss_polys = [
-        # Front upper & lower flank cutouts (X in [10.0, 22.0])
-        [(10.2, 18.2, R_WIN), (22.0, 18.2, R_WIN), (22.0, 27.2, R_WIN), (10.2, 27.2, R_WIN)],
-        [(10.2, -9.2, R_WIN), (22.0, -9.2, R_WIN), (22.0, -0.2, R_WIN), (10.2, -0.2, R_WIN)],
-        # Mid 45 deg Chevron triangles (X in [26.0, 44.5])
-        [(26.0, 15.8, R_WIN), (41.5, 15.8, R_WIN), (26.0, 29.2, R_WIN)],
-        [(26.0, -11.2, R_WIN), (41.5, 2.2, R_WIN), (26.0, 2.2, R_WIN)],
+        # Zone 1: Flank 45-deg trapezoids (100% identical to Coxa v2, 2.50 mm outer rim, zero micro-sliver!)
+        [(9.70, 20.50, R_WIN), (21.70, 20.50, R_WIN), (21.70, 30.00, R_WIN), (19.20, 30.00, R_WIN)],
+        [(9.70, -2.50, R_WIN), (19.20, -12.00, R_WIN), (21.70, -12.00, R_WIN), (21.70, -2.50, R_WIN)],
+        # Zone 2a: Inner 45-deg A-truss triangles (2.50 mm central rib Z in [7.75, 10.25]!)
+        [(27.00, 10.25, R_WIN), (42.50, 10.25, R_WIN), (27.00, 25.75, R_WIN)],
+        [(27.00, -7.75, R_WIN), (42.50, 7.75, R_WIN), (27.00, 7.75, R_WIN)],
+        # Zone 2b: Parallel 45-deg outer trapezoids (exact DX_45 = 3.536 mm -> w = 2.50 mm strut, >= 2.50 mm S-curve rim!)
+        [(30.50, 25.79, R_WIN), (46.04, 10.25, R_WIN), (49.30, 10.25, R_WIN), (49.30, 13.85, R_WIN), (38.40, 22.35, R_WIN)],
+        [(30.50, -7.79, R_WIN), (38.40, -4.35, R_WIN), (49.30, 4.15, R_WIN), (49.30, 7.75, R_WIN), (46.04, 7.75, R_WIN)],
     ]
+    # Lower cheek full through-box (Y in [-1.0, 5.05], strictly inside open servo chamber X in [9.0, 49.8])
+    box_bot = Part.makeBox(60.0, 6.05, 60.0, App.Vector(5.0, -1.00, -20.0))
+    # Upper cheek full through-box (Y in [25.45, 36.0]):
+    # Because the lower web directly above Y = 31.70 across X in [27.0, 49.3] is tapered to exact 2.50 mm
+    # (Z in [7.75, 10.25]), all 6 A-truss windows pass cleanly into open air with ZERO hidden ledge!
+    box_top = Part.makeBox(60.0, 10.55, 60.0, App.Vector(5.0, 25.45, -20.0))
+
     for poly in truss_polys:
         w_tr = make_rounded_polygon_wire_2d(poly, map_win)
-        cut_tr = Part.Face(w_tr).extrude(App.Vector(0.0, 34.0, 0.0))
-        # Do not cut across the middle servo blocks (only cheeks Y in [-1, 5.1] and [25.4, 33])
-        c_bot = cut_tr.common(Part.makeBox(80.0, 6.2, 60.0, App.Vector(0.0, -1.0, -20.0)))
-        c_top = cut_tr.common(Part.makeBox(80.0, 8.0, 60.0, App.Vector(0.0, 25.4, -20.0)))
-        cage = cage.cut(c_bot).cut(c_top)
+        cut_tr = Part.Face(w_tr).extrude(App.Vector(0.0, 38.0, 0.0))
+        shape = shape.cut(cut_tr.common(box_bot)).cut(cut_tr.common(box_top))
+    return shape
 
-    return cage
+
+def smoothstep5(x, x0, v0, x1, v1):
+    """C2-continuous quintic Hermite transition from (x0, v0) to (x1, v1)."""
+    if x <= x0:
+        return v0
+    if x >= x1:
+        return v1
+    t = (x - x0) / (x1 - x0)
+    s = t * t * t * (t * (t * 6.0 - 15.0) + 10.0)
+    return v0 + (v1 - v0) * s
+
+
+def build_outer_blade_envelope(outer_face):
+    """
+    Build the full-thickness 7.00 mm outer bionic Tibia blade flaring smoothly (C2) into
+    the 10.44 mm distal sensor fork across X in [54.0, 62.0].
+    Preserves full 7.00 mm outer claw & dorsal sickle arch thickness everywhere!
+    """
+    xs_out = [X_FORK_RAMP_START + (X_FORK_RAMP_END - X_FORK_RAMP_START) * i / 8.0 for i in range(9)]
+
+    def xz_bspline(pts_xz):
+        bs = Part.BSplineCurve()
+        bs.interpolate([App.Vector(x, -10.0, z) for x, z in pts_xz])
+        return bs.toShape()
+
+    p_l_lo = App.Vector(-30.0, -10.0, BLADE_Z_MIN)
+    p_l_hi = App.Vector(-30.0, -10.0, BLADE_Z_MAX)
+    p_r_lo = App.Vector(135.0, -10.0, FORK_Z_MIN)
+    p_r_hi = App.Vector(135.0, -10.0, COVER_Z_MAX)
+
+    e_lo_1 = Part.makeLine(p_l_lo, App.Vector(X_FORK_RAMP_START, -10.0, BLADE_Z_MIN))
+    e_lo_2 = xz_bspline([(x, smoothstep5(x, X_FORK_RAMP_START, BLADE_Z_MIN, X_FORK_RAMP_END, FORK_Z_MIN)) for x in xs_out])
+    e_lo_3 = Part.makeLine(App.Vector(X_FORK_RAMP_END, -10.0, FORK_Z_MIN), p_r_lo)
+    e_right = Part.makeLine(p_r_lo, p_r_hi)
+    e_hi_3 = Part.makeLine(p_r_hi, App.Vector(X_FORK_RAMP_END, -10.0, COVER_Z_MAX))
+    e_hi_2 = xz_bspline([(x, smoothstep5(x, X_FORK_RAMP_START, BLADE_Z_MAX, X_FORK_RAMP_END, COVER_Z_MAX)) for x in reversed(xs_out)])
+    e_hi_1 = Part.makeLine(App.Vector(X_FORK_RAMP_START, -10.0, BLADE_Z_MAX), p_l_hi)
+    e_left = Part.makeLine(p_l_hi, p_l_lo)
+
+    w_env = Part.Wire([e_lo_1, e_lo_2, e_lo_3, e_right, e_hi_3, e_hi_2, e_hi_1, e_left])
+    env_solid = Part.Face(w_env).extrude(App.Vector(0.0, 80.0, 0.0))
+    prism_outer = outer_face.extrude(App.Vector(0.0, 0.0, 30.0)).translate(App.Vector(0.0, 0.0, -5.0))
+    return env_solid.common(prism_outer)
+
+
+def cut_lower_web_mittelsteg_taper(shape):
+    """
+    Harmonize ONLY the lower web of the Tibia Kralle BELOW the teardrop window (Y >= 31.70,
+    directly seated on the 2.50 mm upper cheek Mittelsteg) while keeping the entire outer
+    dorsal sickle arch & proximal knee claws at full 7.00 mm thickness:
+      - Proximal C2 taper (X in [16.0, 27.0]): smoothly narrows 7.00 mm -> 2.50 mm
+      - Cheek-parallel zone (X in [27.0, 49.3]): exact 2.50 mm (Z in [7.75, 10.25]),
+        100% flush with the 2.50 mm Mittelsteg of the 6-window 45-deg A-truss cheek!
+      - Distal C2 flare (X in [49.3, 55.0]): smoothly widens 2.50 mm -> 7.00 mm into rear cheek/fork
+      - Top mask runs strictly inside the open teardrop air cavity -> NEVER touches the 7.00 mm dorsal arch!
+    """
+    X_L0, X_L1 = 16.00, 27.00
+    X_R0, X_R1 = 49.30, 55.00
+
+    # XY mask strictly covering the lower web (Y in [CHEEK_Y_TOP_MAX=31.70, midline of open teardrop cavity])
+    mask_top_pts = [
+        (15.50, 46.15),
+        (20.00, 46.20),
+        (27.00, 45.30),
+        (35.00, 43.60),
+        (42.00, 41.60),
+        (49.30, 39.00),
+        (56.00, 36.20),
+    ]
+    e_m_top = make_bspline_interp(mask_top_pts)
+    p_m_tl = App.Vector(15.50, 46.15, 0.0)
+    p_m_tr = App.Vector(56.00, 36.20, 0.0)
+    p_m_br = App.Vector(56.00, CHEEK_Y_TOP_MAX, 0.0)
+    p_m_bl = App.Vector(15.50, CHEEK_Y_TOP_MAX, 0.0)
+    w_mask = Part.Wire([
+        e_m_top,
+        Part.makeLine(p_m_tr, p_m_br),
+        Part.makeLine(p_m_br, p_m_bl),
+        Part.makeLine(p_m_bl, p_m_tl),
+    ])
+    mask_prism = Part.Face(w_mask).extrude(App.Vector(0.0, 0.0, 30.0)).translate(App.Vector(0.0, 0.0, -5.0))
+
+    # Build smooth C2-curved +Z and -Z cheek-side recess cutters (XZ extruded in Y)
+    xs_l = [X_L0 + (X_L1 - X_L0) * i / 8.0 for i in range(9)]
+    xs_r = [X_R0 + (X_R1 - X_R0) * i / 8.0 for i in range(9)]
+
+    def xz_bs(pts_xz):
+        bs = Part.BSplineCurve()
+        bs.interpolate([App.Vector(x, 30.0, z) for x, z in pts_xz])
+        return bs.toShape()
+
+    # +Z cutter: removes material above Z_cut_hi(x) up to Z = 16.0 (strictly inside mask_prism!)
+    Z_HI_OUT = 16.0
+    e_hi_l = xz_bs([(x, smoothstep5(x, X_L0, BLADE_Z_MAX, X_L1, WEB_Z_MAX)) for x in xs_l])
+    e_hi_m = Part.makeLine(App.Vector(X_L1, 30.0, WEB_Z_MAX), App.Vector(X_R0, 30.0, WEB_Z_MAX))
+    e_hi_r = xz_bs([(x, smoothstep5(x, X_R0, WEB_Z_MAX, X_R1, BLADE_Z_MAX + 0.50)) for x in xs_r])
+    w_cut_hi = Part.Wire([
+        e_hi_l, e_hi_m, e_hi_r,
+        Part.makeLine(App.Vector(X_R1, 30.0, BLADE_Z_MAX + 0.50), App.Vector(X_R1, 30.0, Z_HI_OUT)),
+        Part.makeLine(App.Vector(X_R1, 30.0, Z_HI_OUT), App.Vector(X_L0, 30.0, Z_HI_OUT)),
+        Part.makeLine(App.Vector(X_L0, 30.0, Z_HI_OUT), App.Vector(X_L0, 30.0, BLADE_Z_MAX)),
+    ])
+    cut_hi = Part.Face(w_cut_hi).extrude(App.Vector(0.0, 22.0, 0.0)).common(mask_prism)
+
+    # -Z cutter: removes material below Z_cut_lo(x) down to Z = 2.0 (strictly inside mask_prism!)
+    Z_LO_OUT = 2.0
+    e_lo_l = xz_bs([(x, smoothstep5(x, X_L0, BLADE_Z_MIN, X_L1, WEB_Z_MIN)) for x in xs_l])
+    e_lo_m = Part.makeLine(App.Vector(X_L1, 30.0, WEB_Z_MIN), App.Vector(X_R0, 30.0, WEB_Z_MIN))
+    e_lo_r = xz_bs([(x, smoothstep5(x, X_R0, WEB_Z_MIN, X_R1, BLADE_Z_MIN - 0.50)) for x in xs_r])
+    w_cut_lo = Part.Wire([
+        e_lo_l, e_lo_m, e_lo_r,
+        Part.makeLine(App.Vector(X_R1, 30.0, BLADE_Z_MIN - 0.50), App.Vector(X_R1, 30.0, Z_LO_OUT)),
+        Part.makeLine(App.Vector(X_R1, 30.0, Z_LO_OUT), App.Vector(X_L0, 30.0, Z_LO_OUT)),
+        Part.makeLine(App.Vector(X_L0, 30.0, Z_LO_OUT), App.Vector(X_L0, 30.0, BLADE_Z_MIN)),
+    ])
+    cut_lo = Part.Face(w_cut_lo).extrude(App.Vector(0.0, 22.0, 0.0)).common(mask_prism)
+
+    return shape.cut(cut_hi).cut(cut_lo)
 
 
 # =============================================================================
@@ -435,36 +593,15 @@ def build_tibia_and_cover():
     outer_face = Part.Face(outer_wire)
     teardrop_wire = build_teardrop_window_wire()
 
-    # A. Central Bionic Blade (Z in [5.50, 12.50], 7.00 mm thick)
-    blade_central = outer_face.extrude(App.Vector(0.0, 0.0, BLADE_Z_MAX - BLADE_Z_MIN)).translate(
-        App.Vector(0.0, 0.0, BLADE_Z_MIN)
-    )
+    # A+B. Full-thickness 7.00 mm Outer Bionic Claw + smooth C2 flare into 10.44 mm Distal Fork
+    blade_outer = build_outer_blade_envelope(outer_face)
 
-    # B. Widened Distal Fork / Sensor Housing (Z in [3.80, 14.24], 10.44 mm thick for X >= 62.0)
-    #    with smooth tapered ramps at X in [54.0, 62.0] on BOTH -Z and +Z faces!
-    prism_outer = outer_face.extrude(App.Vector(0.0, 0.0, 30.0)).translate(App.Vector(0.0, 0.0, -5.0))
-
-    pts_ramp_back = [
-        App.Vector(135.0, -10.0, FORK_Z_MIN),
-        App.Vector(X_FORK_RAMP_END, -10.0, FORK_Z_MIN),
-        App.Vector(X_FORK_RAMP_START, -10.0, BLADE_Z_MIN),
-        App.Vector(135.0, -10.0, BLADE_Z_MIN),
-        App.Vector(135.0, -10.0, FORK_Z_MIN),
-    ]
-    wedge_back = Part.Face(Part.makePolygon(pts_ramp_back)).extrude(App.Vector(0.0, 80.0, 0.0)).common(prism_outer)
-
-    pts_ramp_front = [
-        App.Vector(135.0, -10.0, BLADE_Z_MAX),
-        App.Vector(X_FORK_RAMP_START, -10.0, BLADE_Z_MAX),
-        App.Vector(X_FORK_RAMP_END, -10.0, COVER_Z_MAX),
-        App.Vector(135.0, -10.0, COVER_Z_MAX),
-        App.Vector(135.0, -10.0, BLADE_Z_MAX),
-    ]
-    wedge_front = Part.Face(Part.makePolygon(pts_ramp_front)).extrude(App.Vector(0.0, 80.0, 0.0)).common(prism_outer)
-
-    # C. Fuse Central Blade + Distal Housing + Knee Servo Cage
+    # C. Fuse Outer Blade + Knee Servo Cage, then cut unified 6-window Coxa-matched cheek trusses
+    #    and harmonize ONLY the lower web under the teardrop smoothly to the 2.50 mm cheek Mittelsteg!
     servo_cage = build_knee_servo_cage()
-    tibia_raw = blade_central.fuse(wedge_back).fuse(wedge_front).fuse(servo_cage)
+    tibia_raw = blade_outer.fuse(servo_cage)
+    tibia_raw = cut_lower_web_mittelsteg_taper(tibia_raw)
+    tibia_raw = cut_unified_cheek_truss_windows(tibia_raw)
 
     # D. Cut Repositioned Organic Teardrop Window (cleanly through central blade!)
     win_cut = Part.Face(teardrop_wire).extrude(App.Vector(0.0, 0.0, 30.0)).translate(App.Vector(0.0, 0.0, -5.0))
@@ -559,18 +696,19 @@ def build_tibia_and_cover():
     sw_pin1 = Part.makeCylinder(0.98, 6.20, App.Vector(p_sw_h1.x, p_sw_h1.y, 5.60), App.Vector(0, 0, 1))
     sw_pin2 = Part.makeCylinder(0.98, 6.20, App.Vector(p_sw_h2.x, p_sw_h2.y, 5.60), App.Vector(0, 0, 1))
 
-    # 5. Enclosed Smooth B-Spline Internal Cable Conduit (Ø2.40 mm at Z = 8.20, clear of Bayonet Tab #2 & Teardrop!)
-    #    From microswitch solder bay top-left -> arches cleanly ABOVE the SVG teardrop window -> exits into open Knee U-throat!
+    # 5. Enclosed Smooth B-Spline Internal Cable Conduit (Ø2.40 mm at Z = 8.20 inside full 7.00 mm dorsal sickle arch!)
+    #    From microswitch solder bay top-left -> arches concentrically ABOVE the claw-sickle teardrop -> exits into Knee U-throat!
     Z_CONDUIT = 8.20
     pts_cable = [
         App.Vector(80.80, 39.20, Z_CONDUIT),
-        App.Vector(76.20, 42.40, Z_CONDUIT),
-        App.Vector(66.50, 44.70, Z_CONDUIT),
-        App.Vector(54.00, 47.20, Z_CONDUIT),
-        App.Vector(38.00, 48.80, Z_CONDUIT),
-        App.Vector(20.00, 49.40, Z_CONDUIT),
-        App.Vector(9.00, 44.00, Z_CONDUIT),
-        App.Vector(4.50, 34.50, Z_CONDUIT),
+        App.Vector(75.80, 42.05, Z_CONDUIT),
+        App.Vector(65.31, 44.52, Z_CONDUIT),
+        App.Vector(53.47, 46.81, Z_CONDUIT),
+        App.Vector(41.56, 48.69, Z_CONDUIT),
+        App.Vector(29.62, 50.10, Z_CONDUIT),
+        App.Vector(17.97, 50.84, Z_CONDUIT),
+        App.Vector(11.50, 49.40, Z_CONDUIT),
+        App.Vector(7.20, 43.20, Z_CONDUIT),
     ]
     bs_cable = Part.BSplineCurve()
     bs_cable.interpolate(pts_cable)
@@ -582,16 +720,16 @@ def build_tibia_and_cover():
     # 6. Encapsulated Blind Pivot Bore in Fixed Cheek A (Z in [4.60, 5.95]; outer wall Z in [3.80, 4.60] 100% closed!)
     pivot_bore_a = Part.makeCylinder(PIVOT_BORE_R, 1.35, App.Vector(TARSUS_PIV_X, TARSUS_PIV_Y, 4.60), App.Vector(0, 0, 1))
 
-    # 7. Contoured Form-Fit Service Cover Rebate in +Z Face (wraps cleanly AROUND the monolithic SVG teardrop window!)
-    #    Covers spring bay (X>=59, Y<=26.2) + microswitch & Tarsus fork (X>=77.7), leaving teardrop 100% monolithic!
+    # 7. Contoured Form-Fit Service Cover Rebate in +Z Face (wraps cleanly AROUND the monolithic claw-sickle teardrop!)
+    #    Covers spring bay (X>=59, Y<=24.75) + microswitch & Tarsus fork (X>=77.7), leaving teardrop 100% monolithic!
     cover_poly_pts = [
         (X_COVER_SPLIT, -5.00, 0.00),      # Bottom-left behind spring floor
         (135.00, -5.00, 0.00),             # Bottom-right past distal mouth
         (135.00, 52.00, 0.00),             # Top-right
-        (77.70, 52.00, 0.00),              # Top-left exit right of teardrop (X<=75.4) & left of switch bay (X>=79.6)
-        (77.70, 29.80, 2.20),              # Sweeps down the 4.2 mm rib between teardrop & switch
-        (74.80, 26.20, 2.20),              # Smooth shoulder below teardrop belly (Y>=29.4) & above spring stop (Y<=23.76)
-        (X_COVER_SPLIT, 26.20, 0.00),      # Left step above spring chamber
+        (77.70, 52.00, 0.00),              # Top-left exit right of teardrop (X<=76.0) & left of switch bay (X>=79.6)
+        (77.70, 28.40, 1.80),              # Sweeps down the rib between teardrop & switch
+        (74.80, 24.75, 1.80),              # Smooth shoulder below deep teardrop belly (Y>=25.95) & above spring stop (Y<=23.76)
+        (X_COVER_SPLIT, 24.75, 0.00),      # Left step above spring chamber (0.99 mm overlap on spring stop ceiling!)
     ]
     cover_rebate_wire = make_rounded_polygon_wire_2d(cover_poly_pts, lambda v: App.Vector(v.x, v.y, BAY_Z_MAX))
     cover_rebate = Part.Face(cover_rebate_wire).extrude(App.Vector(0.0, 0.0, 5.0))

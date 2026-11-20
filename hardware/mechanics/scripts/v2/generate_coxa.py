@@ -26,11 +26,13 @@ Generate Lasius Hexapod Coxa Bracket v2 (Organic Lightweight Truss & Reinforced 
 
 import math
 import os
+import sys
 import FreeCAD as App
 import Part
 
 print("--- Generating Lasius Coxa v2 (Monolithic Joint Segment & Lightweight Truss) ---")
 
+DO_EXPORT = ("--export" in sys.argv)
 models_dir = "/home/bjoern/Workspace/Hexapods/lasius/hardware/mechanics/models"
 v1_coxa_path = f"{models_dir}/custom/v1/parts/coxa_bracket.FCStd"
 v2_coxa_path = f"{models_dir}/custom/v2/parts/coxa/coxa.FCStd"
@@ -362,12 +364,12 @@ def build_coxa_bracket_v2_shape():
     # perfectly mirrored about the horizontal midline Z = 9.00 mm (Z_top(x) = 18.00 - Z_bot(x)).
     # Interior hardware chamber (Y in [5.00, 25.50]) is left 100% untouched.
 
-    # A. Flank Windows (Zone 1: X in [9.70, 21.20])
+    # A. Flank Windows (Zone 1: X in [9.70, 21.70] — clean 0.52 mm top flat with R=1.40, zero micro-sliver!)
     # Upper flank window above Femur servo mounting belt (Z in [20.50, 30.00]):
     p_flank_top = [
         App.Vector(9.70, 20.50, 0.0),
-        App.Vector(21.20, 20.50, 0.0),
-        App.Vector(21.20, 30.00, 0.0),
+        App.Vector(21.70, 20.50, 0.0),
+        App.Vector(21.70, 30.00, 0.0),
         App.Vector(19.20, 30.00, 0.0),
     ]
     f_fl_t = make_filleted_polygon_2d(p_flank_top, R_FILLET)
@@ -376,8 +378,8 @@ def build_coxa_bracket_v2_shape():
     p_flank_bot = [
         App.Vector(9.70, -2.50, 0.0),
         App.Vector(19.20, -12.00, 0.0),
-        App.Vector(21.20, -12.00, 0.0),
-        App.Vector(21.20, -2.50, 0.0),
+        App.Vector(21.70, -12.00, 0.0),
+        App.Vector(21.70, -2.50, 0.0),
     ]
     f_fl_b = make_filleted_polygon_2d(p_flank_bot, R_FILLET)
 
@@ -407,12 +409,12 @@ def build_coxa_bracket_v2_shape():
     ]
     f_br_t = make_filleted_polygon_2d(p_br_top, R_FILLET)
 
-    # 4. Outer Lower Trapezoid (mirror across Z = 9.00 mm):
+    # 4. Outer Lower Trapezoid (exact mirror of p_br_top across Z = 9.00 mm -> 2.50 mm central rib!):
     p_br_bot = [
         App.Vector(29.00, -11.54, 0.0),
         App.Vector(51.50, -1.80, 0.0),
-        App.Vector(51.50, 6.50, 0.0),
-        App.Vector(48.29, 6.50, 0.0),
+        App.Vector(51.50, 7.75, 0.0),
+        App.Vector(48.29, 7.75, 0.0),
     ]
     f_br_b = make_filleted_polygon_2d(p_br_bot, R_FILLET)
 
@@ -431,11 +433,11 @@ def build_coxa_bracket_v2_shape():
     # -------------------------------------------------------------
     # 7. Rear Tail 45-Degree Diagonal Truss Windows (Tibia Standard w = 2.50 mm)
     # -------------------------------------------------------------
-    # Exact 45.0-deg diagonal struts with uniform width w = 2.50 mm (DX_45 = 3.536 mm)
+    # Exact 45.0-deg parallel diagonal struts with uniform width w = 2.50 mm (DX_45 = 3.536 mm)
     p_t_bot = [App.Vector(90.50, 2.50, 0.0), App.Vector(103.50, 2.50, 0.0), App.Vector(103.50, 15.50, 0.0)]
     f_t_bot = make_filleted_polygon_2d(p_t_bot, R_FILLET)
 
-    p_t_top = [App.Vector(87.00, 6.04, 0.0), App.Vector(99.96, 15.50, 0.0), App.Vector(87.00, 15.50, 0.0)]
+    p_t_top = [App.Vector(87.00, 2.54, 0.0), App.Vector(99.96, 15.50, 0.0), App.Vector(87.00, 15.50, 0.0)]
     f_t_top = make_filleted_polygon_2d(p_t_top, R_FILLET)
 
     shape = shape.cut(extrude_face_xz(f_t_bot, -1.0, 6.0))
@@ -478,8 +480,9 @@ def build_coxa_bracket_v2_shape():
     # to conceal the Coxa servo mounting screws and protect internal hardware.
 
     # Station 3: Integrated Micro-Zip-Tie Saddle on Coxa Bridge Flank (for 2.5 mm cable ties)
-    s_coxa1 = Part.makeBox(1.30, 8.0, 2.80, App.Vector(58.0, -1.0, 19.0))
-    s_coxa2 = Part.makeBox(1.30, 8.0, 2.80, App.Vector(61.0, -1.0, 19.0))
+    # Positioned cleanly inside solid bulkhead (X = 60.5 / 63.5, Z = 17.8..20.6) so it never bites the X=59.4 corner!
+    s_coxa1 = Part.makeBox(1.30, 8.0, 2.80, App.Vector(60.5, -1.0, 17.8))
+    s_coxa2 = Part.makeBox(1.30, 8.0, 2.80, App.Vector(63.5, -1.0, 17.8))
     shape = shape.cut(s_coxa1).cut(s_coxa2)
 
     shape = shape.removeSplitter()
@@ -494,8 +497,6 @@ if __name__ in ("__main__", "generate_coxa"):
     )
 
     os.makedirs(os.path.dirname(v2_coxa_path), exist_ok=True)
-    os.makedirs(export_step_dir, exist_ok=True)
-    os.makedirs(export_stl_dir, exist_ok=True)
 
     doc = App.newDocument("coxa")
     obj = doc.addObject("Part::Feature", "Coxa")
@@ -506,10 +507,12 @@ if __name__ in ("__main__", "generate_coxa"):
     doc.saveAs(v2_coxa_path)
     print(f"Saved FreeCAD model: {v2_coxa_path}")
 
-    shape_v2.exportStep(step_coxa_path)
-    shape_v2.exportStl(stl_coxa_path)
-    print(f"Exported STEP & STL: {step_coxa_path}, {stl_coxa_path}")
+    if DO_EXPORT:
+        os.makedirs(export_step_dir, exist_ok=True)
+        os.makedirs(export_stl_dir, exist_ok=True)
+        shape_v2.exportStep(step_coxa_path)
+        shape_v2.exportStl(stl_coxa_path)
+        print(f"Exported STEP & STL: {step_coxa_path}, {stl_coxa_path}")
 
     App.closeDocument("coxa")
-    import sys
     sys.exit(0)

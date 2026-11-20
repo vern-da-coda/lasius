@@ -416,14 +416,14 @@ def run_tibia_fea():
         )
         stats = extract_stats(mesh, res)
 
-        # Also extract peak stress specifically around the Teardrop Window region (X in [34, 79], Y in [26, 52])
+        # Also extract peak stress specifically around the extended Claw-Sickle Teardrop region (X in [12, 79], Y in [24.5, 55])
         # so we can separate structural arch stress from local single-cheek blind pivot bore contact stress!
         nodes = mesh.FemMesh.Nodes
         stresses = list(res.vonMises)
         nids = list(res.NodeNumbers)
         win_stresses = [
             s for s, nid in zip(stresses, nids)
-            if 34.0 <= nodes[nid].x <= 79.0 and 25.0 <= nodes[nid].y <= 53.0
+            if 12.0 <= nodes[nid].x <= 79.0 and 24.5 <= nodes[nid].y <= 55.0
         ]
         # Structural stress excluding 4.5 mm radius around the blind single-cheek pivot bore (109, 20.5, 5.2)
         # (remember in assembled Tibia, Tibia_Cover shares 50% of pivot pin load!)
