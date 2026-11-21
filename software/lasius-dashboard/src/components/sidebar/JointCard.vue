@@ -1,15 +1,18 @@
 <script setup lang="ts">
 /**
- * Reusable Single-Joint Control & Calibration Card (`lasius-dashboard/src/components/sidebar/JointCard.vue`).
+ * Reusable Single-Joint Control & Closed-Loop Calibration Card (`lasius-dashboard/src/components/sidebar/JointCard.vue`).
  *
  * Purpose & Role:
  *   Encapsulates the UI and interaction logic for a single leg joint (`coxa`,
- *   `femur`, or `tibia`). Adapts dynamically to `store.legControlMode`:
- *     - In `drive` mode: renders a live degree slider clamped to `[min_angle, max_angle]`
- *       with quick-zero and hover highlighting synchronized with the 3D Digital Twin.
- *     - In `calibrate` mode: renders PCA9685 board/channel metadata, microsecond
- *       pulse trim steppers (`-10µs`, `-1µs`, `Zero`, `+1µs`, `+10µs`), orientation
- *       inversion toggle (`+1` / `-1`), min/max angle limit inputs, and a joint sweep button.
+ *   `femur`, or `tibia`):
+ *     - Live Angle Direct Drive Slider with integrated Closed-Loop feedback (AP 5):
+ *       * Target position (`Soll` / `currentAngle`) controlled by the interactive slider thumb.
+ *       * Actual position (`Ist` / `actualAngle`) rendered as a distinct visual marker
+ *         and deviation bridge bar directly on the same slider rail within `[minLimit, maxLimit]`.
+ *       * Simultaneous numerical badges for `Soll`, `Ist`, and deviation (`Δ°` / `STALL` alert),
+ *         with clean dimmed Open-Loop fallback when no valid ADC feedback is present.
+ *     - Dual-thumb min/max angle limit range slider, microsecond pulse center-trim steppers,
+ *       orientation inversion toggle (`+1` / `-1`), and a joint range sweep button.
  */
 import { computed } from 'vue';
 import { useDashboardStore } from '../../stores/dashboardStore';
@@ -33,22 +36,101 @@ const servoData = computed(() => {
     board_address: 0x40,
     center_offset_pulse: 0,
     orientation: 1,
-    min_angle: props.jointType === 'tibia' ? -60 : -45,
-    max_angle: props.jointType === 'tibia' ? 60 : 45,
+    min_angle: props.jointType === 'tibia' ? -68 : (props.jointType === 'coxa' ? -25 : -90),
+    max_angle: props.jointType === 'tibia' ? 29 : (props.jointType === 'coxa' ? 25 : 90),
     is_overridden: false
   };
 });
 
+// Commanded Target Angle (Soll)
 const currentAngle = computed(() => {
   return store.jointAngles[servoName.value] !== undefined ? store.jointAngles[servoName.value] : 0;
 });
 
+// Measured Actual Angle (Ist) & Closed-Loop Validity
+const isActualValid = computed(() => {
+  return Boolean(
+    store.actualJointValid[servoName.value] &&
+    store.actualJointAngles[servoName.value] !== null &&
+    store.actualJointAngles[servoName.value] !== undefined
+  );
+});
+
+const actualAngle = computed<number | null>(() => {
+  if (!isActualValid.value) return null;
+  const val = store.actualJointAngles[servoName.value];
+  return typeof val === 'number' ? val : null;
+});
+
+const angleDelta = computed<number>(() => {
+  if (actualAngle.value === null) return 0;
+  return actualAngle.value - currentAngle.value;
+});
+
+const isStalled = computed<boolean>(() => {
+  return Boolean(store.jointStalled[servoName.value]);
+});
+
+const isWarningDeviation = computed<boolean>(() => {
+  if (!isActualValid.value) return false;
+  return isStalled.value || Math.abs(angleDelta.value) >= 5.0;
+});
+
+const formattedActualAngle = computed(() => {
+  if (actualAngle.value === null) return '--';
+  return actualAngle.value.toFixed(1);
+});
+
+const formattedDelta = computed(() => {
+  const d = angleDelta.value;
+  const sign = d > 0.05 ? '+' : '';
+  return `${sign}${d.toFixed(1)}`;
+});
+
 const minLimit = computed(() => {
-  return servoData.value.min_angle !== undefined ? servoData.value.min_angle : (props.jointType === 'tibia' ? -60 : -45);
+  return servoData.value.min_angle !== undefined
+    ? servoData.value.min_angle
+    : (props.jointType === 'tibia' ? -68 : (props.jointType === 'coxa' ? -25 : -90));
 });
 
 const maxLimit = computed(() => {
-  return servoData.value.max_angle !== undefined ? servoData.value.max_angle : (props.jointType === 'tibia' ? 60 : 45);
+  return servoData.value.max_angle !== undefined
+    ? servoData.value.max_angle
+    : (props.jointType === 'tibia' ? 29 : (props.jointType === 'coxa' ? 25 : 90));
+});
+
+// Normalized [0..100] percentages along the Live Angle slider track [minLimit, maxLimit]
+function angleToTrackPct(angleDeg: number): number {
+  const span = maxLimit.value - minLimit.value;
+  if (span <= 0) return 50;
+  const raw = ((angleDeg - minLimit.value) / span) * 100;
+  return Math.max(0, Math.min(100, raw));
+}
+
+const targetTrackPct = computed(() => angleToTrackPct(currentAngle.value));
+const actualTrackPct = computed(() => {
+  if (actualAngle.value === null) return targetTrackPct.value;
+  return angleToTrackPct(actualAngle.value);
+});
+
+// Pixel-aligned left position accounting for the 15px range thumb width (7.5px half-thumb inset)
+const actualMarkerStyle = computed(() => {
+  const ratio = actualTrackPct.value / 100;
+  return {
+    left: `calc(7.5px + (100% - 15px) * ${ratio.toFixed(4)})`
+  };
+});
+
+// Deviation bridge bar between Soll and Ist on the slider rail
+const deltaBarStyle = computed(() => {
+  const p1 = targetTrackPct.value / 100;
+  const p2 = actualTrackPct.value / 100;
+  const minR = Math.min(p1, p2);
+  const spanR = Math.abs(p2 - p1);
+  return {
+    left: `calc(7.5px + (100% - 15px) * ${minR.toFixed(4)})`,
+    width: `calc((100% - 15px) * ${spanR.toFixed(4)})`
+  };
 });
 
 const centerTrim = computed(() => {
@@ -154,7 +236,7 @@ function handleOrientationToggle(e: Event) {
 <template>
   <div
     class="joint-control-card"
-    :class="`joint-${jointType}`"
+    :class="[`joint-${jointType}`, { 'joint-card-stalled': isStalled }]"
     @mouseenter="store.hoveredJoint = jointType"
     @mouseleave="if (store.hoveredJoint === jointType) store.hoveredJoint = null;"
   >
@@ -167,27 +249,116 @@ function handleOrientationToggle(e: Event) {
           </span>
         </span>
       </div>
-      <div style="display:flex; align-items:center; gap:8px;">
-        <span :id="`val-joint-${jointType}`" class="val-badge joint-badge">
+      <div class="joint-badges-row">
+        <!-- Commanded Target Angle Badge (Soll) -->
+        <span
+          :id="`val-joint-${jointType}`"
+          class="val-badge joint-badge"
+          title="Commanded Target Angle (Soll)"
+        >
           {{ Math.round(currentAngle) }}&deg;
+        </span>
+
+        <!-- Measured Actual Angle Badge (Ist / Open-Loop Fallback) -->
+        <span
+          :id="`val-actual-${jointType}`"
+          class="val-badge joint-actual-badge"
+          :class="{
+            'open-loop': !isActualValid,
+            'warn': isActualValid && isWarningDeviation && !isStalled,
+            'stall': isStalled
+          }"
+          :title="isActualValid ? `Measured Potentiometer Angle (Ist: ${formattedActualAngle}°, Δ: ${formattedDelta}°)` : 'No valid ADC feedback (Open-Loop)'"
+        >
+          <template v-if="isActualValid">
+            Ist {{ formattedActualAngle }}&deg;
+          </template>
+          <template v-else>
+            Open-Loop
+          </template>
+        </span>
+
+        <!-- Tracking Deviation / Stall Alert Badge -->
+        <span
+          v-if="isActualValid"
+          :id="`val-delta-${jointType}`"
+          class="val-badge joint-delta-badge"
+          :class="{
+            'ok': !isWarningDeviation && !isStalled,
+            'warn': isWarningDeviation && !isStalled,
+            'stall': isStalled
+          }"
+          :title="isStalled ? 'Persistent tracking deviation detected (Stall / Obstacle)' : 'Instantaneous deviation (Ist - Soll)'"
+        >
+          <template v-if="isStalled">
+            ⚠ STALL ({{ formattedDelta }}&deg;)
+          </template>
+          <template v-else>
+            &Delta; {{ formattedDelta }}&deg;
+          </template>
         </span>
       </div>
     </div>
 
-    <!-- Live Angle Direct Drive Slider -->
+    <!-- Live Angle Direct Drive Slider with Integrated Closed-Loop Ist-Indicator -->
     <div class="joint-slider-wrap">
       <div class="slider-label-row">
         <span class="param-sublabel">Live Angle</span>
+        <span class="slider-closed-loop-legend">
+          <span class="legend-item" title="Commanded Target Position (Soll)">
+            <span class="legend-dot soll"></span>Soll
+          </span>
+          <span
+            class="legend-item"
+            :class="{ 'is-open-loop': !isActualValid }"
+            :title="isActualValid ? 'Measured Actual Position (ADS1115 Ist)' : 'Actual Feedback Inactive (Open-Loop)'"
+          >
+            <span
+              class="legend-dot ist"
+              :class="{ 'open-loop': !isActualValid, 'warn': isWarningDeviation, 'stall': isStalled }"
+            ></span>Ist
+          </span>
+        </span>
       </div>
-      <input
-        type="range"
-        :id="`slider-joint-${jointType}`"
-        :min="minLimit"
-        :max="maxLimit"
-        step="1"
-        :value="Math.round(currentAngle)"
-        @input="handleAngleInput"
-      />
+
+      <div class="joint-slider-track-container">
+        <div class="joint-slider-rail"></div>
+
+        <!-- Deviation Bridge Bar between Soll and Ist -->
+        <div
+          v-if="isActualValid"
+          :id="`delta-bar-${jointType}`"
+          class="joint-actual-delta-bar"
+          :class="{ 'warn': isWarningDeviation && !isStalled, 'stall': isStalled }"
+          :style="deltaBarStyle"
+        ></div>
+
+        <!-- Actual Angle (Ist) Indicator Marker on the Slider Track -->
+        <div
+          :id="`marker-actual-${jointType}`"
+          class="joint-actual-marker"
+          :class="{
+            'open-loop': !isActualValid,
+            'warn': isActualValid && isWarningDeviation && !isStalled,
+            'stall': isStalled
+          }"
+          :style="actualMarkerStyle"
+          :title="isActualValid ? `Ist: ${formattedActualAngle}° (Δ ${formattedDelta}°)` : 'Open-Loop (no valid ADC feedback)'"
+        ></div>
+
+        <!-- Interactive Target (Soll) Range Input -->
+        <input
+          type="range"
+          class="joint-live-slider-input"
+          :id="`slider-joint-${jointType}`"
+          :min="minLimit"
+          :max="maxLimit"
+          step="1"
+          :value="Math.round(currentAngle)"
+          @input="handleAngleInput"
+        />
+      </div>
+
       <div class="slider-ticks">
         <span :id="`tick-min-${jointType}`">{{ minLimit }}&deg;</span>
         <span>0&deg;</span>

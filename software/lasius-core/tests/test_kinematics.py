@@ -17,7 +17,7 @@ sys.path.append(str(PROJECT_ROOT))
 import pytest
 import math
 
-from lasius.core.motion import Leg, Joint, BodySide, LegRow, LegIdentifier
+from lasius.core.motion import Leg, Joint, BodySide, LegRow, LegIdentifier, calculate_leg_ik, calculate_leg_fk
 from lasius.core.hardware import Servo, PWMDriverProtocol
 from lasius.core.config import ServoConfig
 
@@ -93,3 +93,24 @@ def test_ik_at_max_reach(sample_leg: Leg):
     assert coxa_angle == pytest.approx(0.0)
     assert femur_angle == pytest.approx(0.0)
     assert tibia_angle == pytest.approx(-90.0, abs=0.1)
+
+
+@pytest.mark.parametrize(
+    "target_xyz",
+    [
+        (230.0, 0.0, -80.0),
+        (195.0, 35.0, -65.0),
+        (210.0, -40.0, -95.0),
+        (150.0, 0.0, -50.0),
+    ],
+)
+def test_fk_inverts_ik_exactly(target_xyz):
+    """Tests that 3-DOF forward kinematics (calculate_leg_fk) is the exact inverse of calculate_leg_ik."""
+    x, y, z = target_xyz
+    coxa_len, femur_len, tibia_len = 60.0, 100.0, 152.6
+    c_deg, f_deg, t_deg = calculate_leg_ik(x, y, z, coxa_len, femur_len, tibia_len)
+    fk_x, fk_y, fk_z = calculate_leg_fk(c_deg, f_deg, t_deg, coxa_len, femur_len, tibia_len)
+    assert fk_x == pytest.approx(x, abs=1e-6)
+    assert fk_y == pytest.approx(y, abs=1e-6)
+    assert fk_z == pytest.approx(z, abs=1e-6)
+

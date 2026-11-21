@@ -59,6 +59,10 @@ class LasiusRestHandler(SimpleHTTPRequestHandler):
             self._handle_get_status()
             return
 
+        if path == "/api/v1/telemetry":
+            self._handle_get_telemetry()
+            return
+
         if path in ("/api/v1/system/stats", "/api/v1/system", "/api/v1/stats"):
             self._handle_get_system_stats()
             return
@@ -180,15 +184,42 @@ class LasiusRestHandler(SimpleHTTPRequestHandler):
 
         disp = srv.dispatcher
         active_ord = disp.active_order.to_dict() if (disp and disp.active_order) else None
+        telem = (
+            srv.hexapod.get_telemetry_state()
+            if (srv.hexapod and hasattr(srv.hexapod, "get_telemetry_state"))
+            else None
+        )
 
         data = {
             "status": "online",
             "control": srv.get_control_state(),
+            "telemetry": telem,
             "active_order": active_ord,
             "connected_clients": len(srv.clients),
             "recent_orders_count": len(disp.order_history) if disp else 0,
         }
         self._send_json(200, data)
+
+    def _handle_get_telemetry(self) -> None:
+        """Returns closed-loop ADC feedback state (target_angles, actual_angles, actual_valid, tracking_errors, stalls, foot_contacts)."""
+        srv = self.server_instance
+        if not srv:
+            self._send_json(500, {"error": "Server instance uninitialized"})
+            return
+        if srv.hexapod and hasattr(srv.hexapod, "get_telemetry_state"):
+            self._send_json(200, srv.hexapod.get_telemetry_state())
+        else:
+            self._send_json(200, {
+                "target_angles": {},
+                "actual_angles": {},
+                "actual_valid": {},
+                "expected_angles": {},
+                "tracking_errors": {},
+                "raw_deviations": {},
+                "stalled_joints": {},
+                "foot_contacts": {},
+                "actual_foot_positions": {},
+            })
 
     def _handle_get_system_stats(self) -> None:
         """Returns Raspberry Pi / system telemetry metrics (CPU, RAM, temp, power health, WiFi)."""

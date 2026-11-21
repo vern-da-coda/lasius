@@ -99,7 +99,27 @@ export interface ServoCalibrationItem {
   orientation?: number;
   min_angle?: number;
   max_angle?: number;
+  pot_v_zero?: number;
+  pot_v_slope?: number;
+  current_angle?: number | null;
+  measured_angle?: number | null;
+  measured_voltage?: number | null;
+  actual_valid?: boolean;
+  tracking_error?: number | null;
+  is_stalled?: boolean;
   is_overridden?: boolean;
+}
+
+export interface ClosedLoopTelemetry {
+  target_angles?: Record<string, number | null>;
+  actual_angles?: Record<string, number | null>;
+  actual_valid?: Record<string, boolean>;
+  expected_angles?: Record<string, number | null>;
+  tracking_errors?: Record<string, number | null>;
+  raw_deviations?: Record<string, number | null>;
+  stalled_joints?: Record<string, boolean>;
+  foot_contacts?: Record<string, boolean>;
+  actual_foot_positions?: Record<string, [number, number, number] | null>;
 }
 
 export interface CpuStats {

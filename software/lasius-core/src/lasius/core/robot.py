@@ -3,8 +3,9 @@ Central Hexapod Robot Coordinator (`lasius.core.robot`).
 
 Purpose & Role:
     Provides the `Hexapod` aggregate root class that binds physical configuration
-    (`HexapodConfig`), I2C/mock PWM drivers (`PWMDriverProtocol`), the six 3-DOF
-    legs (`Leg`), the 50 Hz walking gait engine (`GaitProtocol`), and the
+    (`HexapodConfig`), I2C/mock PWM drivers (`PWMDriverProtocol`), closed-loop
+    PCA9548A + ADS1115 ADC telemetry (`ADCDriverProtocol`), the six 3-DOF legs
+    (`Leg`), the 50 Hz walking gait engine (`GaitProtocol`), and the
     telemetry/control server (`LasiusServer` / `OrderDispatcher`).
 
 Classes:
@@ -13,16 +14,38 @@ Classes:
         * Executes the 50 Hz locomotion step in `tick()` when `locomotion_active` is True,
           computing inverse kinematics for all 6 legs and streaming live joint angles
           to connected WebSocket clients.
+        * Polls closed-loop ADS1115 potentiometer & foot-switch voltages across all
+          6 multiplexer sub-buses (`poll_telemetry()`), computing calibrated measured
+          angles, first-order dynamic reference lag errors, stall flags, and actual
+          forward-kinematics foot positions.
         * Arbitrates safe disengagement (`relax_all()`, `locomotion_active = False`)
           so isolated single-leg calibration and test routines are never overwritten.
 """
 
+import threading
 import time
 from typing import List, Dict, Type, Tuple, Optional, Any
 
 from lasius.core.config import HexapodConfig, load_config
-from lasius.core.hardware import Servo, PWMDriverProtocol, MockPWMDriver, RealPCA9685Driver
-from lasius.core.motion import Leg, Joint, BodySide, LegRow, LegIdentifier, GaitProtocol, TripodGait, OmniGait
+from lasius.core.hardware import (
+    Servo,
+    PWMDriverProtocol,
+    MockPWMDriver,
+    RealPCA9685Driver,
+    ADCDriverProtocol,
+    RealADS1115MuxDriver,
+    SimulatedADCDriver,
+)
+from lasius.core.motion import (
+    Leg,
+    Joint,
+    BodySide,
+    LegRow,
+    LegIdentifier,
+    GaitProtocol,
+    TripodGait,
+    OmniGait,
+)
 from lasius.core.control import OrderDispatcher
 from lasius.core.server import VisualizerServer
 
@@ -31,13 +54,20 @@ class Hexapod:
     """
     The central control class for the hexapod robot.
     """
-    def __init__(self, config: HexapodConfig, drivers: Dict[int, PWMDriverProtocol]):
+    def __init__(
+        self,
+        config: HexapodConfig,
+        drivers: Dict[int, PWMDriverProtocol],
+        adc_driver: Optional[ADCDriverProtocol] = None,
+    ):
         print("Initializing Hexapod...")
         self.config = config
         self.gait_engine: Optional[GaitProtocol] = None
         self.locomotion_active: bool = False
         self.drivers = drivers
         self.visualizer: Optional[VisualizerServer] = self._get_visualizer_from_drivers()
+        self._telemetry_lock = threading.RLock()
+        self._last_telemetry_ts: Optional[float] = None
 
         all_servos = [Servo(config=sc, driver=self.drivers[sc.board_address]) for sc in self.config.servos]
         servos_by_leg = self._group_servos_by_leg(all_servos)
@@ -53,15 +83,36 @@ class Hexapod:
             side = BodySide(side_str)
             row = LegRow(row_str)
 
-            coxa_joint = Joint(servo=servos['coxa'], length=coxa_len)
-            femur_joint = Joint(servo=servos['femur'], length=femur_len)
-            tibia_joint = Joint(servo=servos['tibia'], length=tibia_len)
+            coxa_joint = Joint(servo=servos["coxa"], length=coxa_len)
+            femur_joint = Joint(servo=servos["femur"], length=femur_len)
+            tibia_joint = Joint(servo=servos["tibia"], length=tibia_len)
 
             self.legs[(side, row)] = Leg(
                 side=side, row=row, coxa=coxa_joint, femur=femur_joint, tibia=tibia_joint
             )
+
+        # Configure closed-loop ADC driver (physical ADS1115 mux or simulated first-order physics follower)
+        telem_cfg = getattr(self.config, "telemetry", None)
+        if adc_driver is not None:
+            self.adc_driver: Optional[ADCDriverProtocol] = adc_driver
+        elif telem_cfg and telem_cfg.enabled:
+            # Auto-select SimulatedADCDriver when using MockPWMDriver
+            is_all_mock = all(isinstance(d, MockPWMDriver) for d in self.drivers.values())
+            if is_all_mock:
+                self.adc_driver = SimulatedADCDriver(
+                    tau_lag_s=telem_cfg.tau_lag_s,
+                    max_speed_deg_s=telem_cfg.max_speed_deg_s,
+                )
+            else:
+                self.adc_driver = None
+        else:
+            self.adc_driver = None
+
+        if isinstance(self.adc_driver, SimulatedADCDriver):
+            self._bind_simulated_adc(self.adc_driver)
+
         print(f"Hexapod initialized with {len(self.legs)} legs (Coxa: {coxa_len}mm, Femur: {femur_len}mm, Tibia: {tibia_len}mm).")
-        
+
         if self.visualizer:
             self.dispatcher = self.visualizer.dispatcher
             self.dispatcher.set_robot(self)
@@ -69,9 +120,23 @@ class Hexapod:
         else:
             self.dispatcher = OrderDispatcher(robot=self)
 
+    def _bind_simulated_adc(self, sim_adc: SimulatedADCDriver) -> None:
+        """Binds all 6 legs' servos to their configured PCA9548A multiplexer sub-bus channels."""
+        mux_map = self.config.telemetry.leg_mux_channels
+        for (side, row), leg in self.legs.items():
+            leg_name = f"{side.value}_{row.value}"
+            mux_ch = mux_map.get(leg_name)
+            if mux_ch is not None:
+                sim_adc.bind_leg_servos(
+                    mux_channel=mux_ch,
+                    coxa_servo=leg.coxa.servo,
+                    femur_servo=leg.femur.servo,
+                    tibia_servo=leg.tibia.servo,
+                )
+
     def _get_visualizer_from_drivers(self) -> Optional[VisualizerServer]:
         for driver in self.drivers.values():
-            if hasattr(driver, 'visualizer_server') and driver.visualizer_server:
+            if hasattr(driver, "visualizer_server") and driver.visualizer_server:
                 return driver.visualizer_server
         return None
 
@@ -81,6 +146,114 @@ class Hexapod:
             gait.apply_geometry(self.config.geometry)
         self.gait_engine = gait
         self.locomotion_active = engage
+
+    def poll_telemetry(self, dt: Optional[float] = None) -> Dict[str, Any]:
+        """
+        Polls closed-loop ADS1115 analog feedback across all 6 multiplexer channels,
+        updates each servo's measured angle, dynamic lag model, and stall state,
+        and returns the current closed-loop telemetry snapshot.
+        """
+        now = time.perf_counter()
+        if dt is None:
+            if self._last_telemetry_ts is None:
+                dt_val = 0.020
+            else:
+                dt_val = max(0.001, min(0.25, now - self._last_telemetry_ts))
+        else:
+            dt_val = max(0.001, float(dt))
+        self._last_telemetry_ts = now
+
+        telem_cfg = self.config.telemetry
+        if self.adc_driver is not None and telem_cfg.enabled:
+            if isinstance(self.adc_driver, SimulatedADCDriver) and dt is not None:
+                self.adc_driver.advance_dt(dt_val)
+
+            for (side, row), leg in self.legs.items():
+                leg_name = f"{side.value}_{row.value}"
+                mux_ch = telem_cfg.leg_mux_channels.get(leg_name)
+                if mux_ch is None:
+                    continue
+
+                voltages = self.adc_driver.read_leg_channels(mux_ch)
+                with self._telemetry_lock:
+                    for adc_idx, joint in ((0, leg.coxa), (1, leg.femur), (2, leg.tibia)):
+                        joint.servo.update_feedback(
+                            voltage_v=voltages.get(adc_idx),
+                            dt=dt_val,
+                            ema_alpha=telem_cfg.ema_alpha,
+                            tau_lag_s=telem_cfg.tau_lag_s,
+                            max_speed_deg_s=telem_cfg.max_speed_deg_s,
+                            stall_error_deg=telem_cfg.stall_error_deg,
+                            stall_timeout_s=telem_cfg.stall_timeout_s,
+                        )
+                    v_foot = voltages.get(3)
+                    leg.foot_voltage = v_foot
+                    if v_foot is not None:
+                        leg.foot_contact = v_foot < telem_cfg.foot_switch_threshold_v
+                    else:
+                        leg.foot_contact = False
+
+        snapshot = self.get_telemetry_state()
+        if self.visualizer and hasattr(self.visualizer, "send_telemetry_update"):
+            self.visualizer.send_telemetry_update(snapshot)
+        return snapshot
+
+    def get_telemetry_state(self) -> Dict[str, Any]:
+        """
+        Returns a thread-safe snapshot of commanded vs. measured joint angles,
+        validity flags, dynamic lag tracking errors, stall states, foot switch
+        contacts, and actual forward-kinematics foot positions.
+        """
+        target_angles: Dict[str, Optional[float]] = {}
+        actual_angles: Dict[str, Optional[float]] = {}
+        actual_valid: Dict[str, bool] = {}
+        expected_angles: Dict[str, Optional[float]] = {}
+        tracking_errors: Dict[str, Optional[float]] = {}
+        raw_deviations: Dict[str, Optional[float]] = {}
+        stalled_joints: Dict[str, bool] = {}
+        foot_contacts: Dict[str, bool] = {}
+        actual_foot_positions: Dict[str, Optional[Tuple[float, float, float]]] = {}
+
+        with self._telemetry_lock:
+            for (side, row), leg in self.legs.items():
+                leg_name = f"{side.value}_{row.value}"
+                foot_contacts[leg_name] = bool(leg.foot_contact)
+                fk_pos = leg.get_actual_tip_position()
+                actual_foot_positions[leg_name] = (
+                    (round(fk_pos[0], 2), round(fk_pos[1], 2), round(fk_pos[2], 2))
+                    if fk_pos is not None
+                    else None
+                )
+                for joint in (leg.coxa, leg.femur, leg.tibia):
+                    s = joint.servo
+                    name = s.config.name
+                    target_angles[name] = round(s.current_angle, 2) if s.current_angle is not None else None
+                    actual_angles[name] = round(s.measured_angle, 2) if (s.actual_valid and s.measured_angle is not None) else None
+                    actual_valid[name] = bool(s.actual_valid)
+                    expected_angles[name] = round(s.expected_angle, 2) if s.expected_angle is not None else None
+                    tracking_errors[name] = round(s.tracking_error, 2) if (s.actual_valid and s.tracking_error is not None) else None
+                    raw_deviations[name] = round(s.raw_deviation, 2) if s.raw_deviation is not None else None
+                    stalled_joints[name] = bool(s.is_stalled)
+
+        return {
+            "target_angles": target_angles,
+            "actual_angles": actual_angles,
+            "actual_valid": actual_valid,
+            "expected_angles": expected_angles,
+            "tracking_errors": tracking_errors,
+            "raw_deviations": raw_deviations,
+            "stalled_joints": stalled_joints,
+            "foot_contacts": foot_contacts,
+            "actual_foot_positions": actual_foot_positions,
+        }
+
+    def get_actual_foot_positions(self) -> Dict[str, Optional[Tuple[float, float, float]]]:
+        """Returns 3-DOF forward-kinematics foot positions `(x, y, z)` in mm from actual servo angles."""
+        with self._telemetry_lock:
+            return {
+                f"{side.value}_{row.value}": leg.get_actual_tip_position()
+                for (side, row), leg in self.legs.items()
+            }
 
     def tick(self) -> None:
         if not self.gait_engine or not self.locomotion_active:
@@ -103,7 +276,7 @@ class Hexapod:
         if self.visualizer:
             all_updates = {}
             for driver in self.drivers.values():
-                if hasattr(driver, 'get_and_clear_angle_updates'):
+                if hasattr(driver, "get_and_clear_angle_updates"):
                     all_updates.update(driver.get_and_clear_angle_updates())
 
             if all_updates:
@@ -129,6 +302,8 @@ class Hexapod:
     def relax_all(self) -> None:
         """Relaxes all servos across all drivers and disengages locomotion."""
         self.locomotion_active = False
+        for leg in self.legs.values():
+            leg.relax()
         for d in self.drivers.values():
             if hasattr(d, "relax_all"):
                 d.relax_all()
@@ -146,7 +321,8 @@ class Hexapod:
         res = {}
         for leg in self.legs.values():
             for joint in (leg.coxa, leg.femur, leg.tibia):
-                sc = joint.servo.config
+                s = joint.servo
+                sc = s.config
                 res[sc.name] = {
                     "name": sc.name,
                     "channel": sc.channel,
@@ -156,7 +332,14 @@ class Hexapod:
                     "min_angle": sc.min_angle,
                     "max_angle": sc.max_angle,
                     "pulse_range": sc.pulse_range,
-                    "current_angle": joint.servo.current_angle,
+                    "pot_v_zero": sc.pot_v_zero,
+                    "pot_v_slope": sc.pot_v_slope,
+                    "current_angle": s.current_angle,
+                    "measured_angle": round(s.measured_angle, 2) if (s.actual_valid and s.measured_angle is not None) else None,
+                    "measured_voltage": round(s.measured_voltage, 4) if s.measured_voltage is not None else None,
+                    "actual_valid": s.actual_valid,
+                    "tracking_error": round(s.tracking_error, 2) if (s.actual_valid and s.tracking_error is not None) else None,
+                    "is_stalled": s.is_stalled,
                 }
         return res
 
@@ -164,7 +347,7 @@ class Hexapod:
         self,
         servo_name: str,
         updates: Dict[str, Any],
-        live_angle: Optional[float] = None
+        live_angle: Optional[float] = None,
     ) -> bool:
         """
         Updates calibration parameters on an active servo in memory and immediately re-actuates it.
@@ -189,6 +372,12 @@ class Hexapod:
 
         if "pulse_range" in updates and updates["pulse_range"] is not None:
             servo.config.pulse_range = int(updates["pulse_range"])
+
+        if "pot_v_zero" in updates and updates["pot_v_zero"] is not None:
+            servo.config.pot_v_zero = float(updates["pot_v_zero"])
+
+        if "pot_v_slope" in updates and updates["pot_v_slope"] is not None:
+            servo.config.pot_v_slope = float(updates["pot_v_slope"])
 
         # Re-actuate servo so user sees immediate physical movement
         target_angle = live_angle if live_angle is not None else servo.current_angle
@@ -217,6 +406,8 @@ class Hexapod:
                 servo.config.min_angle = orig.min_angle
                 servo.config.max_angle = orig.max_angle
                 servo.config.pulse_range = orig.pulse_range
+                servo.config.pot_v_zero = orig.pot_v_zero
+                servo.config.pot_v_slope = orig.pot_v_slope
                 if servo.current_angle is not None:
                     servo.set_angle(servo.current_angle)
                     if self.visualizer:

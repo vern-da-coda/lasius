@@ -28,7 +28,30 @@ geometry:
 
 
 # ==============================================================================
-# 2. Servo Calibration & Channel Mapping
+# 2. Closed-Loop Telemetry & ADC Feedback (Multiplexer 0x71 + 6x Wandler 0x48)
+# ==============================================================================
+telemetry:
+  enabled: true
+  mux_address: 0x71                    # PCA9548A/TCA9548A I2C address (A0 bridged to 3.3V)
+  adc_address: 0x48                    # ADS1115 V280 I2C address per sub-bus (ADDR -> GND)
+  poll_hz: 50.0                        # Closed-loop telemetry update rate [Hz]
+  ema_alpha: 0.45                      # Exponential moving average factor for analog voltage smoothing
+  tau_lag_s: 0.075                     # First-order servo transit dynamics lag constant tau [s]
+  max_speed_deg_s: 350.0               # Reely NR-645 MG BB max unloaded slew rate at 6.0V (0.17s/60°)
+  stall_error_deg: 8.0                 # Dynamic tracking error |Ist(t) - Expected(t)| threshold for stall detection [°]
+  stall_timeout_s: 0.35                # Persistence time [s] before flagging a stalled/blocked joint
+  foot_switch_threshold_v: 1.0         # ADS1115 A3 voltage threshold [V] (10k pull-up to 3.3V, COM->GND: <1.0V = contact)
+  leg_mux_channels:
+    left_front: 0
+    left_middle: 1
+    left_rear: 2
+    right_front: 3
+    right_middle: 4
+    right_rear: 5
+
+
+# ==============================================================================
+# 3. Servo Calibration & Channel Mapping
 # ==============================================================================
 servos:
   # --- Left Side (Board 0x40) ---

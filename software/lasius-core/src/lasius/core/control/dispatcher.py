@@ -502,11 +502,11 @@ class OrderDispatcher:
         cycle_start_c, cycle_start_f, cycle_start_t = leg._calculate_inverse_kinematics(x_rad, -stride_half, z_ground)
         neutral_c, neutral_f, neutral_t = leg._calculate_inverse_kinematics(x_rad, 0.0, z_ground)
 
-        # Smooth entry: Start from current live servo angles if available, otherwise default to neutral stance
-        # (prevents dropping to (0, 0, 0) where knee extends down to -130mm)
-        start_c = leg.coxa.servo.current_angle if leg.coxa.servo.current_angle is not None else neutral_c
-        start_f = leg.femur.servo.current_angle if leg.femur.servo.current_angle is not None else neutral_f
-        start_t = leg.tibia.servo.current_angle if leg.tibia.servo.current_angle is not None else neutral_t
+        # Smooth entry: Start from actual measured potentiometer angle if valid (even after relax()),
+        # falling back to last commanded angle or neutral stance
+        start_c = leg.coxa.servo.get_effective_start_angle(neutral_c)
+        start_f = leg.femur.servo.get_effective_start_angle(neutral_f)
+        start_t = leg.tibia.servo.get_effective_start_angle(neutral_t)
 
         # 1. Smooth cosine entry to cycle start pose
         entry_steps = 35
@@ -590,9 +590,9 @@ class OrderDispatcher:
         f_name = leg.femur.servo.config.name
         t_name = leg.tibia.servo.config.name
 
-        start_c = leg.coxa.servo.current_angle if leg.coxa.servo.current_angle is not None else tgt_c
-        start_f = leg.femur.servo.current_angle if leg.femur.servo.current_angle is not None else tgt_f
-        start_t = leg.tibia.servo.current_angle if leg.tibia.servo.current_angle is not None else tgt_t
+        start_c = leg.coxa.servo.get_effective_start_angle(tgt_c)
+        start_f = leg.femur.servo.get_effective_start_angle(tgt_f)
+        start_t = leg.tibia.servo.get_effective_start_angle(tgt_t)
 
         steps = 40
         dt = 0.020
@@ -643,7 +643,7 @@ class OrderDispatcher:
         steps = 40
         dt = 0.025
 
-        start_a = target_servo.current_angle if target_servo.current_angle is not None else 0.0
+        start_a = target_servo.get_effective_start_angle(0.0)
 
         # Sweep start to min
         for s in range(steps + 1):
@@ -718,9 +718,9 @@ class OrderDispatcher:
         t_name = wave_leg.tibia.servo.config.name
 
         neutral_c, neutral_f, neutral_t = wave_leg._calculate_inverse_kinematics(x_rad, 0.0, z_ground)
-        start_c = wave_leg.coxa.servo.current_angle if wave_leg.coxa.servo.current_angle is not None else neutral_c
-        start_f = wave_leg.femur.servo.current_angle if wave_leg.femur.servo.current_angle is not None else neutral_f
-        start_t = wave_leg.tibia.servo.current_angle if wave_leg.tibia.servo.current_angle is not None else neutral_t
+        start_c = wave_leg.coxa.servo.get_effective_start_angle(neutral_c)
+        start_f = wave_leg.femur.servo.get_effective_start_angle(neutral_f)
+        start_t = wave_leg.tibia.servo.get_effective_start_angle(neutral_t)
 
         # Target raised greeting pose
         raise_c, raise_f, raise_t = 20.0, 38.0, -25.0

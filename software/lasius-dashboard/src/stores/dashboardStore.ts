@@ -154,15 +154,26 @@ export const useDashboardStore = defineStore('dashboard', () => {
   // Robot Layout & Geometry
   const robotLayout = ref<RobotLayout>(DEFAULT_ROBOT_LAYOUT);
 
-  // Live Joint Angles (in degrees)
+  // Live Joint Angles (in degrees) — Commanded Target (Soll)
   const jointAngles = ref<Record<string, number>>({});
+
+  // Closed-Loop ADC Telemetry (Ist)
+  const actualJointAngles = ref<Record<string, number | null>>({});
+  const actualJointValid = ref<Record<string, boolean>>({});
+  const jointTrackingErrors = ref<Record<string, number | null>>({});
+  const jointStalled = ref<Record<string, boolean>>({});
+  const footContacts = ref<Record<string, boolean>>({});
 
   // Initialize joint angles to 0
   if (DEFAULT_ROBOT_LAYOUT.legs) {
     for (const leg of Object.values(DEFAULT_ROBOT_LAYOUT.legs)) {
-      jointAngles.value[leg.coxa.name] = 0;
-      jointAngles.value[leg.femur.name] = 0;
-      jointAngles.value[leg.tibia.name] = 0;
+      for (const sName of [leg.coxa.name, leg.femur.name, leg.tibia.name]) {
+        jointAngles.value[sName] = 0;
+        actualJointAngles.value[sName] = null;
+        actualJointValid.value[sName] = false;
+        jointTrackingErrors.value[sName] = null;
+        jointStalled.value[sName] = false;
+      }
     }
   }
 
@@ -278,6 +289,23 @@ export const useDashboardStore = defineStore('dashboard', () => {
       connectionStatus.value = 'Live';
     } else if (msg.type === 'angles' && msg.data) {
       Object.assign(jointAngles.value, msg.data);
+    } else if (msg.type === 'telemetry' && msg.data) {
+      const t = msg.data;
+      if (t.actual_angles && typeof t.actual_angles === 'object') {
+        Object.assign(actualJointAngles.value, t.actual_angles);
+      }
+      if (t.actual_valid && typeof t.actual_valid === 'object') {
+        Object.assign(actualJointValid.value, t.actual_valid);
+      }
+      if (t.tracking_errors && typeof t.tracking_errors === 'object') {
+        Object.assign(jointTrackingErrors.value, t.tracking_errors);
+      }
+      if (t.stalled_joints && typeof t.stalled_joints === 'object') {
+        Object.assign(jointStalled.value, t.stalled_joints);
+      }
+      if (t.foot_contacts && typeof t.foot_contacts === 'object') {
+        Object.assign(footContacts.value, t.foot_contacts);
+      }
     } else if (msg.type === 'state' && msg.data) {
       const s = msg.data;
       if (s.is_paused !== undefined) isPaused.value = s.is_paused;
@@ -481,7 +509,22 @@ export const useDashboardStore = defineStore('dashboard', () => {
       const resp = await fetch(`${apiBase}/api/v1/calibration`);
       if (resp.ok) {
         const data = await resp.json();
-        calibrationData.value = data.servos || {};
+        const servos: Record<string, ServoCalibrationItem> = data.servos || {};
+        calibrationData.value = servos;
+        for (const [sName, item] of Object.entries(servos)) {
+          if (item.actual_valid !== undefined) {
+            actualJointValid.value[sName] = Boolean(item.actual_valid);
+          }
+          if (item.measured_angle !== undefined) {
+            actualJointAngles.value[sName] = item.measured_angle;
+          }
+          if (item.tracking_error !== undefined) {
+            jointTrackingErrors.value[sName] = item.tracking_error;
+          }
+          if (item.is_stalled !== undefined) {
+            jointStalled.value[sName] = Boolean(item.is_stalled);
+          }
+        }
       }
     } catch (e) {
       console.warn('[Calibration] Failed to fetch:', e);
@@ -747,6 +790,11 @@ export const useDashboardStore = defineStore('dashboard', () => {
     hoveredJoint,
     robotLayout,
     jointAngles,
+    actualJointAngles,
+    actualJointValid,
+    jointTrackingErrors,
+    jointStalled,
+    footContacts,
     currentGait,
     gaitSpeed,
     gaitStepHeight,

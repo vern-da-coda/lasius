@@ -16,10 +16,10 @@ Classes:
 
 from dataclasses import dataclass
 from enum import Enum
-from typing import Tuple
+from typing import Optional, Tuple
 
 from lasius.core.hardware.servo import Servo
-from .kinematics import calculate_leg_ik
+from .kinematics import calculate_leg_ik, calculate_leg_fk
 
 
 class BodySide(Enum):
@@ -68,13 +68,20 @@ class Joint:
 @dataclass
 class Leg:
     """
-    Represents a complete 3-DOF leg of the hexapod (Coxa, Femur, Tibia).
+    Represents a complete 3-DOF leg of the hexapod (Coxa, Femur, Tibia)
+    with open-loop IK actuation and closed-loop FK & foot contact telemetry.
     """
     side: BodySide
     row: LegRow
     coxa: Joint
     femur: Joint
     tibia: Joint
+    foot_contact: bool = False
+    foot_voltage: Optional[float] = None
+
+    @property
+    def name(self) -> str:
+        return f"{self.side.value}_{self.row.value}"
 
     def move_tip_to(self, x: float, y: float, z: float) -> None:
         """
@@ -92,6 +99,47 @@ class Leg:
         """Calculates 3-DOF inverse kinematics for this leg's link lengths."""
         return calculate_leg_ik(
             x=x, y=y, z=z,
+            coxa_len=self.coxa.length,
+            femur_len=self.femur.length,
+            tibia_len=self.tibia.length,
+        )
+
+    def get_target_tip_position(self) -> Optional[Tuple[float, float, float]]:
+        """
+        Calculates 3-DOF forward kinematics from the commanded target angles (`current_angle`).
+        Returns `None` if any joint has not yet received a target angle.
+        """
+        c = self.coxa.servo.current_angle
+        f = self.femur.servo.current_angle
+        t = self.tibia.servo.current_angle
+        if c is None or f is None or t is None:
+            return None
+        return calculate_leg_fk(
+            coxa_angle=c,
+            femur_angle=f,
+            tibia_angle=t,
+            coxa_len=self.coxa.length,
+            femur_len=self.femur.length,
+            tibia_len=self.tibia.length,
+        )
+
+    def get_actual_tip_position(self) -> Optional[Tuple[float, float, float]]:
+        """
+        Calculates 3-DOF forward kinematics from the measured closed-loop potentiometer
+        angles (`measured_angle`) when all 3 joints report `actual_valid == True`.
+        Returns `None` if any joint lacks valid closed-loop feedback.
+        """
+        if not (self.coxa.servo.actual_valid and self.femur.servo.actual_valid and self.tibia.servo.actual_valid):
+            return None
+        c = self.coxa.servo.measured_angle
+        f = self.femur.servo.measured_angle
+        t = self.tibia.servo.measured_angle
+        if c is None or f is None or t is None:
+            return None
+        return calculate_leg_fk(
+            coxa_angle=c,
+            femur_angle=f,
+            tibia_angle=t,
             coxa_len=self.coxa.length,
             femur_len=self.femur.length,
             tibia_len=self.tibia.length,

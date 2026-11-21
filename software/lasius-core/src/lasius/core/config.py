@@ -86,7 +86,8 @@ class ServoConfig:
     Data class for the configuration of a single servo.
 
     This class ensures that all configuration parameters of a servo
-    are strongly typed and easily accessible.
+    are strongly typed and easily accessible, including both open-loop PWM
+    parameters and closed-loop ADS1115 potentiometer feedback calibration.
     """
     name: str
     board_address: int
@@ -96,16 +97,51 @@ class ServoConfig:
     min_angle: float
     max_angle: float
     orientation: int
+    # Closed-loop potentiometer calibration (Reely NR-645 MG BB empirical defaults)
+    pot_v_zero: float = 1.5633       # Voltage [V] at 1500 µs electrical center
+    pot_v_slope: float = 0.007589    # Sensitivity [V/°] (+7.589 mV/° -> 131.772 °/V)
+    pot_v_min_valid: float = 0.50    # Pre-PWM-pulse invalidity guard (~0.266 V before first pulse)
+    pot_v_max_valid: float = 3.10    # Upper plausibility limit [V] (3.3 V rail)
+
+
+def _default_leg_mux_channels() -> Dict[str, int]:
+    return {
+        "left_front": 0,
+        "left_middle": 1,
+        "left_rear": 2,
+        "right_front": 3,
+        "right_middle": 4,
+        "right_rear": 5,
+    }
+
+
+@dataclass
+class TelemetryConfig:
+    """
+    Closed-loop ADC & multiplexer telemetry configuration (PCA9548A 0x71 + 6x ADS1115 0x48).
+    """
+    enabled: bool = True
+    mux_address: int = 0x71
+    adc_address: int = 0x48
+    poll_hz: float = 50.0
+    ema_alpha: float = 0.45
+    tau_lag_s: float = 0.075
+    max_speed_deg_s: float = 350.0
+    stall_error_deg: float = 8.0
+    stall_timeout_s: float = 0.35
+    foot_switch_threshold_v: float = 1.0
+    leg_mux_channels: Dict[str, int] = field(default_factory=_default_leg_mux_channels)
 
 
 @dataclass
 class HexapodConfig:
     """
     Data class that contains the complete configuration of the hexapod
-    including physical geometry and servo calibrations.
+    including physical geometry, servo calibrations, and closed-loop telemetry.
     """
     servos: List[ServoConfig]
     geometry: GeometryConfig = field(default_factory=GeometryConfig)
+    telemetry: TelemetryConfig = field(default_factory=TelemetryConfig)
 
 
 def load_config(config_path: Optional[Path] = None, apply_overlay: bool = True) -> HexapodConfig:
@@ -175,6 +211,26 @@ def load_config(config_path: Optional[Path] = None, apply_overlay: bool = True) 
         default_stance=default_stance,
     )
 
+    # Parse telemetry section if present, otherwise use defaults
+    telem_data = raw_config.get("telemetry", {}) or {}
+    leg_mux = dict(_default_leg_mux_channels())
+    if isinstance(telem_data.get("leg_mux_channels"), dict):
+        for k, v in telem_data["leg_mux_channels"].items():
+            leg_mux[str(k)] = int(v)
+    telemetry = TelemetryConfig(
+        enabled=bool(telem_data.get("enabled", True)),
+        mux_address=int(telem_data.get("mux_address", 0x71)),
+        adc_address=int(telem_data.get("adc_address", 0x48)),
+        poll_hz=float(telem_data.get("poll_hz", 50.0)),
+        ema_alpha=float(telem_data.get("ema_alpha", 0.45)),
+        tau_lag_s=float(telem_data.get("tau_lag_s", 0.075)),
+        max_speed_deg_s=float(telem_data.get("max_speed_deg_s", 350.0)),
+        stall_error_deg=float(telem_data.get("stall_error_deg", 8.0)),
+        stall_timeout_s=float(telem_data.get("stall_timeout_s", 0.35)),
+        foot_switch_threshold_v=float(telem_data.get("foot_switch_threshold_v", 1.0)),
+        leg_mux_channels=leg_mux,
+    )
+
     # Parse servos list
     servos_data = raw_config.get("servos", [])
     servo_configs = [ServoConfig(**data) for data in servos_data]
@@ -197,8 +253,12 @@ def load_config(config_path: Optional[Path] = None, apply_overlay: bool = True) 
                         sc.max_angle = float(cal["max_angle"])
                     if "pulse_range" in cal:
                         sc.pulse_range = int(cal["pulse_range"])
+                    if "pot_v_zero" in cal:
+                        sc.pot_v_zero = float(cal["pot_v_zero"])
+                    if "pot_v_slope" in cal:
+                        sc.pot_v_slope = float(cal["pot_v_slope"])
 
-    return HexapodConfig(servos=servo_configs, geometry=geometry)
+    return HexapodConfig(servos=servo_configs, geometry=geometry, telemetry=telemetry)
 
 
 def get_default_calibration_path() -> Path:
@@ -249,7 +309,15 @@ def save_calibration_overlay(
         if servo_name not in existing:
             existing[servo_name] = {}
         for k, v in params.items():
-            if k in ("center_offset_pulse", "orientation", "min_angle", "max_angle", "pulse_range"):
+            if k in (
+                "center_offset_pulse",
+                "orientation",
+                "min_angle",
+                "max_angle",
+                "pulse_range",
+                "pot_v_zero",
+                "pot_v_slope",
+            ):
                 existing[servo_name][k] = v
 
     # Write atomically

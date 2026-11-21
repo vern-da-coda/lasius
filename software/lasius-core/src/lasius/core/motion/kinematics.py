@@ -79,3 +79,31 @@ def calculate_leg_ik(
     femur_angle = math.degrees(femur_angle_rad)
 
     return coxa_angle, femur_angle, tibia_angle
+
+
+def calculate_leg_fk(
+    coxa_angle: float,
+    femur_angle: float,
+    tibia_angle: float,
+    coxa_len: float,
+    femur_len: float,
+    tibia_len: float,
+) -> Tuple[float, float, float]:
+    """
+    Calculates 3-DOF Forward Kinematics: maps joint angles `(coxa_angle, femur_angle, tibia_angle)`
+    in degrees to the Cartesian foot tip position `(x, y, z)` in mm in the leg coordinate frame.
+
+    Exact analytical inverse of `calculate_leg_ik`.
+    """
+    coxa_rad = math.radians(coxa_angle)
+    femur_rad = math.radians(femur_angle)
+    # Exterior knee bend relative to femur axis (0 deg tibia servo = 90 deg downward knee bend)
+    tibia_world_rad = femur_rad - math.radians(tibia_angle + 90.0)
+
+    x_prime = femur_len * math.cos(femur_rad) + tibia_len * math.cos(tibia_world_rad)
+    z = femur_len * math.sin(femur_rad) + tibia_len * math.sin(tibia_world_rad)
+
+    l_horiz = coxa_len + x_prime
+    x = l_horiz * math.cos(coxa_rad)
+    y = l_horiz * math.sin(coxa_rad)
+    return x, y, z

@@ -11,12 +11,13 @@ Exports:
     - `GaitProtocol`, `OmniGait`, `TripodGait`, `RippleGait`, `WaveGait`, `GaitType`: Walking engines.
 """
 
-from .kinematics import calculate_leg_ik
+from .kinematics import calculate_leg_ik, calculate_leg_fk
 from .leg import BodySide, LegRow, LegIdentifier, Joint, Leg
 from .gait import GaitProtocol, OmniGait, TripodGait, RippleGait, WaveGait, GaitType
 
 __all__ = [
     "calculate_leg_ik",
+    "calculate_leg_fk",
     "BodySide",
     "LegRow",
     "LegIdentifier",

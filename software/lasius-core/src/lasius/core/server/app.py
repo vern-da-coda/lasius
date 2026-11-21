@@ -67,8 +67,10 @@ class LasiusServer:
         self.hexapod: Optional["Hexapod"] = None
         self.http_server: Optional[ThreadingHTTPServer] = None
         self._stop_event: Optional[asyncio.Event] = None
+        self._telem_stop_event = threading.Event()
         self._http_thread: Optional[threading.Thread] = None
         self._ws_thread: Optional[threading.Thread] = None
+        self._telemetry_thread: Optional[threading.Thread] = None
 
         # Resolve or create OrderDispatcher
         self.dispatcher = dispatcher if dispatcher is not None else OrderDispatcher(server=self)
@@ -220,6 +222,8 @@ class LasiusServer:
             # Send initial layout and status to new client
             await websocket.send(json.dumps({"type": "layout", "data": self.hexapod_layout}))
             await websocket.send(json.dumps({"type": "state", "data": self.get_control_state()}))
+            if self.hexapod and hasattr(self.hexapod, "get_telemetry_state"):
+                await websocket.send(json.dumps({"type": "telemetry", "data": self.hexapod.get_telemetry_state()}))
 
             async for raw_msg in websocket:
                 try:
@@ -278,8 +282,45 @@ class LasiusServer:
             self._ws_thread = threading.Thread(target=self._run_loop, daemon=True)
             self._ws_thread.start()
 
+        if hasattr(hexapod, "poll_telemetry") and getattr(hexapod, "adc_driver", None) is not None:
+            self._telem_stop_event.clear()
+            self._telemetry_thread = threading.Thread(
+                target=self._run_telemetry_loop,
+                name="ClosedLoopTelemetryWorker",
+                daemon=True,
+            )
+            self._telemetry_thread.start()
+
+    def _run_telemetry_loop(self) -> None:
+        """Background closed-loop ADC polling loop (non-blocking to 50 Hz PWM gait tick)."""
+        poll_hz = 25.0
+        if (
+            self.hexapod
+            and hasattr(self.hexapod, "config")
+            and hasattr(self.hexapod.config, "telemetry")
+            and self.hexapod.config.telemetry
+        ):
+            poll_hz = max(5.0, min(50.0, float(self.hexapod.config.telemetry.poll_hz)))
+        interval = 1.0 / poll_hz
+
+        while not self._telem_stop_event.is_set():
+            t0 = time.perf_counter()
+            if self.hexapod and hasattr(self.hexapod, "poll_telemetry"):
+                try:
+                    self.hexapod.poll_telemetry()
+                except Exception as e:
+                    print(f"[Lasius-Server] Telemetry poll warning: {e}")
+            elapsed = time.perf_counter() - t0
+            wait_s = max(0.005, interval - elapsed)
+            self._telem_stop_event.wait(wait_s)
+
     def stop(self):
-        """Stops HTTP and WebSocket servers cleanly."""
+        """Stops HTTP, WebSocket, and closed-loop telemetry servers cleanly."""
+        self._telem_stop_event.set()
+        if self._telemetry_thread is not None and self._telemetry_thread.is_alive():
+            self._telemetry_thread.join(timeout=1.0)
+        self._telemetry_thread = None
+
         http_srv = self.http_server
         self.http_server = None
         if http_srv is not None:
@@ -300,9 +341,17 @@ class LasiusServer:
 
     def send_angles_update(self, angles: Dict[str, float]) -> None:
         """Sends updated servo angles to all connected dashboard clients."""
-        if not self.clients or not angles:
+        if not self.clients or not angles or not self.loop.is_running():
             return
         msg = json.dumps({"type": "angles", "data": angles})
+        for client in self.clients.copy():
+            asyncio.run_coroutine_threadsafe(self._send_to_client(client, msg), self.loop)
+
+    def send_telemetry_update(self, telemetry: Dict[str, Any]) -> None:
+        """Broadcasts closed-loop ADC feedback (actual_angles, actual_valid, tracking_errors, stalls, foot_contacts)."""
+        if not self.clients or not telemetry or not self.loop.is_running():
+            return
+        msg = json.dumps({"type": "telemetry", "data": telemetry})
         for client in self.clients.copy():
             asyncio.run_coroutine_threadsafe(self._send_to_client(client, msg), self.loop)
 
@@ -397,12 +446,17 @@ def main() -> None:
     import argparse
     import sys
     from lasius.core.config import load_config
-    from lasius.core.hardware import MockPWMDriver, RealPCA9685Driver
+    from lasius.core.hardware import (
+        MockPWMDriver,
+        RealPCA9685Driver,
+        RealADS1115MuxDriver,
+        SimulatedADCDriver,
+    )
     from lasius.core.motion import OmniGait
     from lasius.core.robot import Hexapod
 
     parser = argparse.ArgumentParser(description="Lasius Persistent Server Daemon")
-    parser.add_argument("--hardware", action="store_true", help="Connect to real I2C PCA9685 boards (0x40 & 0x42).")
+    parser.add_argument("--hardware", action="store_true", help="Connect to real I2C PCA9685 boards (0x40 & 0x42) and PCA9548A/ADS1115 telemetry (0x71/0x48).")
     parser.add_argument("--i2c-bus", type=int, default=1, help="I2C bus number (default: 1).")
     parser.add_argument("--port", type=int, default=8000, help="HTTP Port for Dashboard (default: 8000).")
     parser.add_argument("--ws-port", type=int, default=8765, help="WebSocket Port for Telemetry (default: 8765).")
@@ -423,13 +477,30 @@ def main() -> None:
             0x40: RealPCA9685Driver(address=0x40, bus_instance=bus, visualizer_server=server),
             0x42: RealPCA9685Driver(address=0x42, bus_instance=bus, visualizer_server=server),
         }
+        adc_driver = (
+            RealADS1115MuxDriver(
+                mux_address=config.telemetry.mux_address,
+                adc_address=config.telemetry.adc_address,
+                bus_instance=bus,
+            )
+            if config.telemetry.enabled
+            else None
+        )
     else:
         drivers = {
             0x40: MockPWMDriver(visualizer_server=server),
             0x42: MockPWMDriver(visualizer_server=server),
         }
+        adc_driver = (
+            SimulatedADCDriver(
+                tau_lag_s=config.telemetry.tau_lag_s,
+                max_speed_deg_s=config.telemetry.max_speed_deg_s,
+            )
+            if config.telemetry.enabled
+            else None
+        )
 
-    robot = Hexapod(config=config, drivers=drivers)
+    robot = Hexapod(config=config, drivers=drivers, adc_driver=adc_driver)
     robot.set_gait(
         OmniGait(walk_x=0.0, walk_y=0.0, turn_z=0.0, geometry=config.geometry),
         engage=False,
