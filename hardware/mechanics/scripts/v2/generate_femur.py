@@ -351,9 +351,19 @@ def build_femur_shapes():
     ]
     f_w3 = make_filleted_polygon_2d(p_w3, R_FILLET)
 
+    # Blind 45-degree A-truss pockets with an unbroken t_seal = 1.60 mm (4 perimeters @ 0.40 mm nozzle)
+    # inner dust/dirt protection wall sealing the ADS1115 chamber (Y in [Y_mid - 13.50, Y_mid + 13.50] = [-11.00, +16.00]):
+    # - Front flank pocket: Y from +17.60 mm outward to +35.00 mm (pocket depth 6.90..14.26 mm)
+    # - Rear flank pocket:  Y from -35.00 mm inward to -12.60 mm (pocket depth 6.90..14.26 mm)
+    t_seal = 1.60
+    y_chamber_front = Y_mid + 13.50  # +16.00 mm
+    y_chamber_rear = Y_mid - 13.50   # -11.00 mm
+    y_pocket_front = y_chamber_front + t_seal  # +17.60 mm
+    y_pocket_rear = y_chamber_rear - t_seal    # -12.60 mm
+
     for fw in [f_w1, f_w2, f_w3]:
-        cut_f = extrude_face_xz(fw, 15.0, 20.0)
-        cut_r = extrude_face_xz(fw, -35.0, 25.0)
+        cut_f = extrude_face_xz(fw, y_pocket_front, 35.0 - y_pocket_front)
+        cut_r = extrude_face_xz(fw, -35.0, y_pocket_rear - (-35.0))
         base_solid = base_solid.cut(cut_f).cut(cut_r)
 
     # =========================================================================
