@@ -19,21 +19,16 @@
  *       * Tibia & Tarsus v2: `tibia_{left,right}` (45° A-truss servo cage, Krallen-Sichel teardrop,
  *         2.50 mm lower web taper), `tibia_cover_{left,right}`, `knee_servo_{left,right}`,
  *         `tarsus_{left,right}` (3D-exoskeleton), `tarsus_shoe_{left,right}` (compact Kufe).
- *   - Includes an instant v2 procedural fallback while STL assets stream in.
  */
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { STLLoader } from 'three/examples/jsm/loaders/STLLoader.js';
 import {
   CHASSIS_HULL_CONTOUR,
-  CHASSIS_WINDOW_CUTOUT,
   CHASSIS_COXA_HOLES,
-  CHASSIS_STANDOFF_POSITIONS,
   CHASSIS_SPECS,
-  FEMUR_SPECS,
   COXA_SPECS,
-  TIBIA_SPECS,
-  SERVO_SPECS
+  TIBIA_SPECS
 } from './cadGeometries';
 
 export interface GraphicsContainers {
@@ -93,17 +88,6 @@ export class LasiusGraphicsEngine {
   private legActiveSegmentMat!: THREE.MeshStandardMaterial;
   private jointActiveMat!: THREE.MeshStandardMaterial;
   private axisGuideMat!: THREE.MeshBasicMaterial;
-
-  private sharedCoxaBracketGeo!: THREE.ExtrudeGeometry;
-  private sharedCoxaServoGeo!: THREE.BoxGeometry;
-  private sharedCoxaPivotPinGeo!: THREE.CylinderGeometry;
-  private sharedJointRingGeo!: THREE.TorusGeometry;
-  private sharedCoxaCollarGeo!: THREE.CylinderGeometry;
-  private sharedFemurBodyGeo!: THREE.ExtrudeGeometry;
-  private sharedFemurCoverGeo!: THREE.ExtrudeGeometry;
-  private sharedFemurKneeServoGeo!: THREE.BoxGeometry;
-  private sharedTibiaGeo!: THREE.ExtrudeGeometry;
-  private sharedTibiaClampGeo!: THREE.BoxGeometry;
 
   // Cached FreeCAD v2 STL BufferGeometries (loaded asynchronously via STLLoader)
   private stlGeometries: Record<string, THREE.BufferGeometry> = {};
@@ -402,8 +386,6 @@ export class LasiusGraphicsEngine {
       transparent: true,
       opacity: 0.95
     });
-
-    this.initLegGeometries();
   }
 
   /**
@@ -544,144 +526,6 @@ export class LasiusGraphicsEngine {
     }
   }
 
-  private initLegGeometries() {
-    // 1. Procedural v2 Coxa fallback (Twin-servo cage with 45° A-truss cheeks)
-    const coxaShape = new THREE.Shape();
-    coxaShape.moveTo(-40.3, -15.25);
-    coxaShape.lineTo(18.2, -15.25);
-    coxaShape.lineTo(28.0, -9.0);
-    coxaShape.lineTo(48.0, -9.0);
-    coxaShape.lineTo(54.0, -14.5);
-    coxaShape.lineTo(70.0, -14.5);
-    coxaShape.lineTo(74.7, -9.0);
-    coxaShape.lineTo(74.7, 9.0);
-    coxaShape.lineTo(68.0, 16.45);
-    coxaShape.lineTo(49.0, 16.45);
-    coxaShape.lineTo(42.0, 9.0);
-    coxaShape.lineTo(25.0, 9.0);
-    coxaShape.lineTo(18.2, 16.45);
-    coxaShape.lineTo(-40.3, 16.45);
-    coxaShape.closePath();
-
-    const femurServoPocket = new THREE.Path();
-    femurServoPocket.moveTo(25.6, -7.0);
-    femurServoPocket.lineTo(25.6, 7.0);
-    femurServoPocket.lineTo(50.0, 7.0);
-    femurServoPocket.lineTo(50.0, -7.0);
-    femurServoPocket.closePath();
-    coxaShape.holes.push(femurServoPocket);
-
-    const bodyServoPocket = new THREE.Path();
-    bodyServoPocket.moveTo(-32.0, -10.0);
-    bodyServoPocket.lineTo(-32.0, 10.0);
-    bodyServoPocket.lineTo(8.0, 10.0);
-    bodyServoPocket.lineTo(8.0, -10.0);
-    bodyServoPocket.closePath();
-    coxaShape.holes.push(bodyServoPocket);
-
-    this.sharedCoxaBracketGeo = new THREE.ExtrudeGeometry(coxaShape, {
-      depth: COXA_SPECS.width,
-      bevelEnabled: true,
-      bevelThickness: 0.6,
-      bevelSize: 0.6,
-      bevelSegments: 2
-    });
-    this.sharedCoxaBracketGeo.translate(0, 0, -COXA_SPECS.width / 2);
-
-    this.sharedCoxaServoGeo = new THREE.BoxGeometry(SERVO_SPECS.length, SERVO_SPECS.width, SERVO_SPECS.height);
-    this.sharedCoxaPivotPinGeo = new THREE.CylinderGeometry(COXA_SPECS.pivotPinDia / 2, COXA_SPECS.pivotPinDia / 2, 54, 16);
-    this.sharedJointRingGeo = new THREE.TorusGeometry(6.5, 1.2, 8, 24);
-    this.sharedCoxaCollarGeo = new THREE.CylinderGeometry(7.5, 7.5, 3.2, 20);
-    this.sharedCoxaCollarGeo.rotateX(Math.PI / 2);
-
-    // 2. Procedural v2 Monocoque Femur box-girder fallback (G1-tapered waist with 45° A-truss windows)
-    const femurR = FEMUR_SPECS.radius;
-    const waistH = FEMUR_SPECS.waistHeight / 2;
-    const femurShape = new THREE.Shape();
-    femurShape.absarc(0, 0, femurR, Math.PI / 2, -Math.PI / 2, false);
-    femurShape.lineTo(18.0, -femurR);
-    femurShape.bezierCurveTo(28.0, -femurR, 30.0, -waistH, 40.0, -waistH);
-    femurShape.lineTo(60.0, -waistH);
-    femurShape.bezierCurveTo(70.0, -waistH, 72.0, -femurR, 82.0, -femurR);
-    femurShape.lineTo(FEMUR_SPECS.length, -femurR);
-    femurShape.absarc(FEMUR_SPECS.length, 0, femurR, -Math.PI / 2, Math.PI / 2, false);
-    femurShape.lineTo(82.0, femurR);
-    femurShape.bezierCurveTo(72.0, femurR, 70.0, waistH, 60.0, waistH);
-    femurShape.lineTo(40.0, waistH);
-    femurShape.bezierCurveTo(30.0, waistH, 28.0, femurR, 18.0, femurR);
-    femurShape.closePath();
-
-    // 45-degree A-truss windows in Femur waist
-    const addTriangleHole = (p1: [number, number], p2: [number, number], p3: [number, number]) => {
-      const h = new THREE.Path();
-      h.moveTo(p1[0], p1[1]);
-      h.lineTo(p2[0], p2[1]);
-      h.lineTo(p3[0], p3[1]);
-      h.closePath();
-      femurShape.holes.push(h);
-    };
-    addTriangleHole([31, -7.5], [47, -7.5], [39, 6.5]);
-    addTriangleHole([42, 7.5], [58, 7.5], [50, -6.5]);
-    addTriangleHole([53, -7.5], [69, -7.5], [61, 6.5]);
-
-    this.sharedFemurBodyGeo = new THREE.ExtrudeGeometry(femurShape, {
-      depth: FEMUR_SPECS.boxDepth,
-      bevelEnabled: true,
-      bevelThickness: 0.8,
-      bevelSize: 0.8,
-      bevelSegments: 2
-    });
-    this.sharedFemurBodyGeo.translate(0, 0, -FEMUR_SPECS.boxDepth / 2);
-
-    const coverShape = new THREE.Shape();
-    coverShape.moveTo(29.0, -waistH + 1.5);
-    coverShape.lineTo(71.0, -waistH + 1.5);
-    coverShape.lineTo(71.0, waistH - 1.5);
-    coverShape.lineTo(29.0, waistH - 1.5);
-    coverShape.closePath();
-    this.sharedFemurCoverGeo = new THREE.ExtrudeGeometry(coverShape, {
-      depth: 2.5,
-      bevelEnabled: true,
-      bevelThickness: 0.4,
-      bevelSize: 0.4,
-      bevelSegments: 1
-    });
-    this.sharedFemurCoverGeo.translate(0, 0, FEMUR_SPECS.boxDepth / 2 + 0.5);
-
-    this.sharedFemurKneeServoGeo = new THREE.BoxGeometry(SERVO_SPECS.length, SERVO_SPECS.width, SERVO_SPECS.height);
-
-    // 3. Procedural v2 Tibia + 3D-Exoskeleton Tarsus & Compact Kufe (from updated tibia_contour.json, 152.56 mm)
-    const tibiaShape = new THREE.Shape();
-    const outerPts = TIBIA_SPECS.outerPolygon;
-    tibiaShape.moveTo(outerPts[0][0], outerPts[0][1]);
-    for (let i = 1; i < outerPts.length; i++) {
-      tibiaShape.lineTo(outerPts[i][0], outerPts[i][1]);
-    }
-    tibiaShape.closePath();
-
-    // Concentric Krallen-Sichel teardrop window
-    const slotPts = TIBIA_SPECS.slotPolygon;
-    const slotPath = new THREE.Path();
-    slotPath.moveTo(slotPts[0][0], slotPts[0][1]);
-    for (let i = 1; i < slotPts.length; i++) {
-      slotPath.lineTo(slotPts[i][0], slotPts[i][1]);
-    }
-    slotPath.closePath();
-    tibiaShape.holes.push(slotPath);
-
-    this.sharedTibiaGeo = new THREE.ExtrudeGeometry(tibiaShape, {
-      depth: TIBIA_SPECS.thickness,
-      bevelEnabled: true,
-      bevelThickness: 0.6,
-      bevelSize: 0.6,
-      bevelSegments: 2
-    });
-    this.sharedTibiaGeo.translate(0, 0, -TIBIA_SPECS.thickness / 2);
-
-    // Twin-cheek knee servo cage fallback
-    this.sharedTibiaClampGeo = new THREE.BoxGeometry(28, 36, 42);
-  }
-
   public getChassisHullContour(): Array<{ x: number; y: number }> {
     return CHASSIS_HULL_CONTOUR;
   }
@@ -689,18 +533,6 @@ export class LasiusGraphicsEngine {
   private disposeObject3D(obj: THREE.Object3D | null | undefined) {
     if (!obj) return;
     const cachedGeos = new Set<THREE.BufferGeometry>(Object.values(this.stlGeometries));
-    [
-      this.sharedCoxaBracketGeo,
-      this.sharedCoxaServoGeo,
-      this.sharedCoxaPivotPinGeo,
-      this.sharedJointRingGeo,
-      this.sharedCoxaCollarGeo,
-      this.sharedFemurBodyGeo,
-      this.sharedFemurCoverGeo,
-      this.sharedFemurKneeServoGeo,
-      this.sharedTibiaGeo,
-      this.sharedTibiaClampGeo
-    ].forEach(g => { if (g) cachedGeos.add(g); });
 
     obj.traverse((child: any) => {
       if (child.geometry && typeof child.geometry.dispose === 'function' && !cachedGeos.has(child.geometry)) {
@@ -723,6 +555,13 @@ export class LasiusGraphicsEngine {
   public buildThreeJSRobot(layout: any) {
     if (!this.scene || !layout || !layout.body || !layout.legs) return;
     this.robotLayout = layout;
+
+    // Wait for canonical FreeCAD v2 STL meshes before constructing the 3D scene
+    // so there is no visual swap from a temporary procedural placeholder model.
+    if (!this.stlLoadedReady) {
+      this.drawRobot();
+      return;
+    }
 
     if (this.robot3DMeshes.body) {
       this.disposeObject3D(this.robot3DMeshes.body);
@@ -768,97 +607,26 @@ export class LasiusGraphicsEngine {
     // 1. Build v2 Chassis Assembly (`body_assembly.FCStd`)
     const bodyGroup = new THREE.Group();
 
-    if (this.stlLoadedReady && this.stlGeometries.body_bottom && this.stlGeometries.chassis_core) {
-      // Exact 1:1 FreeCAD v2 Binary STL Chassis Meshes
-      const chassisParts: Array<{ key: string; mat: THREE.Material; renderOrder?: number }> = [
-        { key: 'body_bottom', mat: this.carbonPlateMat },
-        { key: 'body_top', mat: this.carbonPlateMat },
-        { key: 'chassis_core', mat: this.chassisMat },
-        { key: 'chassis_belly_pan', mat: this.hardwareMat },
-        { key: 'chassis_rpi_mount', mat: this.chassisMat },
-        { key: 'rpi4_model_b', mat: this.pcbGreenMat },
-        { key: 'vl53l5cx_board', mat: this.pcbRedMat },
-        { key: 'chassis_service_cover', mat: this.coverNeutralMat },
-        { key: 'chassis_canopy', mat: this.canopyMat, renderOrder: 10 }
-      ];
-      for (const part of chassisParts) {
-        const geo = this.stlGeometries[part.key];
-        if (geo) {
-          const mesh = new THREE.Mesh(geo, part.mat);
-          if (part.renderOrder !== undefined) {
-            mesh.renderOrder = part.renderOrder;
-          }
-          bodyGroup.add(mesh);
+    const chassisParts: Array<{ key: string; mat: THREE.Material; renderOrder?: number }> = [
+      { key: 'body_bottom', mat: this.carbonPlateMat },
+      { key: 'body_top', mat: this.carbonPlateMat },
+      { key: 'chassis_core', mat: this.chassisMat },
+      { key: 'chassis_belly_pan', mat: this.hardwareMat },
+      { key: 'chassis_rpi_mount', mat: this.chassisMat },
+      { key: 'rpi4_model_b', mat: this.pcbGreenMat },
+      { key: 'vl53l5cx_board', mat: this.pcbRedMat },
+      { key: 'chassis_service_cover', mat: this.coverNeutralMat },
+      { key: 'chassis_canopy', mat: this.canopyMat, renderOrder: 10 }
+    ];
+    for (const part of chassisParts) {
+      const geo = this.stlGeometries[part.key];
+      if (geo) {
+        const mesh = new THREE.Mesh(geo, part.mat);
+        if (part.renderOrder !== undefined) {
+          mesh.renderOrder = part.renderOrder;
         }
+        bodyGroup.add(mesh);
       }
-    } else {
-      // Procedural v2 Chassis fallback (while STL assets stream in)
-      const bodyShape = new THREE.Shape();
-      const hullPts = this.getChassisHullContour();
-      bodyShape.moveTo(hullPts[0].x, hullPts[0].y);
-      for (let i = 1; i < hullPts.length; i++) {
-        bodyShape.lineTo(hullPts[i].x, hullPts[i].y);
-      }
-      bodyShape.closePath();
-
-      const winW = CHASSIS_WINDOW_CUTOUT.width / 2;
-      const winL = CHASSIS_WINDOW_CUTOUT.length / 2;
-      const winHole = new THREE.Path();
-      winHole.moveTo(-winW, -winL);
-      winHole.lineTo(winW, -winL);
-      winHole.lineTo(winW, winL);
-      winHole.lineTo(-winW, winL);
-      winHole.closePath();
-      bodyShape.holes.push(winHole);
-
-      for (const ch of CHASSIS_COXA_HOLES) {
-        const coxaHole = new THREE.Path();
-        coxaHole.absarc(ch.x, ch.y, 4.0, 0, Math.PI * 2, true);
-        bodyShape.holes.push(coxaHole);
-      }
-
-      const plateGeo = new THREE.ExtrudeGeometry(bodyShape, {
-        depth: CHASSIS_SPECS.plateThickness,
-        bevelEnabled: true,
-        bevelSegments: 2,
-        steps: 1,
-        bevelSize: 0.3,
-        bevelThickness: 0.3
-      });
-      plateGeo.translate(0, 0, -CHASSIS_SPECS.plateThickness / 2);
-      plateGeo.rotateX(Math.PI / 2);
-
-      const topPlate = new THREE.Mesh(plateGeo, this.carbonPlateMat);
-      topPlate.position.set(0, CHASSIS_SPECS.topPlateCenterY, 0);
-      bodyGroup.add(topPlate);
-
-      const bottomPlate = new THREE.Mesh(plateGeo, this.carbonPlateMat);
-      bottomPlate.position.set(0, CHASSIS_SPECS.bottomPlateCenterY, 0);
-      bodyGroup.add(bottomPlate);
-
-      // v2 Monocoque Central Core (replaces v1 standoff pillars)
-      const coreGeo = new THREE.BoxGeometry(CHASSIS_SPECS.coreWidth, CHASSIS_SPECS.standoffHeight, CHASSIS_SPECS.coreLength);
-      const coreMesh = new THREE.Mesh(coreGeo, this.chassisMat);
-      coreMesh.position.set(0, CHASSIS_SPECS.coreCenterY, 0);
-      bodyGroup.add(coreMesh);
-
-      // v2 Belly Pan skid plate beneath bottom carbon plate
-      const bellyGeo = new THREE.BoxGeometry(CHASSIS_SPECS.bellyPanWidth, CHASSIS_SPECS.bellyPanDepth, CHASSIS_SPECS.bellyPanLength);
-      const bellyMesh = new THREE.Mesh(bellyGeo, this.hardwareMat);
-      bellyMesh.position.set(0, CHASSIS_SPECS.bottomPlateCenterY - 1.0 - CHASSIS_SPECS.bellyPanDepth / 2, 0);
-      bodyGroup.add(bellyMesh);
-
-      // v2 Draped Plexiglas Canopy & Service Cover above top carbon plate
-      const canopyGeo = new THREE.BoxGeometry(118, CHASSIS_SPECS.canopyHeight, 210);
-      const canopyMesh = new THREE.Mesh(canopyGeo, this.canopyMat);
-      canopyMesh.position.set(0, CHASSIS_SPECS.topPlateCenterY + 1.0 + CHASSIS_SPECS.canopyHeight / 2, 0);
-      canopyMesh.renderOrder = 10;
-      bodyGroup.add(canopyMesh);
-
-      const coverGeo = new THREE.BoxGeometry(CHASSIS_SPECS.serviceCoverWidth, 4.5, CHASSIS_SPECS.serviceCoverLength);
-      const coverMesh = new THREE.Mesh(coverGeo, this.coverNeutralMat);
-      coverMesh.position.set(0, CHASSIS_SPECS.topPlateCenterY + 1.0 + CHASSIS_SPECS.canopyHeight + 1.0, 0);
-      bodyGroup.add(coverMesh);
     }
 
     // Front Direction Indicator (Blue Triangle on Top Plate pointing forward -Z)
@@ -1000,43 +768,24 @@ export class LasiusGraphicsEngine {
     const group = new THREE.Group();
     const side = isRightLeg ? 'right' : 'left';
 
-    if (this.stlLoadedReady && this.stlGeometries[`coxa_${side}`]) {
-      const bracket = new THREE.Mesh(this.stlGeometries[`coxa_${side}`], this.legNeutralMat);
+    let bracket: THREE.Mesh | null = null;
+    if (this.stlGeometries[`coxa_${side}`]) {
+      bracket = new THREE.Mesh(this.stlGeometries[`coxa_${side}`], this.legNeutralMat);
       bracket.userData = { jointType: 'coxa' };
       group.add(bracket);
-
-      const servos: THREE.Mesh[] = [];
-      for (const sKey of [`coxa_servo_${side}`, `femur_servo_${side}`]) {
-        if (this.stlGeometries[sKey]) {
-          const sm = new THREE.Mesh(this.stlGeometries[sKey], this.hardwareMat);
-          sm.userData = { jointType: 'coxa' };
-          group.add(sm);
-          servos.push(sm);
-        }
-      }
-
-      group.userData = { bracket, servoBox: servos[0] || null, extraServos: servos, isStlV2: true };
-      return group;
     }
 
-    // Procedural v2 Coxa fallback
-    const bracket = new THREE.Mesh(this.sharedCoxaBracketGeo, this.legNeutralMat);
-    bracket.position.set(0, 0, 0);
-    bracket.userData = { jointType: 'coxa' };
-    group.add(bracket);
+    const servos: THREE.Mesh[] = [];
+    for (const sKey of [`coxa_servo_${side}`, `femur_servo_${side}`]) {
+      if (this.stlGeometries[sKey]) {
+        const sm = new THREE.Mesh(this.stlGeometries[sKey], this.hardwareMat);
+        sm.userData = { jointType: 'coxa' };
+        group.add(sm);
+        servos.push(sm);
+      }
+    }
 
-    const servoBox = new THREE.Mesh(this.sharedCoxaServoGeo, this.hardwareMat);
-    servoBox.position.set(38, 0, 0);
-    servoBox.userData = { jointType: 'coxa' };
-    group.add(servoBox);
-
-    const ring1 = new THREE.Mesh(this.sharedJointRingGeo, this.jointNeutralMat);
-    ring1.position.set(60, 0, 0);
-    ring1.rotateY(Math.PI / 2);
-    ring1.userData = { jointType: 'coxa' };
-    group.add(ring1);
-
-    group.userData = { bracket, servoBox, ring1, isStlV2: false };
+    group.userData = { bracket, servoBox: servos[0] || null, extraServos: servos, isStlV2: true };
     return group;
   }
 
@@ -1044,43 +793,23 @@ export class LasiusGraphicsEngine {
     const group = new THREE.Group();
     const side = isRightLeg ? 'right' : 'left';
 
-    if (this.stlLoadedReady && this.stlGeometries[`femur_${side}`]) {
+    const plates: THREE.Mesh[] = [];
+    if (this.stlGeometries[`femur_${side}`]) {
       const bodyMesh = new THREE.Mesh(this.stlGeometries[`femur_${side}`], this.legNeutralMat);
       bodyMesh.userData = { jointType: 'femur' };
       group.add(bodyMesh);
-
-      const covers: THREE.Mesh[] = [];
-      if (this.stlGeometries[`femur_cover_${side}`]) {
-        const coverMesh = new THREE.Mesh(this.stlGeometries[`femur_cover_${side}`], this.coverNeutralMat);
-        coverMesh.userData = { jointType: 'femur' };
-        group.add(coverMesh);
-        covers.push(coverMesh);
-      }
-
-      group.userData = { plates: [bodyMesh], rungs: covers, isStlV2: true };
-      return group;
+      plates.push(bodyMesh);
     }
 
-    // Procedural v2 Monocoque Femur box-girder fallback
-    const bodyMesh = new THREE.Mesh(this.sharedFemurBodyGeo, this.legNeutralMat);
-    bodyMesh.userData = { jointType: 'femur' };
-    group.add(bodyMesh);
+    const covers: THREE.Mesh[] = [];
+    if (this.stlGeometries[`femur_cover_${side}`]) {
+      const coverMesh = new THREE.Mesh(this.stlGeometries[`femur_cover_${side}`], this.coverNeutralMat);
+      coverMesh.userData = { jointType: 'femur' };
+      group.add(coverMesh);
+      covers.push(coverMesh);
+    }
 
-    const coverMesh = new THREE.Mesh(this.sharedFemurCoverGeo, this.coverNeutralMat);
-    coverMesh.userData = { jointType: 'femur' };
-    group.add(coverMesh);
-
-    const ringHip = new THREE.Mesh(this.sharedJointRingGeo, this.jointNeutralMat);
-    ringHip.position.set(0, 0, 0);
-    ringHip.userData = { jointType: 'femur' };
-    group.add(ringHip);
-
-    const ringKnee = new THREE.Mesh(this.sharedJointRingGeo, this.jointNeutralMat);
-    ringKnee.position.set(FEMUR_SPECS.length, 0, 0);
-    ringKnee.userData = { jointType: 'femur' };
-    group.add(ringKnee);
-
-    group.userData = { plates: [bodyMesh], rungs: [coverMesh], ringHip, ringKnee, isStlV2: false };
+    group.userData = { plates, rungs: covers, isStlV2: true };
     return group;
   }
 
@@ -1089,64 +818,46 @@ export class LasiusGraphicsEngine {
     const side = isRightLeg ? 'right' : 'left';
     const lenScale = tibiaLen / TIBIA_SPECS.kinematicLength;
 
-    if (this.stlLoadedReady && this.stlGeometries[`tibia_${side}`]) {
-      const blade = new THREE.Mesh(this.stlGeometries[`tibia_${side}`], this.legNeutralMat);
+    let blade: THREE.Mesh | null = null;
+    if (this.stlGeometries[`tibia_${side}`]) {
+      blade = new THREE.Mesh(this.stlGeometries[`tibia_${side}`], this.legNeutralMat);
       blade.scale.set(1.0, lenScale, 1.0);
       blade.userData = { jointType: 'tibia' };
       group.add(blade);
-
-      let coverMesh: THREE.Mesh | null = null;
-      if (this.stlGeometries[`tibia_cover_${side}`]) {
-        coverMesh = new THREE.Mesh(this.stlGeometries[`tibia_cover_${side}`], this.coverNeutralMat);
-        coverMesh.scale.set(1.0, lenScale, 1.0);
-        coverMesh.userData = { jointType: 'tibia' };
-        group.add(coverMesh);
-      }
-
-      let clamp: THREE.Mesh | null = null;
-      if (this.stlGeometries[`knee_servo_${side}`]) {
-        clamp = new THREE.Mesh(this.stlGeometries[`knee_servo_${side}`], this.hardwareMat);
-        clamp.userData = { jointType: 'tibia' };
-        group.add(clamp);
-      }
-
-      let tarsusMesh: THREE.Mesh | null = null;
-      if (this.stlGeometries[`tarsus_${side}`]) {
-        tarsusMesh = new THREE.Mesh(this.stlGeometries[`tarsus_${side}`], this.tarsusNeutralMat);
-        tarsusMesh.scale.set(1.0, lenScale, 1.0);
-        tarsusMesh.userData = { jointType: 'tibia' };
-        group.add(tarsusMesh);
-      }
-
-      let shoeMesh: THREE.Mesh | null = null;
-      if (this.stlGeometries[`tarsus_shoe_${side}`]) {
-        shoeMesh = new THREE.Mesh(this.stlGeometries[`tarsus_shoe_${side}`], this.kufeNeutralMat);
-        shoeMesh.scale.set(1.0, lenScale, 1.0);
-        shoeMesh.userData = { jointType: 'tibia' };
-        group.add(shoeMesh);
-      }
-
-      group.userData = { blade, coverMesh, clamp, tarsusMesh, shoeMesh, isStlV2: true };
-      return group;
     }
 
-    // Procedural v2 Tibia + Tarsus + Compact Kufe fallback
-    const blade = new THREE.Mesh(this.sharedTibiaGeo, this.legNeutralMat);
-    blade.scale.set(1.0, lenScale, 1.0);
-    blade.userData = { jointType: 'tibia' };
-    group.add(blade);
+    let coverMesh: THREE.Mesh | null = null;
+    if (this.stlGeometries[`tibia_cover_${side}`]) {
+      coverMesh = new THREE.Mesh(this.stlGeometries[`tibia_cover_${side}`], this.coverNeutralMat);
+      coverMesh.scale.set(1.0, lenScale, 1.0);
+      coverMesh.userData = { jointType: 'tibia' };
+      group.add(coverMesh);
+    }
 
-    const clamp = new THREE.Mesh(this.sharedTibiaClampGeo, this.hardwareMat);
-    clamp.position.set(2, -12, 0);
-    clamp.userData = { jointType: 'tibia' };
-    group.add(clamp);
+    let clamp: THREE.Mesh | null = null;
+    if (this.stlGeometries[`knee_servo_${side}`]) {
+      clamp = new THREE.Mesh(this.stlGeometries[`knee_servo_${side}`], this.hardwareMat);
+      clamp.userData = { jointType: 'tibia' };
+      group.add(clamp);
+    }
 
-    const ringKnee = new THREE.Mesh(this.sharedJointRingGeo, this.jointNeutralMat);
-    ringKnee.position.set(0, 0, 0);
-    ringKnee.userData = { jointType: 'tibia' };
-    group.add(ringKnee);
+    let tarsusMesh: THREE.Mesh | null = null;
+    if (this.stlGeometries[`tarsus_${side}`]) {
+      tarsusMesh = new THREE.Mesh(this.stlGeometries[`tarsus_${side}`], this.tarsusNeutralMat);
+      tarsusMesh.scale.set(1.0, lenScale, 1.0);
+      tarsusMesh.userData = { jointType: 'tibia' };
+      group.add(tarsusMesh);
+    }
 
-    group.userData = { blade, clamp, ringKnee, isStlV2: false };
+    let shoeMesh: THREE.Mesh | null = null;
+    if (this.stlGeometries[`tarsus_shoe_${side}`]) {
+      shoeMesh = new THREE.Mesh(this.stlGeometries[`tarsus_shoe_${side}`], this.kufeNeutralMat);
+      shoeMesh.scale.set(1.0, lenScale, 1.0);
+      shoeMesh.userData = { jointType: 'tibia' };
+      group.add(shoeMesh);
+    }
+
+    group.userData = { blade, coverMesh, clamp, tarsusMesh, shoeMesh, isStlV2: true };
     return group;
   }
 
