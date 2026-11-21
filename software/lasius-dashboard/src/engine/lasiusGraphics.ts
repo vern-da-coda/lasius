@@ -291,18 +291,8 @@ export class LasiusGraphicsEngine {
       metalness: 0.38,
       side: THREE.DoubleSide
     });
-    this.tarsusNeutralMat = new THREE.MeshStandardMaterial({
-      color: 0xd96b18,
-      roughness: 0.38,
-      metalness: 0.25,
-      side: THREE.DoubleSide
-    });
-    this.kufeNeutralMat = new THREE.MeshStandardMaterial({
-      color: 0x228da6,
-      roughness: 0.45,
-      metalness: 0.22,
-      side: THREE.DoubleSide
-    });
+    this.tarsusNeutralMat = this.legNeutralMat;
+    this.kufeNeutralMat = this.legNeutralMat;
     this.pcbGreenMat = new THREE.MeshStandardMaterial({
       color: 0x14853d,
       roughness: 0.45,
@@ -514,19 +504,19 @@ export class LasiusGraphicsEngine {
       { key: 'tarsus_shoe_right', file: 'tarsus_shoe_right.stl', matrix: matTibiaRight }
     ];
 
-    let loadedCount = 0;
+    let settledCount = 0;
     const totalCount = specs.length;
 
-    for (const item of specs) {
+    const loadItem = (item: { key: string; file: string; matrix: THREE.Matrix4 }, attempt = 1) => {
       loader.load(
         `./meshes/${item.file}`,
         (geom) => {
           geom.applyMatrix4(item.matrix);
           geom.computeVertexNormals();
           this.stlGeometries[item.key] = geom;
-          loadedCount++;
-          if (loadedCount === totalCount) {
-            this.stlLoadedReady = true;
+          settledCount++;
+          if (settledCount === totalCount) {
+            this.stlLoadedReady = Object.keys(this.stlGeometries).length > 0;
             if (this.robotLayout && this.robotLayout.legs) {
               this.buildThreeJSRobot(this.robotLayout);
             }
@@ -534,9 +524,23 @@ export class LasiusGraphicsEngine {
         },
         undefined,
         () => {
-          // Graceful fallback to v2 procedural geometries if an STL is unreachable
+          if (attempt < 3) {
+            setTimeout(() => loadItem(item, attempt + 1), 150 * attempt);
+          } else {
+            settledCount++;
+            if (settledCount === totalCount) {
+              this.stlLoadedReady = Object.keys(this.stlGeometries).length > 0;
+              if (this.robotLayout && this.robotLayout.legs) {
+                this.buildThreeJSRobot(this.robotLayout);
+              }
+            }
+          }
         }
       );
+    };
+
+    for (const item of specs) {
+      loadItem(item);
     }
   }
 
@@ -1507,11 +1511,12 @@ export class LasiusGraphicsEngine {
       // 3. Tibia + Tarsus + Compact Kufe Segment
       if (leg.tibiaGroup && leg.tibiaGroup.userData) {
         const { blade, coverMesh, clamp, tarsusMesh, shoeMesh, ringKnee } = leg.tibiaGroup.userData;
-        if (blade) blade.material = isSelected ? (isTibiaActive ? this.legActiveSegmentMat : this.legSelectedMat) : this.legNeutralMat;
+        const tibiaSegMat = isSelected ? (isTibiaActive ? this.legActiveSegmentMat : this.legSelectedMat) : this.legNeutralMat;
+        if (blade) blade.material = tibiaSegMat;
         if (coverMesh) coverMesh.material = isSelected ? (isTibiaActive ? this.jointActiveMat : this.jointSelectedMat) : this.coverNeutralMat;
         if (clamp) clamp.material = isSelected ? (isTibiaActive ? this.jointActiveMat : this.jointSelectedMat) : this.hardwareMat;
-        if (tarsusMesh) tarsusMesh.material = isSelected ? (isTibiaActive ? this.legActiveSegmentMat : this.tarsusNeutralMat) : this.tarsusNeutralMat;
-        if (shoeMesh) shoeMesh.material = isSelected ? (isTibiaActive ? this.jointActiveMat : this.kufeNeutralMat) : this.kufeNeutralMat;
+        if (tarsusMesh) tarsusMesh.material = tibiaSegMat;
+        if (shoeMesh) shoeMesh.material = tibiaSegMat;
         if (ringKnee) ringKnee.material = isSelected ? (isTibiaActive ? this.jointActiveMat : this.jointSelectedMat) : this.jointNeutralMat;
       }
     }

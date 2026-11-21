@@ -270,6 +270,7 @@ class LasiusServer:
                     super().__init__(*args, directory=str(web_dir), **kwargs)
 
             ThreadingHTTPServer.allow_reuse_address = True
+            ThreadingHTTPServer.request_queue_size = 128
             self.http_server = ThreadingHTTPServer((self.host, self.http_port), Handler)
             print(f"[Lasius-Server] HTTP REST & Dashboard running on http://{self.host}:{self.http_port}")
             self._http_thread = threading.Thread(target=self.http_server.serve_forever, daemon=True)
