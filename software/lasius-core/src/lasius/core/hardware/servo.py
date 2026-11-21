@@ -205,7 +205,7 @@ class Servo:
                 self.expected_angle += clamped_step
 
         # 2. Plausibility & pre-first-PWM-pulse invalidity guard
-        if not self.is_voltage_plausible(voltage_v):
+        if voltage_v is None or not self.is_voltage_plausible(voltage_v):
             self.measured_voltage = voltage_v
             self.actual_valid = False
             self.measured_angle = None
@@ -214,7 +214,6 @@ class Servo:
             self._stall_accum_s = 0.0
             return None
 
-        assert voltage_v is not None
         alpha = max(0.01, min(1.0, float(ema_alpha)))
         if self.measured_voltage is None or not self.actual_valid:
             self.measured_voltage = float(voltage_v)

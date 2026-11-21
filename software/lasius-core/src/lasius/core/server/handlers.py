@@ -88,6 +88,10 @@ class LasiusRestHandler(SimpleHTTPRequestHandler):
             self._handle_get_gamepad_profiles()
             return
 
+        if path.startswith("/meshes/") and path.endswith(".stl"):
+            self._handle_get_stl_mesh(path.split("/")[-1])
+            return
+
         # Fallback to static file server (lasius-dashboard)
         super().do_GET()
 
@@ -271,6 +275,39 @@ class LasiusRestHandler(SimpleHTTPRequestHandler):
             self._send_json(200, {"profiles": profiles})
         except Exception as e:
             self._send_json(200, {"profiles": {}, "warning": str(e)})
+
+    def _handle_get_stl_mesh(self, filename: str) -> None:
+        """Serves canonical FreeCAD v2 binary STL meshes from `hardware/mechanics/export/urdf/meshes/`."""
+        safe_name = Path(filename).name
+        if not safe_name.endswith(".stl"):
+            self._send_json(404, {"error": "Invalid mesh filename"})
+            return
+
+        candidates = []
+        for parent in Path(__file__).resolve().parents:
+            cand = parent / "hardware" / "mechanics" / "export" / "urdf" / "meshes" / safe_name
+            if cand.is_file():
+                candidates.append(cand)
+        cwd_cand = Path.cwd() / "hardware" / "mechanics" / "export" / "urdf" / "meshes" / safe_name
+        if cwd_cand.is_file():
+            candidates.append(cwd_cand)
+
+        mesh_path = next((c for c in candidates if c.is_file()), None)
+        if not mesh_path:
+            self._send_json(404, {"error": f"Mesh '{safe_name}' not found"})
+            return
+
+        try:
+            content = mesh_path.read_bytes()
+            self.send_response(200)
+            self.send_header("Content-Type", "model/stl")
+            self.send_header("Content-Length", str(len(content)))
+            self.send_header("Cache-Control", "public, max-age=3600")
+            self.send_header("Access-Control-Allow-Origin", "*")
+            self.end_headers()
+            self.wfile.write(content)
+        except Exception as e:
+            self._send_json(500, {"error": f"Failed to read mesh '{safe_name}'", "details": str(e)})
 
     def _handle_post_order(self) -> None:
         srv = self.server_instance

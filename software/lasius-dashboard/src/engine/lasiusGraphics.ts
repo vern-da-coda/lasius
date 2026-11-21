@@ -6,16 +6,24 @@
  *   orthographic projections (Top XY, Front XZ, Side YZ) outside of Vue's
  *   reactivity proxy (`shallowRef` in `App.vue`) for 60 FPS real-time performance.
  *
- * Classes:
- *   - `LasiusGraphicsEngine`:
- *       * Builds the procedural 3D hexapod model (dual 5 mm chassis plates, 6 standoff
- *         pillars, inward-extending coxa brackets, femur/tibia links, and motion-range arcs).
- *       * Performs raycast picking on 3D legs to synchronize `selectedLegKey` with the UI.
- *       * Updates joint angles at 50 Hz with in-place `BufferAttribute` updates and
- *         renders synchronized straight-line 2D orthographic CAD views.
+ * FreeCAD v2 Architecture Sync:
+ *   - Loads the 29 canonical FreeCAD v2 Binary STL meshes (`/meshes/*.stl` from
+ *     `hardware/mechanics/export/urdf/meshes/`) via `STLLoader` with exact
+ *     link-local coordinate transforms (`det = +1`, outward normals):
+ *       * Chassis v2: `body_bottom`, `body_top`, `chassis_core`, `chassis_belly_pan`,
+ *         `chassis_rpi_mount`, `chassis_canopy` (translucent acrylic), `chassis_service_cover`,
+ *         `rpi4_model_b`, `vl53l5cx_board`.
+ *       * Coxa v2: `coxa_{left,right}` (unified 45° A-truss cheeks), `coxa_servo_{left,right}`,
+ *         `femur_servo_{left,right}`.
+ *       * Femur v2: `femur_{left,right}` (45° A-truss monocoque box girder), `femur_cover_{left,right}`.
+ *       * Tibia & Tarsus v2: `tibia_{left,right}` (45° A-truss servo cage, Krallen-Sichel teardrop,
+ *         2.50 mm lower web taper), `tibia_cover_{left,right}`, `knee_servo_{left,right}`,
+ *         `tarsus_{left,right}` (3D-exoskeleton), `tarsus_shoe_{left,right}` (compact Kufe).
+ *   - Includes an instant v2 procedural fallback while STL assets stream in.
  */
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import { STLLoader } from 'three/examples/jsm/loaders/STLLoader.js';
 import {
   CHASSIS_HULL_CONTOUR,
   CHASSIS_WINDOW_CUTOUT,
@@ -64,6 +72,12 @@ export class LasiusGraphicsEngine {
 
   // Three.js Materials & Geometries
   private chassisMat!: THREE.MeshStandardMaterial;
+  private canopyMat!: THREE.MeshStandardMaterial;
+  private pcbGreenMat!: THREE.MeshStandardMaterial;
+  private pcbRedMat!: THREE.MeshStandardMaterial;
+  private tarsusNeutralMat!: THREE.MeshStandardMaterial;
+  private kufeNeutralMat!: THREE.MeshStandardMaterial;
+  private coverNeutralMat!: THREE.MeshStandardMaterial;
   private eyeMat!: THREE.MeshStandardMaterial;
   private hardwareMat!: THREE.MeshStandardMaterial;
   private carbonPlateMat!: THREE.MeshStandardMaterial;
@@ -85,11 +99,16 @@ export class LasiusGraphicsEngine {
   private sharedCoxaPivotPinGeo!: THREE.CylinderGeometry;
   private sharedJointRingGeo!: THREE.TorusGeometry;
   private sharedCoxaCollarGeo!: THREE.CylinderGeometry;
-  private sharedFemurPlateGeo!: THREE.ExtrudeGeometry;
-  private sharedFemurRungGeo!: THREE.CylinderGeometry;
+  private sharedFemurBodyGeo!: THREE.ExtrudeGeometry;
+  private sharedFemurCoverGeo!: THREE.ExtrudeGeometry;
   private sharedFemurKneeServoGeo!: THREE.BoxGeometry;
   private sharedTibiaGeo!: THREE.ExtrudeGeometry;
   private sharedTibiaClampGeo!: THREE.BoxGeometry;
+
+  // Cached FreeCAD v2 STL BufferGeometries (loaded asynchronously via STLLoader)
+  private stlGeometries: Record<string, THREE.BufferGeometry> = {};
+  private stlLoadingStarted = false;
+  private stlLoadedReady = false;
 
   // 3D Meshes map
   private robotRootGroup!: THREE.Group;
@@ -146,6 +165,7 @@ export class LasiusGraphicsEngine {
     this.initThreeJS();
     this.initMaterials();
     this.setupEvents();
+    this.loadFreeCADV2Meshes();
   }
 
   private init2DCanvases() {
@@ -187,7 +207,7 @@ export class LasiusGraphicsEngine {
     el.appendChild(this.renderer.domElement);
 
     this.controls = new OrbitControls(this.camera, this.renderer.domElement);
-    this.controls.target.set(0, -25, 0);
+    this.controls.target.set(0, -15, 0);
     this.controls.enableDamping = true;
     this.controls.dampingFactor = 0.05;
     this.controls.maxPolarAngle = Math.PI / 2 + 0.15;
@@ -217,18 +237,18 @@ export class LasiusGraphicsEngine {
     this.scene.add(axes);
 
     // Lights
-    const ambLight = new THREE.AmbientLight(0xffffff, 0.7);
+    const ambLight = new THREE.AmbientLight(0xffffff, 0.75);
     this.scene.add(ambLight);
 
-    const dirLight1 = new THREE.DirectionalLight(0xffffff, 0.9);
-    dirLight1.position.set(200, 400, 200);
+    const dirLight1 = new THREE.DirectionalLight(0xffffff, 0.95);
+    dirLight1.position.set(220, 420, 220);
     this.scene.add(dirLight1);
 
-    const dirLight2 = new THREE.DirectionalLight(0x7090b0, 0.4);
-    dirLight2.position.set(-200, 200, -200);
+    const dirLight2 = new THREE.DirectionalLight(0x7090b0, 0.45);
+    dirLight2.position.set(-220, 220, -220);
     this.scene.add(dirLight2);
 
-    const rimLight = new THREE.DirectionalLight(0x38bdf8, 0.35);
+    const rimLight = new THREE.DirectionalLight(0x38bdf8, 0.38);
     rimLight.position.set(0, -200, 300);
     this.scene.add(rimLight);
 
@@ -245,12 +265,56 @@ export class LasiusGraphicsEngine {
 
   private initMaterials() {
     this.legNeutralMat = new THREE.MeshStandardMaterial({
-      color: 0x303342,
-      roughness: 0.45,
-      metalness: 0.40,
+      color: 0x343848,
+      roughness: 0.42,
+      metalness: 0.35,
       side: THREE.DoubleSide
     });
-    this.chassisMat = this.legNeutralMat; // Exact same material as the legs
+    this.chassisMat = new THREE.MeshStandardMaterial({
+      color: 0x2f3342,
+      roughness: 0.44,
+      metalness: 0.36,
+      side: THREE.DoubleSide
+    });
+    this.canopyMat = new THREE.MeshStandardMaterial({
+      color: 0xc8e4fa,
+      roughness: 0.16,
+      metalness: 0.12,
+      transparent: true,
+      opacity: 0.36,
+      depthWrite: false,
+      side: THREE.DoubleSide
+    });
+    this.coverNeutralMat = new THREE.MeshStandardMaterial({
+      color: 0x242734,
+      roughness: 0.40,
+      metalness: 0.38,
+      side: THREE.DoubleSide
+    });
+    this.tarsusNeutralMat = new THREE.MeshStandardMaterial({
+      color: 0xd96b18,
+      roughness: 0.38,
+      metalness: 0.25,
+      side: THREE.DoubleSide
+    });
+    this.kufeNeutralMat = new THREE.MeshStandardMaterial({
+      color: 0x228da6,
+      roughness: 0.45,
+      metalness: 0.22,
+      side: THREE.DoubleSide
+    });
+    this.pcbGreenMat = new THREE.MeshStandardMaterial({
+      color: 0x14853d,
+      roughness: 0.45,
+      metalness: 0.25,
+      side: THREE.DoubleSide
+    });
+    this.pcbRedMat = new THREE.MeshStandardMaterial({
+      color: 0xbf2626,
+      roughness: 0.45,
+      metalness: 0.25,
+      side: THREE.DoubleSide
+    });
     this.eyeMat = new THREE.MeshStandardMaterial({
       color: 0x00d2d3,
       emissive: 0x00d2d3,
@@ -259,15 +323,15 @@ export class LasiusGraphicsEngine {
     });
 
     this.hardwareMat = new THREE.MeshStandardMaterial({
-      color: 0x1a1b24,
-      roughness: 0.55,
-      metalness: 0.30,
+      color: 0x1a1c26,
+      roughness: 0.52,
+      metalness: 0.32,
       side: THREE.DoubleSide
     });
     this.carbonPlateMat = new THREE.MeshStandardMaterial({
-      color: 0x1f202a,
-      roughness: 0.40,
-      metalness: 0.35,
+      color: 0x1c1d26,
+      roughness: 0.38,
+      metalness: 0.40,
       side: THREE.DoubleSide
     });
     this.brassMat = new THREE.MeshStandardMaterial({
@@ -303,9 +367,9 @@ export class LasiusGraphicsEngine {
     });
 
     this.jointNeutralMat = new THREE.MeshStandardMaterial({
-      color: 0x20222c,
-      roughness: 0.50,
-      metalness: 0.45,
+      color: 0x222532,
+      roughness: 0.48,
+      metalness: 0.42,
       side: THREE.DoubleSide
     });
 
@@ -352,28 +416,149 @@ export class LasiusGraphicsEngine {
     this.initLegGeometries();
   }
 
+  /**
+   * Asynchronously loads the 29 canonical FreeCAD v2 Binary STL meshes from `/meshes/*.stl`
+   * and transforms them into their exact Three.js link-local millimeter coordinate frames.
+   */
+  private loadFreeCADV2Meshes() {
+    if (this.stlLoadingStarted || typeof window === 'undefined') return;
+    this.stlLoadingStarted = true;
+
+    const loader = new STLLoader();
+
+    // 1. Chassis transform: (X_three, Y_three, Z_three) = (-1000 * y_m, 1000 * z_m - 17.25, -1000 * x_m)
+    const matBody = new THREE.Matrix4().set(
+      0, -1000, 0, 0,
+      0, 0, 1000, -CHASSIS_SPECS.hipPivotZ_FC,
+      -1000, 0, 0, 0,
+      0, 0, 0, 1
+    );
+
+    // 2. Coxa transform: (X_coxa, Y_coxa, Z_coxa) = (1000 * (60/56.5) * x_m, 1000 * z_m, -1000 * y_m)
+    const coxaScaleX = COXA_SPECS.kinematicLength / COXA_SPECS.cadKinematicLength;
+    const matCoxa = new THREE.Matrix4().set(
+      1000 * coxaScaleX, 0, 0, 0,
+      0, 0, 1000, 0,
+      0, -1000, 0, 0,
+      0, 0, 0, 1
+    );
+
+    // 3. Femur transform: (X_femur, Y_femur, Z_femur) = (1000 * x_m, 1000 * z_m, -1000 * y_m ± 2.50)
+    const matFemurLeft = new THREE.Matrix4().set(
+      1000, 0, 0, 0,
+      0, 0, 1000, 0,
+      0, -1000, 0, 2.50,
+      0, 0, 0, 1
+    );
+    const matFemurRight = new THREE.Matrix4().set(
+      1000, 0, 0, 0,
+      0, 0, 1000, 0,
+      0, -1000, 0, -2.50,
+      0, 0, 0, 1
+    );
+
+    // 4. Tibia + Tarsus + Compact Kufe transform:
+    //    Maps Knee (0,0,0) -> (0,0,0) and Kufe Sole (0.1522, ±0.0025, 0.01045) -> (0, -152.56, 0)
+    const dxSole = 152.20;
+    const dzSole = 10.45;
+    const lEff = Math.hypot(dxSole, dzSole);
+    const cosA = dxSole / lEff;
+    const sinA = dzSole / lEff;
+
+    const matTibiaLeft = new THREE.Matrix4().set(
+      -1000 * sinA, 0, 1000 * cosA, 0,
+      -1000 * cosA, 0, -1000 * sinA, 0,
+      0, -1000, 0, 2.50,
+      0, 0, 0, 1
+    );
+    const matTibiaRight = new THREE.Matrix4().set(
+      -1000 * sinA, 0, 1000 * cosA, 0,
+      -1000 * cosA, 0, -1000 * sinA, 0,
+      0, -1000, 0, -2.50,
+      0, 0, 0, 1
+    );
+
+    const specs: Array<{ key: string; file: string; matrix: THREE.Matrix4 }> = [
+      // Chassis v2 (9 parts)
+      { key: 'body_bottom', file: 'body_bottom.stl', matrix: matBody },
+      { key: 'body_top', file: 'body_top.stl', matrix: matBody },
+      { key: 'chassis_core', file: 'chassis_core.stl', matrix: matBody },
+      { key: 'chassis_belly_pan', file: 'chassis_belly_pan.stl', matrix: matBody },
+      { key: 'chassis_rpi_mount', file: 'chassis_rpi_mount.stl', matrix: matBody },
+      { key: 'chassis_canopy', file: 'chassis_canopy.stl', matrix: matBody },
+      { key: 'chassis_service_cover', file: 'chassis_service_cover.stl', matrix: matBody },
+      { key: 'rpi4_model_b', file: 'rpi4_model_b.stl', matrix: matBody },
+      { key: 'vl53l5cx_board', file: 'vl53l5cx_board.stl', matrix: matBody },
+      // Coxa v2 (Left & Right)
+      { key: 'coxa_left', file: 'coxa_left.stl', matrix: matCoxa },
+      { key: 'coxa_right', file: 'coxa_right.stl', matrix: matCoxa },
+      { key: 'coxa_servo_left', file: 'coxa_servo_left.stl', matrix: matCoxa },
+      { key: 'coxa_servo_right', file: 'coxa_servo_right.stl', matrix: matCoxa },
+      { key: 'femur_servo_left', file: 'femur_servo_left.stl', matrix: matCoxa },
+      { key: 'femur_servo_right', file: 'femur_servo_right.stl', matrix: matCoxa },
+      // Femur v2 (Left & Right)
+      { key: 'femur_left', file: 'femur_left.stl', matrix: matFemurLeft },
+      { key: 'femur_right', file: 'femur_right.stl', matrix: matFemurRight },
+      { key: 'femur_cover_left', file: 'femur_cover_left.stl', matrix: matFemurLeft },
+      { key: 'femur_cover_right', file: 'femur_cover_right.stl', matrix: matFemurRight },
+      // Tibia + Tarsus + Kufe v2 (Left & Right)
+      { key: 'tibia_left', file: 'tibia_left.stl', matrix: matTibiaLeft },
+      { key: 'tibia_right', file: 'tibia_right.stl', matrix: matTibiaRight },
+      { key: 'tibia_cover_left', file: 'tibia_cover_left.stl', matrix: matTibiaLeft },
+      { key: 'tibia_cover_right', file: 'tibia_cover_right.stl', matrix: matTibiaRight },
+      { key: 'knee_servo_left', file: 'knee_servo_left.stl', matrix: matTibiaLeft },
+      { key: 'knee_servo_right', file: 'knee_servo_right.stl', matrix: matTibiaRight },
+      { key: 'tarsus_left', file: 'tarsus_left.stl', matrix: matTibiaLeft },
+      { key: 'tarsus_right', file: 'tarsus_right.stl', matrix: matTibiaRight },
+      { key: 'tarsus_shoe_left', file: 'tarsus_shoe_left.stl', matrix: matTibiaLeft },
+      { key: 'tarsus_shoe_right', file: 'tarsus_shoe_right.stl', matrix: matTibiaRight }
+    ];
+
+    let loadedCount = 0;
+    const totalCount = specs.length;
+
+    for (const item of specs) {
+      loader.load(
+        `./meshes/${item.file}`,
+        (geom) => {
+          geom.applyMatrix4(item.matrix);
+          geom.computeVertexNormals();
+          this.stlGeometries[item.key] = geom;
+          loadedCount++;
+          if (loadedCount === totalCount) {
+            this.stlLoadedReady = true;
+            if (this.robotLayout && this.robotLayout.legs) {
+              this.buildThreeJSRobot(this.robotLayout);
+            }
+          }
+        },
+        undefined,
+        () => {
+          // Graceful fallback to v2 procedural geometries if an STL is unreachable
+        }
+      );
+    }
+  }
+
   private initLegGeometries() {
-    // 1. Coxa 3D-printed monolithic segment (from FreeCAD coxa.FCStd / coxa_bracket.FCStd):
-    // Length: 115.0 mm [x = -40.3 mm inner reach to x = +74.7 mm outer end],
-    // Width: 31.7 mm, main height 18.0 mm (y = -9.0 .. +9.0),
-    // Body-to-coxa stabilization cheeks: height 26.3 mm (y = -13.15 .. +13.15 mm) spanning x = -40.3 .. +17.3 mm,
-    // Femur servo lower tab: extends to y = -14.5 mm for femur servo counter-bearing at x = 49.0 .. 67.5 mm.
+    // 1. Procedural v2 Coxa fallback (Twin-servo cage with 45° A-truss cheeks)
     const coxaShape = new THREE.Shape();
-    coxaShape.moveTo(-40.3, -13.15);
-    coxaShape.lineTo(17.3, -13.15);
-    coxaShape.lineTo(17.3, -9.0);
-    coxaShape.lineTo(49.0, -9.0);
-    coxaShape.lineTo(49.0, -14.5);
-    coxaShape.lineTo(67.5, -14.5);
-    coxaShape.lineTo(67.5, -9.0);
+    coxaShape.moveTo(-40.3, -15.25);
+    coxaShape.lineTo(18.2, -15.25);
+    coxaShape.lineTo(28.0, -9.0);
+    coxaShape.lineTo(48.0, -9.0);
+    coxaShape.lineTo(54.0, -14.5);
+    coxaShape.lineTo(70.0, -14.5);
     coxaShape.lineTo(74.7, -9.0);
     coxaShape.lineTo(74.7, 9.0);
-    coxaShape.lineTo(17.3, 9.0);
-    coxaShape.lineTo(17.3, 13.15);
-    coxaShape.lineTo(-40.3, 13.15);
+    coxaShape.lineTo(68.0, 16.45);
+    coxaShape.lineTo(49.0, 16.45);
+    coxaShape.lineTo(42.0, 9.0);
+    coxaShape.lineTo(25.0, 9.0);
+    coxaShape.lineTo(18.2, 16.45);
+    coxaShape.lineTo(-40.3, 16.45);
     coxaShape.closePath();
 
-    // Femur servo pocket cutout [x = 25.6 .. 50.0 mm]
     const femurServoPocket = new THREE.Path();
     femurServoPocket.moveTo(25.6, -7.0);
     femurServoPocket.lineTo(25.6, 7.0);
@@ -382,7 +567,6 @@ export class LasiusGraphicsEngine {
     femurServoPocket.closePath();
     coxaShape.holes.push(femurServoPocket);
 
-    // Body-to-Coxa servo pocket cutout [x = -32.0 .. 8.0 mm]
     const bodyServoPocket = new THREE.Path();
     bodyServoPocket.moveTo(-32.0, -10.0);
     bodyServoPocket.lineTo(-32.0, 10.0);
@@ -392,10 +576,10 @@ export class LasiusGraphicsEngine {
     coxaShape.holes.push(bodyServoPocket);
 
     this.sharedCoxaBracketGeo = new THREE.ExtrudeGeometry(coxaShape, {
-      depth: COXA_SPECS.width, // 31.7 mm
+      depth: COXA_SPECS.width,
       bevelEnabled: true,
-      bevelThickness: 0.5,
-      bevelSize: 0.5,
+      bevelThickness: 0.6,
+      bevelSize: 0.6,
       bevelSegments: 2
     });
     this.sharedCoxaBracketGeo.translate(0, 0, -COXA_SPECS.width / 2);
@@ -406,49 +590,63 @@ export class LasiusGraphicsEngine {
     this.sharedCoxaCollarGeo = new THREE.CylinderGeometry(7.5, 7.5, 3.2, 20);
     this.sharedCoxaCollarGeo.rotateX(Math.PI / 2);
 
-    // 2. Femur side plate shape (from FreeCAD femur_plate.FCStd):
-    // Stadium: length 131.6 mm, width 31.6 mm [R = 15.8 mm], 100 mm pitch
-    const femurRadius = FEMUR_SPECS.radius;
+    // 2. Procedural v2 Monocoque Femur box-girder fallback (G1-tapered waist with 45° A-truss windows)
+    const femurR = FEMUR_SPECS.radius;
+    const waistH = FEMUR_SPECS.waistHeight / 2;
     const femurShape = new THREE.Shape();
-    femurShape.absarc(0, 0, femurRadius, Math.PI / 2, -Math.PI / 2, false);
-    femurShape.lineTo(FEMUR_SPECS.length, -femurRadius);
-    femurShape.absarc(FEMUR_SPECS.length, 0, femurRadius, -Math.PI / 2, Math.PI / 2, false);
-    femurShape.lineTo(0, femurRadius);
+    femurShape.absarc(0, 0, femurR, Math.PI / 2, -Math.PI / 2, false);
+    femurShape.lineTo(18.0, -femurR);
+    femurShape.bezierCurveTo(28.0, -femurR, 30.0, -waistH, 40.0, -waistH);
+    femurShape.lineTo(60.0, -waistH);
+    femurShape.bezierCurveTo(70.0, -waistH, 72.0, -femurR, 82.0, -femurR);
+    femurShape.lineTo(FEMUR_SPECS.length, -femurR);
+    femurShape.absarc(FEMUR_SPECS.length, 0, femurR, -Math.PI / 2, Math.PI / 2, false);
+    femurShape.lineTo(82.0, femurR);
+    femurShape.bezierCurveTo(72.0, femurR, 70.0, waistH, 60.0, waistH);
+    femurShape.lineTo(40.0, waistH);
+    femurShape.bezierCurveTo(30.0, waistH, 28.0, femurR, 18.0, femurR);
     femurShape.closePath();
 
-    const addCircleHole = (cx: number, cy: number, r: number, segments = 20) => {
-      const hole = new THREE.Path();
-      hole.absarc(cx, cy, r, 0, Math.PI * 2, true);
-      femurShape.holes.push(hole);
+    // 45-degree A-truss windows in Femur waist
+    const addTriangleHole = (p1: [number, number], p2: [number, number], p3: [number, number]) => {
+      const h = new THREE.Path();
+      h.moveTo(p1[0], p1[1]);
+      h.lineTo(p2[0], p2[1]);
+      h.lineTo(p3[0], p3[1]);
+      h.closePath();
+      femurShape.holes.push(h);
     };
+    addTriangleHole([31, -7.5], [47, -7.5], [39, 6.5]);
+    addTriangleHole([42, 7.5], [58, 7.5], [50, -6.5]);
+    addTriangleHole([53, -7.5], [69, -7.5], [61, 6.5]);
 
-    for (const pivotX of [0, FEMUR_SPECS.length]) {
-      addCircleHole(pivotX, 0, 4.0, 24);
-      addCircleHole(pivotX - 8.0, 0, 1.0, 12);
-      addCircleHole(pivotX + 8.0, 0, 1.0, 12);
-      addCircleHole(pivotX, -8.0, 1.0, 12);
-      addCircleHole(pivotX, 8.0, 1.0, 12);
-    }
-    addCircleHole(FEMUR_SPECS.standoff1_X, 0, 1.5, 16);
-    addCircleHole(FEMUR_SPECS.standoff2_X, 0, 1.5, 16);
-
-    this.sharedFemurPlateGeo = new THREE.ExtrudeGeometry(femurShape, {
-      depth: FEMUR_SPECS.thickness, // 2.2 mm
+    this.sharedFemurBodyGeo = new THREE.ExtrudeGeometry(femurShape, {
+      depth: FEMUR_SPECS.boxDepth,
       bevelEnabled: true,
-      bevelThickness: 0.3,
-      bevelSize: 0.3,
+      bevelThickness: 0.8,
+      bevelSize: 0.8,
       bevelSegments: 2
     });
-    this.sharedFemurPlateGeo.translate(0, 0, -FEMUR_SPECS.thickness / 2);
+    this.sharedFemurBodyGeo.translate(0, 0, -FEMUR_SPECS.boxDepth / 2);
 
-    // Two Ø 14.0 mm standoffs spanning the 51.3 mm gap between femur plates
-    this.sharedFemurRungGeo = new THREE.CylinderGeometry(FEMUR_SPECS.standoffRadius, FEMUR_SPECS.standoffRadius, FEMUR_SPECS.plateSpacing, 16);
-    this.sharedFemurRungGeo.rotateX(Math.PI / 2);
+    const coverShape = new THREE.Shape();
+    coverShape.moveTo(29.0, -waistH + 1.5);
+    coverShape.lineTo(71.0, -waistH + 1.5);
+    coverShape.lineTo(71.0, waistH - 1.5);
+    coverShape.lineTo(29.0, waistH - 1.5);
+    coverShape.closePath();
+    this.sharedFemurCoverGeo = new THREE.ExtrudeGeometry(coverShape, {
+      depth: 2.5,
+      bevelEnabled: true,
+      bevelThickness: 0.4,
+      bevelSize: 0.4,
+      bevelSegments: 1
+    });
+    this.sharedFemurCoverGeo.translate(0, 0, FEMUR_SPECS.boxDepth / 2 + 0.5);
 
     this.sharedFemurKneeServoGeo = new THREE.BoxGeometry(SERVO_SPECS.length, SERVO_SPECS.width, SERVO_SPECS.height);
 
-    // 3. Tibia sickle claw (from FreeCAD tibia.FCStd & calibrated 600 DPI scan):
-    // 147 analytical outer polygon points, 69 weight-reduction slot points, 7.0 mm thickness
+    // 3. Procedural v2 Tibia + 3D-Exoskeleton Tarsus & Compact Kufe (from updated tibia_contour.json, 152.56 mm)
     const tibiaShape = new THREE.Shape();
     const outerPts = TIBIA_SPECS.outerPolygon;
     tibiaShape.moveTo(outerPts[0][0], outerPts[0][1]);
@@ -457,7 +655,7 @@ export class LasiusGraphicsEngine {
     }
     tibiaShape.closePath();
 
-    // Weight-reduction internal slot hole
+    // Concentric Krallen-Sichel teardrop window
     const slotPts = TIBIA_SPECS.slotPolygon;
     const slotPath = new THREE.Path();
     slotPath.moveTo(slotPts[0][0], slotPts[0][1]);
@@ -468,16 +666,16 @@ export class LasiusGraphicsEngine {
     tibiaShape.holes.push(slotPath);
 
     this.sharedTibiaGeo = new THREE.ExtrudeGeometry(tibiaShape, {
-      depth: TIBIA_SPECS.thickness, // 7.0 mm
+      depth: TIBIA_SPECS.thickness,
       bevelEnabled: true,
-      bevelThickness: 0.5,
-      bevelSize: 0.5,
+      bevelThickness: 0.6,
+      bevelSize: 0.6,
       bevelSegments: 2
     });
     this.sharedTibiaGeo.translate(0, 0, -TIBIA_SPECS.thickness / 2);
 
-    // Tibia Servo Foot mount clamped around knee joint
-    this.sharedTibiaClampGeo = new THREE.BoxGeometry(26, 22, 28);
+    // Twin-cheek knee servo cage fallback
+    this.sharedTibiaClampGeo = new THREE.BoxGeometry(28, 36, 42);
   }
 
   public getChassisHullContour(): Array<{ x: number; y: number }> {
@@ -486,16 +684,23 @@ export class LasiusGraphicsEngine {
 
   private disposeObject3D(obj: THREE.Object3D | null | undefined) {
     if (!obj) return;
+    const cachedGeos = new Set<THREE.BufferGeometry>(Object.values(this.stlGeometries));
+    [
+      this.sharedCoxaBracketGeo,
+      this.sharedCoxaServoGeo,
+      this.sharedCoxaPivotPinGeo,
+      this.sharedJointRingGeo,
+      this.sharedCoxaCollarGeo,
+      this.sharedFemurBodyGeo,
+      this.sharedFemurCoverGeo,
+      this.sharedFemurKneeServoGeo,
+      this.sharedTibiaGeo,
+      this.sharedTibiaClampGeo
+    ].forEach(g => { if (g) cachedGeos.add(g); });
+
     obj.traverse((child: any) => {
-      if (child.geometry && typeof child.geometry.dispose === 'function') {
+      if (child.geometry && typeof child.geometry.dispose === 'function' && !cachedGeos.has(child.geometry)) {
         child.geometry.dispose();
-      }
-      if (child.material) {
-        if (Array.isArray(child.material)) {
-          child.material.forEach((m: any) => m && typeof m.dispose === 'function' && m.dispose());
-        } else if (typeof child.material.dispose === 'function') {
-          child.material.dispose();
-        }
       }
     });
   }
@@ -556,81 +761,107 @@ export class LasiusGraphicsEngine {
     }
     this.robot3DMeshes.legs = {};
 
-    // 1. Dual Chassis Body Plates (Two 2.0 mm solid plates sandwiching 51.3 mm standoffs)
+    // 1. Build v2 Chassis Assembly (`body_assembly.FCStd`)
     const bodyGroup = new THREE.Group();
 
-    const bodyShape = new THREE.Shape();
-    const hullPts = this.getChassisHullContour();
-    bodyShape.moveTo(hullPts[0].x, hullPts[0].y);
-    for (let i = 1; i < hullPts.length; i++) {
-      bodyShape.lineTo(hullPts[i].x, hullPts[i].y);
+    if (this.stlLoadedReady && this.stlGeometries.body_bottom && this.stlGeometries.chassis_core) {
+      // Exact 1:1 FreeCAD v2 Binary STL Chassis Meshes
+      const chassisParts: Array<{ key: string; mat: THREE.Material; renderOrder?: number }> = [
+        { key: 'body_bottom', mat: this.carbonPlateMat },
+        { key: 'body_top', mat: this.carbonPlateMat },
+        { key: 'chassis_core', mat: this.chassisMat },
+        { key: 'chassis_belly_pan', mat: this.hardwareMat },
+        { key: 'chassis_rpi_mount', mat: this.chassisMat },
+        { key: 'rpi4_model_b', mat: this.pcbGreenMat },
+        { key: 'vl53l5cx_board', mat: this.pcbRedMat },
+        { key: 'chassis_service_cover', mat: this.coverNeutralMat },
+        { key: 'chassis_canopy', mat: this.canopyMat, renderOrder: 10 }
+      ];
+      for (const part of chassisParts) {
+        const geo = this.stlGeometries[part.key];
+        if (geo) {
+          const mesh = new THREE.Mesh(geo, part.mat);
+          if (part.renderOrder !== undefined) {
+            mesh.renderOrder = part.renderOrder;
+          }
+          bodyGroup.add(mesh);
+        }
+      }
+    } else {
+      // Procedural v2 Chassis fallback (while STL assets stream in)
+      const bodyShape = new THREE.Shape();
+      const hullPts = this.getChassisHullContour();
+      bodyShape.moveTo(hullPts[0].x, hullPts[0].y);
+      for (let i = 1; i < hullPts.length; i++) {
+        bodyShape.lineTo(hullPts[i].x, hullPts[i].y);
+      }
+      bodyShape.closePath();
+
+      const winW = CHASSIS_WINDOW_CUTOUT.width / 2;
+      const winL = CHASSIS_WINDOW_CUTOUT.length / 2;
+      const winHole = new THREE.Path();
+      winHole.moveTo(-winW, -winL);
+      winHole.lineTo(winW, -winL);
+      winHole.lineTo(winW, winL);
+      winHole.lineTo(-winW, winL);
+      winHole.closePath();
+      bodyShape.holes.push(winHole);
+
+      for (const ch of CHASSIS_COXA_HOLES) {
+        const coxaHole = new THREE.Path();
+        coxaHole.absarc(ch.x, ch.y, 4.0, 0, Math.PI * 2, true);
+        bodyShape.holes.push(coxaHole);
+      }
+
+      const plateGeo = new THREE.ExtrudeGeometry(bodyShape, {
+        depth: CHASSIS_SPECS.plateThickness,
+        bevelEnabled: true,
+        bevelSegments: 2,
+        steps: 1,
+        bevelSize: 0.3,
+        bevelThickness: 0.3
+      });
+      plateGeo.translate(0, 0, -CHASSIS_SPECS.plateThickness / 2);
+      plateGeo.rotateX(Math.PI / 2);
+
+      const topPlate = new THREE.Mesh(plateGeo, this.carbonPlateMat);
+      topPlate.position.set(0, CHASSIS_SPECS.topPlateCenterY, 0);
+      bodyGroup.add(topPlate);
+
+      const bottomPlate = new THREE.Mesh(plateGeo, this.carbonPlateMat);
+      bottomPlate.position.set(0, CHASSIS_SPECS.bottomPlateCenterY, 0);
+      bodyGroup.add(bottomPlate);
+
+      // v2 Monocoque Central Core (replaces v1 standoff pillars)
+      const coreGeo = new THREE.BoxGeometry(CHASSIS_SPECS.coreWidth, CHASSIS_SPECS.standoffHeight, CHASSIS_SPECS.coreLength);
+      const coreMesh = new THREE.Mesh(coreGeo, this.chassisMat);
+      coreMesh.position.set(0, CHASSIS_SPECS.coreCenterY, 0);
+      bodyGroup.add(coreMesh);
+
+      // v2 Belly Pan skid plate beneath bottom carbon plate
+      const bellyGeo = new THREE.BoxGeometry(CHASSIS_SPECS.bellyPanWidth, CHASSIS_SPECS.bellyPanDepth, CHASSIS_SPECS.bellyPanLength);
+      const bellyMesh = new THREE.Mesh(bellyGeo, this.hardwareMat);
+      bellyMesh.position.set(0, CHASSIS_SPECS.bottomPlateCenterY - 1.0 - CHASSIS_SPECS.bellyPanDepth / 2, 0);
+      bodyGroup.add(bellyMesh);
+
+      // v2 Draped Plexiglas Canopy & Service Cover above top carbon plate
+      const canopyGeo = new THREE.BoxGeometry(118, CHASSIS_SPECS.canopyHeight, 210);
+      const canopyMesh = new THREE.Mesh(canopyGeo, this.canopyMat);
+      canopyMesh.position.set(0, CHASSIS_SPECS.topPlateCenterY + 1.0 + CHASSIS_SPECS.canopyHeight / 2, 0);
+      canopyMesh.renderOrder = 10;
+      bodyGroup.add(canopyMesh);
+
+      const coverGeo = new THREE.BoxGeometry(CHASSIS_SPECS.serviceCoverWidth, 4.5, CHASSIS_SPECS.serviceCoverLength);
+      const coverMesh = new THREE.Mesh(coverGeo, this.coverNeutralMat);
+      coverMesh.position.set(0, CHASSIS_SPECS.topPlateCenterY + 1.0 + CHASSIS_SPECS.canopyHeight + 1.0, 0);
+      bodyGroup.add(coverMesh);
     }
-    bodyShape.closePath();
 
-    // Central electronics cutout window (50 mm x 160 mm)
-    const winW = CHASSIS_WINDOW_CUTOUT.width / 2; // 25 mm
-    const winL = CHASSIS_WINDOW_CUTOUT.length / 2; // 80 mm
-    const winHole = new THREE.Path();
-    winHole.moveTo(-winW, -winL);
-    winHole.lineTo(winW, -winL);
-    winHole.lineTo(winW, winL);
-    winHole.lineTo(-winW, winL);
-    winHole.closePath();
-    bodyShape.holes.push(winHole);
-
-    // 6x Coxa rotation bearing holes (Ø 8.0 mm)
-    for (const ch of CHASSIS_COXA_HOLES) {
-      const coxaHole = new THREE.Path();
-      coxaHole.absarc(ch.x, ch.y, 4.0, 0, Math.PI * 2, true);
-      bodyShape.holes.push(coxaHole);
-    }
-
-    // 8x Standoff screw mounting holes (Ø 3.0 mm)
-    for (const sp of CHASSIS_STANDOFF_POSITIONS) {
-      const spHole = new THREE.Path();
-      spHole.absarc(sp.x, sp.y, 1.5, 0, Math.PI * 2, true);
-      bodyShape.holes.push(spHole);
-    }
-
-    const plateGeo = new THREE.ExtrudeGeometry(bodyShape, {
-      depth: CHASSIS_SPECS.plateThickness, // 2.0 mm
-      bevelEnabled: true,
-      bevelSegments: 2,
-      steps: 1,
-      bevelSize: 0.3,
-      bevelThickness: 0.3
-    });
-    plateGeo.translate(0, 0, -CHASSIS_SPECS.plateThickness / 2);
-    plateGeo.rotateX(Math.PI / 2);
-
-    // Top Plate: centered at y = +26.65 mm (spans +25.65 mm to +27.65 mm)
-    const topPlate = new THREE.Mesh(plateGeo, this.carbonPlateMat);
-    topPlate.position.set(0, CHASSIS_SPECS.topPlateCenterY, 0);
-    bodyGroup.add(topPlate);
-
-    // Bottom Plate: centered at y = -26.65 mm (spans -27.65 mm to -25.65 mm)
-    const bottomPlate = new THREE.Mesh(plateGeo, this.carbonPlateMat);
-    bottomPlate.position.set(0, CHASSIS_SPECS.bottomPlateCenterY, 0);
-    bodyGroup.add(bottomPlate);
-
-    // 8x Standoff spacer pillars (Ø 14.0 mm, L = 51.3 mm connecting bottom and top plates)
-    const standoffGeo = new THREE.CylinderGeometry(
-      CHASSIS_SPECS.standoffRadius,
-      CHASSIS_SPECS.standoffRadius,
-      CHASSIS_SPECS.standoffHeight,
-      20
-    );
-    CHASSIS_STANDOFF_POSITIONS.forEach(pos => {
-      const post = new THREE.Mesh(standoffGeo, this.aluSpacerMat);
-      post.position.set(pos.x, 0, pos.y);
-      bodyGroup.add(post);
-    });
-
-    // 2. Front Direction Indicator (Blue Triangle on Top Plate pointing forward)
+    // Front Direction Indicator (Blue Triangle on Top Plate pointing forward -Z)
     const triangleShape = new THREE.Shape();
-    triangleShape.moveTo(0, -118);       // Tip pointing forward towards front (-135 mm)
-    triangleShape.lineTo(7, -98);        // Right base corner
-    triangleShape.lineTo(-7, -98);       // Left base corner
+    triangleShape.moveTo(0, -118);
+    triangleShape.lineTo(7, -98);
+    triangleShape.lineTo(-7, -98);
     triangleShape.closePath();
 
     const triangleGeo = new THREE.ExtrudeGeometry(triangleShape, {
@@ -652,18 +883,19 @@ export class LasiusGraphicsEngine {
       metalness: 0.2
     });
     const triangleMesh = new THREE.Mesh(triangleGeo, triangleMat);
-    triangleMesh.position.set(0, CHASSIS_SPECS.topPlateCenterY + CHASSIS_SPECS.plateThickness / 2 + 0.6, 0);
+    triangleMesh.position.set(0, CHASSIS_SPECS.topPlateCenterY + CHASSIS_SPECS.plateThickness / 2 + 0.8, 0);
     bodyGroup.add(triangleMesh);
 
     this.robotRootGroup.add(bodyGroup);
     this.robot3DMeshes.body = bodyGroup;
 
-    // 5. Build Legs
+    // 2. Build Six Modular v2 Legs
     for (const legName in layout.legs) {
-      const coxaGroup = this.createCoxaGroup();
-      const femurGroup = this.createFemurGroup();
+      const isRightLeg = legName.startsWith('right_');
+      const coxaGroup = this.createCoxaGroup(isRightLeg);
+      const femurGroup = this.createFemurGroup(isRightLeg);
       const tibiaLen = layout.legs[legName]?.tibia?.length ?? TIBIA_SPECS.kinematicLength;
-      const tibiaGroup = this.createTibiaGroup(tibiaLen);
+      const tibiaGroup = this.createTibiaGroup(tibiaLen, isRightLeg);
 
       [coxaGroup, femurGroup, tibiaGroup].forEach(g => {
         g.traverse(child => {
@@ -760,86 +992,79 @@ export class LasiusGraphicsEngine {
     this.drawRobot();
   }
 
-  private createCoxaGroup(): THREE.Group {
+  private createCoxaGroup(isRightLeg = false): THREE.Group {
     const group = new THREE.Group();
+    const side = isRightLeg ? 'right' : 'left';
 
-    // Main 115mm 3D-printed Coxa bracket (stabilizing cheeks, inward reach, lower tab)
+    if (this.stlLoadedReady && this.stlGeometries[`coxa_${side}`]) {
+      const bracket = new THREE.Mesh(this.stlGeometries[`coxa_${side}`], this.legNeutralMat);
+      bracket.userData = { jointType: 'coxa' };
+      group.add(bracket);
+
+      const servos: THREE.Mesh[] = [];
+      for (const sKey of [`coxa_servo_${side}`, `femur_servo_${side}`]) {
+        if (this.stlGeometries[sKey]) {
+          const sm = new THREE.Mesh(this.stlGeometries[sKey], this.hardwareMat);
+          sm.userData = { jointType: 'coxa' };
+          group.add(sm);
+          servos.push(sm);
+        }
+      }
+
+      group.userData = { bracket, servoBox: servos[0] || null, extraServos: servos, isStlV2: true };
+      return group;
+    }
+
+    // Procedural v2 Coxa fallback
     const bracket = new THREE.Mesh(this.sharedCoxaBracketGeo, this.legNeutralMat);
     bracket.position.set(0, 0, 0);
     bracket.userData = { jointType: 'coxa' };
     group.add(bracket);
 
-    // Femur servo housed inside outer bracket pocket (output shaft at x = 60mm)
     const servoBox = new THREE.Mesh(this.sharedCoxaServoGeo, this.hardwareMat);
     servoBox.position.set(38, 0, 0);
     servoBox.userData = { jointType: 'coxa' };
     group.add(servoBox);
 
-    // Vertical rotation pivot axle pin interfacing with top and bottom chassis plates
-    const pivotPin = new THREE.Mesh(this.sharedCoxaPivotPinGeo, this.aluSpacerMat);
-    pivotPin.position.set(0, 0, 0);
-    pivotPin.userData = { jointType: 'coxa' };
-    group.add(pivotPin);
-
-    // Top and bottom bearing rings on the pivot axis (interfaces with chassis plates at y = ±25.65)
-    const bearingTop = new THREE.Mesh(this.sharedJointRingGeo, this.jointNeutralMat);
-    bearingTop.position.set(0, 13.5, 0);
-    bearingTop.rotateX(Math.PI / 2);
-    bearingTop.userData = { jointType: 'coxa' };
-    group.add(bearingTop);
-
-    const bearingBottom = new THREE.Mesh(this.sharedJointRingGeo, this.jointNeutralMat);
-    bearingBottom.position.set(0, -13.5, 0);
-    bearingBottom.rotateX(Math.PI / 2);
-    bearingBottom.userData = { jointType: 'coxa' };
-    group.add(bearingBottom);
-
-    // Outer femur connection at x = 60
     const ring1 = new THREE.Mesh(this.sharedJointRingGeo, this.jointNeutralMat);
     ring1.position.set(60, 0, 0);
     ring1.rotateY(Math.PI / 2);
     ring1.userData = { jointType: 'coxa' };
     group.add(ring1);
 
-    const collar = new THREE.Mesh(this.sharedCoxaCollarGeo, this.hardwareMat);
-    collar.position.set(60, 0, 0);
-    collar.userData = { jointType: 'coxa' };
-    group.add(collar);
-
-    group.userData = { bracket, servoBox, pivotPin, bearingTop, bearingBottom, ring1, collar };
+    group.userData = { bracket, servoBox, ring1, isStlV2: false };
     return group;
   }
 
-  private createFemurGroup(): THREE.Group {
+  private createFemurGroup(isRightLeg = false): THREE.Group {
     const group = new THREE.Group();
+    const side = isRightLeg ? 'right' : 'left';
 
-    // Two parallel Femur plates with exact 51.3 mm inner spacing (z = ±25.65 mm)
-    const plateInner = new THREE.Mesh(this.sharedFemurPlateGeo, this.legNeutralMat);
-    plateInner.position.set(0, 0, FEMUR_SPECS.plateSpacing / 2);
-    plateInner.userData = { jointType: 'femur' };
-    group.add(plateInner);
+    if (this.stlLoadedReady && this.stlGeometries[`femur_${side}`]) {
+      const bodyMesh = new THREE.Mesh(this.stlGeometries[`femur_${side}`], this.legNeutralMat);
+      bodyMesh.userData = { jointType: 'femur' };
+      group.add(bodyMesh);
 
-    const plateOuter = new THREE.Mesh(this.sharedFemurPlateGeo, this.legNeutralMat);
-    plateOuter.position.set(0, 0, -FEMUR_SPECS.plateSpacing / 2);
-    plateOuter.userData = { jointType: 'femur' };
-    group.add(plateOuter);
+      const covers: THREE.Mesh[] = [];
+      if (this.stlGeometries[`femur_cover_${side}`]) {
+        const coverMesh = new THREE.Mesh(this.stlGeometries[`femur_cover_${side}`], this.coverNeutralMat);
+        coverMesh.userData = { jointType: 'femur' };
+        group.add(coverMesh);
+        covers.push(coverMesh);
+      }
 
-    // 2x Ø 14 mm standoff pillars at x = 35.0 mm and x = 65.0 mm
-    const rung1 = new THREE.Mesh(this.sharedFemurRungGeo, this.aluSpacerMat);
-    rung1.position.set(FEMUR_SPECS.standoff1_X, 0, 0);
-    rung1.userData = { jointType: 'femur' };
-    group.add(rung1);
+      group.userData = { plates: [bodyMesh], rungs: covers, isStlV2: true };
+      return group;
+    }
 
-    const rung2 = new THREE.Mesh(this.sharedFemurRungGeo, this.aluSpacerMat);
-    rung2.position.set(FEMUR_SPECS.standoff2_X, 0, 0);
-    rung2.userData = { jointType: 'femur' };
-    group.add(rung2);
+    // Procedural v2 Monocoque Femur box-girder fallback
+    const bodyMesh = new THREE.Mesh(this.sharedFemurBodyGeo, this.legNeutralMat);
+    bodyMesh.userData = { jointType: 'femur' };
+    group.add(bodyMesh);
 
-    // Knee servo driving tibia at x = 100 mm
-    const kneeServo = new THREE.Mesh(this.sharedFemurKneeServoGeo, this.hardwareMat);
-    kneeServo.position.set(FEMUR_SPECS.length, 0, 0);
-    kneeServo.userData = { jointType: 'femur' };
-    group.add(kneeServo);
+    const coverMesh = new THREE.Mesh(this.sharedFemurCoverGeo, this.coverNeutralMat);
+    coverMesh.userData = { jointType: 'femur' };
+    group.add(coverMesh);
 
     const ringHip = new THREE.Mesh(this.sharedJointRingGeo, this.jointNeutralMat);
     ringHip.position.set(0, 0, 0);
@@ -851,23 +1076,64 @@ export class LasiusGraphicsEngine {
     ringKnee.userData = { jointType: 'femur' };
     group.add(ringKnee);
 
-    group.userData = { plates: [plateInner, plateOuter], rungs: [rung1, rung2], kneeServo, ringHip, ringKnee };
+    group.userData = { plates: [bodyMesh], rungs: [coverMesh], ringHip, ringKnee, isStlV2: false };
     return group;
   }
 
-  private createTibiaGroup(tibiaLen = TIBIA_SPECS.kinematicLength): THREE.Group {
+  private createTibiaGroup(tibiaLen = TIBIA_SPECS.kinematicLength, isRightLeg = false): THREE.Group {
     const group = new THREE.Group();
-
-    // 7.0 mm solid sickle claw limb with internal weight-reduction cutout, scaled to effective kinematic length
-    const blade = new THREE.Mesh(this.sharedTibiaGeo, this.legNeutralMat);
+    const side = isRightLeg ? 'right' : 'left';
     const lenScale = tibiaLen / TIBIA_SPECS.kinematicLength;
+
+    if (this.stlLoadedReady && this.stlGeometries[`tibia_${side}`]) {
+      const blade = new THREE.Mesh(this.stlGeometries[`tibia_${side}`], this.legNeutralMat);
+      blade.scale.set(1.0, lenScale, 1.0);
+      blade.userData = { jointType: 'tibia' };
+      group.add(blade);
+
+      let coverMesh: THREE.Mesh | null = null;
+      if (this.stlGeometries[`tibia_cover_${side}`]) {
+        coverMesh = new THREE.Mesh(this.stlGeometries[`tibia_cover_${side}`], this.coverNeutralMat);
+        coverMesh.scale.set(1.0, lenScale, 1.0);
+        coverMesh.userData = { jointType: 'tibia' };
+        group.add(coverMesh);
+      }
+
+      let clamp: THREE.Mesh | null = null;
+      if (this.stlGeometries[`knee_servo_${side}`]) {
+        clamp = new THREE.Mesh(this.stlGeometries[`knee_servo_${side}`], this.hardwareMat);
+        clamp.userData = { jointType: 'tibia' };
+        group.add(clamp);
+      }
+
+      let tarsusMesh: THREE.Mesh | null = null;
+      if (this.stlGeometries[`tarsus_${side}`]) {
+        tarsusMesh = new THREE.Mesh(this.stlGeometries[`tarsus_${side}`], this.tarsusNeutralMat);
+        tarsusMesh.scale.set(1.0, lenScale, 1.0);
+        tarsusMesh.userData = { jointType: 'tibia' };
+        group.add(tarsusMesh);
+      }
+
+      let shoeMesh: THREE.Mesh | null = null;
+      if (this.stlGeometries[`tarsus_shoe_${side}`]) {
+        shoeMesh = new THREE.Mesh(this.stlGeometries[`tarsus_shoe_${side}`], this.kufeNeutralMat);
+        shoeMesh.scale.set(1.0, lenScale, 1.0);
+        shoeMesh.userData = { jointType: 'tibia' };
+        group.add(shoeMesh);
+      }
+
+      group.userData = { blade, coverMesh, clamp, tarsusMesh, shoeMesh, isStlV2: true };
+      return group;
+    }
+
+    // Procedural v2 Tibia + Tarsus + Compact Kufe fallback
+    const blade = new THREE.Mesh(this.sharedTibiaGeo, this.legNeutralMat);
     blade.scale.set(1.0, lenScale, 1.0);
     blade.userData = { jointType: 'tibia' };
     group.add(blade);
 
-    // Tibia servo foot mount around knee joint
     const clamp = new THREE.Mesh(this.sharedTibiaClampGeo, this.hardwareMat);
-    clamp.position.set(-2, 4, 0);
+    clamp.position.set(2, -12, 0);
     clamp.userData = { jointType: 'tibia' };
     group.add(clamp);
 
@@ -876,7 +1142,7 @@ export class LasiusGraphicsEngine {
     ringKnee.userData = { jointType: 'tibia' };
     group.add(ringKnee);
 
-    group.userData = { blade, clamp, ringKnee };
+    group.userData = { blade, clamp, ringKnee, isStlV2: false };
     return group;
   }
 
@@ -1006,8 +1272,8 @@ export class LasiusGraphicsEngine {
 
   private getJointLimits(sName: string, jointType: 'coxa' | 'femur' | 'tibia') {
     const sData = this.calibrationData[sName] || {};
-    const defaultMin = jointType === 'tibia' ? -60 : -45;
-    const defaultMax = jointType === 'tibia' ? 60 : 45;
+    const defaultMin = jointType === 'tibia' ? -68 : (jointType === 'coxa' ? -25 : -90);
+    const defaultMax = jointType === 'tibia' ? 29 : (jointType === 'coxa' ? (sName.includes('front') ? 35 : 25) : 90);
     return {
       minAngle: sData.min_angle !== undefined ? sData.min_angle : defaultMin,
       maxAngle: sData.max_angle !== undefined ? sData.max_angle : defaultMax
@@ -1212,9 +1478,13 @@ export class LasiusGraphicsEngine {
 
       // 1. Coxa Segment
       if (leg.coxaGroup && leg.coxaGroup.userData) {
-        const { bracket, servoBox, ring1 } = leg.coxaGroup.userData;
+        const { bracket, servoBox, extraServos, ring1 } = leg.coxaGroup.userData;
         if (bracket) bracket.material = isSelected ? (isCoxaActive ? this.legActiveSegmentMat : this.legSelectedMat) : this.legNeutralMat;
         if (servoBox) servoBox.material = isSelected ? (isCoxaActive ? this.jointActiveMat : this.jointSelectedMat) : this.hardwareMat;
+        if (Array.isArray(extraServos)) {
+          const sMat = isSelected ? (isCoxaActive ? this.jointActiveMat : this.jointSelectedMat) : this.hardwareMat;
+          extraServos.forEach((sm: any) => { if (sm) sm.material = sMat; });
+        }
         if (ring1) ring1.material = isSelected ? ((isCoxaActive || isFemurActive) ? this.jointActiveMat : this.jointSelectedMat) : this.jointNeutralMat;
       }
 
@@ -1226,7 +1496,7 @@ export class LasiusGraphicsEngine {
           plates.forEach((p: any) => { if (p) p.material = targetMat; });
         }
         if (rungs) {
-          const targetRungMat = isSelected ? (isFemurActive ? this.jointActiveMat : this.jointSelectedMat) : this.hardwareMat;
+          const targetRungMat = isSelected ? (isFemurActive ? this.jointActiveMat : this.jointSelectedMat) : this.coverNeutralMat;
           rungs.forEach((r: any) => { if (r) r.material = targetRungMat; });
         }
         if (kneeServo) kneeServo.material = isSelected ? ((isFemurActive || isTibiaActive) ? this.jointActiveMat : this.jointSelectedMat) : this.hardwareMat;
@@ -1234,11 +1504,14 @@ export class LasiusGraphicsEngine {
         if (ringKnee) ringKnee.material = isSelected ? ((isFemurActive || isTibiaActive) ? this.jointActiveMat : this.jointSelectedMat) : this.jointNeutralMat;
       }
 
-      // 3. Tibia Segment
+      // 3. Tibia + Tarsus + Compact Kufe Segment
       if (leg.tibiaGroup && leg.tibiaGroup.userData) {
-        const { blade, clamp, ringKnee } = leg.tibiaGroup.userData;
+        const { blade, coverMesh, clamp, tarsusMesh, shoeMesh, ringKnee } = leg.tibiaGroup.userData;
         if (blade) blade.material = isSelected ? (isTibiaActive ? this.legActiveSegmentMat : this.legSelectedMat) : this.legNeutralMat;
+        if (coverMesh) coverMesh.material = isSelected ? (isTibiaActive ? this.jointActiveMat : this.jointSelectedMat) : this.coverNeutralMat;
         if (clamp) clamp.material = isSelected ? (isTibiaActive ? this.jointActiveMat : this.jointSelectedMat) : this.hardwareMat;
+        if (tarsusMesh) tarsusMesh.material = isSelected ? (isTibiaActive ? this.legActiveSegmentMat : this.tarsusNeutralMat) : this.tarsusNeutralMat;
+        if (shoeMesh) shoeMesh.material = isSelected ? (isTibiaActive ? this.jointActiveMat : this.kufeNeutralMat) : this.kufeNeutralMat;
         if (ringKnee) ringKnee.material = isSelected ? (isTibiaActive ? this.jointActiveMat : this.jointSelectedMat) : this.jointNeutralMat;
       }
     }
@@ -1479,7 +1752,8 @@ export class LasiusGraphicsEngine {
         const mat0 = new THREE.Matrix4().makeBasis(axisX0, axisY0, axisZ0);
         m.coxaGroup.position.copy(v0);
         m.coxaGroup.quaternion.setFromRotationMatrix(mat0);
-        m.coxaGroup.scale.set(1, 1, isRightLeg ? -1 : 1);
+        const zScale0 = m.coxaGroup.userData?.isStlV2 ? 1 : (isRightLeg ? -1 : 1);
+        m.coxaGroup.scale.set(1, 1, zScale0);
       }
 
       // 2. Femur Segment
@@ -1491,7 +1765,8 @@ export class LasiusGraphicsEngine {
         const mat1 = new THREE.Matrix4().makeBasis(axisX1, axisY1, axisZ1);
         m.femurGroup.position.copy(v1);
         m.femurGroup.quaternion.setFromRotationMatrix(mat1);
-        m.femurGroup.scale.set(1, 1, isRightLeg ? -1 : 1);
+        const zScale1 = m.femurGroup.userData?.isStlV2 ? 1 : (isRightLeg ? -1 : 1);
+        m.femurGroup.scale.set(1, 1, zScale1);
       }
 
       // 3. Tibia Segment
@@ -1503,7 +1778,8 @@ export class LasiusGraphicsEngine {
         const mat2 = new THREE.Matrix4().makeBasis(axisX2, axisY2, axisZ2);
         m.tibiaGroup.position.copy(v2);
         m.tibiaGroup.quaternion.setFromRotationMatrix(mat2);
-        m.tibiaGroup.scale.set(1, 1, isRightLeg ? -1 : 1);
+        const zScale2 = m.tibiaGroup.userData?.isStlV2 ? 1 : (isRightLeg ? -1 : 1);
+        m.tibiaGroup.scale.set(1, 1, zScale2);
       }
 
       if (legName === this.selectedLegKey) {
@@ -1597,32 +1873,44 @@ export class LasiusGraphicsEngine {
     ctx.lineWidth = 2.0;
     ctx.stroke();
 
-    // 2. Central electronics window cutout (50 mm x 160 mm)
-    const winW = CHASSIS_WINDOW_CUTOUT.width * scale;
-    const winL = CHASSIS_WINDOW_CUTOUT.length * scale;
+    // 2. v2 Monocoque Chassis Core & Service Cover ('>>>' chevron louvers)
+    const coreW = CHASSIS_SPECS.coreWidth * scale;
+    const coreL = CHASSIS_SPECS.coreLength * scale;
     ctx.beginPath();
     if ((ctx as any).roundRect) {
-      (ctx as any).roundRect(centerX - winW / 2, centerY - winL / 2, winW, winL, 4 * scale);
+      (ctx as any).roundRect(centerX - coreW / 2, centerY - coreL / 2, coreW, coreL, 8 * scale);
     } else {
-      ctx.rect(centerX - winW / 2, centerY - winL / 2, winW, winL);
+      ctx.rect(centerX - coreW / 2, centerY - coreL / 2, coreW, coreL);
     }
-    ctx.fillStyle = '#161722';
+    ctx.fillStyle = '#262938';
     ctx.fill();
-    ctx.strokeStyle = '#2d3044';
+    ctx.strokeStyle = '#3a3f58';
     ctx.lineWidth = 1.2;
     ctx.stroke();
 
-    // 3. 8x Chassis standoff spacer pillars (Ø 14 mm)
-    ctx.fillStyle = '#8a92a6';
-    ctx.strokeStyle = '#4a5568';
-    ctx.lineWidth = 1.0;
-    const standoffRadiusPx = (CHASSIS_SPECS.standoffDiameter / 2) * scale;
-    for (const sp of CHASSIS_STANDOFF_POSITIONS) {
-      const sx = centerX + sp.x * scale;
-      const sy = centerY + sp.y * scale;
+    const srvW = CHASSIS_SPECS.serviceCoverWidth * scale;
+    const srvL = CHASSIS_SPECS.serviceCoverLength * scale;
+    ctx.beginPath();
+    if ((ctx as any).roundRect) {
+      (ctx as any).roundRect(centerX - srvW / 2, centerY - srvL / 2, srvW, srvL, 5 * scale);
+    } else {
+      ctx.rect(centerX - srvW / 2, centerY - srvL / 2, srvW, srvL);
+    }
+    ctx.fillStyle = '#1b1d2a';
+    ctx.fill();
+    ctx.strokeStyle = '#32364c';
+    ctx.lineWidth = 1.1;
+    ctx.stroke();
+
+    // Service Cover '>>>' Chevron Louvers pointing forward (-Y)
+    ctx.strokeStyle = '#38bdf8';
+    ctx.lineWidth = 1.1;
+    for (const ly of [-16, 0, 16]) {
+      const cy = centerY + ly * scale;
       ctx.beginPath();
-      ctx.arc(sx, sy, Math.max(standoffRadiusPx, 2.5), 0, 2 * Math.PI);
-      ctx.fill();
+      ctx.moveTo(centerX - 11 * scale, cy + 5 * scale);
+      ctx.lineTo(centerX, cy - 4 * scale);
+      ctx.lineTo(centerX + 11 * scale, cy + 5 * scale);
       ctx.stroke();
     }
 
@@ -1773,10 +2061,16 @@ export class LasiusGraphicsEngine {
       }
     }
 
-    // 3. Draw Robot Body Chassis (Dual 2.0 mm plates with 51.3 mm standoff gap, tilted & elevated by world kinematics)
+    // 3. Draw v2 Robot Body Chassis (Belly Pan + Dual 2.0 mm Carbon Plates + Monocoque Core + Draped Canopy)
     const halfWidthPx = 88.4 * scale;
     const plateThickPx = Math.max(CHASSIS_SPECS.plateThickness * scale, 2.0);
-    const gapPx = CHASSIS_SPECS.standoffHeight * scale;
+    const topPlateCanvasY = -CHASSIS_SPECS.topPlateCenterY * scale;
+    const botPlateCanvasY = -CHASSIS_SPECS.bottomPlateCenterY * scale;
+    const coreH = botPlateCanvasY - topPlateCanvasY;
+    const coreHalfW = (CHASSIS_SPECS.coreWidth / 2) * scale;
+    const bellyHalfW = (CHASSIS_SPECS.bellyPanWidth / 2) * scale;
+    const bellyH = CHASSIS_SPECS.bellyPanDepth * scale;
+    const canopyH = CHASSIS_SPECS.canopyHeight * scale;
 
     const rightVec = new THREE.Vector3(1, 0, 0).applyQuaternion(this.chassisWorldQuat);
     const rollAngleCanvas = Math.atan2(-rightVec.y, rightVec.x);
@@ -1785,26 +2079,38 @@ export class LasiusGraphicsEngine {
     ctx.translate(centerX, bodyCanvasY - this.chassisWorldZ * scale);
     ctx.rotate(rollAngleCanvas);
 
-    // Standoff pillars connecting top and bottom plates
-    ctx.fillStyle = '#8a92a6';
-    ctx.strokeStyle = '#4a5568';
-    ctx.lineWidth = 1.0;
-    const standoffWPx = Math.max(CHASSIS_SPECS.standoffDiameter * scale, 3.0);
-    for (const sx of [-30, -12, 12, 30]) {
-      ctx.fillRect(sx * scale - standoffWPx / 2, -gapPx / 2, standoffWPx, gapPx);
-      ctx.strokeRect(sx * scale - standoffWPx / 2, -gapPx / 2, standoffWPx, gapPx);
-    }
-
-    // Top Plate
-    ctx.fillStyle = '#222432';
+    // v2 Monocoque Central Core between carbon plates
+    ctx.fillStyle = '#2a2d3d';
     ctx.strokeStyle = '#3e425a';
-    ctx.lineWidth = 1.8;
-    ctx.fillRect(-halfWidthPx, -gapPx / 2 - plateThickPx, halfWidthPx * 2, plateThickPx);
-    ctx.strokeRect(-halfWidthPx, -gapPx / 2 - plateThickPx, halfWidthPx * 2, plateThickPx);
+    ctx.lineWidth = 1.2;
+    ctx.fillRect(-coreHalfW, topPlateCanvasY, coreHalfW * 2, coreH);
+    ctx.strokeRect(-coreHalfW, topPlateCanvasY, coreHalfW * 2, coreH);
 
-    // Bottom Plate
-    ctx.fillRect(-halfWidthPx, gapPx / 2, halfWidthPx * 2, plateThickPx);
-    ctx.strokeRect(-halfWidthPx, gapPx / 2, halfWidthPx * 2, plateThickPx);
+    // v2 Belly Pan beneath bottom plate
+    ctx.fillStyle = '#1c1e2a';
+    ctx.strokeStyle = '#34384c';
+    ctx.fillRect(-bellyHalfW, botPlateCanvasY + plateThickPx / 2, bellyHalfW * 2, bellyH);
+    ctx.strokeRect(-bellyHalfW, botPlateCanvasY + plateThickPx / 2, bellyHalfW * 2, bellyH);
+
+    // v2 Draped Translucent Canopy dome above top plate
+    ctx.fillStyle = 'rgba(186, 224, 250, 0.22)';
+    ctx.strokeStyle = 'rgba(125, 211, 252, 0.55)';
+    ctx.beginPath();
+    ctx.moveTo(-halfWidthPx * 0.86, topPlateCanvasY - plateThickPx / 2);
+    ctx.quadraticCurveTo(-halfWidthPx * 0.65, topPlateCanvasY - canopyH, 0, topPlateCanvasY - canopyH);
+    ctx.quadraticCurveTo(halfWidthPx * 0.65, topPlateCanvasY - canopyH, halfWidthPx * 0.86, topPlateCanvasY - plateThickPx / 2);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // Top & Bottom Carbon Plates
+    ctx.fillStyle = '#1c1d26';
+    ctx.strokeStyle = '#474c66';
+    ctx.lineWidth = 1.8;
+    ctx.fillRect(-halfWidthPx, topPlateCanvasY - plateThickPx / 2, halfWidthPx * 2, plateThickPx);
+    ctx.strokeRect(-halfWidthPx, topPlateCanvasY - plateThickPx / 2, halfWidthPx * 2, plateThickPx);
+    ctx.fillRect(-halfWidthPx, botPlateCanvasY - plateThickPx / 2, halfWidthPx * 2, plateThickPx);
+    ctx.strokeRect(-halfWidthPx, botPlateCanvasY - plateThickPx / 2, halfWidthPx * 2, plateThickPx);
 
     ctx.restore();
 
@@ -1933,10 +2239,16 @@ export class LasiusGraphicsEngine {
       }
     }
 
-    // 3. Draw Robot Body Chassis (Side Profile, dual 2.0 mm plates with 51.3 mm gap, tilted & elevated by world kinematics)
-    const bodyLengthPx = 267.0 * scale; // -132 mm nose to +135 mm tail
+    // 3. Draw v2 Robot Body Chassis (Side Profile: Belly Pan + Dual 2.0 mm Carbon Plates + Monocoque Core + Draped Canopy)
+    const bodyLengthPx = 267.0 * scale;
     const plateThickPx = Math.max(CHASSIS_SPECS.plateThickness * scale, 2.0);
-    const gapPx = CHASSIS_SPECS.standoffHeight * scale;
+    const topPlateCanvasY = -CHASSIS_SPECS.topPlateCenterY * scale;
+    const botPlateCanvasY = -CHASSIS_SPECS.bottomPlateCenterY * scale;
+    const coreH = botPlateCanvasY - topPlateCanvasY;
+    const coreHalfL = (CHASSIS_SPECS.coreLength / 2) * scale;
+    const bellyHalfL = (CHASSIS_SPECS.bellyPanLength / 2) * scale;
+    const bellyH = CHASSIS_SPECS.bellyPanDepth * scale;
+    const canopyH = CHASSIS_SPECS.canopyHeight * scale;
 
     const rearVec = new THREE.Vector3(0, 0, 1).applyQuaternion(this.chassisWorldQuat);
     const pitchAngleCanvas = Math.atan2(-rearVec.y, rearVec.z);
@@ -1945,33 +2257,45 @@ export class LasiusGraphicsEngine {
     ctx.translate(centerX, bodyCanvasY - this.chassisWorldZ * scale);
     ctx.rotate(pitchAngleCanvas);
 
-    // Standoff pillars along the profile
-    ctx.fillStyle = '#8a92a6';
-    ctx.strokeStyle = '#4a5568';
-    ctx.lineWidth = 1.0;
-    const standoffWPx = Math.max(CHASSIS_SPECS.standoffDiameter * scale, 3.0);
-    for (const sy of [-128, -45, 45, 90, 120]) {
-      ctx.fillRect(sy * scale - standoffWPx / 2, -gapPx / 2, standoffWPx, gapPx);
-      ctx.strokeRect(sy * scale - standoffWPx / 2, -gapPx / 2, standoffWPx, gapPx);
-    }
-
-    // Top Plate
-    ctx.fillStyle = '#222432';
+    // v2 Monocoque Central Core between carbon plates
+    ctx.fillStyle = '#2a2d3d';
     ctx.strokeStyle = '#3e425a';
-    ctx.lineWidth = 1.8;
-    ctx.fillRect(-bodyLengthPx / 2, -gapPx / 2 - plateThickPx, bodyLengthPx, plateThickPx);
-    ctx.strokeRect(-bodyLengthPx / 2, -gapPx / 2 - plateThickPx, bodyLengthPx, plateThickPx);
+    ctx.lineWidth = 1.2;
+    ctx.fillRect(-coreHalfL, topPlateCanvasY, coreHalfL * 2, coreH);
+    ctx.strokeRect(-coreHalfL, topPlateCanvasY, coreHalfL * 2, coreH);
 
-    // Bottom Plate
-    ctx.fillRect(-bodyLengthPx / 2, gapPx / 2, bodyLengthPx, plateThickPx);
-    ctx.strokeRect(-bodyLengthPx / 2, gapPx / 2, bodyLengthPx, plateThickPx);
+    // v2 Belly Pan beneath bottom plate
+    ctx.fillStyle = '#1c1e2a';
+    ctx.strokeStyle = '#34384c';
+    ctx.fillRect(-bellyHalfL, botPlateCanvasY + plateThickPx / 2, bellyHalfL * 2, bellyH);
+    ctx.strokeRect(-bellyHalfL, botPlateCanvasY + plateThickPx / 2, bellyHalfL * 2, bellyH);
+
+    // v2 Draped Translucent Canopy dome above top plate
+    ctx.fillStyle = 'rgba(186, 224, 250, 0.22)';
+    ctx.strokeStyle = 'rgba(125, 211, 252, 0.55)';
+    ctx.beginPath();
+    ctx.moveTo(-bodyLengthPx * 0.48, topPlateCanvasY - plateThickPx / 2);
+    ctx.quadraticCurveTo(-bodyLengthPx * 0.30, topPlateCanvasY - canopyH, 0, topPlateCanvasY - canopyH);
+    ctx.quadraticCurveTo(bodyLengthPx * 0.30, topPlateCanvasY - canopyH, bodyLengthPx * 0.48, topPlateCanvasY - plateThickPx / 2);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // Top & Bottom Carbon Plates
+    ctx.fillStyle = '#1c1d26';
+    ctx.strokeStyle = '#474c66';
+    ctx.lineWidth = 1.8;
+    ctx.fillRect(-bodyLengthPx / 2, topPlateCanvasY - plateThickPx / 2, bodyLengthPx, plateThickPx);
+    ctx.strokeRect(-bodyLengthPx / 2, topPlateCanvasY - plateThickPx / 2, bodyLengthPx, plateThickPx);
+    ctx.fillRect(-bodyLengthPx / 2, botPlateCanvasY - plateThickPx / 2, bodyLengthPx, plateThickPx);
+    ctx.strokeRect(-bodyLengthPx / 2, botPlateCanvasY - plateThickPx / 2, bodyLengthPx, plateThickPx);
 
     // Direction indicator on top plate pointing FRONT (left, towards nose apex)
     ctx.fillStyle = '#38bdf8';
     ctx.beginPath();
-    ctx.moveTo(-bodyLengthPx / 2 + 10, -gapPx / 2 - plateThickPx - 3);
-    ctx.lineTo(-bodyLengthPx / 2 + 24, -gapPx / 2 - plateThickPx - 9);
-    ctx.lineTo(-bodyLengthPx / 2 + 24, -gapPx / 2 - plateThickPx + 3);
+    ctx.moveTo(-bodyLengthPx / 2 + 10, topPlateCanvasY - plateThickPx - 3);
+    ctx.lineTo(-bodyLengthPx / 2 + 24, topPlateCanvasY - plateThickPx - 9);
+    ctx.lineTo(-bodyLengthPx / 2 + 24, topPlateCanvasY - plateThickPx + 3);
     ctx.closePath();
     ctx.fill();
 

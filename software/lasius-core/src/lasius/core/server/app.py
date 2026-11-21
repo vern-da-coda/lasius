@@ -394,22 +394,24 @@ class LasiusServer:
             w_fr = 130.0
             w_m = 150.0
 
+        # Physical coxa bearing holes on the v1/v2 carbon plates are at Y = ±86.0 mm with 45° diagonal radial mounts
+        hole_dy = 86.0
         body_vertices = [
-            {"x": half_w_m, "y": 0.0},     # Index 0: Right Middle
-            {"x": half_w_fr, "y": dy},     # Index 1: Right Rear
-            {"x": -half_w_fr, "y": dy},    # Index 2: Left Rear
-            {"x": -half_w_m, "y": 0.0},    # Index 3: Left Middle
-            {"x": -half_w_fr, "y": -dy},   # Index 4: Left Front
-            {"x": half_w_fr, "y": -dy},    # Index 5: Right Front
+            {"x": half_w_m, "y": 0.0},          # Index 0: Right Middle
+            {"x": half_w_fr, "y": hole_dy},     # Index 1: Right Rear
+            {"x": -half_w_fr, "y": hole_dy},    # Index 2: Left Rear
+            {"x": -half_w_m, "y": 0.0},         # Index 3: Left Middle
+            {"x": -half_w_fr, "y": -hole_dy},   # Index 4: Left Front
+            {"x": half_w_fr, "y": -hole_dy},    # Index 5: Right Front
         ]
 
         leg_geometry = {
             (BodySide.RIGHT, LegRow.MIDDLE): {"vertex_idx": 0, "base_angle": 0.0},
-            (BodySide.RIGHT, LegRow.REAR):   {"vertex_idx": 1, "base_angle": 0.0},
-            (BodySide.LEFT, LegRow.REAR):    {"vertex_idx": 2, "base_angle": math.pi},
+            (BodySide.RIGHT, LegRow.REAR):   {"vertex_idx": 1, "base_angle": math.pi / 4.0},
+            (BodySide.LEFT, LegRow.REAR):    {"vertex_idx": 2, "base_angle": 3.0 * math.pi / 4.0},
             (BodySide.LEFT, LegRow.MIDDLE):  {"vertex_idx": 3, "base_angle": math.pi},
-            (BodySide.LEFT, LegRow.FRONT):   {"vertex_idx": 4, "base_angle": math.pi},
-            (BodySide.RIGHT, LegRow.FRONT):  {"vertex_idx": 5, "base_angle": 0.0},
+            (BodySide.LEFT, LegRow.FRONT):   {"vertex_idx": 4, "base_angle": 5.0 * math.pi / 4.0},
+            (BodySide.RIGHT, LegRow.FRONT):  {"vertex_idx": 5, "base_angle": 7.0 * math.pi / 4.0},
         }
 
         layout = {
