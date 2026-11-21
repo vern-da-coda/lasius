@@ -1,4 +1,4 @@
-# Hexapod:Lasius – Mechanik & Hardware Style-Guide
+# Hexapod:Lasius – Mechanics & Hardware Style Guide
 
 ---
 
@@ -6,133 +6,134 @@
 
 ---
 
-Dieses Dokument definiert die verbindlichen gestalterischen, geometrischen und fertigungstechnischen Richtlinien für alle mechanischen Bauteile des **Hexapod:Lasius** (Generation v2 und Folgegenerationen).
+This document defines the binding aesthetic, geometric, and design-for-manufacturing (DfAM) guidelines for all mechanical components of **Hexapod:Lasius** (Generation v2 and subsequent generations).
 
-Das Ziel ist eine **konsistente bionische Formensprache**, maximale strukturelle Steifigkeit bei minimalem Gewicht sowie reproduzierbare Fertigungsqualität im FDM-3D-Druck (PETG).
-
----
-
-## 1. Bionische Design-DNA (*Form follows Load & Bio-Motion*)
-
-Das visuelle und konstruktive Leitbild von Lasius ist die Waldameise (*Lasius niger*):
-
-* **Keine rein dekorativen Kanten:** Jede Wölbung, Versteifungsrippe oder Aussparung folgt einem realen Kraftfluss oder Funktionsbedarf (Drehmomentabstützung, Freigang, Kabelführung, Kaminbelüftung).
-* **Fließende Übergänge ($G^1$-Stetigkeit):** Bauteile vermeiden abrupte 90°-Sprünge oder scharfkantige Querschnittsänderungen. Übergänge zwischen Funktionsabschnitten erfolgen über stetige Tangentenkurven ($G^1$).
-* **Funktionale Kapselung:** Sensoren (z. B. ADS1115 im Femur, VL53L5CX in der Belly Pan) und Leitungen werden formschlüssig in die Struktur integriert, statt nachträglich außen aufgeschraubt zu werden.
+The goal is a **consistent bionic design language**, maximum structural stiffness at minimal moving mass, and reproducible manufacturing quality in FDM 3D printing (PETG).
 
 ---
 
-## 2. Gliedmaßen- & Wangen-Geometrie (Limb & Joint Morphology)
+## 1. Bionic Design DNA (*Form Follows Load & Bio-Motion*)
+
+The visual and structural archetype of Lasius is the black garden ant (*Lasius niger*):
+
+* **No purely decorative edges:** Every curvature, stiffening rib, or cutout follows an actual load path or functional requirement (torque reaction, kinematic clearance, wire routing, or passive chimney convection).
+* **Flowing transitions ($G^1$ continuity):** Components avoid abrupt 90° steps or sharp cross-sectional jumps. Transitions between functional sections are constructed from tangent-continuous curves ($G^1$).
+* **Functional encapsulation:** Sensors (e.g., ADS1115 in the Femur, VL53L5CX in the Belly Pan) and wiring harnesses are form-fitted directly inside the structural shell rather than bolted onto the exterior afterwards.
+
+---
+
+## 2. Limb & Joint Morphology
 
 ```
-       Gelenkkopf (Apex)
-           (X_axis, Z_max)
-               /-----\
-              /       \  <-- S-Kurve 2
- S-Kurve 1   /         \____        Taille (Waist)
-   /--------/               \______/-----\
-  /                                       \_____  Käfig-Dach (Z_cage_top)
- (                                              |=========================
-  \                                       /-----' Käfig-Boden (Z_cage_bot)
-   \--------\               /------\-----/
-             \         /----'
-              \       /  <-- S-Kurve 4
-               \-----/
-           Gegenlager (Apex)
-           (X_axis, Z_min)
+         Joint Apex (Top)
+            (X_axis, Z_max)
+                /-----\
+               /       \  <-- S-Curve 2
+  S-Curve 1   /         \____         Waist
+    /--------/               \______/-----\
+   /                                       \_____  Cage Roof (Z_cage_top)
+  (                                              |=========================
+   \                                       /-----' Cage Floor (Z_cage_bot)
+    \--------\               /------\-----/
+              \         /----'
+               \       /  <-- S-Curve 4
+                \-----/
+        Counter-Bearing Apex
+            (X_axis, Z_min)
 ```
 
-### 2.1 Gelenkköpfe & Drehachsen
-* **Scheitelpunkte (Apices):** Der höchste Punkt der oberen Wange ($Z_{\text{max}}$) und der tiefste Punkt des Gegenlagers ($Z_{\text{min}}$) liegen immer exakt auf der geometrischen Drehachse des Gelenks ($X_{\text{axis}}$).
-* **Auslaufende Spitzen:** Gabel- und Wangenenden (wie bei $X = 0{,}0\,\text{mm}$ an der Coxa) dürfen nicht als plane 90°-Kappschnitte enden, sondern laufen über definierte Radien ($R \ge 3\text{--}5\,\text{mm}$) oder stetige Halbbögen organisch aus.
+### 2.1 Joint Heads & Pivot Axes
+* **Apices:** The highest point of the upper cheek ($Z_{\text{max}}$) and the lowest point of the counter-bearing boss ($Z_{\text{min}}$) always lie directly on the geometric rotation axis of the joint ($X_{\text{axis}}$).
+* **Tapered tips:** Fork and cheek terminations (such as at $X = 0.0\,\text{mm}$ on the Coxa) must never end as flat 90° chop cuts; instead, they terminate organically via defined radii ($R \ge 3\text{--}5\,\text{mm}$) or tangent semi-circular arcs.
 
-### 2.2 Anatomische Taillierung (Waist Curve)
-Zwischen zwei Gelenken verjüngt sich ein Segment nicht monoton, sondern bildet eine **anatomische Taille** (Sehnenprofil):
-1. **Oberer Kamm:** Fällt hinter dem Scheitelpunkt sanft unter die Dachhöhe des Folgekörpers ab, bildet eine leichte Einschnürung (Waist) und schwingt dann tangential auf die Anschlusshöhe auf.
-2. **Unterer Kamm:** Steigt hinter dem Gegenlager an, bildet eine korrespondierende Taillierung und läuft tangential in den Boden des Folgekörpers ein.
-3. **Mathematische Definition:**
-   * Alle Übergänge werden aus Paaren gegenläufiger Kreisbögen mit stetiger Wendepunkt-Tangente ($G^1$) konstruiert (`make_s_curve_edges`).
+### 2.2 Anatomical Waist Curve
+Between two joints, a limb segment does not taper monotonically, but forms an **anatomical waist** (tendon profile):
+1. **Upper crest:** Drops gently below the roof height of the following segment behind the joint apex, forms a smooth constriction (waist), and sweeps tangentially up to the connecting roof height.
+2. **Lower crest:** Rises behind the counter-bearing apex, forms a corresponding waist constriction, and merges tangentially into the floor of the following segment.
+3. **Mathematical definition:**
+   * All transitions are constructed from pairs of opposing circular arcs with a tangent-continuous inflection point ($G^1$, `make_s_curve_edges`).
 
 ---
 
-## 3. Fachwerk- & Gewichtsreduktions-Standards (Truss Architecture)
+## 3. Truss & Weight-Reduction Standards (Truss Architecture)
 
-Wo geschlossene Vollwände statisch nicht erforderlich sind, werden standardisierte bionische Fachwerkfenster eingesetzt.
+Where solid walls are not structurally required, standardized bionic truss windows are employed.
 
-| Parameter | Standard-Wert | Begründung |
+| Parameter | Standard Value | Engineering Rationale |
 | :--- | :--- | :--- |
-| **Stegbreite ($w_{\text{strut}}$)** | **$2{,}50\,\text{mm}$** | Exakt 6 Perimeter bei $0{,}40\,\text{mm}$ Nozzle / $0{,}42\,\text{mm}$ Linienbreite; 100 % massiv gedruckt ohne Lücken. |
-| **Fachwerk-Winkel ($\alpha$)** | **$45{,}0^\circ$** | Garantiert stützstrukturfreien FDM-Druck; optimale Schub- und Biegesteifigkeit. |
-| **Horizontale Strut-Delta ($\Delta X_{45}$)** | **$3{,}536\,\text{mm}$** | $w \cdot \sqrt{2}$; Versatz für parallele 45°-Flanken. |
-| **Eckenverrundung ($R_{\text{fillet}}$)** | **$1{,}40\text{--}2{,}00\,\text{mm}$** | Beseitigt Kerbspannungen (*Notch-Stress Reduction*) an allen Dreiecks- und Trapezecken. |
-| **Flanken-Topologie** | **Warren-Truss** | Abwechselnde $45^\circ$-Dreiecke für schlanke Biegebalken (Tibia, Coxa-Wangen). |
-| **Zentral-Topologie** | **A-Truss / Chevrons** | Pfeilförmige Chevrons mit zentralem First für Torsionsbrücken und Rumpfelemente. |
+| **Strut Width ($w_{\text{strut}}$)** | **$2.50\,\text{mm}$** | Exactly 6 perimeters at a $0.40\,\text{mm}$ nozzle / $0.42\,\text{mm}$ line width; printed 100% solid without infill gaps. |
+| **Truss Angle ($\alpha$)** | **$45.0^\circ$** | Guarantees support-free FDM printing and optimal shear/bending stiffness. |
+| **Horizontal Strut Delta ($\Delta X_{45}$)** | **$3.536\,\text{mm}$** | $w \cdot \sqrt{2}$; horizontal offset for parallel 45° diagonals. |
+| **Corner Fillet Radius ($R_{\text{fillet}}$)** | **$1.40\text{--}2.00\,\text{mm}$** | Eliminates notch stresses (*Notch-Stress Reduction*) at all triangular and trapezoidal corners. |
+| **Inner Dust-Protection Backing Wall ($t_{\text{seal}}$)** | **$1.60\,\text{mm}$** | Where truss windows border an internal electronics chamber (e.g., Femur ADS1115 bay), windows are executed as blind pockets backed by an unbroken $1.60\,\text{mm}$ (4-perimeter) inner sealing wall to protect PCBs from dust and debris. |
+| **Flank Topology** | **Warren Truss** | Alternating $45^\circ$ triangles for slender bending beams (Tibia, Coxa cheeks). |
+| **Central Topology** | **A-Truss / Chevrons** | Arrow-shaped chevrons with a central apex for torsion bridges and body segments. |
 
 ---
 
-## 4. Kanten-, Fasen- und Belüftungs-Hierarchie
+## 4. Edge, Chamfer & Ventilation Hierarchy
 
-### 4.1 Außenkanten & Lichtkanten (Tactile Fillets)
-* **Standard-Außenradius:** Exponierte Außenkanten entlang von Wangen, Kämmen und Rumpfschalen erhalten ein **$R = 1{,}0\text{--}1{,}5\,\text{mm}$ Fillet**.
-* **Zweck:** Angenehme Griffigkeit ohne scharfe Grate, verbesserte Schichthaftung an Rändern und hochwertige Lichtkanten im Rendering und Realteil.
+### 4.1 Exterior & Highlight Edges (Tactile Fillets)
+* **Standard exterior radius:** Exposed outer edges along cheeks, crests, and body shells receive an **$R = 1.0\text{--}1.5\,\text{mm}$ fillet**.
+* **Purpose:** Comfortable handling without sharp burrs, improved interlayer adhesion along edges, and clean specular highlights in renders and physical hardware.
 
-### 4.2 Funktions- & Schutzfasen (Chamfers)
-* **Kabeldurchführungen:** $45^\circ \times 1{,}0\text{--}1{,}5\,\text{mm}$ Einlauffasen an allen Kabeltunnels und Durchbrüchen (Schutz vor Durchscheuern der Servolitzen im Dauerbetrieb).
-* **Steckermontagen & Fügefalze:** $45^\circ \times 0{,}5\,\text{mm}$ Fügefasen für spielfreies Ineinanderschieben von Kappen und Deckeln.
+### 4.2 Functional & Protective Chamfers / Fillets
+* **Cable pass-throughs:** $R = 1.0\text{--}1.5\,\text{mm}$ lead-in fillets or $45^\circ \times 1.0\text{--}1.5\,\text{mm}$ chamfers at all cable tunnels and apertures to prevent insulation chafing during continuous motion.
+* **Connector & lid rebates:** $45^\circ \times 0.5\,\text{mm}$ assembly chamfers for zero-backlash mating of covers and caps.
 
-### 4.3 Bionische Belüftungs-Louvers (`>>>`)
-Elektronikkammern (BCM2711 SoC, Femur-ADC-Kammer) nutzen einheitliche bionische Kamin-Lamellen:
-* **Form:** $45^\circ$ nach vorn gepfeilte Schlitze mit abgerundeten Kapsel-/Pillenenden.
-* **Geometrie:** Schlitzbreite $2{,}5\text{--}3{,}0\,\text{mm}$, Lamellensteg $3{,}0\text{--}4{,}0\,\text{mm}$, Tiefenwinkel $45^\circ$ für regengeschützte passive Konvektion.
-
----
-
-## 5. Fertigungsgerechte Konstruktion (DfAM für PETG & CFK-Platten)
-
-* **Chassis-Platten (Hardware-Freeze):** Die beiden $2{,}0\,\text{mm}$ Kohlefaser-Platten ([`body_bottom.FCStd`](models/custom/v1/parts/body_bottom.FCStd) und [`body_top.FCStd`](models/custom/v1/parts/body_top.FCStd)) **existieren bereits als physische, fertig gefräste CFK-Hardware** und sind das **einzige Bauteil, das unverändert aus Generation `v1` in `v2` übernommen wird**. Sie definieren die geometrische Referenz (Bohrungsraster, Außenkontur) für alle v2-Rumpfkomponenten.
-* **FDM-3D-Druckteile:** Alle weiteren mechanischen Eigenkonstruktionen (Beine, Monocoque-Zentralkern, Belly Pan, Canopy, Deckel, Montageblöcke) sind primär für den FDM-Druck aus **PETG** (sowie TPU 95A für Kufen-Dämpfungsschuhe) auf Standard-Druckbetten ($256 \times 256\,\text{mm}$) optimiert.
-
-### 5.1 Wandstärken-Klassen
-* **Klasse 1 – Leichte Abdeckungen & Hauben:** $1{,}60\text{--}2{,}00\,\text{mm}$ (4 Perimeter, formsteif durch Doppelkrümmung).
-* **Klasse 2 – Fachwerkstreben & Rippen:** $2{,}50\,\text{mm}$ (massiv aus Perimetern aufgebaut).
-* **Klasse 3 – Gelenkwangen & tragende Hauptträger:** $5{,}00\text{--}6{,}20\,\text{mm}$ (maximale Torsions- und Biegesteifigkeit).
-* **Klasse 4 – Servohorn-Aufnahmen & Drehmomenteinleitung:** $\ge 3{,}50\text{--}4{,}50\,\text{mm}$ massives Material um Schraubenkränze.
-
-### 5.2 Normteil-Sitze & Passungen
-* **Kugellager 684ZZ ($\varnothing 8 \times 3\,\text{mm}$):**
-  * Bohrung: $\varnothing 8{,}05\,\text{mm}$ (leichte Presspassung für FDM).
-  * Bundkragen: $R = 3{,}30\,\text{mm}$ ($0{,}30\,\text{mm}$ Überstand über Lageraußenring), damit nur der Innenring geklemmt wird und das Gelenk leichtgängig dreht.
-* **Flachmutter DIN 439 M4 (Gegenlager-Gewindesitz):**
-  * Sechskanttasche: Schlüsselweite $SW = 7{,}10\,\text{mm}$, Taschentiefe $2{,}40\,\text{mm}$.
-  * Fester Anschlagkragen: $0{,}60\,\text{mm}$ Restwand zur Durchgangsbohrung ($\varnothing 4{,}10\,\text{mm}$).
-* **Gewindeeinsätze (Ruthex M2 / M2.5 / M3):**
-  * Bohrungsdurchmesser exakt nach Hersteller-Datenblatt mit $8^\circ$-Einlaufsenkung für sauberes thermisches Einschmelzen.
+### 4.3 Bionic Ventilation Louvers (`>>>`)
+Electronics enclosures (BCM2711 SoC service cover, Femur ADC cover) use unified bionic chimney louvers:
+* **Shape:** $45^\circ$ forward-swept chevron slots with rounded pill ends.
+* **Geometry:** Slot width $2.5\text{--}3.0\,\text{mm}$, louver web $3.0\text{--}4.0\,\text{mm}$, depth angle $45^\circ$ for drip-protected passive convection.
 
 ---
 
-## 6. Farb- & Materialkodierung (Visual Identity in CAD & Digital Twin)
+## 5. Design for Additive Manufacturing (DfAM for PETG & CFRP Plates)
 
-Zur eindeutigen visuellen Unterscheidbarkeit in FreeCAD und im Three.js Digital Twin gilt folgende Farbpalette:
+* **Chassis Plates (Hardware Freeze):** The two $2.0\,\text{mm}$ carbon-fiber plates ([`body_bottom.FCStd`](models/custom/v1/parts/body_bottom.FCStd) and [`body_top.FCStd`](models/custom/v1/parts/body_top.FCStd)) **already exist as physical, CNC-milled CFRP hardware** and are the **only component inherited unchanged from Generation `v1` into `v2`**. They define the immutable geometric reference (hole pattern, outer contour) for all v2 torso components.
+* **FDM 3D-Printed Parts:** All other custom mechanical components (legs, monocoque central core, belly pan, canopy, covers, mounting blocks) are optimized for FDM printing in **PETG** (and TPU 95A for damping foot shoes) on standard build plates ($256 \times 256\,\text{mm}$).
 
-| Baugruppe / Rolle | Farbe | RGB-Werte | Material / Finish |
+### 5.1 Wall-Thickness Classes
+* **Class 1 – Lightweight Covers, Canopies & Inner Chamber Seals:** $1.60\text{--}2.00\,\text{mm}$ (4 perimeters; dimensionally rigid and dust-tight).
+* **Class 2 – Truss Struts & Ribs:** $2.50\,\text{mm}$ (built solidly from perimeter walls).
+* **Class 3 – Joint Cheeks & Primary Structural Beams:** $5.00\text{--}6.20\,\text{mm}$ (maximum torsional and bending stiffness).
+* **Class 4 – Servo-Horn Bosses & Torque Introduction:** $\ge 3.50\text{--}4.50\,\text{mm}$ solid material around screw bolt circles.
+
+### 5.2 Standard Hardware Seats & Fits
+* **Ball Bearing 684ZZ ($\varnothing 8 \times 3\,\text{mm}$):**
+  * Bore: $\varnothing 8.05\,\text{mm}$ (light interference fit for FDM).
+  * Retention shoulder collar: $R = 3.30\,\text{mm}$ ($0.30\,\text{mm}$ step over bearing outer ring) so only the inner race is clamped and the joint rotates freely.
+* **Thin Hex Nut DIN 439 M4 (Counter-Bearing Thread Seat):**
+  * Hex pocket: width across flats $SW = 7.10\,\text{mm}$, pocket depth $2.40\,\text{mm}$.
+  * Solid stop shoulder: $0.60\,\text{mm}$ residual wall to through-bore ($\varnothing 4.10\,\text{mm}$).
+* **Heat-Set Threaded Inserts (Ruthex M2 / M2.5 / M3):**
+  * Bore diameters strictly per manufacturer datasheet with an $8^\circ$ lead-in countersink for clean thermal installation.
+
+---
+
+## 6. Color & Material Coding (Visual Identity in CAD & Digital Twin)
+
+For clear visual identification in FreeCAD and in the Three.js Digital Twin, the following color palette applies:
+
+| Subsystem / Role | Color | RGB Values | Material / Finish |
 | :--- | :--- | :--- | :--- |
-| **Strukturteile Chassis & Beine** | Anthrazit / Schiefergrau | `(0.20, 0.22, 0.25)` | PETG matt / Carbon |
-| **Gelenkwangen & Halterungen** | Technisches Mittelblau | `(0.12, 0.35, 0.65)` | PETG matt |
-| **Wartungsdeckel & Kappen** | Graphitschwarz | `(0.15, 0.15, 0.18)` | PETG Feinstruktur |
-| **Plexiglas-Canopy** | Eisblau-Transluzent (55 % Alpha) | `(0.85, 0.92, 0.98)` | Acrylglas / Tiefzieh |
-| **LiPo-Akku (COTS)** | Signalgold / Gelb | `(0.95, 0.75, 0.10)` | Schrumpfschlauch |
-| **PWM-Servotreiber PCA9685** | Adafruit-Signalblau | `(0.04, 0.38, 0.88)` | PCB |
-| **I2C-Multiplexer TCA9548A** | Signalviolett | `(0.58, 0.15, 0.75)` | PCB |
-| **Raspberry Pi 4 Model B** | Signalgrün | `(0.10, 0.55, 0.25)` | PCB |
+| **Structural Chassis & Limb Parts** | Anthracite / Slate Grey | `(0.20, 0.22, 0.25)` | Matte PETG / Carbon |
+| **Joint Cheeks & Brackets** | Technical Medium Blue | `(0.12, 0.35, 0.65)` | Matte PETG |
+| **Service Covers & Caps** | Graphite Black | `(0.15, 0.15, 0.18)` | Fine-texture PETG |
+| **Plexiglas Canopy** | Ice-Blue Translucent (55% Alpha) | `(0.85, 0.92, 0.98)` | PMMA Acrylic / Thermoformed |
+| **LiPo Battery Pack (COTS)** | Signal Gold / Yellow | `(0.95, 0.75, 0.10)` | Heat-shrink wrap |
+| **PWM Servo Driver PCA9685** | Adafruit Signal Blue | `(0.04, 0.38, 0.88)` | PCB |
+| **I2C Multiplexer TCA9548A** | Signal Purple | `(0.58, 0.15, 0.75)` | PCB |
+| **Raspberry Pi 4 Model B** | Signal Green | `(0.10, 0.55, 0.25)` | PCB |
 
 ---
 
-## 7. Parametrischer Code-Standard (Hardware-as-Code)
+## 7. Parametric Code Standard (Hardware-as-Code)
 
-Jedes CAD-Generatorskript in `hardware/mechanics/scripts/v2/` folgt dieser Struktur:
-1. **Konstanten-Block am Dateianfang:** Keine hartcodierten magischen Zahlen im Modellierungscode; alle Abmessungen ($W_{\text{STRUT}}$, $R_{\text{FILLET}}$, Achsabstände) werden oben zentral deklariert.
-2. **Modulare Geometrie-Helfer:**
-   * `make_s_curve_edges(p1, p2)` für $G^1$-stetige S-Kurven.
-   * `make_filleted_polygon_2d(pts, r_list)` für verrundete Fachwerkfenster.
-   * `make_hex_nut_pocket_z(cx, cy, z1, z2, sw)` für Mutternsitze.
-3. **Fertigungsexporte ausschließlich auf explizite Benutzeranforderung:** Skripte erzeugen im Standarddurchlauf rein die parametrischen `.FCStd`-Modelle. STEP-, STL- oder DXF-Dateien werden **niemals eigenmächtig oder während iterativer Entwicklungsphasen exportiert**, und es wird **nicht danach gefragt**. Fertigungsexporte werden erst und ausschließlich dann erzeugt, wenn der Benutzer sie explizit anfordert (*„ich fordere die exporte an wenn es soweit ist“*). Assemblies (`*_assembly`) erhalten grundsätzlich **keine** Exporte.
+Every CAD generator script in `hardware/mechanics/scripts/v2/` follows this structure:
+1. **Constants block at top of file:** No hardcoded magic numbers inside modeling routines; all dimensions ($W_{\text{STRUT}}$, $R_{\text{FILLET}}$, inter-axis distances) are declared centrally at the top.
+2. **Modular geometry helpers:**
+   * `make_s_curve_edges(p1, p2)` for $G^1$-continuous S-curves.
+   * `make_filleted_polygon_2d(pts, r_list)` for corner-filleted truss windows.
+   * `make_hex_nut_pocket_z(cx, cy, z1, z2, sw)` for hex nut seats.
+3. **Manufacturing exports exclusively upon explicit user request:** By default, generator scripts output only the parametric `.FCStd` models. STEP, STL, or DXF manufacturing files are **never exported proactively or during iterative development phases**, and the user is **never asked** whether exports should be generated. Manufacturing exports are generated only when explicitly requested by the user. Assemblies (`*_assembly`) never receive manufacturing exports.

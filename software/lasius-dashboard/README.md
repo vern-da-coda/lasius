@@ -29,7 +29,7 @@ The dashboard is accessible online at [**https://dashboard.lasius.kaemmereit.de/
 ### Additive Simulation Mode (`src/demo/`)
 When the dashboard is accessed without an active Raspberry Pi robot connection (e.g. public hosting), it automatically activates a self-contained, client-side kinematics simulation:
 - **In-Browser Gait Engine (`demoGaitEngine.ts`):** Complete TypeScript port of the 50 Hz harmonic cosine tripod, ripple, and wave gait generator with $C^1$-continuous foot trajectories.
-- **Closed-Form 3-DOF Inverse Kinematics:** Computes exact Coxa, Femur, and Tibia angles using the Law of Cosines for the 60 mm / 100 mm / 130 mm limb geometry.
+- **Closed-Form 3-DOF Inverse Kinematics:** Computes exact Coxa, Femur, and Tibia angles using the Law of Cosines for the 60 mm / 100 mm / 152.6 mm v2 limb geometry.
 - **Full Teleoperation Interactivity:** Supports omnidirectional translation, rotation, and 6-DOF body posing (height $-120 \dots -40\,\text{mm}$, roll $\pm 25^\circ$, pitch $\pm 25^\circ$) via:
   - On-screen Direction Pad and slider controls
   - Keyboard hotkeys (`W`/`A`/`S`/`D`, `Q`/`E`, `Space`)
@@ -51,8 +51,8 @@ When the dashboard is accessed without an active Raspberry Pi robot connection (
 ## Views & Viewport System
 
 - **Interactive 3D WebGL Digital Twin:**
-  - Full-mesh 3D representation based on physical CAD geometry: dual carbon-fiber sandwich plates, 8 standoff pillars, Coxa brackets, Femur beam cages, and curved Tibia sickles.
-  - Consistent PBR metal-roughness materials (`#343746`) with forward-facing orientation chevron (`#3498db`).
+  - Full-mesh 3D representation synchronized 1:1 with the 29 canonical FreeCAD v2 Binary STL meshes: dual carbon-fiber sandwich plates, monocoque central core, belly pan, translucent Plexiglas canopy & service cover, 45° A-truss Coxa & Femur cages, and Krallen-Sichel Tibia blades with unified-color 3D-Exoskeleton Tarsus and compact Kufe shoes.
+  - Consistent PBR metal-roughness materials (`#343848`) with forward-facing orientation chevron (`#38bdf8`).
   - Full OrbitControls navigation (Left-drag rotate, Right-drag pan, Wheel zoom).
 - **Multi-View 2D Orthographic Projections:**
   - Clean CAD orthographic projections using straight kinematic vectors:

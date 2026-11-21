@@ -16,7 +16,7 @@
   <a href="software/lasius-core/README.md"><img src="https://img.shields.io/badge/Locomotion-50Hz%20Harmonic%20Cosine-0284c7.svg" alt="50 Hz Harmonic Gait"></a>
   <a href="hardware/README.md"><img src="https://img.shields.io/badge/Hardware-18%20DOF%20%7C%20CFRP%20Sandwich-orange.svg" alt="18 DOF Robot Hardware"></a>
   <a href="software/lasius-core/README.md"><img src="https://img.shields.io/badge/API-OpenAPI%203.1-6BA539.svg?logo=openapiinitiative&logoColor=white" alt="OpenAPI 3.1"></a>
-  <a href="scripts/dev/run_tests.sh"><img src="https://img.shields.io/badge/Tests-66%20Passing%20(100%25)-success.svg" alt="66 Passing Tests"></a>
+  <a href="scripts/dev/run_tests.sh"><img src="https://img.shields.io/badge/Tests-71%20Passing%20(100%25)-success.svg" alt="71 Passing Tests"></a>
 </p>
 <p align="left">
   <a href="https://github.com/vern-da-coda/lasius/actions/workflows/ci.yml"><img src="https://github.com/vern-da-coda/lasius/actions/workflows/ci.yml/badge.svg" alt="Continuous Integration"></a>

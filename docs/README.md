@@ -20,8 +20,8 @@ Specifications, architectural decisions, wiring schematics, and development road
   Audio learning script covering physical CAD modeling, PyBullet simulation, kinematics, and software architecture.
 
 ### Hardware & Electronics
-- [**Femur FEA-Strukturanalyse & Bionische Topologieoptimierung**](hardware/femur_topology_optimization_report.md):
-  Vollständiger FEM-Prüfbericht zur Leichtbau-Topologieoptimierung des Lasius Femurs v2 mit CalculiX & Gmsh über 3 Betriebs-Lastfälle ($-21{,}9\,\%$ Bauteilmasse, $S = 2{,}72$ unter Servo-Blockiermoment).
+- [**Femur FEA Structural Analysis & Bionic Topology Optimization**](hardware/femur_topology_optimization_report.md):
+  Complete FEM verification report covering the lightweight topology optimization of the Lasius Femur v2 using CalculiX & Gmsh across 3 operating load cases ($-21.9\,\%$ component mass reduction, safety factor $S = 2.72$ under knee-servo stall torque).
 - [**Electronics Testbench Bring-Up Status & Handover**](hardware/testbench_bringup_status.md):
   **Active Focus:** Status of the 6-step bench Bring-Up for the TCA9548A I2C multiplexer and ADS1115 16-bit ADCs.
 - [**Electronics Testbench Reference Guide**](hardware/electronics_testbench_guide.md):
