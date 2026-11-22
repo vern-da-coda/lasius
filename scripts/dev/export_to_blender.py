@@ -93,9 +93,14 @@ def run_freecad_export():
 
     print("Traversing assembly tree...")
     leaves = []
-    for o in doc.Objects:
-        if any(o.Name.startswith(p) for p in ["Body_", "Chassis_", "Leg_", "Sensor_", "Board_"]):
+    root_part = doc.getObject("Body_Assembly_v2")
+    if root_part and hasattr(root_part, "Group"):
+        for o in root_part.Group:
             leaves.extend(get_leaves(o))
+    else:
+        for o in doc.Objects:
+            if any(o.Name.startswith(p) for p in ["Body_", "Chassis_", "Leg_", "Sensor_", "Board_"]):
+                leaves.extend(get_leaves(o))
 
     print(f"Total leaf parts to tessellate: {len(leaves)}")
     os.makedirs(EXPORT_DIR, exist_ok=True)

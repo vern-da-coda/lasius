@@ -13,12 +13,12 @@ assembly_files = [
     os.path.join(models_dir, "custom/v1/leg_assembly.FCStd"),
     os.path.join(models_dir, "custom/v1/body_assembly.FCStd"),
     os.path.join(models_dir, "custom/v2/chassis_core_assembly.FCStd"),
+    os.path.join(models_dir, "custom/v2/chassis_assembly.FCStd"),
     os.path.join(models_dir, "custom/v2/electronics_tray_assembly.FCStd"),
-    os.path.join(models_dir, "custom/v2/electronics_tray_assembly_opt_a.FCStd"),
-    os.path.join(models_dir, "custom/v2/electronics_tray_assembly_opt_b.FCStd"),
     os.path.join(models_dir, "custom/v2/head_assembly.FCStd"),
     os.path.join(models_dir, "custom/v2/gaster_assembly.FCStd"),
     os.path.join(models_dir, "custom/v2/femur_assembly.FCStd"),
+    os.path.join(models_dir, "custom/v2/tarsus_assembly.FCStd"),
     os.path.join(models_dir, "custom/v2/tibia_assembly.FCStd"),
     os.path.join(models_dir, "custom/v2/leg_assembly.FCStd"),
     os.path.join(models_dir, "custom/v2/leg_right_assembly.FCStd"),
@@ -62,10 +62,10 @@ print(f"Total Links Checked:      {total_links}")
 print(f"Broken Links:             {broken_links}")
 print(f"============================================================")
 
-import sys
+import sys, os
 if broken_links > 0:
     print("❌ Broken CAD links detected!")
-    sys.exit(1)
+    os._exit(1)
 else:
     print("✅ All CAD links verified successfully!")
-    sys.exit(0)
+    os._exit(0)
