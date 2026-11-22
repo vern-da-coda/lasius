@@ -81,6 +81,8 @@ flowchart TD
   * **Print Orientation:** Print parts flat on bed so tensile/bending stresses align with continuous extrusion paths.
   * **Perimeters & Infill:** **4 perimeters (1.6 mm wall thickness)**, **40% gyroid infill**, **5 top/bottom layers (1.0 mm)**, 0.20 mm layer height at 240–245 °C with minimal part cooling (max. 20–30%) for maximum interlayer adhesion.
   * **Structural Reinforcement:** Fillet sharp 90° interior corners ($R \ge 2\text{--}3\,\text{mm}$), increase wall thickness around 25T servo horns to $\ge 3.5\text{--}4.0\,\text{mm}$, and incorporate M3 heat-set brass threaded inserts.
+* **Bionic Limb Morphology & Design Consistency (Generation v2):**
+  * Continuation of the bionic claw/sickle geometry from the Tibia onto the Coxa bracket for full design coherence and structural stiffening of the hip yaw and femur counter-bearing interfaces (tracked in [`models/custom/v2/TODO.md`](../hardware/mechanics/models/custom/v2/TODO.md)).
 
 ### Milestone 3: Dashboard, Simulation, Teleoperation & Reinforcement Learning [COMPLETED]
 * **Google Stadia, PS5 DualSense & Xbox Profiles (`lasius-pilot` & `lasius-dashboard`) [COMPLETED]:**

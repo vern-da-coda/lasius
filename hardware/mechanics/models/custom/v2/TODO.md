@@ -49,6 +49,15 @@ Dieser Backlog führt alle offenen Aufgaben, konstruktiven Erweiterungen und Ver
   * Maßhaltigkeit der verpressten M4-Sechskanttasche für die flache DIN 439 Mutter nach Testdruck prüfen (Sitz $SW = 7.10\,\text{mm}$, Tiefe $2.40\,\text{mm}$).
 - [ ] **Kabelauslass-Führung:**  
   * Freigang für die 4-adrige Servozuleitung des Coxa-Servos entlang des Versteifungs-Gussets prüfen.
+- [ ] **Fortführung der bionischen Krallen-/Sichel-Geometrie der Tibia auf der Coxa (Design-Konsistenz & Versteifung):**  
+  * **Motivation & Gestaltungsabsicht:**
+    * *Konsequente Designentscheidung:* Übertragung der organischen Krallen- und Sichel-Morphologie der Tibia (Dorsal-Sichelbogen, geschwungene Leitkontur) auf das Coxa-Segment, um eine durchgehende, unverwechselbare bionische Formensprache (*Form Follows Bio-Motion*) vom Chassis-Gelenk über den Femur bis zur Tibia-Kralle zu etablieren.
+    * *Strukturelle Versteifung:* Die Fortführung des Krallenkamms bzw. eines sichelartigen Versteifungsstegs entlang der Coxa-Außenwange und des Gegenlager-Gussets verstärkt die Torsions- und Biegesteifigkeit unter dynamischen Lastwechseln (insbesondere bei Coxa-Yaw- und Femur-Gegenlagerbelastung).
+  * **Konstruktive Randbedingungen & Prüfpunkte:**
+    * Fortführung der $G^1$-/$G^2$-stetigen Außenkontur am Coxa-Kamm bzw. Wangenbogen analog zum Sichelbogen der Tibia (`e_dorsal`).
+    * Kollisionsraum-Invariante: Strikte Einhaltung des Freigangs gegenüber den $R = 43{,}2\dots 45{,}0\,\text{mm}$ Schwenkausschnitten des Chassis-Monocoques sowie gegenüber dem Femur über den vollen Nickwinkel (`[-95°, +95°]`).
+    * DfAM-Konformität: Beibehaltung der stützfreien 3D-Druckbarkeit in FDM (PETG).
+  * **Betroffener Code:** [`generate_coxa.py`](../../../scripts/v2/generate_coxa.py).
 
 ---
 
