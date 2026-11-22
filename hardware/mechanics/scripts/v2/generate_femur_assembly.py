@@ -98,7 +98,7 @@ make_link("Femur_Body", "1. Femur Monolithic Housing (PETG)", doc_femur.Femur_Bo
 # 2. Encapsulated COTS ADC board clamped in internal chamber
 # Sits at X=50.00, Y=2.50 (Y_mid), Z=-4.80 mm
 p_ads = App.Placement(App.Vector(50.00, 2.50, -4.80), App.Rotation())
-make_link("ADS1115_Board", "2. Encapsulated Leg ADC (ADS1115 0x48)", doc_ads.ADS1115_Board, placement=p_ads, color=COLOR_ADC_BLUE)
+make_link("ADS1115_Board", "2. Encapsulated Leg ADC (ADS1115 0x48)", doc_ads.ADS1115_Board, placement=p_ads, color=None)
 
 # 3. Monolithic Service Cover & Canopy (Draped Convex Eisblau 55%)
 make_link("Femur_Cover", "3. Femur Service Cover & Canopy (Monolithic Eisblau 55%)", doc_cover.Femur_Cover, color=COLOR_CANOPY, transparency=55)
@@ -157,3 +157,5 @@ if gui_xml:
     os.replace(tmp_fcstd, fcstd_path)
 
 print(f"✔ Saved Femur Assembly -> {fcstd_path}")
+import sys
+sys.exit(0)

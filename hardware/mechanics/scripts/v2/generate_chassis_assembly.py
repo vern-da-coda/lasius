@@ -143,7 +143,7 @@ def build_chassis_assembly():
         "5. VL53L5CX 9-Zone ToF Distance Sensor (Fixed Front, COTS)",
         doc_tof.VL53L5CX_Board,
         App.Placement(App.Vector(58.00, 0.0, -2.75), App.Rotation(App.Vector(0, 1, 0), 180.0)),
-        COLOR_PCB_RED,
+        None,
     )
 
     # 6. Raspberry Pi 4 Mounting Plate on Body_Top
@@ -161,7 +161,7 @@ def build_chassis_assembly():
         "7. Raspberry Pi 4 Model B (Elevated Deck, COTS)",
         doc_rpi.Raspberry_Pi_4,
         App.Placement(App.Vector(0.0, 0.0, 59.80), App.Rotation()),
-        COLOR_RPI_GREEN,
+        None,
     )
 
     # 8. Draped Canopy

@@ -9,18 +9,12 @@ Architecture:
     bosses at (0.0, 0.0, 28.00 mm).
   - Integrates the 8-channel TCA9548A I2C Multiplexer (seated in central dual 12-pin sockets)
     with a continuous 3.3V logic rail and common logic Star-GND rail.
-  - Exposes 6x dedicated 4-pin polarized leg connectors (2.54 mm pitch):
-      Pin 1: 3.3V (Red)
-      Pin 2: GND (Black)
-      Pin 3: SCx I2C Clock (Yellow)
-      Pin 4: SDx I2C Data (Channel color)
-    * Left Bank (+Y): LR (CH2 Violet), LM (CH1 Green), LF (CH0 Blue) facing left cable ports.
-    * Right Bank (-Y): RR (CH5 Grey), RM (CH4 White), FR (CH3 Orange) facing right cable ports.
-  - Dedicated connectors:
-    * 1x 4-Pin Main Bus Input from Raspberry Pi (3.3V, GND, SDA, SCL).
-    * 1x 4-Pin Auxiliary / Sensor Expansion Port (CH6 INA228 / CH7 ToF).
-    * 2x 2-Pin Logic Power Feeds for PCA9685 Left and Right controllers (3.3V, GND).
-    * Filter caps: 10 µF electrolytic + 100 nF MLCC ceramic capacitor.
+  - Sockets & Headers referenced via App::Link to standard COTS models:
+    * Dual 12-Pin female sockets: `cots/socket_header_1x12.FCStd` (Black body, solder pins)
+    * 6x Leg headers (4-pin): `cots/header_pin_1x4.FCStd` (Black collar, gold pins)
+    * 1x Pi Main Bus header (4-pin): `cots/header_pin_1x4.FCStd`
+    * 1x AUX / Sensor Expansion (4-pin): `cots/header_pin_1x4.FCStd`
+    * 2x PCA9685 Logic Power Feeds (2-pin): `cots/header_pin_1x2.FCStd`
   - Dimensions: 54.0 mm along Y x 22.0 mm along X x 1.60 mm PCB thickness.
     2x M2.5 mounting holes at (0.0, ±13.0 mm) matching monocoque screw bosses.
 """
@@ -31,10 +25,11 @@ import sys
 import FreeCAD as App
 import Part
 
-print("--- Generating Lasius Sensor Hub & Distribution Board v2 ---")
+print("--- Generating Lasius Sensor Hub & Distribution Board v2 with COTS References ---")
 
 repo_root = "/home/bjoern/Workspace/Hexapods/lasius"
 models_dir = f"{repo_root}/hardware/mechanics/models/custom/v2/parts/chassis"
+cots_dir = f"{repo_root}/hardware/mechanics/models/cots"
 os.makedirs(models_dir, exist_ok=True)
 fcstd_path = f"{models_dir}/sensor_hub_board.FCStd"
 
@@ -44,6 +39,7 @@ try:
 except Exception:
     pass
 doc = App.newDocument(doc_name)
+doc.saveAs(fcstd_path)
 
 # 1. Carrier PCB Substrate (54.0 mm along Y, 22.0 mm along X, 1.60 mm thick)
 w_x = 22.0
@@ -79,73 +75,100 @@ pcb_solid = pcb_face.extrude(App.Vector(0.0, 0.0, t_pcb))
 hole_r = 1.30  # Ø2.6 mm for M2.5 screw pass-through
 hole1 = Part.makeCylinder(hole_r, 5.0, App.Vector(0.0, 13.0, -1.0), App.Vector(0, 0, 1))
 hole2 = Part.makeCylinder(hole_r, 5.0, App.Vector(0.0, -13.0, -1.0), App.Vector(0, 0, 1))
-pcb_solid = pcb_solid.cut(hole1).cut(hole2)
+pcb_solid = pcb_solid.cut(hole1).cut(hole2).removeSplitter()
 
-
-def make_pin_header(x_c, y_c, z_base, pins, orient_x=False):
-    """Creates a black thermoplastic header body with gold pins."""
-    pitch = 2.54
-    if orient_x:
-        len_x = pins * pitch
-        len_y = pitch
-    else:
-        len_x = pitch
-        len_y = pins * pitch
-    h_box = 2.50
-    h_pin = 8.50
-    box = Part.makeBox(len_x, len_y, h_box, App.Vector(x_c - len_x / 2.0, y_c - len_y / 2.0, z_base))
-    pins_compound = box
-    for i in range(pins):
-        if orient_x:
-            px = x_c - len_x / 2.0 + (i + 0.5) * pitch
-            py = y_c
-        else:
-            px = x_c
-            py = y_c - len_y / 2.0 + (i + 0.5) * pitch
-        pin = Part.makeBox(0.64, 0.64, h_pin, App.Vector(px - 0.32, py - 0.32, z_base - 1.0))
-        pins_compound = pins_compound.fuse(pin)
-    return pins_compound
-
-
-# 3. Dual 12-Pin Female Socket Headers for TCA9548A Multiplexer (Height 4.00 mm)
-h_sock = 4.00
-sock1 = Part.makeBox(2.54, 30.48, h_sock, App.Vector(8.77 - 1.27, -15.24, t_pcb))
-sock2 = Part.makeBox(2.54, 30.48, h_sock, App.Vector(-8.77 - 1.27, -15.24, t_pcb))
-
-# 4. Left Bank (+Y): LR, LM, LF (4-pin), Pi Main Bus (4-pin), PCA9685 Left Logic (2-pin)
-y_bank_l = 21.28
-h_lr = make_pin_header(-5.715, y_bank_l, t_pcb, 4, orient_x=False)    # Left Rear (CH2)
-h_lm = make_pin_header(-1.905, y_bank_l, t_pcb, 4, orient_x=False)    # Left Middle (CH1)
-h_lf = make_pin_header(1.905, y_bank_l, t_pcb, 4, orient_x=False)     # Left Front (CH0)
-h_pi = make_pin_header(5.715, y_bank_l, t_pcb, 4, orient_x=False)     # Pi Main Bus Input
-h_pca_l = make_pin_header(8.80, 22.0, t_pcb, 2, orient_x=False)      # PCA9685 Left Logic Power
-
-# 5. Right Bank (-Y): RR, RM, FR (4-pin), AUX Expansion (4-pin), PCA9685 Right Logic (2-pin)
-y_bank_r = -21.28
-h_rr = make_pin_header(-5.715, y_bank_r, t_pcb, 4, orient_x=False)    # Right Rear (CH5)
-h_mr = make_pin_header(-1.905, y_bank_r, t_pcb, 4, orient_x=False)    # Right Middle (CH4)
-h_fr = make_pin_header(1.905, y_bank_r, t_pcb, 4, orient_x=False)     # Right Front (CH3)
-h_aux = make_pin_header(5.715, y_bank_r, t_pcb, 4, orient_x=False)    # AUX / Sensor Expansion (CH6/7)
-h_pca_r = make_pin_header(-8.80, -22.0, t_pcb, 2, orient_x=False)    # PCA9685 Right Logic Power
-
-# 6. Decoupling Capacitors (10 µF electrolytic + 100 nF ceramic)
+# 3. Decoupling Capacitors (10 µF electrolytic + 100 nF ceramic)
 cap_elec = Part.makeCylinder(2.0, 5.0, App.Vector(-8.80, 18.0, t_pcb), App.Vector(0, 0, 1))
 cap_mlcc = Part.makeBox(1.6, 0.8, 1.2, App.Vector(8.00, -18.4, t_pcb))
+caps_solid = cap_elec.fuse(cap_mlcc).removeSplitter()
 
-# Assemble complete composite solid
-hub_solid = pcb_solid.fuse(sock1).fuse(sock2)
-hub_solid = hub_solid.fuse(h_lr).fuse(h_lm).fuse(h_lf).fuse(h_pi).fuse(h_pca_l)
-hub_solid = hub_solid.fuse(h_rr).fuse(h_mr).fuse(h_fr).fuse(h_aux).fuse(h_pca_r)
-hub_solid = hub_solid.fuse(cap_elec).fuse(cap_mlcc)
-hub_solid = hub_solid.removeSplitter()
+# Create Root App::Part Container
+part = doc.addObject("App::Part", "Sensor_Hub_Board")
+part.Label = "Sensor Hub & 3.3V/GND Distribution Carrier Board (v2)"
 
-part_obj = doc.addObject("Part::Feature", "Sensor_Hub_Board")
-part_obj.Label = "Sensor Hub & 3.3V/GND Distribution Carrier Board (v2)"
-part_obj.Shape = hub_solid
-if hasattr(part_obj, "ViewObject") and part_obj.ViewObject is not None:
-    part_obj.ViewObject.Visibility = True
-    part_obj.ViewObject.ShapeColor = (0.12, 0.38, 0.22)  # Dark Forest Green FR4
+obj_pcb = doc.addObject("Part::Feature", "Carrier_PCB")
+obj_pcb.Label = "Carrier FR4 PCB (Green)"
+obj_pcb.Shape = pcb_solid
+if hasattr(obj_pcb, "ViewObject") and obj_pcb.ViewObject:
+    obj_pcb.ViewObject.ShapeColor = (0.12, 0.38, 0.22)  # Dark Forest Green FR4
+part.addObject(obj_pcb)
+
+obj_caps = doc.addObject("Part::Feature", "Filter_Capacitors")
+obj_caps.Label = "Decoupling Capacitors (10uF + 100nF)"
+obj_caps.Shape = caps_solid
+if hasattr(obj_caps, "ViewObject") and obj_caps.ViewObject:
+    obj_caps.ViewObject.ShapeColor = (0.35, 0.35, 0.38)
+part.addObject(obj_caps)
+
+# Open COTS Header documents for linking
+doc_sock12 = App.openDocument(f"{cots_dir}/socket_header_1x12.FCStd")
+doc_hdr4 = App.openDocument(f"{cots_dir}/header_pin_1x4.FCStd")
+doc_hdr2 = App.openDocument(f"{cots_dir}/header_pin_1x2.FCStd")
+
+rot_90 = App.Rotation(App.Vector(0, 0, 1), 90.0)
+
+# 4. Dual 12-Pin Female Sockets for TCA9548A Multiplexer at X = ±8.77 mm (along Y)
+lnk_sock1 = doc.addObject("App::Link", "Socket_TCA_Right")
+lnk_sock1.Label = "TCA9548A Right Socket (1x12, Female, COTS)"
+lnk_sock1.setLink(doc_sock12.Socket)
+lnk_sock1.Placement = App.Placement(App.Vector(8.77, 0.00, t_pcb), rot_90)
+part.addObject(lnk_sock1)
+
+lnk_sock2 = doc.addObject("App::Link", "Socket_TCA_Left")
+lnk_sock2.Label = "TCA9548A Left Socket (1x12, Female, COTS)"
+lnk_sock2.setLink(doc_sock12.Socket)
+lnk_sock2.Placement = App.Placement(App.Vector(-8.77, 0.00, t_pcb), rot_90)
+part.addObject(lnk_sock2)
+
+# 5. Left Bank (+Y): LR, LM, LF (4-pin), Pi Main Bus (4-pin), PCA9685 Left Logic (2-pin)
+y_bank_l = 21.28
+leg_connectors_l = [
+    ("Header_Leg_LR", "Leg LR Connector (CH2, 1x4, COTS)", -5.715),
+    ("Header_Leg_LM", "Leg LM Connector (CH1, 1x4, COTS)", -1.905),
+    ("Header_Leg_LF", "Leg LF Connector (CH0, 1x4, COTS)", 1.905),
+    ("Header_Pi_Bus", "RPi Main I2C Bus Input (1x4, COTS)", 5.715),
+]
+for name, lbl, px in leg_connectors_l:
+    lnk = doc.addObject("App::Link", name)
+    lnk.Label = lbl
+    lnk.setLink(doc_hdr4.Header)
+    lnk.Placement = App.Placement(App.Vector(px, y_bank_l, t_pcb), rot_90)
+    part.addObject(lnk)
+
+lnk_pca_l = doc.addObject("App::Link", "Header_PCA_Logic_Left")
+lnk_pca_l.Label = "PCA9685 Left Logic Power (1x2, COTS)"
+lnk_pca_l.setLink(doc_hdr2.Header)
+lnk_pca_l.Placement = App.Placement(App.Vector(8.80, 22.00, t_pcb), rot_90)
+part.addObject(lnk_pca_l)
+
+# 6. Right Bank (-Y): RR, RM, FR (4-pin), AUX Expansion (4-pin), PCA9685 Right Logic (2-pin)
+y_bank_r = -21.28
+leg_connectors_r = [
+    ("Header_Leg_RR", "Leg RR Connector (CH5, 1x4, COTS)", -5.715),
+    ("Header_Leg_RM", "Leg RM Connector (CH4, 1x4, COTS)", -1.905),
+    ("Header_Leg_FR", "Leg FR Connector (CH3, 1x4, COTS)", 1.905),
+    ("Header_AUX_Port", "AUX / Sensor Expansion Port (CH6/7, 1x4, COTS)", 5.715),
+]
+for name, lbl, px in leg_connectors_r:
+    lnk = doc.addObject("App::Link", name)
+    lnk.Label = lbl
+    lnk.setLink(doc_hdr4.Header)
+    lnk.Placement = App.Placement(App.Vector(px, y_bank_r, t_pcb), rot_90)
+    part.addObject(lnk)
+
+lnk_pca_r = doc.addObject("App::Link", "Header_PCA_Logic_Right")
+lnk_pca_r.Label = "PCA9685 Right Logic Power (1x2, COTS)"
+lnk_pca_r.setLink(doc_hdr2.Header)
+lnk_pca_r.Placement = App.Placement(App.Vector(-8.80, -22.00, t_pcb), rot_90)
+part.addObject(lnk_pca_r)
 
 doc.recompute()
-doc.saveAs(fcstd_path)
-print(f"✔ Generated Sensor Hub Board -> {fcstd_path} (Valid={hub_solid.isValid()}, Volume={hub_solid.Volume:.1f} mm^3)")
+doc.save()
+
+App.closeDocument(doc_sock12.Name)
+App.closeDocument(doc_hdr4.Name)
+App.closeDocument(doc_hdr2.Name)
+App.closeDocument(doc_name)
+
+print(f"✔ Generated Sensor Hub Board with COTS References -> {fcstd_path}")
+sys.exit(0)

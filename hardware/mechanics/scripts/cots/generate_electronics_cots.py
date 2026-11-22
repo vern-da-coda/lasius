@@ -2,28 +2,37 @@
 """
 Generate Lasius Hexapod COTS Electronics CAD Models
 ===================================================
-Generates high-fidelity commercial off-the-shelf (COTS) solid CAD models in `models/cots/`:
+Generates high-fidelity commercial off-the-shelf (COTS) CAD models in `models/cots/`:
   1. Raspberry Pi 4 Model B (`rpi4_model_b.FCStd`):
      - 85.0 x 56.0 x 1.4 mm green PCB with R = 3.0 mm filleted corners.
      - 4x M2.5 mounting holes (58.0 x 49.0 mm pattern, centered at origin).
      - BCM2711 SoC metal heatspreader, USB 3.0/2.0 dual blocks, RJ45 Ethernet,
-       40-pin GPIO header, USB-C, dual Micro-HDMI, and MicroSD slot.
+       USB-C, dual Micro-HDMI, MicroSD slot.
+     - 40-Pin GPIO Header referenced via App::Link to `header_pin_2x20.FCStd`.
   2. PCA9685 16-Channel 12-Bit PWM Servo Driver Board (`pca9685_board.FCStd`):
      - 62.5 x 25.4 x 1.6 mm blue PCB with 4x M2.5 mounting holes (56.0 x 19.0 mm pattern).
-     - PCA9685 TSSOP chip, power capacitor, 2-pin screw terminal block,
-       16x 3-pin servo headers (3x16 pins), and I2C headers.
+     - PCA9685 TSSOP chip, power capacitor, 2-pin screw terminal block.
+     - 16x 3-pin servo headers referenced via App::Link to `header_pin_3x16_ra.FCStd`.
+     - Dual 6-pin I2C headers referenced via App::Link to `header_pin_1x6.FCStd`.
   3. TCA9548A 8-Channel I2C Multiplexer Breakout (`tca9548a_board.FCStd`):
      - 31.5 x 21.0 x 1.6 mm purple PCB with 2x M2.5 mounting holes (26.0 mm spacing).
-     - TCA9548A TSSOP-24 chip and dual 12-pin headers.
+     - TCA9548A TSSOP-24 chip.
+     - Dual 12-pin headers referenced via App::Link to `header_pin_1x12.FCStd`.
   4. VL53L5CX 9-Zone Time-of-Flight Terrain Distance Sensor (`vl53l5cx_board.FCStd`):
      - 24.0 x 18.0 x 1.6 mm red PCB with 4x M2 mounting holes (21.0 x 13.0 mm pattern).
-     - Optical sensor module (6.4 x 3.0 x 1.2 mm) with dual emitter/receiver lenses,
-       and 6-pin I2C header.
+     - Optical sensor module with dual lenses.
+     - 6-pin 90° right-angle I2C header referenced via App::Link to `header_pin_1x6_ra.FCStd`.
+  5. 2S 7.4V LiPo Battery Pack (`battery_lipo_2s.FCStd`):
+     - 88.0 x 35.0 x 14.0 mm slim pack, silicone leads, XT60, JST-XH.
+  6. ADS1115 16-Bit 4-Channel I2C ADC Breakout (`ads1115_board.FCStd`):
+     - 28.0 x 17.0 x 1.6 mm blue PCB with 2x M2.5 mounting holes.
+     - ADS1115 MSOP-10 IC chip.
+     - 10-pin header referenced via App::Link to `header_pin_1x10.FCStd`.
 
-Exports:
-  - Models:  `hardware/mechanics/models/cots/*.FCStd`
-  - STEP:    `hardware/mechanics/export/step/cots/*.step`
-  - STL:     `hardware/mechanics/export/stl/cots/*.stl`
+Standards:
+  - Header Sockets & Collars: Always black thermoplastic (0.12, 0.12, 0.12)
+  - Header Pins: Always gold/brass (0.85, 0.70, 0.20)
+  - References: App::Link to standard COTS header files
 """
 
 import math
@@ -32,15 +41,23 @@ import sys
 import FreeCAD as App
 import Part
 
-print("--- Generating Lasius COTS Electronics Models (FreeCAD 1.1+) ---")
+print("=== Generating Lasius COTS Electronics Models with COTS Header References ===")
 
 cots_models_dir = "/home/bjoern/Workspace/Hexapods/lasius/hardware/mechanics/models/cots"
 cots_step_dir = "/home/bjoern/Workspace/Hexapods/lasius/hardware/mechanics/export/step/cots"
 cots_stl_dir = "/home/bjoern/Workspace/Hexapods/lasius/hardware/mechanics/export/stl/cots"
 
 os.makedirs(cots_models_dir, exist_ok=True)
-os.makedirs(cots_step_dir, exist_ok=True)
-os.makedirs(cots_stl_dir, exist_ok=True)
+
+# Visual colors
+COLOR_PCB_GREEN = (0.12, 0.45, 0.22)   # RPi 4 FR4
+COLOR_PCB_BLUE  = (0.04, 0.38, 0.88)   # Adafruit Blue (PCA9685, ADS1115)
+COLOR_PCB_PURPLE= (0.50, 0.15, 0.70)   # SparkFun / Adafruit Purple (TCA9548A)
+COLOR_PCB_RED   = (0.85, 0.15, 0.15)   # SparkFun Red (VL53L5CX)
+COLOR_IC_BLACK  = (0.15, 0.15, 0.15)   # Epoxy IC packaging
+COLOR_METAL     = (0.75, 0.75, 0.78)   # USB / Ethernet metal shielding
+COLOR_USB3_BLUE = (0.05, 0.35, 0.85)   # USB 3.0 insert
+COLOR_TERM_BLUE = (0.10, 0.40, 0.80)   # Screw terminal block
 
 
 def make_rounded_rect_solid(x_min, x_max, y_min, y_max, r_corner, z_min, z_max):
@@ -78,104 +95,6 @@ def make_rounded_rect_solid(x_min, x_max, y_min, y_max, r_corner, z_min, z_max):
     return face.extrude(App.Vector(0.0, 0.0, z_max - z_min))
 
 
-def make_pin_header_1row(x_c, y_c, z_base, pins, orient_x=True, pin_len=8.50, collar_h=2.50):
-    """Creates a 1-row Dupont header with thermoplastic collar base and discrete gold square pins."""
-    pitch = 2.54
-    pin_w = 0.64
-    if orient_x:
-        len_x = pins * pitch
-        len_y = pitch
-    else:
-        len_x = pitch
-        len_y = pins * pitch
-    collar = Part.makeBox(len_x, len_y, collar_h, App.Vector(x_c - len_x / 2.0, y_c - len_y / 2.0, z_base))
-    compound = collar
-    for i in range(pins):
-        if orient_x:
-            px = x_c - len_x / 2.0 + (i + 0.5) * pitch
-            py = y_c
-        else:
-            px = x_c
-            py = y_c - len_y / 2.0 + (i + 0.5) * pitch
-        pin = Part.makeBox(pin_w, pin_w, pin_len, App.Vector(px - pin_w / 2.0, py - pin_w / 2.0, z_base - 1.0))
-        compound = compound.fuse(pin)
-    return compound.removeSplitter()
-
-
-def make_pin_header_2row(x_c, y_c, z_base, cols, orient_x=True, pin_len=8.50, collar_h=2.50):
-    """Creates a 2-row Dupont header (e.g. 2x20 RPi GPIO) with collar base and discrete gold pins."""
-    pitch = 2.54
-    pin_w = 0.64
-    if orient_x:
-        len_x = cols * pitch
-        len_y = 2.0 * pitch
-    else:
-        len_x = 2.0 * pitch
-        len_y = cols * pitch
-    collar = Part.makeBox(len_x, len_y, collar_h, App.Vector(x_c - len_x / 2.0, y_c - len_y / 2.0, z_base))
-    compound = collar
-    for r in range(2):
-        for c in range(cols):
-            if orient_x:
-                px = x_c - len_x / 2.0 + (c + 0.5) * pitch
-                py = y_c - len_y / 2.0 + (r + 0.5) * pitch
-            else:
-                px = x_c - len_x / 2.0 + (r + 0.5) * pitch
-                py = y_c - len_y / 2.0 + (c + 0.5) * pitch
-            pin = Part.makeBox(pin_w, pin_w, pin_len, App.Vector(px - pin_w / 2.0, py - pin_w / 2.0, z_base - 1.0))
-            compound = compound.fuse(pin)
-    return compound.removeSplitter()
-
-
-def make_right_angle_servo_header_3x16(x_c, y_base, z_base, cols=16):
-    """
-    Creates a 16x 3-pin (3x16 = 48 pins) 90° right-angle servo header.
-    Pins extend from PCB horizontally in +Y direction.
-    """
-    pitch = 2.54
-    pin_w = 0.64
-    len_x = cols * pitch  # 40.64 mm
-    collar_w = 4.50
-    collar_h = 3.00
-    collar = Part.makeBox(len_x, collar_w, collar_h, App.Vector(x_c - len_x / 2.0, y_base, z_base))
-    compound = collar
-    pin_horiz_len = 8.70  # extends horizontally past Y = 12.0 to Y = 20.7 mm
-    for row in range(3):
-        pz = z_base + 0.90 + row * 2.54
-        for col in range(cols):
-            px = x_c - len_x / 2.0 + (col + 0.5) * pitch
-            # Vertical leg from PCB
-            vert_leg = Part.makeBox(pin_w, pin_w, pz - z_base + pin_w, App.Vector(px - pin_w / 2.0, y_base + 1.2, z_base - 0.8))
-            # Horizontal leg extending in +Y
-            horiz_leg = Part.makeBox(pin_w, pin_horiz_len, pin_w, App.Vector(px - pin_w / 2.0, y_base + 1.2, pz))
-            pin_solid = vert_leg.fuse(horiz_leg)
-            compound = compound.fuse(pin_solid)
-    return compound.removeSplitter()
-
-
-def make_right_angle_header_1row(x_c, y_base, z_base, pins=6, dir_y=-1.0):
-    """Creates a 1-row 90° right-angle Dupont header with discrete pins."""
-    pitch = 2.54
-    pin_w = 0.64
-    len_x = pins * pitch
-    collar_w = 2.54
-    collar_h = 2.50
-    collar = Part.makeBox(len_x, collar_w, collar_h, App.Vector(x_c - len_x / 2.0, y_base, z_base))
-    compound = collar
-    horiz_len = 5.00
-    for i in range(pins):
-        px = x_c - len_x / 2.0 + (i + 0.5) * pitch
-        py_start = y_base if dir_y < 0 else y_base + collar_w
-        py_end = py_start + dir_y * horiz_len
-        ymin, ymax = min(py_start, py_end), max(py_start, py_end)
-        # Vertical pin leg
-        vert_leg = Part.makeBox(pin_w, pin_w, 2.00, App.Vector(px - pin_w / 2.0, y_base + collar_w / 2.0 - pin_w / 2.0, z_base - 0.8))
-        # Horizontal pin leg
-        horiz_leg = Part.makeBox(pin_w, ymax - ymin, pin_w, App.Vector(px - pin_w / 2.0, ymin, z_base + 1.25 - pin_w / 2.0))
-        compound = compound.fuse(vert_leg).fuse(horiz_leg)
-    return compound.removeSplitter()
-
-
 # =============================================================================
 # 1. Raspberry Pi 4 Model B
 # =============================================================================
@@ -186,122 +105,137 @@ def build_rpi4():
     except Exception:
         pass
     doc = App.newDocument(doc_name)
+    fcstd_path = f"{cots_models_dir}/rpi4_model_b.FCStd"
+    doc.saveAs(fcstd_path)
 
-    # PCB centered at (0, 0, 0). Length = 85.0 mm (X in [-42.5, 42.5]), Width = 56.0 mm (Y in [-28.0, 28.0])
+    # 1. PCB Substrate (85.0 x 56.0 x 1.4 mm, green)
     pcb = make_rounded_rect_solid(-42.5, 42.5, -28.0, 28.0, 3.0, 0.0, 1.4)
-
-    # Broadcom BCM2711 SoC Heatspreader (15.0 x 15.0 x 1.8 mm)
-    soc = Part.makeBox(15.0, 15.0, 1.8, App.Vector(-12.5, -7.5, 1.4))
-
-    # Dual USB 3.0 Port Block (Blue, 17.0 x 14.5 x 16.0 mm on +X front edge)
-    usb3 = Part.makeBox(17.0, 14.5, 16.0, App.Vector(27.0, -22.5, 1.4))
-
-    # Dual USB 2.0 Port Block (Black, 17.0 x 14.5 x 16.0 mm on +X front edge)
-    usb2 = Part.makeBox(17.0, 14.5, 16.0, App.Vector(27.0, -5.5, 1.4))
-
-    # Gigabit Ethernet Port Block (Metal, 21.5 x 16.0 x 14.0 mm on +X front edge)
-    eth = Part.makeBox(21.5, 16.0, 14.0, App.Vector(23.5, 10.5, 1.4))
-
-    # 40-Pin GPIO Header (2x20 pins with individual square pins and collar base along +Y edge)
-    gpio = make_pin_header_2row(x_c=-10.0, y_c=24.50, z_base=1.4, cols=20, orient_x=True)
-
-    # USB-C Power Port (9.0 x 7.5 x 3.2 mm on -Y edge)
-    usbc = Part.makeBox(9.0, 7.5, 3.2, App.Vector(-35.0, -28.0, 1.4))
-
-    # Dual Micro-HDMI Ports (7.5 x 6.5 x 3.0 mm on -Y edge)
-    hdmi1 = Part.makeBox(7.5, 6.5, 3.0, App.Vector(-20.0, -28.0, 1.4))
-    hdmi2 = Part.makeBox(7.5, 6.5, 3.0, App.Vector(-6.5, -28.0, 1.4))
-
-    # MicroSD Card Slot on Underside (14.0 x 12.0 x 1.2 mm on -X edge)
-    sd = Part.makeBox(14.0, 12.0, 1.2, App.Vector(-42.5, -6.0, -1.2))
-
-    rpi_solid = pcb.fuse(soc).fuse(usb3).fuse(usb2).fuse(eth).fuse(gpio).fuse(usbc).fuse(hdmi1).fuse(hdmi2).fuse(sd)
-    rpi_solid = rpi_solid.removeSplitter()
-
-    # 4x Official Raspberry Pi 4 M2.5 Mounting Holes (58.0 x 49.0 mm pattern: 3.5 mm from -X/+Y/-Y edges -> X in [-39.0, +19.0], Y in [-24.5, +24.5])
     for hx in [-39.0, 19.0]:
         for hy in [-24.5, 24.5]:
             hole = Part.makeCylinder(1.35, 6.0, App.Vector(hx, hy, -2.0), App.Vector(0, 0, 1))
-            rpi_solid = rpi_solid.cut(hole)
+            pcb = pcb.cut(hole)
+    pcb = pcb.removeSplitter()
 
-    obj = doc.addObject("Part::Feature", "Raspberry_Pi_4")
-    obj.Label = "Raspberry Pi 4 Model B (COTS)"
-    obj.Shape = rpi_solid
+    # 2. Ports & Components
+    soc = Part.makeBox(15.0, 15.0, 1.8, App.Vector(-12.5, -7.5, 1.4))
+    usb3 = Part.makeBox(17.0, 14.5, 16.0, App.Vector(27.0, -22.5, 1.4))
+    usb2 = Part.makeBox(17.0, 14.5, 16.0, App.Vector(27.0, -5.5, 1.4))
+    eth = Part.makeBox(21.5, 16.0, 14.0, App.Vector(23.5, 10.5, 1.4))
+    usbc = Part.makeBox(9.0, 7.5, 3.2, App.Vector(-35.0, -28.0, 1.4))
+    hdmi1 = Part.makeBox(7.5, 6.5, 3.0, App.Vector(-20.0, -28.0, 1.4))
+    hdmi2 = Part.makeBox(7.5, 6.5, 3.0, App.Vector(-6.5, -28.0, 1.4))
+    sd = Part.makeBox(14.0, 12.0, 1.2, App.Vector(-42.5, -6.0, -1.2))
+
+    ports = soc.fuse(usb3).fuse(usb2).fuse(eth).fuse(usbc).fuse(hdmi1).fuse(hdmi2).fuse(sd).removeSplitter()
+
+    # Create Assembly Part
+    part = doc.addObject("App::Part", "Raspberry_Pi_4")
+    part.Label = "Raspberry Pi 4 Model B (COTS)"
+
+    obj_pcb = doc.addObject("Part::Feature", "RPi4_PCB")
+    obj_pcb.Label = "Raspberry Pi 4 PCB Substrate (Green)"
+    obj_pcb.Shape = pcb
+    if hasattr(obj_pcb, "ViewObject") and obj_pcb.ViewObject:
+        obj_pcb.ViewObject.ShapeColor = COLOR_PCB_GREEN
+    part.addObject(obj_pcb)
+
+    obj_ports = doc.addObject("Part::Feature", "RPi4_Components")
+    obj_ports.Label = "Ports & SoC Components"
+    obj_ports.Shape = ports
+    if hasattr(obj_ports, "ViewObject") and obj_ports.ViewObject:
+        obj_ports.ViewObject.ShapeColor = COLOR_METAL
+    part.addObject(obj_ports)
+
+    # 3. 40-Pin GPIO Header via App::Link to `header_pin_2x20.FCStd`
+    doc_hdr = App.openDocument(f"{cots_models_dir}/header_pin_2x20.FCStd")
+    lnk_gpio = doc.addObject("App::Link", "Header_GPIO_40Pin")
+    lnk_gpio.Label = "40-Pin GPIO Header (2x20, 2.54 mm, COTS)"
+    lnk_gpio.setLink(doc_hdr.Header)
+    lnk_gpio.Placement = App.Placement(App.Vector(-10.00, 24.50, 1.40), App.Rotation())
+    part.addObject(lnk_gpio)
+
     doc.recompute()
-
-    fcstd_path = f"{cots_models_dir}/rpi4_model_b.FCStd"
-    doc.saveAs(fcstd_path)
-    if "--export" in sys.argv:
-        rpi_solid.exportStep(f"{cots_step_dir}/rpi4_model_b.step")
-        rpi_solid.exportStl(f"{cots_stl_dir}/rpi4_model_b.stl")
+    doc.save()
+    App.closeDocument(doc_hdr.Name)
     App.closeDocument(doc_name)
     print(f"✔ Generated Raspberry Pi 4 Model B -> {fcstd_path}")
 
 
 # =============================================================================
-# 2. PCA9685 16-Channel PWM Servo Driver Board (COTS)
+# 2. PCA9685 16-Channel PWM Servo Driver Board
 # =============================================================================
 def build_pca9685():
-    """
-    Constructs high-fidelity PCA9685 16-Channel 12-Bit PWM Driver Board (Adafruit).
-    Reflects physical reference photo PXL_20261110_220915159.jpg:
-      - 62.5 x 25.4 x 1.6 mm blue PCB with 4x M2.5 mounting holes (56.0 x 19.0 mm pattern).
-      - 16x 3-pin right-angle servo headers (90-degree bend) extending horizontally
-        in +Y direction past the PCB edge for lateral servo connector insertion.
-      - Dual 6-pin I2C headers pointing vertically (+Z) on short edges (-X and +X).
-      - 2-pin screw terminal block on -Y edge with wire entry facing outward (-Y).
-      - Cylindrical electrolytic power capacitor (Ø8.0 x 12.5 mm) at corner.
-      - PCA9685 TSSOP-28 chip centered on PCB.
-    """
     doc_name = "pca9685_board"
     try:
         App.closeDocument(doc_name)
     except Exception:
         pass
     doc = App.newDocument(doc_name)
+    fcstd_path = f"{cots_models_dir}/pca9685_board.FCStd"
+    doc.saveAs(fcstd_path)
 
-    # PCB centered at (0, 0, 0). Length = 62.5 mm (X in [-31.25, 31.25]), Width = 25.4 mm (Y in [-12.7, 12.7])
+    # 1. PCB Substrate (62.5 x 25.4 x 1.6 mm, blue)
     pcb = make_rounded_rect_solid(-31.25, 31.25, -12.7, 12.7, 2.0, 0.0, 1.6)
-
-    # 4x M2.5 Mounting Holes (Pattern: 56.0 x 19.0 mm -> X = ±28.0 mm, Y = ±9.5 mm)
     for hx in [-28.0, 28.0]:
         for hy in [-9.5, 9.5]:
             hole = Part.makeCylinder(1.25, 5.0, App.Vector(hx, hy, -1.0), App.Vector(0, 0, 1))
             pcb = pcb.cut(hole)
+    pcb = pcb.removeSplitter()
 
-    # PCA9685 TSSOP-28 IC Chip (9.7 x 4.4 x 1.1 mm)
+    # 2. Onboard Components: IC, Power Cap, Terminal Block
     ic = Part.makeBox(9.7, 4.4, 1.1, App.Vector(-4.85, -2.2, 1.6))
-
-    # Power Capacitor (Ø8.0 x 12.5 mm cylinder at -X / -Y corner)
     cap = Part.makeCylinder(4.0, 12.5, App.Vector(-21.0, -7.5, 1.6), App.Vector(0, 0, 1))
-
-    # Blue 2-Pin Screw Terminal Block (10.0 x 8.0 x 10.0 mm on -Y edge)
-    # Wire entrances face in -Y direction, clamping screws on top face (+Z)
     term_body = Part.makeBox(10.0, 8.0, 10.0, App.Vector(-14.0, -12.5, 1.6))
     term_cav1 = Part.makeBox(3.0, 4.0, 4.0, App.Vector(-13.0, -13.0, 3.5))
     term_cav2 = Part.makeBox(3.0, 4.0, 4.0, App.Vector(-8.0, -13.0, 3.5))
     term = term_body.cut(term_cav1).cut(term_cav2)
+    comps = ic.fuse(cap).fuse(term).removeSplitter()
 
-    # 16x 3-Pin Servo Pin Headers (90° Right Angle with 48 discrete pins pointing horizontally in +Y direction)
-    headers = make_right_angle_servo_header_3x16(x_c=0.00, y_base=7.50, z_base=1.60, cols=16)
+    part = doc.addObject("App::Part", "PCA9685_Board")
+    part.Label = "PCA9685 16-Channel PWM Servo Controller (COTS)"
 
-    # Dual 6-Pin I2C Headers (Straight pins pointing vertically +Z on -X and +X edges with discrete square pins)
-    i2c_in = make_pin_header_1row(x_c=-28.00, y_c=0.00, z_base=1.60, pins=6, orient_x=False)
-    i2c_out = make_pin_header_1row(x_c=28.00, y_c=0.00, z_base=1.60, pins=6, orient_x=False)
+    obj_pcb = doc.addObject("Part::Feature", "PCA9685_PCB")
+    obj_pcb.Label = "PCA9685 PCB Substrate (Blue)"
+    obj_pcb.Shape = pcb
+    if hasattr(obj_pcb, "ViewObject") and obj_pcb.ViewObject:
+        obj_pcb.ViewObject.ShapeColor = COLOR_PCB_BLUE
+    part.addObject(obj_pcb)
 
-    pca_solid = pcb.fuse(ic).fuse(cap).fuse(term).fuse(headers).fuse(i2c_in).fuse(i2c_out)
-    pca_solid = pca_solid.removeSplitter()
+    obj_comps = doc.addObject("Part::Feature", "PCA9685_Components")
+    obj_comps.Label = "IC, Capacitor & Screw Terminal Block"
+    obj_comps.Shape = comps
+    if hasattr(obj_comps, "ViewObject") and obj_comps.ViewObject:
+        obj_comps.ViewObject.ShapeColor = COLOR_IC_BLACK
+    part.addObject(obj_comps)
 
-    obj = doc.addObject("Part::Feature", "PCA9685_Board")
-    obj.Label = "PCA9685 16-Channel PWM Servo Controller (COTS)"
-    obj.Shape = pca_solid
+    # 3. 16x 3-Pin Right-Angle Servo Header via App::Link to `header_pin_3x16_ra.FCStd`
+    doc_ra = App.openDocument(f"{cots_models_dir}/header_pin_3x16_ra.FCStd")
+    lnk_servos = doc.addObject("App::Link", "Header_Servos_3x16")
+    lnk_servos.Label = "16x 3-Pin Servo Headers (90° Right Angle, COTS)"
+    lnk_servos.setLink(doc_ra.Header)
+    lnk_servos.Placement = App.Placement(App.Vector(0.00, 7.50 + 2.25, 1.60), App.Rotation())
+    part.addObject(lnk_servos)
+
+    # 4. Dual 6-Pin I2C Headers via App::Link to `header_pin_1x6.FCStd` (rotated 90° along Y)
+    doc_i2c = App.openDocument(f"{cots_models_dir}/header_pin_1x6.FCStd")
+    rot_90 = App.Rotation(App.Vector(0, 0, 1), 90.0)
+
+    lnk_i2c_in = doc.addObject("App::Link", "Header_I2C_In")
+    lnk_i2c_in.Label = "6-Pin I2C Input Header (2.54 mm, COTS)"
+    lnk_i2c_in.setLink(doc_i2c.Header)
+    lnk_i2c_in.Placement = App.Placement(App.Vector(-28.00, 0.00, 1.60), rot_90)
+    part.addObject(lnk_i2c_in)
+
+    lnk_i2c_out = doc.addObject("App::Link", "Header_I2C_Out")
+    lnk_i2c_out.Label = "6-Pin I2C Cascade Header (2.54 mm, COTS)"
+    lnk_i2c_out.setLink(doc_i2c.Header)
+    lnk_i2c_out.Placement = App.Placement(App.Vector(28.00, 0.00, 1.60), rot_90)
+    part.addObject(lnk_i2c_out)
+
     doc.recompute()
-
-    fcstd_path = f"{cots_models_dir}/pca9685_board.FCStd"
-    doc.saveAs(fcstd_path)
-    if "--export" in sys.argv:
-        pca_solid.exportStep(f"{cots_step_dir}/pca9685_board.step")
-        pca_solid.exportStl(f"{cots_stl_dir}/pca9685_board.stl")
+    doc.save()
+    App.closeDocument(doc_ra.Name)
+    App.closeDocument(doc_i2c.Name)
     App.closeDocument(doc_name)
     print(f"✔ Generated PCA9685 16-Channel Board -> {fcstd_path}")
 
@@ -316,35 +250,58 @@ def build_tca9548a():
     except Exception:
         pass
     doc = App.newDocument(doc_name)
+    fcstd_path = f"{cots_models_dir}/tca9548a_board.FCStd"
+    doc.saveAs(fcstd_path)
 
-    # PCB centered at (0, 0, 0). Length = 31.5 mm (X in [-15.75, 15.75]), Width = 21.0 mm (Y in [-10.5, 10.5])
+    # 1. PCB Substrate (31.5 x 21.0 x 1.6 mm, purple)
     pcb = make_rounded_rect_solid(-15.75, 15.75, -10.5, 10.5, 1.5, 0.0, 1.6)
-
-    # 2x M2.5 Mounting Holes (Spacing 26.0 mm -> X = ±13.0 mm, Y = 0.0 mm)
     for hx in [-13.0, 13.0]:
         hole = Part.makeCylinder(1.25, 5.0, App.Vector(hx, 0.0, -1.0), App.Vector(0, 0, 1))
         pcb = pcb.cut(hole)
+    pcb = pcb.removeSplitter()
 
-    # TCA9548A TSSOP-24 IC Chip (7.8 x 4.4 x 1.1 mm)
-    ic = Part.makeBox(7.8, 4.4, 1.1, App.Vector(-3.9, -2.2, 1.6))
+    ic = Part.makeBox(7.8, 4.4, 1.1, App.Vector(-3.9, -2.2, 1.6)).removeSplitter()
 
-    # Dual 12-Pin Headers (Straight pins pointing vertically +Z with discrete square pins and collar base)
-    h_top = make_pin_header_1row(x_c=0.00, y_c=8.77, z_base=1.60, pins=12, orient_x=True)
-    h_bot = make_pin_header_1row(x_c=0.00, y_c=-8.77, z_base=1.60, pins=12, orient_x=True)
+    part = doc.addObject("App::Part", "TCA9548A_Board")
+    part.Label = "TCA9548A 8-Channel I2C Multiplexer (COTS)"
 
-    tca_solid = pcb.fuse(ic).fuse(h_top).fuse(h_bot)
-    tca_solid = tca_solid.removeSplitter()
+    obj_pcb = doc.addObject("Part::Feature", "TCA9548A_PCB")
+    obj_pcb.Label = "TCA9548A PCB Substrate (Purple)"
+    obj_pcb.Shape = pcb
+    if hasattr(obj_pcb, "ViewObject") and obj_pcb.ViewObject:
+        obj_pcb.ViewObject.ShapeColor = COLOR_PCB_PURPLE
+    part.addObject(obj_pcb)
 
-    obj = doc.addObject("Part::Feature", "TCA9548A_Board")
-    obj.Label = "TCA9548A 8-Channel I2C Multiplexer (COTS)"
-    obj.Shape = tca_solid
+    obj_ic = doc.addObject("Part::Feature", "TCA9548A_IC")
+    obj_ic.Label = "TCA9548A TSSOP-24 Multiplexer IC"
+    obj_ic.Shape = ic
+    if hasattr(obj_ic, "ViewObject") and obj_ic.ViewObject:
+        obj_ic.ViewObject.ShapeColor = COLOR_IC_BLACK
+    part.addObject(obj_ic)
+
+    # 2. Dual 12-Pin Headers via App::Link to `header_pin_1x12.FCStd`
+    # Pins point downwards through the PCB into the Hub socket
+    # Male header sitting with collar below PCB (Z = -2.50 mm) and pins extending down to Z = -8.50 mm
+    doc_hdr = App.openDocument(f"{cots_models_dir}/header_pin_1x12.FCStd")
+
+    # Inverted orientation: header seated under PCB with pins extending downwards into socket
+    rot_flip = App.Rotation(App.Vector(1, 0, 0), 180.0)
+
+    lnk_top = doc.addObject("App::Link", "Header_Top_12Pin")
+    lnk_top.Label = "12-Pin Header Top (2.54 mm, COTS)"
+    lnk_top.setLink(doc_hdr.Header)
+    lnk_top.Placement = App.Placement(App.Vector(0.00, 8.77, 0.00), rot_flip)
+    part.addObject(lnk_top)
+
+    lnk_bot = doc.addObject("App::Link", "Header_Bottom_12Pin")
+    lnk_bot.Label = "12-Pin Header Bottom (2.54 mm, COTS)"
+    lnk_bot.setLink(doc_hdr.Header)
+    lnk_bot.Placement = App.Placement(App.Vector(0.00, -8.77, 0.00), rot_flip)
+    part.addObject(lnk_bot)
+
     doc.recompute()
-
-    fcstd_path = f"{cots_models_dir}/tca9548a_board.FCStd"
-    doc.saveAs(fcstd_path)
-    if "--export" in sys.argv:
-        tca_solid.exportStep(f"{cots_step_dir}/tca9548a_board.step")
-        tca_solid.exportStl(f"{cots_stl_dir}/tca9548a_board.stl")
+    doc.save()
+    App.closeDocument(doc_hdr.Name)
     App.closeDocument(doc_name)
     print(f"✔ Generated TCA9548A 8-Channel Multiplexer -> {fcstd_path}")
 
@@ -359,45 +316,59 @@ def build_vl53l5cx():
     except Exception:
         pass
     doc = App.newDocument(doc_name)
+    fcstd_path = f"{cots_models_dir}/vl53l5cx_board.FCStd"
+    doc.saveAs(fcstd_path)
 
-    # PCB centered at (0, 0, 0). Length = 24.0 mm (X in [-12.0, 12.0]), Width = 18.0 mm (Y in [-9.0, 9.0])
+    # 1. PCB Substrate (24.0 x 18.0 x 1.6 mm, red)
     pcb = make_rounded_rect_solid(-12.0, 12.0, -9.0, 9.0, 1.5, 0.0, 1.6)
-
-    # 4x M2 Mounting Holes (Pattern: 21.0 x 13.0 mm -> X = ±10.5 mm, Y = ±6.5 mm)
     for hx in [-10.5, 10.5]:
         for hy in [-6.5, 6.5]:
             hole = Part.makeCylinder(1.05, 5.0, App.Vector(hx, hy, -1.0), App.Vector(0, 0, 1))
             pcb = pcb.cut(hole)
+    pcb = pcb.removeSplitter()
 
-    # VL53L5CX Optical Sensor Package (6.4 x 3.0 x 1.2 mm)
+    # 2. Optical Sensor Package & Dual Lenses
     sensor = Part.makeBox(6.4, 3.0, 1.2, App.Vector(-3.2, -1.5, 1.6))
-
-    # Dual Optical Aperture / Lenses (2x Ø1.0 mm cylinders)
     lens1 = Part.makeCylinder(0.55, 0.4, App.Vector(-1.5, 0.0, 2.8), App.Vector(0, 0, 1))
     lens2 = Part.makeCylinder(0.55, 0.4, App.Vector(1.5, 0.0, 2.8), App.Vector(0, 0, 1))
+    optics = sensor.fuse(lens1).fuse(lens2).removeSplitter()
 
-    # 6-Pin 90-Degree Right-Angle I2C Header on back side with discrete pins
-    header = make_right_angle_header_1row(x_c=0.00, y_base=-8.50, z_base=-2.50, pins=6, dir_y=-1.0)
+    part = doc.addObject("App::Part", "VL53L5CX_Board")
+    part.Label = "VL53L5CX 9-Zone ToF Terrain Distance Sensor (COTS)"
 
-    tof_solid = pcb.fuse(sensor).fuse(lens1).fuse(lens2).fuse(header)
-    tof_solid = tof_solid.removeSplitter()
+    obj_pcb = doc.addObject("Part::Feature", "VL53L5CX_PCB")
+    obj_pcb.Label = "VL53L5CX PCB Substrate (Red)"
+    obj_pcb.Shape = pcb
+    if hasattr(obj_pcb, "ViewObject") and obj_pcb.ViewObject:
+        obj_pcb.ViewObject.ShapeColor = COLOR_PCB_RED
+    part.addObject(obj_pcb)
 
-    obj = doc.addObject("Part::Feature", "VL53L5CX_Board")
-    obj.Label = "VL53L5CX 9-Zone ToF Terrain Distance Sensor (COTS)"
-    obj.Shape = tof_solid
+    obj_opt = doc.addObject("Part::Feature", "Optical_Package")
+    obj_opt.Label = "VL53L5CX Optical Sensor & Lenses"
+    obj_opt.Shape = optics
+    if hasattr(obj_opt, "ViewObject") and obj_opt.ViewObject:
+        obj_opt.ViewObject.ShapeColor = COLOR_IC_BLACK
+    part.addObject(obj_opt)
+
+    # 3. 6-Pin 90° Right-Angle Header via App::Link to `header_pin_1x6_ra.FCStd`
+    doc_ra = App.openDocument(f"{cots_models_dir}/header_pin_1x6_ra.FCStd")
+    # Seated on back side with horizontal pins extending in -Y direction into Belly Pan slot
+    rot_flip = App.Rotation(App.Vector(1, 0, 0), 180.0)
+    lnk_hdr = doc.addObject("App::Link", "Header_I2C_6Pin_RA")
+    lnk_hdr.Label = "6-Pin I2C Header (90° Right-Angle, COTS)"
+    lnk_hdr.setLink(doc_ra.Header)
+    lnk_hdr.Placement = App.Placement(App.Vector(0.00, -8.50, 0.00), rot_flip)
+    part.addObject(lnk_hdr)
+
     doc.recompute()
-
-    fcstd_path = f"{cots_models_dir}/vl53l5cx_board.FCStd"
-    doc.saveAs(fcstd_path)
-    if "--export" in sys.argv:
-        tof_solid.exportStep(f"{cots_step_dir}/vl53l5cx_board.step")
-        tof_solid.exportStl(f"{cots_stl_dir}/vl53l5cx_board.stl")
+    doc.save()
+    App.closeDocument(doc_ra.Name)
     App.closeDocument(doc_name)
     print(f"✔ Generated VL53L5CX ToF Sensor -> {fcstd_path}")
 
 
 # =============================================================================
-# 5. 2S 7.4V LiPo Battery Pack (Slim Flat-Pack)
+# 5. 2S 7.4V LiPo Battery Pack
 # =============================================================================
 def build_battery_lipo_2s():
     doc_name = "battery_lipo_2s"
@@ -406,43 +377,32 @@ def build_battery_lipo_2s():
     except Exception:
         pass
     doc = App.newDocument(doc_name)
+    fcstd_path = f"{cots_models_dir}/battery_lipo_2s.FCStd"
+    doc.saveAs(fcstd_path)
 
-    # Battery main pack centered at (0, 0) in X/Y, Z in [0.0, 14.0 mm].
-    # Dimensions: 88.0 x 35.0 x 14.0 mm with filleted corners (R = 3.5 mm)
     pack = make_rounded_rect_solid(-44.0, 44.0, -17.5, 17.5, 3.5, 0.0, 14.0)
-
-    # Output Lead Cable Exit Strain Relief Collar (-X end, centered in Y)
     collar = Part.makeBox(4.0, 12.0, 7.0, App.Vector(-48.0, -6.0, 3.5))
-
-    # 12AWG Silicone Main Leads (Pair of D = 3.5 mm cables extending in -X direction)
     cable_pos = Part.makeCylinder(1.75, 20.0, App.Vector(-48.0, 3.0, 7.0), App.Vector(-1, 0, 0))
     cable_neg = Part.makeCylinder(1.75, 20.0, App.Vector(-48.0, -3.0, 7.0), App.Vector(-1, 0, 0))
-
-    # Amass XT60 Connector Body (15.5 x 16.0 x 8.0 mm) at the end of the cables
     xt60 = Part.makeBox(15.5, 16.0, 8.0, App.Vector(-83.5, -8.0, 3.0))
-
-    # JST-XH 3-Pin Balance Lead (5.5 x 9.8 x 6.0 mm) exiting beside main leads
     jst_xh = Part.makeBox(5.5, 9.8, 6.0, App.Vector(-55.0, 8.0, 4.0))
 
-    bat_solid = pack.fuse(collar).fuse(cable_pos).fuse(cable_neg).fuse(xt60).fuse(jst_xh)
-    bat_solid = bat_solid.removeSplitter()
+    bat_solid = pack.fuse(collar).fuse(cable_pos).fuse(cable_neg).fuse(xt60).fuse(jst_xh).removeSplitter()
 
     obj = doc.addObject("Part::Feature", "Battery_LiPo_2S")
     obj.Label = "2S 7.4V LiPo Battery Pack (COTS)"
     obj.Shape = bat_solid
-    doc.recompute()
+    if hasattr(obj, "ViewObject") and obj.ViewObject:
+        obj.ViewObject.ShapeColor = (0.85, 0.65, 0.10)  # Gold/Yellow wrap
 
-    fcstd_path = f"{cots_models_dir}/battery_lipo_2s.FCStd"
-    doc.saveAs(fcstd_path)
-    if "--export" in sys.argv:
-        bat_solid.exportStep(f"{cots_step_dir}/battery_lipo_2s.step")
-        bat_solid.exportStl(f"{cots_stl_dir}/battery_lipo_2s.stl")
+    doc.recompute()
+    doc.save()
     App.closeDocument(doc_name)
     print(f"✔ Generated 2S LiPo Battery Pack -> {fcstd_path}")
 
 
 # =============================================================================
-# 6. ADS1115 16-Bit 4-Channel I2C ADC Breakout (Adafruit Blue)
+# 6. ADS1115 16-Bit 4-Channel I2C ADC Breakout
 # =============================================================================
 def build_ads1115():
     doc_name = "ads1115_board"
@@ -451,34 +411,46 @@ def build_ads1115():
     except Exception:
         pass
     doc = App.newDocument(doc_name)
+    fcstd_path = f"{cots_models_dir}/ads1115_board.FCStd"
+    doc.saveAs(fcstd_path)
 
-    # 28.0 x 17.0 x 1.6 mm blue PCB with 2x M2.5 mounting holes
+    # 1. PCB Substrate (28.0 x 17.0 x 1.6 mm, blue)
     pcb = make_rounded_rect_solid(-14.0, 14.0, -8.5, 8.5, 2.0, 0.0, 1.6)
-
-    # 2x M2.5 mounting holes at X = ±10.1 mm, Y = 5.3 mm
     for hx in [-10.1, 10.1]:
         hole = Part.makeCylinder(1.25, 5.0, App.Vector(hx, 5.3, -1.0), App.Vector(0, 0, 1))
         pcb = pcb.cut(hole)
+    pcb = pcb.removeSplitter()
 
-    # ADS1115 MSOP-10 IC Chip (3.0 x 3.0 x 1.1 mm)
-    ic = Part.makeBox(3.0, 3.0, 1.1, App.Vector(-1.5, -1.5, 1.6))
+    ic = Part.makeBox(3.0, 3.0, 1.1, App.Vector(-1.5, -1.5, 1.6)).removeSplitter()
 
-    # 10-Pin Header along bottom edge with discrete gold square pins and collar base
-    hdr = make_pin_header_1row(x_c=0.00, y_c=-6.35, z_base=1.60, pins=10, orient_x=True)
+    part = doc.addObject("App::Part", "ADS1115_Board")
+    part.Label = "ADS1115 16-Bit 4-Channel ADC (COTS)"
 
-    ads_solid = pcb.fuse(ic).fuse(hdr)
-    ads_solid = ads_solid.removeSplitter()
+    obj_pcb = doc.addObject("Part::Feature", "ADS1115_PCB")
+    obj_pcb.Label = "ADS1115 PCB Substrate (Blue)"
+    obj_pcb.Shape = pcb
+    if hasattr(obj_pcb, "ViewObject") and obj_pcb.ViewObject:
+        obj_pcb.ViewObject.ShapeColor = COLOR_PCB_BLUE
+    part.addObject(obj_pcb)
 
-    obj = doc.addObject("Part::Feature", "ADS1115_Board")
-    obj.Label = "ADS1115 16-Bit 4-Channel ADC (COTS)"
-    obj.Shape = ads_solid
+    obj_ic = doc.addObject("Part::Feature", "ADS1115_IC")
+    obj_ic.Label = "ADS1115 MSOP-10 ADC IC"
+    obj_ic.Shape = ic
+    if hasattr(obj_ic, "ViewObject") and obj_ic.ViewObject:
+        obj_ic.ViewObject.ShapeColor = COLOR_IC_BLACK
+    part.addObject(obj_ic)
+
+    # 2. 10-Pin Header via App::Link to `header_pin_1x10.FCStd`
+    doc_hdr = App.openDocument(f"{cots_models_dir}/header_pin_1x10.FCStd")
+    lnk_hdr = doc.addObject("App::Link", "Header_10Pin")
+    lnk_hdr.Label = "10-Pin Header (2.54 mm, COTS)"
+    lnk_hdr.setLink(doc_hdr.Header)
+    lnk_hdr.Placement = App.Placement(App.Vector(0.00, -6.35, 1.60), App.Rotation())
+    part.addObject(lnk_hdr)
+
     doc.recompute()
-
-    fcstd_path = f"{cots_models_dir}/ads1115_board.FCStd"
-    doc.saveAs(fcstd_path)
-    if "--export" in sys.argv:
-        ads_solid.exportStep(f"{cots_step_dir}/ads1115_board.step")
-        ads_solid.exportStl(f"{cots_stl_dir}/ads1115_board.stl")
+    doc.save()
+    App.closeDocument(doc_hdr.Name)
     App.closeDocument(doc_name)
     print(f"✔ Generated ADS1115 16-Bit ADC Breakout -> {fcstd_path}")
 
@@ -491,6 +463,5 @@ build_vl53l5cx()
 build_battery_lipo_2s()
 build_ads1115()
 
-print("--- All Electronics & Power COTS Models Generated Successfully ---")
-import sys
+print("=== All Electronics & Power COTS Models Generated with References Successfully ===")
 sys.exit(0)

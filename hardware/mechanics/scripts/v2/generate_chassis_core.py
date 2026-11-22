@@ -471,20 +471,20 @@ make_link("Chassis_Core", "1. Monocoque Core Shell", doc_core.Chassis_Core, App.
 
 # 2. Front PCA9685 Board at X = +43.25 mm, Y = -3.00 mm, Z = 28.00 mm (Horizontal, pins +Y Left, clamps UP)
 p_pca_front = App.Placement(App.Vector(43.25, -3.00, 28.00), App.Rotation(App.Vector(0, 0, 1), 0.0))
-make_link("Board_PCA9685_Left", "2. PCA9685 Front (Horizontal, Pins +Y Left, Clamps UP)", doc_pca.PCA9685_Board, p_pca_front, COLOR_PCA)
+make_link("Board_PCA9685_Left", "2. PCA9685 Front (Horizontal, Pins +Y Left, Clamps UP)", doc_pca.PCA9685_Board, p_pca_front, None)
 
 # 3. Rear PCA9685 Board at X = -43.25 mm, Y = +3.00 mm, Z = 28.00 mm (Horizontal, pins -Y Right, clamps UP)
 p_pca_rear = App.Placement(App.Vector(-43.25, 3.00, 28.00), App.Rotation(App.Vector(0, 0, 1), 180.0))
-make_link("Board_PCA9685_Right", "3. PCA9685 Rear (Horizontal, Pins -Y Right, Clamps UP)", doc_pca.PCA9685_Board, p_pca_rear, COLOR_PCA)
+make_link("Board_PCA9685_Right", "3. PCA9685 Rear (Horizontal, Pins -Y Right, Clamps UP)", doc_pca.PCA9685_Board, p_pca_rear, None)
 
 # 4. Sensor Hub & 3.3V/GND Distribution Carrier Board seated on Intermediate Deck bosses at (0.0, 0.0, 28.00 mm)
 p_hub = App.Placement(App.Vector(0.0, 0.0, 28.00), App.Rotation())
-make_link("Board_Sensor_Hub", "4. Sensor Hub & 3.3V/GND Distribution Carrier Board", doc_hub.Sensor_Hub_Board, p_hub, COLOR_HUB)
+make_link("Board_Sensor_Hub", "4. Sensor Hub & 3.3V/GND Distribution Carrier Board", doc_hub.Sensor_Hub_Board, p_hub, None)
 
 # 5. TCA9548A Multiplexer seated in Hub Female Sockets (elevated to Z = 33.60 mm)
 r_tca = App.Rotation(App.Vector(0, 0, 1), 90.0)
 p_tca = App.Placement(App.Vector(0.0, 0.0, 33.60), r_tca)
-make_link("Board_TCA9548A", "5. TCA9548A I2C Multiplexer (Seated in Hub Sockets)", doc_tca.TCA9548A_Board, p_tca, COLOR_TCA)
+make_link("Board_TCA9548A", "5. TCA9548A I2C Multiplexer (Seated in Hub Sockets)", doc_tca.TCA9548A_Board, p_tca, None)
 
 # 6. 2S LiPo Battery Pack in lower tunnel (Z = 3.75 .. 17.75 mm)
 p_bat = App.Placement(App.Vector(0.0, 0.0, 3.75), App.Rotation())
