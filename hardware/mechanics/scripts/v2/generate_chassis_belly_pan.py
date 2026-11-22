@@ -258,6 +258,7 @@ if hasattr(obj_frame, "ViewObject") and obj_frame.ViewObject:
     obj_frame.ViewObject.ShapeColor = (0.22, 0.24, 0.27)
 doc_frame.recompute()
 doc_frame.saveAs(fcstd_frame_path)
+# Export visual mesh for Three.js / Web-Dashboard
 obj_frame.Shape.exportStl(f"{urdf_mesh_dir}/chassis_belly_pan.stl")
 if "--export" in sys.argv:
     os.makedirs(export_step_dir, exist_ok=True)
@@ -283,6 +284,7 @@ if hasattr(obj_hatch, "ViewObject") and obj_hatch.ViewObject:
     obj_hatch.ViewObject.ShapeColor = (0.30, 0.32, 0.36)
 doc_hatch.recompute()
 doc_hatch.saveAs(fcstd_hatch_path)
+# Export visual mesh for Three.js / Web-Dashboard
 obj_hatch.Shape.exportStl(f"{urdf_mesh_dir}/chassis_battery_hatch.stl")
 if "--export" in sys.argv:
     obj_hatch.Shape.exportStep(f"{export_step_dir}/chassis_battery_hatch.step")

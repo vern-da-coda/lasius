@@ -86,6 +86,67 @@ def make_rounded_rect_solid(x_min, x_max, y_min, y_max, r_corner, z_min, z_max):
     face = Part.Face(Part.Wire(edges))
     return face.extrude(App.Vector(0.0, 0.0, z_max - z_min))
 
+
+def make_dovetail_prism(x_throat, x_base, w_throat, w_base, z_min, z_max, x_overshoot=0.0):
+    """Constructs a dovetail prism in the X-Y plane extruded along Z."""
+    if abs(x_overshoot) > 1e-4:
+        pts = [
+            (x_throat + x_overshoot,  w_throat / 2.0),
+            (x_throat,                w_throat / 2.0),
+            (x_base,                  w_base / 2.0),
+            (x_base,                 -w_base / 2.0),
+            (x_throat,               -w_throat / 2.0),
+            (x_throat + x_overshoot, -w_throat / 2.0),
+        ]
+    else:
+        pts = [
+            (x_throat,  w_throat / 2.0),
+            (x_base,    w_base / 2.0),
+            (x_base,   -w_base / 2.0),
+            (x_throat, -w_throat / 2.0),
+        ]
+    v = [App.Vector(px, py, z_min) for px, py in pts]
+    edges = [Part.makeLine(v[i], v[(i + 1) % len(v)]) for i in range(len(v))]
+    face = Part.Face(Part.Wire(edges))
+    return face.extrude(App.Vector(0.0, 0.0, z_max - z_min))
+
+
+def make_filleted_boss(x_start, x_end, y_half, r_corner, z_min, z_max):
+    """Constructs a filleted rectangular boss in X-Y extruded along Z."""
+    dx = abs(x_end - x_start)
+    xmin = min(x_start, x_end)
+    xmax = max(x_start, x_end)
+    ymin = -y_half
+    ymax = y_half
+    r = min(r_corner, dx / 2.0 - 0.1, y_half - 0.1)
+    k = r * (1.0 - 1.0 / math.sqrt(2.0))
+    if x_end > x_start:  # Front boss
+        pts = [
+            (xmin, ymax),
+            (xmax - r, ymax),
+            (xmax - k, ymax - k),
+            (xmax, ymax - r),
+            (xmax, ymin + r),
+            (xmax - k, ymin + k),
+            (xmax - r, ymin),
+            (xmin, ymin),
+        ]
+    else:  # Rear boss
+        pts = [
+            (xmax, ymin),
+            (xmin + r, ymin),
+            (xmin + k, ymin + k),
+            (xmin, ymin + r),
+            (xmin, ymax - r),
+            (xmin + k, ymax - k),
+            (xmin + r, ymax),
+            (xmax, ymax),
+        ]
+    v = [App.Vector(px, py, z_min) for px, py in pts]
+    wire = Part.Wire(Part.makePolygon(v + [v[0]]))
+    face = Part.Face(wire)
+    return face.extrude(App.Vector(0.0, 0.0, z_max - z_min))
+
 # -----------------------------------------------------------------------------
 # 1. Build Part: chassis_core.FCStd
 # -----------------------------------------------------------------------------
@@ -158,9 +219,9 @@ for cx, cy in coxa_pivots:
 
 core_solid = hull.fuse(win_plug)
 
-# 1.2 Cut Full Open-Top Monocoque Tub Cavity (Z = 3.62 .. 55.00 mm) via Exact 2D Normal Offset (-2.00 mm)
-#     Every outer wall segment (spline + leg-swing scallops) has an exact 2.00 mm (5-perimeter) wall thickness!
-t_wall = 2.00
+# 1.2 Cut Full Open-Top Monocoque Tub Cavity (Z = 3.62 .. 55.00 mm) via Exact 2D Normal Offset (-1.60 mm)
+#     Every outer wall segment (spline + leg-swing scallops) has an exact 1.60 mm (4-perimeter) wall thickness!
+t_wall = 1.60
 inner_face_valid = outer_2d_face.Faces[0].makeOffset2D(-t_wall).Faces[0]
 inner_tub = inner_face_valid.extrude(App.Vector(0.0, 0.0, 52.00))
 inner_tub.translate(App.Vector(0.0, 0.0, 3.62))
@@ -174,16 +235,24 @@ deck_solid = inner_face_valid.extrude(App.Vector(0.0, 0.0, 2.00))
 deck_solid.translate(App.Vector(0.0, 0.0, 24.00))
 core_solid = core_solid.fuse(deck_solid)
 
-# 1.4 Fuse ONLY the 4 Main Standoff Pillars at (±45.0, ±30.0 mm) Connected to the Outer Wall
-#     (Ø8.20 mm = 2.00 mm wall around Ø4.20 mm Ruthex M3 insert pocket)
+# 1.4 Fuse the 4 Main Standoff Pillars at (±45.0, ±30.0 mm) Solidly with the Outer Wall
+#     Bridges each pillar directly into the outer hull wall across Z = 2.02 .. 53.28 mm,
+#     eliminating the narrow wall-to-pillar gap and maximizing horizontal wall stiffness in the upper section:
 standoffs = [
     (45.0, 30.0),
     (45.0, -30.0),
     (-45.0, 30.0),
     (-45.0, -30.0),
 ]
+r_pillar = 4.80
 for sx, sy in standoffs:
-    pillar_solid = Part.makeCylinder(4.10, 51.26, App.Vector(sx, sy, 2.02), App.Vector(0, 0, 1)).common(hull)
+    sign_y = 1.0 if sy > 0 else -1.0
+    cyl = Part.makeCylinder(r_pillar, 51.26, App.Vector(sx, sy, 2.02), App.Vector(0, 0, 1))
+    if sy > 0:
+        bridge = Part.makeBox(2 * r_pillar, 8.50, 51.26, App.Vector(sx - r_pillar, sy, 2.02))
+    else:
+        bridge = Part.makeBox(2 * r_pillar, 8.50, 51.26, App.Vector(sx - r_pillar, sy - 8.50, 2.02))
+    pillar_solid = cyl.fuse(bridge).common(hull)
     core_solid = core_solid.fuse(pillar_solid)
     bore = Part.makeCylinder(1.70, 55.00, App.Vector(sx, sy, 0.0), App.Vector(0, 0, 1))
     top_pocket = Part.makeCylinder(2.10, 7.50, App.Vector(sx, sy, 46.30), App.Vector(0, 0, 1))
@@ -195,6 +264,10 @@ for sx, sy in standoffs:
 front_stop = Part.makeBox(2.00, 36.40, 20.38, App.Vector(44.50, -18.20, 3.62))
 core_solid = core_solid.fuse(front_stop)
 
+# Battery rear clearance pocket (ensures 0.0000 mm^3 collision with 2S LiPo reaching X = -83.5 mm):
+bat_rear_clearance = Part.makeBox(6.00, 36.40, 20.38, App.Vector(-85.00, -18.20, 3.62))
+core_solid = core_solid.cut(bat_rear_clearance)
+
 # Cut Battery Service Aperture through the Bottom Plate (Z in [-0.50, 4.50 mm]):
 # Preserves all 4 corners of the 160 x 50 mm Body_Bottom window as solid sealing gussets,
 # leaves the front floor (X in [44.0, 80.0]) and rear transverse bridge (X in [-80.0, -72.0]) solid,
@@ -203,9 +276,8 @@ core_solid = core_solid.fuse(front_stop)
 bat_service_cut = make_rounded_rect_solid(-72.0, 44.0, -19.0, 19.0, 5.0, -0.50, 4.50)
 core_solid = core_solid.cut(bat_service_cut)
 
-# Rear battery insertion / extraction port cutting through rear outer wall (X in [-90.0, -82.0 mm], Y in [-19.0, +19.0 mm]):
-rear_bat_port = Part.makeBox(10.00, 38.00, 21.00, App.Vector(-90.00, -19.00, 3.50))
-core_solid = core_solid.cut(rear_bat_port)
+# Note: Horizontal rear battery extraction port removed - battery extraction is now 100% downward
+# through the Belly Pan service hatch, leaving the rear bulkhead solid and dirt-sealed.
 
 # 1.6 Pass-Through Slots between Levels (Z in [23.50, 28.50 mm]):
 # - Front ToF cable slot at X in [46.50, 51.50], Y in [-6.00, +6.00]
@@ -305,6 +377,26 @@ for bx, by in bosses:
     bore = Part.makeCylinder(1.025, 4.00, App.Vector(bx, by, 24.00), App.Vector(0, 0, 1))
     core_solid = core_solid.fuse(boss).cut(bore)
 
+# 1.9 Add Front & Rear Integrated Vertical Dovetail Sockets for Head & Gaster Mounts (Concept 1)
+# Bionic Bosses:
+# - Front Boss at X in [84.00, 92.50 mm], Y in [-14.00, +14.00 mm], Z in [2.02, 53.28 mm]
+# - Rear Boss at X in [-92.50, -84.00 mm], Y in [-14.00, +14.00 mm], Z in [2.02, 53.28 mm]
+f_boss = make_filleted_boss(84.00, 92.50, 14.00, 2.50, 2.02, 53.28)
+r_boss = make_filleted_boss(-84.00, -92.50, 14.00, 2.50, 2.02, 53.28)
+core_solid = core_solid.fuse(f_boss).fuse(r_boss)
+
+# Dovetail Female Pockets (Cut from Z = 6.00 mm to 55.00 mm, leaving 4.0 mm bottom stop collar at Z in [2.02, 6.00 mm]):
+# - Front Dovetail: Throat at X = 92.50 mm (w = 14.0 mm), Base at X = 85.50 mm (w = 22.0 mm)
+f_cut = make_dovetail_prism(92.50, 85.50, 14.00, 22.00, 6.00, 55.00, x_overshoot=2.0)
+# - Rear Dovetail: Throat at X = -92.50 mm (w = 14.0 mm), Base at X = -85.50 mm (w = 22.0 mm)
+r_cut = make_dovetail_prism(-92.50, -85.50, 14.00, 22.00, 6.00, 55.00, x_overshoot=-2.0)
+core_solid = core_solid.cut(f_cut).cut(r_cut)
+
+# Central Cable Pass-Through Tunnels (12.0 x 8.0 mm at Z in [28.00, 36.00 mm] leading directly into Level 2):
+cable_cut_front = Part.makeBox(20.00, 12.00, 8.00, App.Vector(80.00, -6.00, 28.00))
+cable_cut_rear = Part.makeBox(20.00, 12.00, 8.00, App.Vector(-95.00, -6.00, 28.00))
+core_solid = core_solid.cut(cable_cut_front).cut(cable_cut_rear)
+
 core_solid = core_solid.removeSplitter()
 
 part_obj = doc_core.addObject("Part::Feature", "Chassis_Core")
@@ -316,6 +408,7 @@ if hasattr(part_obj, "ViewObject") and part_obj.ViewObject is not None:
 doc_core.recompute()
 
 doc_core.saveAs(fcstd_core_path)
+# Export visual mesh for Three.js / Web-Dashboard
 core_solid.exportStl(f"{repo_root}/hardware/mechanics/export/urdf/meshes/chassis_core.stl")
 if "--export" in sys.argv:
     core_solid.exportStep(f"{export_step_dir}/parts/chassis/chassis_core.step")

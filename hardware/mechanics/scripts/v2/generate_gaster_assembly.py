@@ -73,16 +73,40 @@ z_base = 2.00
 h_mount = 51.30
 z_mid = z_base + 0.5 * h_mount  # Z = 27.65 mm
 
-# Main body block spanning X = -82.0 .. -136.0 mm (length 54.0 mm), Y in [-15.0, 15.0 mm]
-body_box = Part.makeBox(54.0, 30.0, h_mount, App.Vector(-136.0, -15.0, z_base))
 
-# 2x Centerline Standoff Bores & Ruthex M3 Pockets at X = -90.0 and X = -120.0 mm (Y = 0)
-mount_solid = body_box
-for sx in [-90.0, -120.0]:
-    bore = Part.makeCylinder(1.70, h_mount + 10.0, App.Vector(sx, 0.0, z_base - 5.0), App.Vector(0, 0, 1))
-    top_pocket = Part.makeCylinder(2.10, 8.0, App.Vector(sx, 0.0, z_base + h_mount - 7.5), App.Vector(0, 0, 1))
-    bot_pocket = Part.makeCylinder(2.10, 8.0, App.Vector(sx, 0.0, z_base - 0.5), App.Vector(0, 0, 1))
-    mount_solid = mount_solid.cut(bore).cut(top_pocket).cut(bot_pocket)
+def make_dovetail_prism(x_throat, x_base, w_throat, w_base, z_min, z_max):
+    """Constructs a male dovetail runner prism in the X-Y plane extruded along Z."""
+    pts = [
+        (x_throat,  w_throat / 2.0),
+        (x_base,    w_base / 2.0),
+        (x_base,   -w_base / 2.0),
+        (x_throat, -w_throat / 2.0),
+    ]
+    v = [App.Vector(px, py, z_min) for px, py in pts]
+    edges = [Part.makeLine(v[i], v[(i + 1) % len(v)]) for i in range(len(v))]
+    face = Part.Face(Part.Wire(edges))
+    return face.extrude(App.Vector(0.0, 0.0, z_max - z_min))
+
+
+# 1. Main body block spanning X = -136.0 .. -92.50 mm (length 43.50 mm), Y in [-14.0, 14.0 mm]
+body_box = Part.makeBox(43.50, 28.00, h_mount, App.Vector(-136.0, -14.0, z_base))
+
+# 2. Male Dovetail Runner at X in [-92.50, -85.68 mm], Z in [6.18, 53.10 mm]
+#    Mates with 0.18 mm normal clearance into Chassis Core rear socket (throat: 13.64, base: 21.64 mm):
+male_runner = make_dovetail_prism(-92.50, -85.68, 13.64, 21.64, 6.18, 53.10)
+mount_solid = body_box.fuse(male_runner)
+
+# Rear Centerline Standoff Bore at X = -120.0 mm (Y = 0)
+bore_120 = Part.makeCylinder(1.70, h_mount + 10.0, App.Vector(-120.0, 0.0, z_base - 5.0), App.Vector(0, 0, 1))
+top_pocket_120 = Part.makeCylinder(2.10, 8.0, App.Vector(-120.0, 0.0, z_base + h_mount - 7.5), App.Vector(0, 0, 1))
+bot_pocket_120 = Part.makeCylinder(2.10, 8.0, App.Vector(-120.0, 0.0, z_base - 0.5), App.Vector(0, 0, 1))
+mount_solid = mount_solid.cut(bore_120).cut(top_pocket_120).cut(bot_pocket_120)
+
+# Optional Locking Bore at X = -90.0 mm through the Dovetail Runner (Y = 0)
+bore_90 = Part.makeCylinder(1.70, h_mount + 10.0, App.Vector(-90.0, 0.0, z_base - 5.0), App.Vector(0, 0, 1))
+top_pocket_90 = Part.makeCylinder(2.10, 8.0, App.Vector(-90.0, 0.0, z_base + h_mount - 7.5), App.Vector(0, 0, 1))
+bot_pocket_90 = Part.makeCylinder(2.10, 8.0, App.Vector(-90.0, 0.0, z_base - 0.5), App.Vector(0, 0, 1))
+mount_solid = mount_solid.cut(bore_90).cut(top_pocket_90).cut(bot_pocket_90)
 
 # Rear Clevis Yoke for Standard Pan Servo at X in [-138.0, -126.0]
 # Vertical servo ear pocket (width 21.0 mm, height 42.0 mm)
@@ -93,9 +117,9 @@ mount_solid = mount_solid.cut(pan_cradle)
 pan_bore = Part.makeCylinder(1.60, h_mount + 5.0, App.Vector(-134.0, 0.0, z_base - 2.0), App.Vector(0, 0, 1))
 mount_solid = mount_solid.cut(pan_bore)
 
-# Weight relief and cable tunnel
-tunnel = Part.makeBox(36.0, 16.0, 20.0, App.Vector(-118.0, -8.0, z_mid - 10.0))
-mount_solid = mount_solid.cut(tunnel)
+# Central Cable Conduit (12.0 x 8.0 mm) through Dovetail Runner into Monocoque at Z in [28.00, 36.00 mm]
+cable_conduit = Part.makeBox(50.0, 12.0, 8.0, App.Vector(-120.0, -6.0, 28.00))
+mount_solid = mount_solid.cut(cable_conduit)
 
 obj_tm = doc_m.addObject("Part::Feature", "APod_Tail_Mount")
 obj_tm.Label = "A-Pod Rear Chassis Standoff Mount (v2)"

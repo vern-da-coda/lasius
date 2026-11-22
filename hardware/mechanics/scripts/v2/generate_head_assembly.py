@@ -57,6 +57,20 @@ z_base = 2.00
 h_mount = 51.30
 z_mid = z_base + 0.5 * h_mount  # Z = 27.65 mm
 
+
+def make_dovetail_prism(x_throat, x_base, w_throat, w_base, z_min, z_max):
+    """Constructs a male dovetail runner prism in the X-Y plane extruded along Z."""
+    pts = [
+        (x_throat,  w_throat / 2.0),
+        (x_base,    w_base / 2.0),
+        (x_base,   -w_base / 2.0),
+        (x_throat, -w_throat / 2.0),
+    ]
+    v = [App.Vector(px, py, z_min) for px, py in pts]
+    edges = [Part.makeLine(v[i], v[(i + 1) % len(v)]) for i in range(len(v))]
+    face = Part.Face(Part.Wire(edges))
+    return face.extrude(App.Vector(0.0, 0.0, z_max - z_min))
+
 # =============================================================================
 # 1. Build Part: apod_head_mount.FCStd
 # =============================================================================
@@ -69,10 +83,17 @@ except Exception:
 doc_mount = App.newDocument(doc_mount_name)
 fcstd_mount_path = f"{models_dir}/apod_head_mount.FCStd"
 
-# Base block clamped between body_bottom (Z = 2.0) and body_top (Z = 53.3 mm)
-# Spanning X = 118.0 .. 152.0 mm, Y in [-18.0, 18.0 mm]
+# 1. Male Dovetail Runner at X in [85.68, 92.50 mm], Z in [6.18, 53.10 mm]
+#    Mates with 0.18 mm normal clearance into Chassis Core front socket (throat: 13.64, base: 21.64 mm):
+male_runner = make_dovetail_prism(92.50, 85.68, 13.64, 21.64, 6.18, 53.10)
+
+# 2. Extension Neck Bridge from Dovetail to Main Block (X in [92.50, 118.00 mm], Y in [-9.0, +9.0 mm], Z in [6.18, 53.10 mm]):
+bridge = Part.makeBox(25.50, 18.00, 53.10 - 6.18, App.Vector(92.50, -9.00, 6.18))
+
+# 3. Main Head Standoff Block clamped between body_bottom (Z = 2.0) and body_top (Z = 53.3 mm)
+#    Spanning X = 118.0 .. 152.0 mm, Y in [-18.0, 18.0 mm]
 box_body = Part.makeBox(34.0, 36.0, h_mount, App.Vector(118.0, -18.0, z_base))
-mount_solid = box_body
+mount_solid = box_body.fuse(bridge).fuse(male_runner)
 
 # 2x Front Standoff Bores & Ruthex M3 Pockets at (128.0, ±12.0 mm)
 for hy in [12.0, -12.0]:
@@ -88,8 +109,8 @@ servo_pocket = Part.makeBox(42.0, 21.0, 44.0, App.Vector(126.0, -10.5, z_base + 
 spline_bore = Part.makeCylinder(7.0, 12.0, App.Vector(142.0, 0.0, z_base + h_mount - 8.0), App.Vector(0, 0, 1))
 mount_solid = mount_solid.cut(servo_pocket).cut(spline_bore)
 
-# Central cable pass-through conduit (16 x 10 mm) at rear
-cable_conduit = Part.makeBox(15.0, 16.0, 16.0, App.Vector(116.0, -8.0, z_mid - 8.0))
+# Central Cable Conduit (12.0 x 8.0 mm) through Bridge & Dovetail into Monocoque at Z in [28.00, 36.00 mm]
+cable_conduit = Part.makeBox(60.0, 12.0, 8.0, App.Vector(84.0, -6.0, 28.00))
 mount_solid = mount_solid.cut(cable_conduit)
 
 obj_m = doc_mount.addObject("Part::Feature", "APod_Head_Mount")
