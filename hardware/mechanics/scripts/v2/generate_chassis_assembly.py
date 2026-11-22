@@ -42,7 +42,6 @@ def build_chassis_assembly():
 
     doc_bottom = App.openDocument(f"{v1_parts_dir}/body_bottom.FCStd")
     doc_top = App.openDocument(f"{v1_parts_dir}/body_top.FCStd")
-    doc_spacer = App.openDocument(f"{v1_parts_dir}/spacer_14x50.FCStd")
     doc_core_asm = App.openDocument(f"{v2_asm_dir}/chassis_core_assembly.FCStd")
     doc_belly = App.openDocument(f"{v2_asm_dir}/parts/chassis/chassis_belly_pan.FCStd")
     doc_hatch = App.openDocument(f"{v2_asm_dir}/parts/chassis/chassis_battery_hatch.FCStd")
@@ -87,7 +86,6 @@ def build_chassis_assembly():
         return lnk
 
     COLOR_CARBON = (0.16, 0.16, 0.18)
-    COLOR_SPACER = (0.78, 0.78, 0.80)
     COLOR_BELLY_PAN = (0.26, 0.26, 0.30)
     COLOR_RPI_MOUNT = (0.24, 0.24, 0.28)
     COLOR_SERVICE_COVER = (0.20, 0.20, 0.23)
@@ -183,22 +181,6 @@ def build_chassis_assembly():
         App.Placement(App.Vector(0.0, 0.0, 0.0), App.Rotation()),
         COLOR_SERVICE_COVER,
     )
-
-    # 10. Front & Rear End Standoff Spacers (Z = 2.00 .. 53.30 mm) stiffening the CFRP plate tips:
-    spacer_obj = getattr(doc_spacer, "Spacer", doc_spacer.Objects[0])
-    end_spacers = [
-        ("Spacer_Front_Left",  "10. Front Left Standoff Spacer (M3, 51.3mm)",  128.0,  12.0),
-        ("Spacer_Front_Right", "11. Front Right Standoff Spacer (M3, 51.3mm)", 128.0, -12.0),
-        ("Spacer_Rear_End",    "12. Rear End Standoff Spacer (M3, 51.3mm)",   -120.0,   0.0),
-    ]
-    for s_name, s_label, sx, sy in end_spacers:
-        make_link(
-            s_name,
-            s_label,
-            spacer_obj,
-            App.Placement(App.Vector(sx, sy, 2.00), App.Rotation()),
-            COLOR_SPACER,
-        )
 
     doc.recompute()
     doc.save()
