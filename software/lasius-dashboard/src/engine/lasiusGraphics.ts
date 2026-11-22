@@ -260,21 +260,13 @@ export class LasiusGraphicsEngine {
       metalness: 0.36,
       side: THREE.DoubleSide
     });
-    this.canopyMat = new THREE.MeshStandardMaterial({
-      color: 0xc8e4fa,
-      roughness: 0.16,
-      metalness: 0.12,
-      transparent: true,
-      opacity: 0.36,
-      depthWrite: false,
-      side: THREE.DoubleSide
-    });
     this.coverNeutralMat = new THREE.MeshStandardMaterial({
       color: 0x242734,
       roughness: 0.40,
       metalness: 0.38,
       side: THREE.DoubleSide
     });
+    this.canopyMat = this.coverNeutralMat;
     this.tarsusNeutralMat = this.legNeutralMat;
     this.kufeNeutralMat = this.legNeutralMat;
     this.pcbGreenMat = new THREE.MeshStandardMaterial({
@@ -456,6 +448,7 @@ export class LasiusGraphicsEngine {
       { key: 'body_top', file: 'body_top.stl', matrix: matBody },
       { key: 'chassis_core', file: 'chassis_core.stl', matrix: matBody },
       { key: 'chassis_belly_pan', file: 'chassis_belly_pan.stl', matrix: matBody },
+      { key: 'chassis_battery_hatch', file: 'chassis_battery_hatch.stl', matrix: matBody },
       { key: 'chassis_rpi_mount', file: 'chassis_rpi_mount.stl', matrix: matBody },
       { key: 'chassis_canopy', file: 'chassis_canopy.stl', matrix: matBody },
       { key: 'chassis_service_cover', file: 'chassis_service_cover.stl', matrix: matBody },
@@ -612,6 +605,7 @@ export class LasiusGraphicsEngine {
       { key: 'body_top', mat: this.carbonPlateMat },
       { key: 'chassis_core', mat: this.chassisMat },
       { key: 'chassis_belly_pan', mat: this.hardwareMat },
+      { key: 'chassis_battery_hatch', mat: this.hardwareMat },
       { key: 'chassis_rpi_mount', mat: this.chassisMat },
       { key: 'rpi4_model_b', mat: this.pcbGreenMat },
       { key: 'vl53l5cx_board', mat: this.pcbRedMat },
