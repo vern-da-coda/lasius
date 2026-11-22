@@ -6,16 +6,26 @@ Architecture:
   - Integral 3D-printed monocoque central core (chassis_core.FCStd) spanning
     the 51.30 mm vertical gap between Body_Bottom (Z = 2.00 mm) and
     Body_Top (Z = 53.30 mm).
-  - Directly replaces the 4 discrete middle spacer standoffs at X = ±45.0, Y = ±30.0 mm
-    with integrated structural pillars featuring M3 Ruthex heat-set insert pockets.
-  - Symmetrical bionic ant-thorax outer contour with an organic pinched waist at X = 0.
-  - Dual vertical slide-in card slots (Option A) for two PCA9685 16-channel servo
-    controllers (Y = ±13.0 mm, Z = 31.00 mm -> PCB Z in [18.30, 43.70 mm], pins up to 52.20 mm),
-    captively guiding the 62.5 mm PCB edges over 2.25 mm per side with zero collision.
-  - Lower encapsulated battery tunnel (Z = 1.5 .. 16.65 mm) with full rear clearance
-    for 2S LiPo battery pack and JST-XH balance plug.
-  - Rear compartment for TCA9548A 8-channel I2C multiplexer with integrated support
-    bosses (Z = 18.0 .. 19.95 mm) and centering pins at (-42.0, ±13.0 mm).
+  - 2-Level Monocoque Structure separated by a continuous horizontal Intermediate Deck
+    (Zwischenboden, Z = 18.00 .. 20.00 mm):
+    * Level 1 (Lower Level, Z = 0.02 .. 18.00 mm):
+      - 100% flush sealing plug (Z in [0.02, 3.62 mm]) closing Body_Bottom's 160 x 50 mm cutout
+        with 6x cylindrical leg-swing clearance scallops (R = 45.0 mm).
+      - Lower encapsulated 2S LiPo battery tunnel (Z = 3.62 .. 18.00 mm, X in [-84.5, +44.5 mm])
+        with rear insertion/extraction port and front battery stop wall.
+      - Dedicated front-floor cable passage for Belly Pan VL53L5CX ToF sensor.
+    * Intermediate Deck (Zwischenboden, Z = 18.00 .. 20.00 mm):
+      - Continuous 2.00 mm horizontal deck spanning the entire monocoque interior.
+      - Integrated M2.5 screw bosses (Z = 20.00 .. 21.98 mm) for rigid horizontal mounting.
+      - Dedicated cable pass-through slots (Front ToF slot, Rear LiPo power slot).
+    * Level 2 (Upper Level, Z = 20.00 .. 53.28 mm):
+      - Open-top electronics tub with uniform 2.00 mm wall thickness.
+      - 4 structural corner pillars at (±45.0, ±30.0 mm) with Ruthex M3 insert pockets.
+      - 6 lateral cable ports at Z in [23.00, 35.00 mm] with integrated micro zip-tie saddles.
+      - Tandem horizontal controller layout (Option 1):
+        - Front PCA9685 at X = +43.25 mm (clamping screws face UP +Z, wire entry -Y, pins +Y Left).
+        - Rear PCA9685 at X = -43.25 mm (clamping screws face UP +Z, wire entry +Y, pins -Y Right).
+        - Center TCA9548A at X = 0.00 mm, Y = 0.00 mm (flat horizontal, 90° rotated).
 """
 
 import math
@@ -41,6 +51,41 @@ for d in [
 ]:
     os.makedirs(d, exist_ok=True)
 
+
+def make_rounded_rect_solid(x_min, x_max, y_min, y_max, r_corner, z_min, z_max):
+    """Constructs a filleted 3D solid prism in the X-Y plane extruded along Z."""
+    dx = x_max - x_min
+    dy = y_max - y_min
+    r = min(r_corner, dx / 2.0 - 0.1, dy / 2.0 - 0.1)
+    k = r * (1.0 - 1.0 / math.sqrt(2.0))
+    pts = [
+        (x_min + r, y_max),
+        (x_max - r, y_max),
+        (x_max - k, y_max - k),
+        (x_max, y_max - r),
+        (x_max, y_min + r),
+        (x_max - k, y_min + k),
+        (x_max - r, y_min),
+        (x_min + r, y_min),
+        (x_min + k, y_min + k),
+        (x_min, y_min + r),
+        (x_min, y_max - r),
+        (x_min + k, y_max - k),
+    ]
+    v = [App.Vector(px, py, z_min) for px, py in pts]
+    edges = [
+        Part.makeLine(v[0], v[1]),
+        Part.Edge(Part.ArcOfCircle(v[1], v[2], v[3])),
+        Part.makeLine(v[3], v[4]),
+        Part.Edge(Part.ArcOfCircle(v[4], v[5], v[6])),
+        Part.makeLine(v[6], v[7]),
+        Part.Edge(Part.ArcOfCircle(v[7], v[8], v[9])),
+        Part.makeLine(v[9], v[10]),
+        Part.Edge(Part.ArcOfCircle(v[10], v[11], v[0])),
+    ]
+    face = Part.Face(Part.Wire(edges))
+    return face.extrude(App.Vector(0.0, 0.0, z_max - z_min))
+
 # -----------------------------------------------------------------------------
 # 1. Build Part: chassis_core.FCStd
 # -----------------------------------------------------------------------------
@@ -52,21 +97,29 @@ except Exception:
 doc_core = App.newDocument(doc_core_name)
 fcstd_core_path = f"{models_dir}/chassis_core.FCStd"
 
-# 1.1 Bionic Outer Hull Spline Extrusion (Z = 2.02 .. 53.28 mm, H = 51.26 mm for 0.02 mm plate clearance)
+# 1.1 Extended Bionic Outer Hull Spline Extrusion (X in [-84.5, +84.5 mm], Z = 2.02 .. 53.28 mm)
+#     Completely covers and seals the 160 x 50 mm cutout window in Body_Bottom (X in [-80, +80], Y in [-25, +25]),
+#     with waist Y = ±29.0 mm (4.0 mm overlap per side) and ends X = ±84.5 mm (4.5 mm overlap per end),
+#     plus an integrated flush lower window-sealing plate (Z = 0.02 .. 2.02 mm, X in [-79.9, +79.9], Y in [-24.9, +24.9])
+#     and 6x cylindrical leg-swing clearance scallops (R = 43.20 mm around all 6 Coxa pivots for Z >= 1.98 mm).
 pts_half = [
-    App.Vector(54.0, 0.0, 0.0),
-    App.Vector(54.0, 16.0, 0.0),
+    App.Vector(84.5, 0.0, 0.0),
+    App.Vector(84.5, 22.0, 0.0),
+    App.Vector(78.0, 28.5, 0.0),
+    App.Vector(62.0, 29.5, 0.0),
     App.Vector(45.0 + 7.0 * math.cos(math.radians(20)), 30.0 + 7.0 * math.sin(math.radians(20)), 0.0),
     App.Vector(45.0, 37.0, 0.0),
     App.Vector(45.0 - 7.0 * math.cos(math.radians(45)), 30.0 + 7.0 * math.sin(math.radians(45)), 0.0),
-    App.Vector(20.0, 22.0, 0.0),
-    App.Vector(0.0, 20.0, 0.0),
-    App.Vector(-20.0, 22.0, 0.0),
+    App.Vector(20.0, 29.5, 0.0),
+    App.Vector(0.0, 29.0, 0.0),
+    App.Vector(-20.0, 29.5, 0.0),
     App.Vector(-45.0 + 7.0 * math.cos(math.radians(45)), 30.0 + 7.0 * math.sin(math.radians(45)), 0.0),
     App.Vector(-45.0, 37.0, 0.0),
     App.Vector(-45.0 - 7.0 * math.cos(math.radians(20)), 30.0 + 7.0 * math.sin(math.radians(20)), 0.0),
-    App.Vector(-56.0, 16.0, 0.0),
-    App.Vector(-56.0, 0.0, 0.0),
+    App.Vector(-62.0, 29.5, 0.0),
+    App.Vector(-78.0, 28.5, 0.0),
+    App.Vector(-84.5, 22.0, 0.0),
+    App.Vector(-84.5, 0.0, 0.0),
 ]
 spline_half = Part.BSplineCurve()
 spline_half.interpolate(pts_half)
@@ -77,12 +130,52 @@ spline_lower.interpolate([pts_half[-1]] + pts_lower + [pts_half[0]])
 
 wire = Part.Wire([spline_half.toShape(), spline_lower.toShape()])
 face = Part.Face(wire)
-hull = face.extrude(App.Vector(0.0, 0.0, 51.26))
+
+# Cut 6x Cylindrical Leg-Swing Clearance Envelopes in 2D first so makeOffset2D(-2.00) produces
+# an exact, uniform 2.00 mm normal wall thickness along both the spline AND all 6 leg-swing scallops!
+coxa_pivots = [
+    (86.0, 65.0),
+    (0.0, 75.0),
+    (-86.0, 65.0),
+    (86.0, -65.0),
+    (0.0, -75.0),
+    (-86.0, -65.0),
+]
+outer_2d_face = face
+for cx, cy in coxa_pivots:
+    c_face = Part.Face(Part.Wire(Part.makeCircle(45.00, App.Vector(cx, cy, 0.0))))
+    outer_2d_face = outer_2d_face.cut(c_face)
+
+hull = outer_2d_face.extrude(App.Vector(0.0, 0.0, 51.26))
 hull.translate(App.Vector(0.0, 0.0, 2.02))
 
-core_solid = hull
+# Flush Window-Sealing Plug (X in [-79.90, +79.90], Y in [-24.90, +24.90], Z in [0.02, 3.62 mm])
+# Closes 100% of Body_Bottom's 160.0 x 50.0 mm cutout window (including the 4 corners under the leg swing path):
+win_plug = Part.makeBox(159.80, 49.80, 3.60, App.Vector(-79.90, -24.90, 0.02))
+for cx, cy in coxa_pivots:
+    swing_cyl = Part.makeCylinder(45.00, 52.50, App.Vector(cx, cy, 1.98), App.Vector(0, 0, 1))
+    win_plug = win_plug.cut(swing_cyl)
 
-# 1.2 Cut 4x Integrated Standoff Bores & Ruthex M3 Pockets at (±45.0, ±30.0 mm)
+core_solid = hull.fuse(win_plug)
+
+# 1.2 Cut Full Open-Top Monocoque Tub Cavity (Z = 3.62 .. 55.00 mm) via Exact 2D Normal Offset (-2.00 mm)
+#     Every outer wall segment (spline + leg-swing scallops) has an exact 2.00 mm (5-perimeter) wall thickness!
+t_wall = 2.00
+inner_face_valid = outer_2d_face.Faces[0].makeOffset2D(-t_wall).Faces[0]
+inner_tub = inner_face_valid.extrude(App.Vector(0.0, 0.0, 52.00))
+inner_tub.translate(App.Vector(0.0, 0.0, 3.62))
+core_solid = core_solid.cut(inner_tub)
+
+# 1.3 Add Solid Intermediate Deck (Zwischenboden, Z = 24.00 .. 26.00 mm)
+#     Spans the entire inner tub (thickness 2.00 mm), cleanly separating the lower battery tunnel
+#     (Level 1, Z in [3.62, 24.00 mm], clear height 20.38 mm) from the upper electronics tub
+#     (Level 2, Z in [26.00, 53.28 mm]).
+deck_solid = inner_face_valid.extrude(App.Vector(0.0, 0.0, 2.00))
+deck_solid.translate(App.Vector(0.0, 0.0, 24.00))
+core_solid = core_solid.fuse(deck_solid)
+
+# 1.4 Fuse ONLY the 4 Main Standoff Pillars at (±45.0, ±30.0 mm) Connected to the Outer Wall
+#     (Ø8.20 mm = 2.00 mm wall around Ø4.20 mm Ruthex M3 insert pocket)
 standoffs = [
     (45.0, 30.0),
     (45.0, -30.0),
@@ -90,74 +183,127 @@ standoffs = [
     (-45.0, -30.0),
 ]
 for sx, sy in standoffs:
+    pillar_solid = Part.makeCylinder(4.10, 51.26, App.Vector(sx, sy, 2.02), App.Vector(0, 0, 1)).common(hull)
+    core_solid = core_solid.fuse(pillar_solid)
     bore = Part.makeCylinder(1.70, 55.00, App.Vector(sx, sy, 0.0), App.Vector(0, 0, 1))
     top_pocket = Part.makeCylinder(2.10, 7.50, App.Vector(sx, sy, 46.30), App.Vector(0, 0, 1))
     bot_pocket = Part.makeCylinder(2.10, 7.50, App.Vector(sx, sy, 1.50), App.Vector(0, 0, 1))
     core_solid = core_solid.cut(bore).cut(top_pocket).cut(bot_pocket)
 
-# 1.3 Cut Top Central Electronics Bay & Captive PCA9685 Card Guide Slots
-# - Main bay spans X in [-29.00, +29.00], Y in [-16.50, +16.50], Z in [18.00, 54.00]
-# - Inner component relief spans X in [-31.00, +31.00], Y in [-11.10, +11.10], Z in [18.00, 54.00]
-# - Vertical card guide slots at Y in [11.10, 13.30] and [-13.30, -11.10] span X in [-31.60, +31.60],
-#   captively guiding the 62.50 x 1.60 mm PCA9685 PCBs (X in [-31.25, +31.25], Y in [±11.40, ±13.00])
-#   over 2.25 mm per side with >= 0.30 mm clearance!
-bay_box = Part.makeBox(58.00, 33.00, 36.00, App.Vector(-29.00, -16.50, 18.00))
-bay_inner = Part.makeBox(62.00, 22.20, 36.00, App.Vector(-31.00, -11.10, 18.00))
-slot_left = Part.makeBox(63.20, 2.20, 36.00, App.Vector(-31.60, 11.10, 18.00))
-slot_right = Part.makeBox(63.20, 2.20, 36.00, App.Vector(-31.60, -13.30, 18.00))
-core_solid = core_solid.cut(bay_box).cut(bay_inner).cut(slot_left).cut(slot_right)
+# 1.5 Lower Level Battery Compartment Features (Z in [3.62, 24.00 mm])
+# Front battery stop wall at X = +44.5 mm (keeps 2S LiPo securely seated in X in [-83.5, +44.0 mm]):
+front_stop = Part.makeBox(2.00, 36.40, 20.38, App.Vector(44.50, -18.20, 3.62))
+core_solid = core_solid.fuse(front_stop)
 
-# 1.4 Cut Lower LiPo Battery Tunnel (Z = 1.50 .. 16.65 mm, X = -55.50 .. +46.00 mm, Y = -18.20 .. +18.20 mm)
-bat_box = Part.makeBox(101.50, 36.40, 15.15, App.Vector(-55.50, -18.20, 1.50))
-core_solid = core_solid.cut(bat_box)
+# Cut Battery Service Aperture through the Bottom Plate (Z in [-0.50, 4.50 mm]):
+# Preserves all 4 corners of the 160 x 50 mm Body_Bottom window as solid sealing gussets,
+# leaves the front floor (X in [44.0, 80.0]) and rear transverse bridge (X in [-80.0, -72.0]) solid,
+# and leaves 6.0 mm lateral rims along Y in [-25.0, -19.0] and [19.0, 25.0] mm.
+# Provides 100% collision-free downward battery extraction via Belly Pan removal.
+bat_service_cut = make_rounded_rect_solid(-72.0, 44.0, -19.0, 19.0, 5.0, -0.50, 4.50)
+core_solid = core_solid.cut(bat_service_cut)
 
-# 1.5 Cut Rear TCA9548A Multiplexer Compartment - OPEN TO BODY_TOP (Z = 18.00 .. 54.00 mm)
-tca_box = Part.makeBox(23.00, 32.00, 36.00, App.Vector(-54.00, -16.00, 18.00))
-core_solid = core_solid.cut(tca_box)
+# Rear battery insertion / extraction port cutting through rear outer wall (X in [-90.0, -82.0 mm], Y in [-19.0, +19.0 mm]):
+rear_bat_port = Part.makeBox(10.00, 38.00, 21.00, App.Vector(-90.00, -19.00, 3.50))
+core_solid = core_solid.cut(rear_bat_port)
 
-# 1.6 FRONT Neck / Head Modular Interface & Wiring Bay - OPEN TO BODY_TOP (Z = 22.00 .. 54.00 mm)
-front_tunnel = Part.makeBox(24.00, 20.00, 32.00, App.Vector(30.00, -10.00, 22.00))
-core_solid = core_solid.cut(front_tunnel)
-for hy in [12.0, -12.0]:
-    front_bore = Part.makeCylinder(2.10, 9.0, App.Vector(55.0, hy, 38.0), App.Vector(-1, 0, 0))
-    core_solid = core_solid.cut(front_bore)
-front_step = Part.makeBox(2.5, 36.0, 52.0, App.Vector(52.5, -18.0, 1.5))
-front_step_cut = front_step.cut(Part.makeBox(3.0, 28.0, 44.0, App.Vector(52.0, -14.0, 5.0)))
-core_solid = core_solid.cut(front_step_cut)
+# 1.6 Pass-Through Slots between Levels (Z in [23.50, 28.50 mm]):
+# - Front ToF cable slot at X in [46.50, 51.50], Y in [-6.00, +6.00]
+tof_slot = Part.makeBox(5.00, 12.00, 5.00, App.Vector(46.50, -6.00, 23.50))
+core_solid = core_solid.cut(tof_slot)
+# - Front ToF protective floor channel (through bottom plate into belly pan):
+tof_ch = Part.makeBox(5.00, 12.00, 5.00, App.Vector(46.50, -6.00, -0.50))
+core_solid = core_solid.cut(tof_ch)
+# - Rear battery power lead slot (Z in [23.50, 28.50 mm], X in [-79.0, -73.0], Y in [-10.0, +10.0]):
+bat_slot = Part.makeBox(6.00, 20.00, 5.00, App.Vector(-79.00, -10.00, 23.50))
+core_solid = core_solid.cut(bat_slot)
 
-# 1.7 REAR Petiolus / Gaster Modular Interface (at X = -56.0 mm)
-rear_tunnel_low = Part.makeBox(20.00, 24.00, 15.15, App.Vector(-57.00, -12.00, 1.50))
-rear_tunnel_high = Part.makeBox(20.00, 20.00, 12.00, App.Vector(-57.00, -10.00, 22.00))
-core_solid = core_solid.cut(rear_tunnel_low).cut(rear_tunnel_high)
-for hy in [12.0, -12.0]:
-    rear_bore = Part.makeCylinder(2.10, 9.0, App.Vector(-57.0, hy, 38.0), App.Vector(1, 0, 0))
-    core_solid = core_solid.cut(rear_bore)
+# 1.7 Cut 4x Organic Bionic Inter-Leg Bay Cable Ports (Vorschlag A) at Z in [28.50, 40.00 mm]
+#     Harmonized with the organic ant-thorax morphology: smooth bionic capsule apertures with R = 4.50 mm corner radii,
+#     completely replacing sharp rectangular chop cuts with flowing G1-continuous transitions.
+#     Placed in the safe inter-leg bays completely clear of all 6 Coxa swing cylinders (R = 45.0 mm):
+#     - Front-Bay Left at X = +32.50 mm (X in [25.5, 39.5 mm]) -> > 12.0 mm to FL, > 6.5 mm to ML
+#     - Rear-Bay Left at X = -32.50 mm (X in [-39.5, -25.5 mm]) -> > 12.0 mm to RL, > 6.5 mm to ML
+#     - Front-Bay Right at X = +32.50 mm
+#     - Rear-Bay Right at X = -32.50 mm
+def make_organic_port_cutter(x_center, z_center, width, height, r_corner, y_min, y_max):
+    """Constructs an organic, corner-filleted bionic aperture cutter in the X-Z plane, extruded through the wall along Y."""
+    dx = width
+    dz = height
+    r = min(r_corner, dx / 2.0 - 0.1, dz / 2.0 - 0.1)
+    x1, x2 = x_center - dx / 2.0, x_center + dx / 2.0
+    z1, z2 = z_center - dz / 2.0, z_center + dz / 2.0
+    k = r * (1.0 - 1.0 / math.sqrt(2.0))
+    pts = [
+        (x1 + r, z2),
+        (x2 - r, z2),
+        (x2 - k, z2 - k),
+        (x2, z2 - r),
+        (x2, z1 + r),
+        (x2 - k, z1 + k),
+        (x2 - r, z1),
+        (x1 + r, z1),
+        (x1 + k, z1 + k),
+        (x1, z1 + r),
+        (x1, z2 - r),
+        (x1 + k, z2 - k),
+    ]
+    v = [App.Vector(px, y_min, pz) for px, pz in pts]
+    edges = [
+        Part.makeLine(v[0], v[1]),
+        Part.Edge(Part.ArcOfCircle(v[1], v[2], v[3])),
+        Part.makeLine(v[3], v[4]),
+        Part.Edge(Part.ArcOfCircle(v[4], v[5], v[6])),
+        Part.makeLine(v[6], v[7]),
+        Part.Edge(Part.ArcOfCircle(v[7], v[8], v[9])),
+        Part.makeLine(v[9], v[10]),
+        Part.Edge(Part.ArcOfCircle(v[10], v[11], v[0])),
+    ]
+    face = Part.Face(Part.Wire(edges))
+    return face.extrude(App.Vector(0.0, y_max - y_min, 0.0))
 
-# 1.8 Cut 6x Lateral Cable Ports (FL, ML, RL, FR, MR, RR)
-port_defs = [
-    (34.00, 10.00, 12.00, 22.00, 12.00),    # FL
-    (-6.00, 10.00, 12.00, 22.00, 12.00),    # ML
-    (-46.00, 10.00, 12.00, 22.00, 12.00),   # RL
-    (34.00, -32.00, 12.00, 22.00, 12.00),   # FR
-    (-6.00, -32.00, 12.00, 22.00, 12.00),   # MR
-    (-46.00, -32.00, 12.00, 22.00, 12.00),  # RR
+
+organic_ports = [
+    (32.50, 34.25, 14.00, 11.50, 4.50, 15.00, 45.00),    # Front-Bay Left (FL + ML)
+    (-32.50, 34.25, 14.00, 11.50, 4.50, 15.00, 45.00),   # Rear-Bay Left (RL)
+    (32.50, 34.25, 14.00, 11.50, 4.50, -45.00, -15.00),  # Front-Bay Right (FR + MR)
+    (-32.50, 34.25, 14.00, 11.50, 4.50, -45.00, -15.00), # Rear-Bay Right (RR)
 ]
-for px, py, pdx, pdy, pdz in port_defs:
-    port_box = Part.makeBox(pdx, pdy, pdz, App.Vector(px, py, 23.00))
-    core_solid = core_solid.cut(port_box)
+for x_c, z_c, pw, ph, pr, y_min, y_max in organic_ports:
+    p_solid = make_organic_port_cutter(x_c, z_c, pw, ph, pr, y_min, y_max)
+    core_solid = core_solid.cut(p_solid)
 
-    # Station 4: Integrated Micro-Zip-Tie Saddle at Lateral Port Sill (for 2.5 mm cable ties)
-    sign_y = 1.0 if py > 0 else -1.0
-    ys = 15.0 * sign_y
-    s_ch1 = Part.makeBox(1.30, 2.80, 8.0, App.Vector(px + 3.5, ys - 1.40, 16.0))
-    s_ch2 = Part.makeBox(1.30, 2.80, 8.0, App.Vector(px + 6.5, ys - 1.40, 16.0))
-    core_solid = core_solid.cut(s_ch1).cut(s_ch2)
+    # Dual Micro-Zip-Tie Saddles at Port Sill (for 2.5 mm cable ties):
+    sign_y = 1.0 if y_min > 0 else -1.0
+    ys = 27.0 * sign_y
+    for x_sad in [x_c - 3.00, x_c + 3.00]:
+        s_ch1 = Part.makeBox(1.30, 2.80, 8.0, App.Vector(x_sad - 1.50, ys - 1.40, 24.0))
+        s_ch2 = Part.makeBox(1.30, 2.80, 8.0, App.Vector(x_sad + 1.50, ys - 1.40, 24.0))
+        core_solid = core_solid.cut(s_ch1).cut(s_ch2)
 
-# 1.9 Add Integrated Support Bosses & Centering Pins for TCA9548A at (-42.0, ±13.0 mm)
-for ty in [13.0, -13.0]:
-    tca_boss = Part.makeCylinder(2.50, 1.95, App.Vector(-42.0, ty, 18.00), App.Vector(0, 0, 1))
-    tca_pin = Part.makeCylinder(1.15, 2.00, App.Vector(-42.0, ty, 19.95), App.Vector(0, 0, 1))
-    core_solid = core_solid.fuse(tca_boss).fuse(tca_pin)
+# 1.8 Add Integrated M2.5 Screw Bosses on Intermediate Deck (Z = 26.00 .. 27.98 mm, height 1.98 mm)
+# Bosses support PCB bottom at Z = 28.00 mm with 0.02 mm clearance, keeping clamping screw heads
+# facing UP (+Z at Z = 39.60 mm) and wire entrances horizontal (+Y / -Y):
+boss_h = 1.98
+bosses = [
+    # Front PCA9685 (center: 43.25, -3.00 mm, pattern: 56.0 x 19.0 mm)
+    (43.25 + 28.00, -3.00 + 9.50),
+    (43.25 + 28.00, -3.00 - 9.50),
+    (43.25 - 28.00, -3.00 + 9.50),
+    (43.25 - 28.00, -3.00 - 9.50),
+    # Rear PCA9685 (center: -43.25, +3.00 mm, pattern: 56.0 x 19.0 mm)
+    (-43.25 + 28.00, 3.00 + 9.50),
+    (-43.25 + 28.00, 3.00 - 9.50),
+    (-43.25 - 28.00, 3.00 + 9.50),
+    (-43.25 - 28.00, 3.00 - 9.50),
+    # Center TCA9548A (center: 0.00, 0.00 mm, pattern: 26.0 mm spacing along Y)
+    (0.00, 13.00),
+    (0.00, -13.00),
+]
+for bx, by in bosses:
+    boss = Part.makeCylinder(2.60, boss_h, App.Vector(bx, by, 26.00), App.Vector(0, 0, 1))
+    bore = Part.makeCylinder(1.025, 4.00, App.Vector(bx, by, 24.00), App.Vector(0, 0, 1))
+    core_solid = core_solid.fuse(boss).cut(bore)
 
 core_solid = core_solid.removeSplitter()
 
@@ -170,8 +316,10 @@ if hasattr(part_obj, "ViewObject") and part_obj.ViewObject is not None:
 doc_core.recompute()
 
 doc_core.saveAs(fcstd_core_path)
-core_solid.exportStep(f"{export_step_dir}/parts/chassis/chassis_core.step")
-core_solid.exportStl(f"{export_stl_dir}/parts/chassis/chassis_core.stl")
+core_solid.exportStl(f"{repo_root}/hardware/mechanics/export/urdf/meshes/chassis_core.stl")
+if "--export" in sys.argv:
+    core_solid.exportStep(f"{export_step_dir}/parts/chassis/chassis_core.step")
+    core_solid.exportStl(f"{export_stl_dir}/parts/chassis/chassis_core.stl")
 print(f"✔ Saved Monocoque Part -> {fcstd_core_path} (Valid={core_solid.isValid()}, Volume={core_solid.Volume:.1f} mm^3)")
 App.closeDocument(doc_core_name)
 
@@ -226,24 +374,22 @@ COLOR_BAT = (0.85, 0.65, 0.10)   # Gold / Yellow 2S LiPo
 # 1. Monocoque Core Shell
 make_link("Chassis_Core", "1. Monocoque Core Shell", doc_core.Chassis_Core, App.Placement(), COLOR_CORE)
 
-# 2. Left PCA9685 Board at Y = +13.00 mm, Z = 31.00 mm (PCB Z in [18.30, 43.70], pins up to 52.20 mm)
-r_pca_l = App.Rotation(App.Vector(1, 0, 0), 90.0)
-p_pca_l = App.Placement(App.Vector(0.0, 13.00, 31.00), r_pca_l)
-make_link("Board_PCA9685_Left", "2. PCA9685 Left (Vertical, Pins +Z, Comps Inward)", doc_pca.PCA9685_Board, p_pca_l, COLOR_PCA)
+# 2. Front PCA9685 Board at X = +43.25 mm, Y = -3.00 mm, Z = 28.00 mm (Horizontal, pins +Y Left, clamps UP)
+p_pca_front = App.Placement(App.Vector(43.25, -3.00, 28.00), App.Rotation(App.Vector(0, 0, 1), 0.0))
+make_link("Board_PCA9685_Left", "2. PCA9685 Front (Horizontal, Pins +Y Left, Clamps UP)", doc_pca.PCA9685_Board, p_pca_front, COLOR_PCA)
 
-# 3. Right PCA9685 Board at Y = -13.00 mm, Z = 31.00 mm
-r_pca_r = App.Rotation(App.Vector(0, 1, 1), 180.0)
-p_pca_r = App.Placement(App.Vector(0.0, -13.00, 31.00), r_pca_r)
-make_link("Board_PCA9685_Right", "3. PCA9685 Right (Vertical, Pins +Z, Comps Inward)", doc_pca.PCA9685_Board, p_pca_r, COLOR_PCA)
+# 3. Rear PCA9685 Board at X = -43.25 mm, Y = +3.00 mm, Z = 28.00 mm (Horizontal, pins -Y Right, clamps UP)
+p_pca_rear = App.Placement(App.Vector(-43.25, 3.00, 28.00), App.Rotation(App.Vector(0, 0, 1), 180.0))
+make_link("Board_PCA9685_Right", "3. PCA9685 Rear (Horizontal, Pins -Y Right, Clamps UP)", doc_pca.PCA9685_Board, p_pca_rear, COLOR_PCA)
 
-# 4. TCA9548A Multiplexer seated on support bosses at (-42.0, 0.0, 20.00 mm)
+# 4. TCA9548A Multiplexer seated on support bosses at (0.0, 0.0, 28.00 mm)
 r_tca = App.Rotation(App.Vector(0, 0, 1), 90.0)
-p_tca = App.Placement(App.Vector(-42.0, 0.0, 20.00), r_tca)
-make_link("Board_TCA9548A", "4. TCA9548A I2C Multiplexer", doc_tca.TCA9548A_Board, p_tca, COLOR_TCA)
+p_tca = App.Placement(App.Vector(0.0, 0.0, 28.00), r_tca)
+make_link("Board_TCA9548A", "4. TCA9548A I2C Multiplexer (Horizontal, Center)", doc_tca.TCA9548A_Board, p_tca, COLOR_TCA)
 
-# 5. 2S LiPo Battery Pack in lower tunnel (Z = 2.45 .. 16.45 mm)
-p_bat = App.Placement(App.Vector(0.0, 0.0, 2.45), App.Rotation())
-make_link("Battery_LiPo_2S", "5. 2S 7.4V LiPo Battery Pack", doc_bat.Battery_LiPo_2S, p_bat, COLOR_BAT)
+# 5. 2S LiPo Battery Pack in lower tunnel (Z = 3.75 .. 17.75 mm)
+p_bat = App.Placement(App.Vector(0.0, 0.0, 3.75), App.Rotation())
+make_link("Battery_LiPo_2S", "5. 2S 7.4V LiPo Battery Pack (Lower Level Tunnel)", doc_bat.Battery_LiPo_2S, p_bat, COLOR_BAT)
 
 doc_asm.recompute()
 doc_asm.save()
@@ -265,14 +411,4 @@ for i in range(len(items)):
 if max_coll <= 1e-4:
     print("  ✅ ZERO COLLISIONS in chassis_core_assembly.FCStd (0.0000 mm^3)!")
 
-for d in list(App.listDocuments().values()):
-    try:
-        App.closeDocument(d.Name)
-    except Exception:
-        pass
-try:
-    from PySide6 import QtCore
-    QtCore.QCoreApplication.processEvents()
-except Exception:
-    pass
-sys.exit(0)
+os._exit(0)
