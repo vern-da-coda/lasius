@@ -245,12 +245,21 @@ Dieser Backlog führt alle offenen Aufgaben, konstruktiven Erweiterungen und Ver
   * **Architektur & Bauraum-Integration:**
     * **Platzierung:** Sitzt auf den beiden Zwischenboden-Domen bei $X = 0{,}0\,\text{mm}, Y = \pm 13{,}0\,\text{mm}, Z = 28{,}00\,\text{mm}$ im $24\,\text{mm}$-Spalt zwischen den beiden horizontalen PCA9685-Controllern.
     * **Abmessungen:** $54{,}0 \times 22{,}0 \times 1{,}60\,\text{mm}$ FR4-Substrat mit $R = 2{,}0\,\text{mm}$ Eckverrundungen.
-    * **Steckbare TCA9548A-Aufnahme:** Duale 12-Pin Buchsenleisten ($h = 4{,}00\,\text{mm}$) bei $X = \pm 8{,}77\,\text{mm}$, die das TCA9548A Breakout-Modul auf $Z = 33{,}60\,\text{mm}$ anheben.
+    * **Steckbare TCA9548A-Aufnahme:** Duale 12-Pin Buchsenleisten ($h = 4{,}00\,\text{mm}$) als COTS-Referenz [`socket_header_1x12.FCStd`](../../cots/socket_header_1x12.FCStd) bei $X = \pm 8{,}77\,\text{mm}$, die das TCA9548A Breakout-Modul auf $Z = 33{,}60\,\text{mm}$ anheben.
+    * **COTS-Header-Referenzen:** Sämtliche Stift- und Buchsenleisten sind als modulare COTS-Normteile (`header_pin_1x4.FCStd`, `header_pin_1x2.FCStd`, `socket_header_1x12.FCStd`) eingebunden – mit durchgängig tiefschwarzen Thermoplast-Sockeln (`(0.12, 0.12, 0.12)`) und diskreten vergoldeten Vierkant-Pins (`(0.85, 0.70, 0.20)`).
     * **6× 4-Pin Bein-Steckplätze (`3,3V · GND · SCx · SDx`):**
       * $+Y$-Bank (nach links zeigend): `LR` (CH2 Violett), `LM` (CH1 Grün), `LF` (CH0 Blau) sowie Pi-Haupteingangsheader (`3,3V, GND, SDA, SCL`) und 2-Pin PCA9685-Left-Logikversorgungsheader.
       * $-Y$-Bank (nach rechts zeigend): `RR` (CH5 Grau), `RM` (CH4 Weiß), `FR` (CH3 Orange) sowie 4-Pin Sensor-Erweiterungsheader (CH6/7) und 2-Pin PCA9685-Right-Logikversorgungsheader.
     * **Ergonomie:** Alle 6 Bein-Anschlüsse liegen außerhalb des TCA9548A-Footprints ($|Y| \ge 16{,}2\,\text{mm}$) mit $16{,}2\,\text{mm}$ Kopffreiheit zu `Body_Top` und sind bei abgenommenem Service-Deckel direkt von oben frei zugänglich.
     * **Kollisionsfreiheit:** Exakt **$0{,}0000\,\text{mm}^3$** Kollision zu Monocoque, PCA9685, TCA9548A und LiPo-Akku.
+
+- [x] **Modulare COTS-Pinheader & Buchsenleisten-Bibliothek (`hardware/mechanics/models/cots/`):**
+  * **Modelle & Generator:** Kanonische Normteil-Bibliothek generiert via [`generate_headers_cots.py`](../../scripts/cots/generate_headers_cots.py):
+    - [`header_pin_1x2.FCStd`](../../cots/header_pin_1x2.FCStd), [`header_pin_1x4.FCStd`](../../cots/header_pin_1x4.FCStd), [`header_pin_1x6.FCStd`](../../cots/header_pin_1x6.FCStd)
+    - [`header_pin_1x10.FCStd`](../../cots/header_pin_1x10.FCStd), [`header_pin_1x12.FCStd`](../../cots/header_pin_1x12.FCStd), [`header_pin_2x20.FCStd`](../../cots/header_pin_2x20.FCStd)
+    - [`header_pin_3x16_ra.FCStd`](../../cots/header_pin_3x16_ra.FCStd) (90° Winkel-Servoheader), [`header_pin_1x6_ra.FCStd`](../../cots/header_pin_1x6_ra.FCStd) (90° ToF-Header), [`socket_header_1x12.FCStd`](../../cots/socket_header_1x12.FCStd)
+  * **Standards:** Thermoplastische Sockel/Kragen immer mattschwarz (`(0.12, 0.12, 0.12)`), Stifte immer diskrete $0{,}64 \times 0{,}64\,\text{mm}$ Vierkant-Pins aus Messing/Gold (`(0.85, 0.70, 0.20)`).
+  * **Integration:** Alle Platinen ([`rpi4_model_b.FCStd`](../../cots/rpi4_model_b.FCStd), [`pca9685_board.FCStd`](../../cots/pca9685_board.FCStd), [`tca9548a_board.FCStd`](../../cots/tca9548a_board.FCStd), [`ads1115_board.FCStd`](../../cots/ads1115_board.FCStd), [`vl53l5cx_board.FCStd`](../../cots/vl53l5cx_board.FCStd) und [`sensor_hub_board.FCStd`](parts/chassis/sensor_hub_board.FCStd)) als modulare `App::Part`-Baugruppen mit `App::Link`-Referenzen umgesetzt. Material-Overrides in Assemblies aufgehoben für naturgetreue Farbtrennung.
 
 - [ ] **Chassis-Core-Monocoque Evolution: Vollständige Bodenabdeckung, flexibler Akkutunnel & Schwenkbereichs-Morphologie:**  
   * **Hintergrund & Motivation:**
