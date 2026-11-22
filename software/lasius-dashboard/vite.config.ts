@@ -2,6 +2,14 @@ import { defineConfig } from 'vite';
 import vue from '@vitejs/plugin-vue';
 import fs from 'fs';
 import path from 'path';
+import crypto from 'node:crypto';
+
+// Polyfill crypto.hash for Node.js < 20.19.0 (introduced in Node 21.7 / 20.19)
+if (typeof (crypto as any).hash !== 'function') {
+  (crypto as any).hash = (algorithm: string, data: crypto.BinaryLike, outputEncoding?: crypto.BinaryToTextEncoding) => {
+    return crypto.createHash(algorithm).update(data).digest(outputEncoding as any);
+  };
+}
 
 const urdfMeshesDir = path.resolve(__dirname, '../../hardware/mechanics/export/urdf/meshes');
 
