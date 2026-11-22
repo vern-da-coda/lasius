@@ -254,7 +254,7 @@ Dieser Backlog führt alle offenen Aufgaben, konstruktiven Erweiterungen und Ver
     * **Kollisionsfreiheit:** Exakt **$0{,}0000\,\text{mm}^3$** Kollision zu Monocoque, PCA9685, TCA9548A und LiPo-Akku.
 
 - [x] **Modulare COTS-Pinheader & Buchsenleisten-Bibliothek (`hardware/mechanics/models/cots/`):**
-  * **Modelle & Generator:** Kanonische Normteil-Bibliothek generiert via [`generate_headers_cots.py`](../../scripts/cots/generate_headers_cots.py):
+  * **Modelle & Generator:** Kanonische Normteil-Bibliothek generiert via [`generate_headers_cots.py`](../../../scripts/cots/generate_headers_cots.py):
     - [`header_pin_1x2.FCStd`](../../cots/header_pin_1x2.FCStd), [`header_pin_1x4.FCStd`](../../cots/header_pin_1x4.FCStd), [`header_pin_1x6.FCStd`](../../cots/header_pin_1x6.FCStd)
     - [`header_pin_1x10.FCStd`](../../cots/header_pin_1x10.FCStd), [`header_pin_1x12.FCStd`](../../cots/header_pin_1x12.FCStd), [`header_pin_2x20.FCStd`](../../cots/header_pin_2x20.FCStd)
     - [`header_pin_3x16_ra.FCStd`](../../cots/header_pin_3x16_ra.FCStd) (90° Winkel-Servoheader), [`header_pin_1x6_ra.FCStd`](../../cots/header_pin_1x6_ra.FCStd) (90° ToF-Header), [`socket_header_1x12.FCStd`](../../cots/socket_header_1x12.FCStd)

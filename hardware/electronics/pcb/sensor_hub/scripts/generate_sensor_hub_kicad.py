@@ -594,8 +594,8 @@ readme_content = r"""# Lasius Sensor Hub & 3.3V / GND Distribution Carrier Board
 
 ---
 
-[Project Index](../../../../README.md) | [Electronics Index](../../README.md) | [Wiring Plan](../../../docs/hardware/wiring_plan.md) |<br>
-[Wiring Harness Spec](../../WIRING_HARNESS_SPEC.md) | [Chassis Core Assembly](../../../hardware/mechanics/models/custom/v2/chassis_core_assembly.FCStd)
+[Project Index](../../../../README.md) | [Electronics Roadmap](../../TODO.md) | [Wiring Plan](../../../../docs/hardware/wiring_plan.md) |<br>
+[Wiring Harness Spec](../../WIRING_HARNESS_SPEC.md) | [Chassis Core Assembly](../../../mechanics/models/custom/v2/chassis_core_assembly.FCStd)
 
 ---
 
