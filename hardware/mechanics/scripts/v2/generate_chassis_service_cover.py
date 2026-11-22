@@ -102,18 +102,18 @@ def make_chevron_slot(cx, cy, arm_len, width, angle_deg=45.0, z_min=75.0, z_max=
 
 def build_service_cover():
     z_rebate = 80.20
-    z_apex = 85.00
+    z_apex = 81.50  # 100% flush with Chassis_Canopy top surface (Z = 81.50 mm)
 
-    # 1. Outer Overlapping Seating Flange & Domed Crown
+    # 1. Outer Flush Seating Flange (Z = 80.25 .. 81.50 mm, sitting flush inside Canopy rebate Z = 80.20 .. 81.50 mm)
     # Directly over the Raspberry Pi 4 in matching length (89.0 mm) and width (57.0 mm)
     lid_top = make_rounded_rect_solid(-43.5, 45.5, -28.5, 28.5, 5.0, z_rebate + 0.05, z_apex)
 
-    # 2. Mating Locating Lip (Slots down into the canopy aperture)
-    lid_lip = make_rounded_rect_solid(-41.5, 43.5, -26.5, 26.5, 3.5, z_rebate - 1.70, z_rebate + 0.5)
+    # 2. Mating Locating Lip (Slots down into the canopy aperture, Z = 78.50 .. 80.50 mm)
+    lid_lip = make_rounded_rect_solid(-41.5, 43.5, -26.5, 26.5, 3.5, z_rebate - 1.70, z_rebate + 0.30)
     hatch = lid_lip.fuse(lid_top)
 
-    # 3. Inner Clearance Cavity (Leaves generous 6.3 mm headroom for USB/Ethernet and SoC heatsink)
-    cavity = make_rounded_rect_solid(-39.5, 41.5, -24.5, 24.5, 2.5, 76.0, z_apex - 1.5)
+    # 3. Inner Clearance Cavity (Ceiling at Z = 80.00 mm -> 1.50 mm solid top wall, 2.80 mm clearance above RPi 4 USB ports at Z = 77.20 mm)
+    cavity = make_rounded_rect_solid(-39.5, 41.5, -24.5, 24.5, 2.5, 76.0, z_apex - 1.50)
     hatch = hatch.cut(cavity)
 
     # 4. Bionic Rounded '>>>' Chevron Louvers (5x centered directly over BCM2711 SoC, matching Femur Cover)
@@ -121,7 +121,14 @@ def build_service_cover():
         slot = make_chevron_slot(dx, 0.0, 10.0, 2.40, 45.0, 75.0, z_apex + 2.0)
         hatch = hatch.cut(slot)
 
-    return hatch
+    # 5. 4x Integrated Snap-Fit Retention Detent Ridges along the locating lip (Z = 79.15 mm)
+    # engaging the canopy aperture rim (X in [-41.8, +43.8], Y in [-26.8, +26.8]) with a snug 0.02 mm friction fit:
+    for sy in [-26.5, 26.5]:
+        for sx in [-22.0, 22.0]:
+            bump = Part.makeCylinder(0.28, 8.0, App.Vector(sx - 4.0, sy, 79.15), App.Vector(1, 0, 0))
+            hatch = hatch.fuse(bump)
+
+    return hatch.removeSplitter()
 
 
 cover_solid = build_service_cover()
@@ -145,12 +152,13 @@ obj.Visibility = True
 
 doc.recompute()
 doc.saveAs(fcstd_cover_path)
-export_step_dir = f"{repo_root}/hardware/mechanics/export/step/custom/v2/parts/chassis"
-export_stl_dir = f"{repo_root}/hardware/mechanics/export/stl/custom/v2/parts/chassis"
-os.makedirs(export_step_dir, exist_ok=True)
-os.makedirs(export_stl_dir, exist_ok=True)
-cover_solid.exportStep(f"{export_step_dir}/chassis_service_cover.step")
-cover_solid.exportStl(f"{export_stl_dir}/chassis_service_cover.stl")
+if "--export" in sys.argv:
+    export_step_dir = f"{repo_root}/hardware/mechanics/export/step/custom/v2/parts/chassis"
+    export_stl_dir = f"{repo_root}/hardware/mechanics/export/stl/custom/v2/parts/chassis"
+    os.makedirs(export_step_dir, exist_ok=True)
+    os.makedirs(export_stl_dir, exist_ok=True)
+    cover_solid.exportStep(f"{export_step_dir}/chassis_service_cover.step")
+    cover_solid.exportStl(f"{export_stl_dir}/chassis_service_cover.stl")
 print(f"Saved FreeCAD model: {fcstd_cover_path}")
 App.closeDocument(doc_name)
 

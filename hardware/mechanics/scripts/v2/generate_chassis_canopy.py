@@ -17,9 +17,11 @@ Design Concept (Vakuum-Tiefzieh-Haube / Draped Plexiglas Sheet):
      - Apex centered symmetrically around X = 0.0, Y = 0.0 mm.
      - Inner cavity conforms precisely to the central components and provides
        generous headroom over the elevated Raspberry Pi 4.
-  4. Continuous Closed Shell:
-     - Clean, sealed aerodynamic carapace without piercing spacer bores.
-     - Supported from below by Chassis_RPi_Mount pillars.
+  4. Continuous Closed Shell & Magnetic Fastening (WIP):
+     - Note (WIP): Final canopy geometry and fastening are not yet completed.
+       The canopy will be retained via embedded neodymium magnets (magnetic mount
+       onto the 4 outward-offset pillars at ±48, ±36 mm and perimeter standoffs)
+       instead of screws for tool-free removal.
   5. Service Hatch Aperture & Rebate:
      - Aperture centered directly over the Raspberry Pi 4 Model B at X = 0, Y = 0
        (X in [-41.8, +43.8 mm], Y in [-26.8, +26.8 mm]).
@@ -74,9 +76,10 @@ def make_filleted_wire(x_min, x_max, y_min, y_max, r, z):
 
 def build_draped_plexiglas_canopy():
     # 1. Load exact Body_Top perimeter wire
-    doc_plate = App.openDocument(body_top_path)
+    already_open = "body_top" in App.listDocuments()
+    doc_plate = App.getDocument("body_top") if already_open else App.openDocument(body_top_path)
     plate_shape = doc_plate.getObject("BodyTop").Shape
-    outer_wire = max([w for w in plate_shape.Wires if w.BoundBox.XLength > 200], key=lambda w: w.BoundBox.ZMin). copy()
+    outer_wire = max([w for w in plate_shape.Wires if w.BoundBox.XLength > 200], key=lambda w: w.BoundBox.ZMin).copy()
     doc_plate_name = doc_plate.Name
 
     z_base = 55.32  # 0.02 mm clearance above Body_Top (55.30 mm)
@@ -132,10 +135,16 @@ def build_draped_plexiglas_canopy():
     plexiglas_solid = plexiglas_solid.cut(through_hole).cut(rebate)
 
     # -------------------------------------------------------------------------
-    # 6. Continuous Sealed Shell (Obsolete spacer through-holes closed)
+    # 6. 3x Front & Rear Perimeter Standoff Spacer Fastening Holes (+128, ±12 mm & -120, 0 mm)
+    #    (Supported centrally from underneath by the 4 outward-offset pillars on Chassis_RPi_Mount at ±48.0, ±36.0 mm)
     # -------------------------------------------------------------------------
-    App.closeDocument(doc_plate_name)
-    return plexiglas_solid
+    for sx, sy in [(128.0, 12.0), (128.0, -12.0), (-120.0, 0.0)]:
+        sp_hole = Part.makeCylinder(1.60, 20.0, App.Vector(sx, sy, 50.0), App.Vector(0, 0, 1))
+        plexiglas_solid = plexiglas_solid.cut(sp_hole)
+
+    if not already_open:
+        App.closeDocument(doc_plate_name)
+    return plexiglas_solid.removeSplitter()
 
 
 canopy_solid = build_draped_plexiglas_canopy()
@@ -158,44 +167,21 @@ obj = doc.addObject("Part::Feature", "Chassis_Canopy")
 obj.Label = "Plexiglas Canopy (Draped & Trimmed Flush to Body_Top)"
 obj.Shape = canopy_solid
 obj.Visibility = True
+if hasattr(obj, "ViewObject") and obj.ViewObject is not None:
+    obj.ViewObject.Visibility = True
+    obj.ViewObject.Transparency = 0
+    obj.ViewObject.ShapeColor = (0.20, 0.20, 0.23)
 
 doc.recompute()
 doc.saveAs(fcstd_canopy_path)
-export_step_dir = f"{repo_root}/hardware/mechanics/export/step/custom/v2/parts/chassis"
-export_stl_dir = f"{repo_root}/hardware/mechanics/export/stl/custom/v2/parts/chassis"
-os.makedirs(export_step_dir, exist_ok=True)
-os.makedirs(export_stl_dir, exist_ok=True)
-canopy_solid.exportStep(f"{export_step_dir}/chassis_canopy.step")
-canopy_solid.exportStl(f"{export_stl_dir}/chassis_canopy.stl")
+if "--export" in sys.argv:
+    export_step_dir = f"{repo_root}/hardware/mechanics/export/step/custom/v2/parts/chassis"
+    export_stl_dir = f"{repo_root}/hardware/mechanics/export/stl/custom/v2/parts/chassis"
+    os.makedirs(export_step_dir, exist_ok=True)
+    os.makedirs(export_stl_dir, exist_ok=True)
+    canopy_solid.exportStep(f"{export_step_dir}/chassis_canopy.step")
+    canopy_solid.exportStl(f"{export_stl_dir}/chassis_canopy.stl")
 print(f"Saved FreeCAD model: {fcstd_canopy_path}")
 App.closeDocument(doc_name)
-
-
-# Ensure GuiDocument.xml has Visibility="true" and Transparent Material
-def patch_canopy_view(filepath):
-    temp_zip = filepath + ".tmp"
-    with zipfile.ZipFile(filepath, "r") as zin:
-        with zipfile.ZipFile(temp_zip, "w", compression=zipfile.ZIP_DEFLATED) as zout:
-            for item in zin.infolist():
-                data = zin.read(item.filename)
-                if item.filename == "GuiDocument.xml":
-                    xml_str = data.decode("utf-8")
-                    xml_str = xml_str.replace('<Bool value="false"/>', '<Bool value="true"/>')
-                    # Set transparent Plexiglas material (55% transparency, light cyan tint)
-                    if "<Property name=\"Transparency\"" in xml_str:
-                        xml_str = xml_str.replace('<Integer value="0"/>', '<Integer value="55"/>')
-                    else:
-                        insert_pos = xml_str.find("</Properties>")
-                        if insert_pos != -1:
-                            transp_prop = '<Property name="Transparency" type="App::PropertyPercent"><Integer value="55"/></Property>\n'
-                            diffuse_prop = '<Property name="ShapeColor" type="App::PropertyColor"><PropertyColor value="4042322175"/></Property>\n'
-                            xml_str = xml_str[:insert_pos] + transp_prop + diffuse_prop + xml_str[insert_pos:]
-                    data = xml_str.encode("utf-8")
-                zout.writestr(item, data)
-    os.replace(temp_zip, filepath)
-
-
-patch_canopy_view(fcstd_canopy_path)
-print("✔ Patched GuiDocument.xml with transparent Plexiglas appearance")
 
 sys.exit(0)

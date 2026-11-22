@@ -181,14 +181,13 @@ outer_face.rotate(App.Vector(0.0, 0.0, 0.0), App.Vector(0.0, 0.0, 1.0), 180.0)
 # -------------------------------------------------------------
 # 3. Central Stepped Window Cutout (Matching Scanned Physical Plate)
 # -------------------------------------------------------------
-# Stepped cruciform window topology:
-# - Front tongue: X in [+26.0, +58.0] mm (length 32 mm), width 35.0 mm (Y in [-17.5, +17.5] mm)
-# - Middle wide chamber: X in [-32.0, +26.0] mm (length 58 mm), width 58.0 mm (Y in [-29.0, +29.0] mm)
-# - Rear tongue: X in [-64.0, -32.0] mm (length 32 mm), width 35.0 mm (Y in [-17.5, +17.5] mm)
+# Stepped cruciform window topology (calibrated from 300 DPI scan):
+# - Front tongue: X in [+30.0, +60.0] mm (length 30 mm), width 30.0 mm (Y in [-15.0, +15.0] mm)
+# - Middle wide chamber: X in [-30.0, +30.0] mm (length 60 mm), width 60.0 mm (Y in [-30.0, +30.0] mm)
+# - Rear tongue: X in [-60.0, -30.0] mm (length 30 mm), width 30.0 mm (Y in [-15.0, +15.0] mm)
 # - G1-continuous corners (Rc = 2.0 mm) and shoulder concave transition fillets (Rf = 4.0 mm)
-# Preserves >= 12.5 mm solid carbon flange around all 4 central standoff holes at (+-45, +-30) mm.
 
-def make_stepped_window(x_top=58.0, x_fsh=26.0, x_rsh=-32.0, x_bot=-64.0, y_t=17.5, y_m=29.0, rc=2.0, rf=4.0):
+def make_stepped_window(x_top=60.0, x_fsh=30.0, x_rsh=-30.0, x_bot=-60.0, y_t=15.0, y_m=30.0, rc=2.0, rf=4.0):
     edges = []
     # 1. Front centerline to top-left corner
     edges.append(Part.makeLine(App.Vector(x_top, 0.0, 0.0), App.Vector(x_top, y_t - rc, 0.0)))
@@ -280,11 +279,15 @@ for xc, yc in coxa_holes:
         plate_solid = plate_solid.cut(m2_cyl)
 
 # -------------------------------------------------------------
-# 6. Drill 8x M3 Screw Holes (dia 3.0 mm)
+# 6. Drill 16x M3 Screw Holes (dia 3.0 mm)
 # -------------------------------------------------------------
 screw_holes = [
-    # 4x Window flanking screws:
+    # 4x Outer window-flanking standoff screws:
     (45.0, 30.0), (45.0, -30.0), (-45.0, 30.0), (-45.0, -30.0),
+    # 4x Inner window-corner throat screws (A1..A4 from scan):
+    (36.5, 19.0), (36.5, -19.0), (-36.5, 19.0), (-36.5, -19.0),
+    # 4x Inner window-corner shoulder screws (B1..B4 from scan):
+    (34.3, 25.3), (34.3, -25.3), (-34.3, 25.3), (-34.3, -25.3),
     # 2x Front screws (side-by-side):
     (128.0, 12.0), (128.0, -12.0),
     # 2x Rear centerline screws (inline):
@@ -312,33 +315,28 @@ print(f"Length X: {bbox.XLength:.2f} mm ([{bbox.XMin:.2f}, {bbox.XMax:.2f}])")
 print(f"Width Y: {bbox.YLength:.2f} mm ([{bbox.YMin:.2f}, {bbox.YMax:.2f}])")
 print(f"Thickness Z: {bbox.ZLength:.2f} mm ([{bbox.ZMin:.2f}, {bbox.ZMax:.2f}])")
 
-# Ensure export directories exist
+import sys
 os.makedirs(os.path.dirname(fcstd_path), exist_ok=True)
-os.makedirs(os.path.dirname(stl_path), exist_ok=True)
-os.makedirs(os.path.dirname(step_path), exist_ok=True)
-os.makedirs(os.path.dirname(dxf_path), exist_ok=True)
 
 # Save FreeCAD Document
 doc.saveAs(fcstd_path)
 print(f"Saved FreeCAD Model: {fcstd_path}")
 
-# Export STL
-part_obj.Shape.exportStl(stl_path)
-print(f"Exported STL: {stl_path}")
-
-# Export STEP
-part_obj.Shape.exportStep(step_path)
-print(f"Exported STEP: {step_path}")
-
-# Export DXF of 2D profile
-try:
-    import importDXF
-    importDXF.export([part_obj], dxf_path)
-    print(f"Exported DXF: {dxf_path}")
-except Exception as e:
-    print(f"DXF export skipped: {e}")
+if "--export" in sys.argv:
+    os.makedirs(os.path.dirname(stl_path), exist_ok=True)
+    os.makedirs(os.path.dirname(step_path), exist_ok=True)
+    os.makedirs(os.path.dirname(dxf_path), exist_ok=True)
+    part_obj.Shape.exportStl(stl_path)
+    print(f"Exported STL: {stl_path}")
+    part_obj.Shape.exportStep(step_path)
+    print(f"Exported STEP: {step_path}")
+    try:
+        import importDXF
+        importDXF.export([part_obj], dxf_path)
+        print(f"Exported DXF: {dxf_path}")
+    except Exception as e:
+        print(f"DXF export skipped: {e}")
 
 App.closeDocument(doc_name)
 print("--- Done ---")
-import sys
 sys.exit(0)

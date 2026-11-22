@@ -28,6 +28,7 @@ Exports:
 
 import math
 import os
+import sys
 import FreeCAD as App
 import Part
 
@@ -91,14 +92,8 @@ def build_rpi4():
     # PCB centered at (0, 0, 0). Length = 85.0 mm (X in [-42.5, 42.5]), Width = 56.0 mm (Y in [-28.0, 28.0])
     pcb = make_rounded_rect_solid(-42.5, 42.5, -28.0, 28.0, 3.0, 0.0, 1.4)
 
-    # 4x M2.5 Mounting Holes (Pattern: 58.0 x 49.0 mm -> X = ±29.0 mm, Y = ±24.5 mm)
-    for hx in [-29.0, 29.0]:
-        for hy in [-24.5, 24.5]:
-            hole = Part.makeCylinder(1.35, 5.0, App.Vector(hx, hy, -1.0), App.Vector(0, 0, 1))
-            pcb = pcb.cut(hole)
-
     # Broadcom BCM2711 SoC Heatspreader (15.0 x 15.0 x 1.8 mm)
-    soc = Part.makeBox(15.0, 15.0, 1.8, App.Vector(-2.5, -7.5, 1.4))
+    soc = Part.makeBox(15.0, 15.0, 1.8, App.Vector(-12.5, -7.5, 1.4))
 
     # Dual USB 3.0 Port Block (Blue, 17.0 x 14.5 x 16.0 mm on +X front edge)
     usb3 = Part.makeBox(17.0, 14.5, 16.0, App.Vector(27.0, -22.5, 1.4))
@@ -109,20 +104,26 @@ def build_rpi4():
     # Gigabit Ethernet Port Block (Metal, 21.5 x 16.0 x 14.0 mm on +X front edge)
     eth = Part.makeBox(21.5, 16.0, 14.0, App.Vector(23.5, 10.5, 1.4))
 
-    # 40-Pin GPIO Header (51.0 x 5.0 x 8.5 mm along +Y edge)
-    gpio = Part.makeBox(51.0, 5.0, 8.5, App.Vector(-28.0, 21.5, 1.4))
+    # 40-Pin GPIO Header (51.0 x 5.0 x 8.5 mm along +Y edge, centered at X = -10.0 mm between mounting holes)
+    gpio = Part.makeBox(51.0, 5.0, 8.5, App.Vector(-35.5, 22.0, 1.4))
 
     # USB-C Power Port (9.0 x 7.5 x 3.2 mm on -Y edge)
-    usbc = Part.makeBox(9.0, 7.5, 3.2, App.Vector(-31.5, -28.0, 1.4))
+    usbc = Part.makeBox(9.0, 7.5, 3.2, App.Vector(-35.0, -28.0, 1.4))
 
     # Dual Micro-HDMI Ports (7.5 x 6.5 x 3.0 mm on -Y edge)
-    hdmi1 = Part.makeBox(7.5, 6.5, 3.0, App.Vector(-15.0, -28.0, 1.4))
-    hdmi2 = Part.makeBox(7.5, 6.5, 3.0, App.Vector(-4.0, -28.0, 1.4))
+    hdmi1 = Part.makeBox(7.5, 6.5, 3.0, App.Vector(-20.0, -28.0, 1.4))
+    hdmi2 = Part.makeBox(7.5, 6.5, 3.0, App.Vector(-6.5, -28.0, 1.4))
 
     # MicroSD Card Slot on Underside (14.0 x 12.0 x 1.2 mm on -X edge)
     sd = Part.makeBox(14.0, 12.0, 1.2, App.Vector(-42.5, -6.0, -1.2))
 
     rpi_solid = pcb.fuse(soc).fuse(usb3).fuse(usb2).fuse(eth).fuse(gpio).fuse(usbc).fuse(hdmi1).fuse(hdmi2).fuse(sd)
+
+    # 4x Official Raspberry Pi 4 M2.5 Mounting Holes (58.0 x 49.0 mm pattern: 3.5 mm from -X/+Y/-Y edges -> X in [-39.0, +19.0], Y in [-24.5, +24.5])
+    for hx in [-39.0, 19.0]:
+        for hy in [-24.5, 24.5]:
+            hole = Part.makeCylinder(1.35, 6.0, App.Vector(hx, hy, -2.0), App.Vector(0, 0, 1))
+            rpi_solid = rpi_solid.cut(hole)
 
     obj = doc.addObject("Part::Feature", "Raspberry_Pi_4")
     obj.Label = "Raspberry Pi 4 Model B (COTS)"
@@ -131,8 +132,9 @@ def build_rpi4():
 
     fcstd_path = f"{cots_models_dir}/rpi4_model_b.FCStd"
     doc.saveAs(fcstd_path)
-    rpi_solid.exportStep(f"{cots_step_dir}/rpi4_model_b.step")
-    rpi_solid.exportStl(f"{cots_stl_dir}/rpi4_model_b.stl")
+    if "--export" in sys.argv:
+        rpi_solid.exportStep(f"{cots_step_dir}/rpi4_model_b.step")
+        rpi_solid.exportStl(f"{cots_stl_dir}/rpi4_model_b.stl")
     App.closeDocument(doc_name)
     print(f"✔ Generated Raspberry Pi 4 Model B -> {fcstd_path}")
 
@@ -275,8 +277,12 @@ def build_vl53l5cx():
     lens1 = Part.makeCylinder(0.55, 0.4, App.Vector(-1.5, 0.0, 2.8), App.Vector(0, 0, 1))
     lens2 = Part.makeCylinder(0.55, 0.4, App.Vector(1.5, 0.0, 2.8), App.Vector(0, 0, 1))
 
-    # 6-Pin I2C Header on back side (-Z) so header points upward into chassis while lens (+Z) faces downward
-    header = Part.makeBox(15.24, 2.54, 4.7, App.Vector(-7.62, -8.5, -4.7))
+    # 6-Pin 90-Degree Right-Angle I2C Header on back side (-Z_local -> +Z_world in Belly Pan):
+    # Plastic shroud stays within Z_local in [-2.50, 0.00] (Z_world in [-2.75, -0.25 mm], completely below Body_Bottom Z=0),
+    # with horizontal pins extending toward -Y into the Belly Pan wire pass-through slot.
+    hdr_base = Part.makeBox(15.24, 2.54, 2.50, App.Vector(-7.62, -8.50, -2.50))
+    hdr_pins = Part.makeBox(15.24, 5.00, 1.20, App.Vector(-7.62, -13.50, -2.00))
+    header = hdr_base.fuse(hdr_pins)
 
     tof_solid = pcb.fuse(sensor).fuse(lens1).fuse(lens2).fuse(header)
 
