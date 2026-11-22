@@ -68,8 +68,17 @@ Dieses Dokument bündelt den aktuellen Testbench-Stand, Hardware-Befunde, das ve
       * $+Y$-Bank (nach links zeigend): `LR` (CH2 Violett), `LM` (CH1 Grün), `LF` (CH0 Blau) sowie 4-Pin Pi-Haupteingang (`3,3V, GND, SDA, SCL`) und 2-Pin PCA9685 Left Logik.
       * $-Y$-Bank (nach rechts zeigend): `RR` (CH5 Grau), `RM` (CH4 Weiß), `FR` (CH3 Orange) sowie 4-Pin Sensor-Erweiterung (CH6/7) und 2-Pin PCA9685 Right Logik.
     * Alle 6 Bein-Steckplätze liegen außerhalb des TCA9548A-Footprints ($|Y| \ge 16{,}2\,\text{mm}$) und sind bei abgenommenem Wartungsdeckel direkt von oben frei zugänglich.
-- [ ] **Physische Verteilerplatine (`3,3 V / GND`-Schiene) auf Lochraster / PCB aufbauen & löten:**  
-  * Gemäß CAD-Layout und Bestückungsplan löten: 2× 12-Pin Buchsenleisten für Multiplexer, 6× 4-Pin verpolsichere Bein-Wannenleisten, Pi-Eingangsheader, PCA9685-Versorgungsheader und Entkoppelkondensatoren (`10 µF` Elko + `100 nF` Keramik).
+- [x] **KiCad-Projekt & Gerber-Fertigungsdaten für Carrier Board ([`pcb/sensor_hub/`](pcb/sensor_hub/README.md)):**  
+  * **Status:** Vollständiges KiCad 8 Projekt ([`sensor_hub.kicad_pro`](pcb/sensor_hub/sensor_hub.kicad_pro), [`sensor_hub.kicad_sch`](pcb/sensor_hub/sensor_hub.kicad_sch), [`sensor_hub.kicad_pcb`](pcb/sensor_hub/sensor_hub.kicad_pcb)), RS-274X Gerbers, Excellon Drill und fertiges Bestell-ZIP ([`sensor_hub_gerbers.zip`](pcb/sensor_hub/sensor_hub_gerbers.zip)) generiert via [`generate_sensor_hub_kicad.py`](pcb/sensor_hub/scripts/generate_sensor_hub_kicad.py).
+  * **Features:**
+    * 2-Lagen FR4 ($54 \times 22 \times 1{,}6\,\text{mm}$), 2× M2.5 Bohrungen im 26 mm Abstand.
+    * 2× 12-Pin TCA9548A/PW548A Sockel, Hardware-Adresse fest auf `0x71` verdrahtet (`A0 → 3,3V`).
+    * 6× 4-Pin Bein-Steckplätze mit $1:1$ geradem Pinout zu den ADS1115 (`V280`) Wandlern (`1: 3,3V, 2: GND, 3: SCx, 4: SDx`).
+    * 4-Pin Pi-Haupteingang, 4-Pin AUX (CH6 INA228 / CH7 ToF), 2× 2-Pin PCA9685 Versorgungen und $10\,\mu\text{F} + 100\,\text{nF}$ Entkopplung.
+    * Ground-Pour auf Bottom-Layer, $0{,}6\,\text{mm}$ Power-Bus, vollständiger Bestückungsdruck.
+- [ ] **Physische Verteilerplatine (`3,3 V / GND`-Schiene) aufbauen / bestellen:**  
+  * *Option A (Sofort / Werkstatt):* Prototyp auf $54 \times 22\,\text{mm}$ Lochraster aufbauen für den aktuellen Bring-up.  
+  * *Option B (Fabrikneu):* [`sensor_hub_gerbers.zip`](pcb/sensor_hub/sensor_hub_gerbers.zip) per Drag & Drop bei JLCPCB oder AISLER hochladen (ca. 2–15 €, Lieferzeit 3–5 Tage).
 - [ ] **`Star-GND`-Konzept sauber umsetzen:**  
   * Hohe `6 V`-Servoströme strikt über die zentrale [`Star_Ground_Bus`](wiring/03_power_distribution.yml)-Schiene direkt zu Batterie / UBECs zurückführen; die `GND`-Schiene des `3,3 V`-Verteilers nur über **genau eine** Referenzverbindung an `Star-GND` koppeln (Schutz vor Erdschleifen / `Ground Bounce`).
 - [x] **Bauraum- & Stecker-Check im Chassis ([`chassis_core_assembly.FCStd`](../mechanics/models/custom/v2/chassis_core_assembly.FCStd)):**  

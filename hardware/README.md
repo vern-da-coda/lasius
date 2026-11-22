@@ -38,7 +38,7 @@ All dimensions and physical kinematics are defined in [`software/lasius-core/src
 ## Subdirectories
 
 - [**`mechanics/`**](mechanics/README.md): Parametric FreeCAD 3D CAD models (`.FCStd`), headless generation scripts (`scripts/`), fabrication exports (`export/` in STEP, STL, DXF), 1:1 SVG drill templates, and 1200 DPI reference flatbed scans.
-- [**`electronics/`**](electronics/wiring/README.md): WireViz wiring definitions (`.yml`), electrical harness diagrams (`.svg`, `.png`), and automated Bills of Materials (`.bom.tsv`). See also the [**Electronics & Wiring Backlog / TODOs**](electronics/TODO.md).
+- [**`electronics/`**](electronics/wiring/README.md): WireViz wiring definitions (`.yml`), electrical harness diagrams (`.svg`, `.png`), automated Bills of Materials (`.bom.tsv`), and the **custom KiCad PCB project & Gerber files** ([`electronics/pcb/sensor_hub/`](electronics/pcb/sensor_hub/README.md)). See also the [**Electronics & Wiring Backlog / TODOs**](electronics/TODO.md).
 
 ---
 
