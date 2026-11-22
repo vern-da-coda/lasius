@@ -87,8 +87,17 @@ Dieses Dokument bündelt den aktuellen Testbench-Stand, Hardware-Befunde, das ve
 - [ ] **Zweiten Controller (`0x42`, rechts, `A1` gebrückt) in Daisy-Chain integrieren & testen.**
 - [ ] **Restliche `5×` `V280`-Wandler einzeln prüfen:**  
   * Jeden weiteren **Wandler** vor dem Einbau in die Femur-Kammern auf Adresse `0x48` (`ADDR → GND`), 12- vs. 16-Bit-Auflösung und Kanal-Isolation (`CH1–CH5`) verifizieren.
-- [ ] **Alle 18 Servos (`Reely NR-645 MG BB`) umbauen & einzeln durchmessen:**  
-  * Schleifer-Leitung anlöten und bei **jedem** Servo vor dem Anstecken an einen **Wandler** per Multimeter gegen `GND` bestätigen, dass über den kompletten Stellweg strikt `≤ 3,3 V` anliegen.
+- [ ] **Alle 18 Servos (`Reely / Torcster NR-645 MG BB`) umbauen & einzeln durchmessen:**  
+  * **Spezifikation & Maße:** Siehe verbindliche Leitfaden- und Längenmatrix in [`WIRING_HARNESS_SPEC.md`](WIRING_HARNESS_SPEC.md).
+  * **1 Servo verifiziert (`bkhexapod`), 17 Servos ausstehend:**
+    * Weiße hochflexible Silikonlitze (AWG 28/30) auf **150 mm** (Coxa) bzw. **100 mm** (Femur/Tibia) an den mittleren Schleiferabgriff des internen 5kΩ-Drehpotis anlöten.
+    * Leitung parallel zum Werkskabel durch die Gehäusetülle herausführen und Deckel schließen.
+  * **Zwingende QC-Messtoleranz vor Platinenanschluss:** Bei **jedem** Servo vor dem Anstecken an einen **Wandler** per Multimeter gegen `GND` bestätigen, dass über den kompletten Stellweg strikt `≤ 3,3 V` anliegen ($0{,}88\dots 2{,}25\,\text{V}$ normal, $1{,}56\,\text{V}$ neutral, niemals $> 3{,}3\,\text{V}$).
+- [ ] **Kabelbäume & Platinen-Stecker nach 3D-CAD-Maßen konfektionieren ([`WIRING_HARNESS_SPEC.md`](WIRING_HARNESS_SPEC.md)):**  
+  * **6× I²C-Uplinks (Wandler $\rightarrow$ Zentrale Verteilerschiene):** 4-adrig AWG 28 (`Rot, Schwarz, Gelb, Kanal-Farbe`), einheitliche Schnittlänge **300 mm** (Dupont / JST-XH 4-Pin Buchse).
+  * **6× Fußsensor-Leitungen (Omron D2F-L $\rightarrow$ Wandler `A3` & `GND`):** 2-adrig AWG 28 (`Orange, Schwarz`), Schnittlänge **210 mm**.
+  * **6× Wandler-Eingangsstecker (Analog A0–A3):** 4-Pin-Buchse (`A0 Weiß Coxa, A1 Weiß Femur, A2 Weiß Tibia, A3 Orange Fuß`).
+  * **PWM-Zuleitungen zu den PCA9685:** 300 mm Werkskabel für Coxa/Femur/Tibia-nah nutzen; Tibia-fern (`RL, FR, MR`) mit 100 mm Servo-Verlängerung versehen.
 
 ### AP 4: Bench- & Software-Integration (`scripts/bench/` & `lasius-core`)
 - [ ] **[`pot_calibration_wizard.py`](../../scripts/bench/pot_calibration_wizard.py) automatisieren:**  
