@@ -78,6 +78,104 @@ def make_rounded_rect_solid(x_min, x_max, y_min, y_max, r_corner, z_min, z_max):
     return face.extrude(App.Vector(0.0, 0.0, z_max - z_min))
 
 
+def make_pin_header_1row(x_c, y_c, z_base, pins, orient_x=True, pin_len=8.50, collar_h=2.50):
+    """Creates a 1-row Dupont header with thermoplastic collar base and discrete gold square pins."""
+    pitch = 2.54
+    pin_w = 0.64
+    if orient_x:
+        len_x = pins * pitch
+        len_y = pitch
+    else:
+        len_x = pitch
+        len_y = pins * pitch
+    collar = Part.makeBox(len_x, len_y, collar_h, App.Vector(x_c - len_x / 2.0, y_c - len_y / 2.0, z_base))
+    compound = collar
+    for i in range(pins):
+        if orient_x:
+            px = x_c - len_x / 2.0 + (i + 0.5) * pitch
+            py = y_c
+        else:
+            px = x_c
+            py = y_c - len_y / 2.0 + (i + 0.5) * pitch
+        pin = Part.makeBox(pin_w, pin_w, pin_len, App.Vector(px - pin_w / 2.0, py - pin_w / 2.0, z_base - 1.0))
+        compound = compound.fuse(pin)
+    return compound.removeSplitter()
+
+
+def make_pin_header_2row(x_c, y_c, z_base, cols, orient_x=True, pin_len=8.50, collar_h=2.50):
+    """Creates a 2-row Dupont header (e.g. 2x20 RPi GPIO) with collar base and discrete gold pins."""
+    pitch = 2.54
+    pin_w = 0.64
+    if orient_x:
+        len_x = cols * pitch
+        len_y = 2.0 * pitch
+    else:
+        len_x = 2.0 * pitch
+        len_y = cols * pitch
+    collar = Part.makeBox(len_x, len_y, collar_h, App.Vector(x_c - len_x / 2.0, y_c - len_y / 2.0, z_base))
+    compound = collar
+    for r in range(2):
+        for c in range(cols):
+            if orient_x:
+                px = x_c - len_x / 2.0 + (c + 0.5) * pitch
+                py = y_c - len_y / 2.0 + (r + 0.5) * pitch
+            else:
+                px = x_c - len_x / 2.0 + (r + 0.5) * pitch
+                py = y_c - len_y / 2.0 + (c + 0.5) * pitch
+            pin = Part.makeBox(pin_w, pin_w, pin_len, App.Vector(px - pin_w / 2.0, py - pin_w / 2.0, z_base - 1.0))
+            compound = compound.fuse(pin)
+    return compound.removeSplitter()
+
+
+def make_right_angle_servo_header_3x16(x_c, y_base, z_base, cols=16):
+    """
+    Creates a 16x 3-pin (3x16 = 48 pins) 90° right-angle servo header.
+    Pins extend from PCB horizontally in +Y direction.
+    """
+    pitch = 2.54
+    pin_w = 0.64
+    len_x = cols * pitch  # 40.64 mm
+    collar_w = 4.50
+    collar_h = 3.00
+    collar = Part.makeBox(len_x, collar_w, collar_h, App.Vector(x_c - len_x / 2.0, y_base, z_base))
+    compound = collar
+    pin_horiz_len = 8.70  # extends horizontally past Y = 12.0 to Y = 20.7 mm
+    for row in range(3):
+        pz = z_base + 0.90 + row * 2.54
+        for col in range(cols):
+            px = x_c - len_x / 2.0 + (col + 0.5) * pitch
+            # Vertical leg from PCB
+            vert_leg = Part.makeBox(pin_w, pin_w, pz - z_base + pin_w, App.Vector(px - pin_w / 2.0, y_base + 1.2, z_base - 0.8))
+            # Horizontal leg extending in +Y
+            horiz_leg = Part.makeBox(pin_w, pin_horiz_len, pin_w, App.Vector(px - pin_w / 2.0, y_base + 1.2, pz))
+            pin_solid = vert_leg.fuse(horiz_leg)
+            compound = compound.fuse(pin_solid)
+    return compound.removeSplitter()
+
+
+def make_right_angle_header_1row(x_c, y_base, z_base, pins=6, dir_y=-1.0):
+    """Creates a 1-row 90° right-angle Dupont header with discrete pins."""
+    pitch = 2.54
+    pin_w = 0.64
+    len_x = pins * pitch
+    collar_w = 2.54
+    collar_h = 2.50
+    collar = Part.makeBox(len_x, collar_w, collar_h, App.Vector(x_c - len_x / 2.0, y_base, z_base))
+    compound = collar
+    horiz_len = 5.00
+    for i in range(pins):
+        px = x_c - len_x / 2.0 + (i + 0.5) * pitch
+        py_start = y_base if dir_y < 0 else y_base + collar_w
+        py_end = py_start + dir_y * horiz_len
+        ymin, ymax = min(py_start, py_end), max(py_start, py_end)
+        # Vertical pin leg
+        vert_leg = Part.makeBox(pin_w, pin_w, 2.00, App.Vector(px - pin_w / 2.0, y_base + collar_w / 2.0 - pin_w / 2.0, z_base - 0.8))
+        # Horizontal pin leg
+        horiz_leg = Part.makeBox(pin_w, ymax - ymin, pin_w, App.Vector(px - pin_w / 2.0, ymin, z_base + 1.25 - pin_w / 2.0))
+        compound = compound.fuse(vert_leg).fuse(horiz_leg)
+    return compound.removeSplitter()
+
+
 # =============================================================================
 # 1. Raspberry Pi 4 Model B
 # =============================================================================
@@ -104,8 +202,8 @@ def build_rpi4():
     # Gigabit Ethernet Port Block (Metal, 21.5 x 16.0 x 14.0 mm on +X front edge)
     eth = Part.makeBox(21.5, 16.0, 14.0, App.Vector(23.5, 10.5, 1.4))
 
-    # 40-Pin GPIO Header (51.0 x 5.0 x 8.5 mm along +Y edge, centered at X = -10.0 mm between mounting holes)
-    gpio = Part.makeBox(51.0, 5.0, 8.5, App.Vector(-35.5, 22.0, 1.4))
+    # 40-Pin GPIO Header (2x20 pins with individual square pins and collar base along +Y edge)
+    gpio = make_pin_header_2row(x_c=-10.0, y_c=24.50, z_base=1.4, cols=20, orient_x=True)
 
     # USB-C Power Port (9.0 x 7.5 x 3.2 mm on -Y edge)
     usbc = Part.makeBox(9.0, 7.5, 3.2, App.Vector(-35.0, -28.0, 1.4))
@@ -118,6 +216,7 @@ def build_rpi4():
     sd = Part.makeBox(14.0, 12.0, 1.2, App.Vector(-42.5, -6.0, -1.2))
 
     rpi_solid = pcb.fuse(soc).fuse(usb3).fuse(usb2).fuse(eth).fuse(gpio).fuse(usbc).fuse(hdmi1).fuse(hdmi2).fuse(sd)
+    rpi_solid = rpi_solid.removeSplitter()
 
     # 4x Official Raspberry Pi 4 M2.5 Mounting Holes (58.0 x 49.0 mm pattern: 3.5 mm from -X/+Y/-Y edges -> X in [-39.0, +19.0], Y in [-24.5, +24.5])
     for hx in [-39.0, 19.0]:
@@ -183,18 +282,15 @@ def build_pca9685():
     term_cav2 = Part.makeBox(3.0, 4.0, 4.0, App.Vector(-8.0, -13.0, 3.5))
     term = term_body.cut(term_cav1).cut(term_cav2)
 
-    # 16x 3-Pin Servo Pin Headers (90° Right Angle pointing horizontally in +Y direction)
-    # Plastic base sits on PCB along +Y edge: 40.64 x 4.5 x 3.0 mm
-    hdr_base = Part.makeBox(40.64, 4.5, 3.0, App.Vector(-20.32, 7.5, 1.6))
-    # 90° Right-angle pins extending horizontally past PCB edge (8.5 mm protrusion past Y=12.7, reaching Y=21.2 mm)
-    hdr_pins = Part.makeBox(40.64, 9.2, 5.0, App.Vector(-20.32, 12.0, 2.5))
-    headers = hdr_base.fuse(hdr_pins)
+    # 16x 3-Pin Servo Pin Headers (90° Right Angle with 48 discrete pins pointing horizontally in +Y direction)
+    headers = make_right_angle_servo_header_3x16(x_c=0.00, y_base=7.50, z_base=1.60, cols=16)
 
-    # Dual 6-Pin I2C Headers (Straight pins pointing vertically +Z on -X and +X edges)
-    i2c_in = Part.makeBox(2.54, 15.24, 8.5, App.Vector(-29.27, -7.62, 1.6))
-    i2c_out = Part.makeBox(2.54, 15.24, 8.5, App.Vector(26.73, -7.62, 1.6))
+    # Dual 6-Pin I2C Headers (Straight pins pointing vertically +Z on -X and +X edges with discrete square pins)
+    i2c_in = make_pin_header_1row(x_c=-28.00, y_c=0.00, z_base=1.60, pins=6, orient_x=False)
+    i2c_out = make_pin_header_1row(x_c=28.00, y_c=0.00, z_base=1.60, pins=6, orient_x=False)
 
     pca_solid = pcb.fuse(ic).fuse(cap).fuse(term).fuse(headers).fuse(i2c_in).fuse(i2c_out)
+    pca_solid = pca_solid.removeSplitter()
 
     obj = doc.addObject("Part::Feature", "PCA9685_Board")
     obj.Label = "PCA9685 16-Channel PWM Servo Controller (COTS)"
@@ -203,8 +299,9 @@ def build_pca9685():
 
     fcstd_path = f"{cots_models_dir}/pca9685_board.FCStd"
     doc.saveAs(fcstd_path)
-    pca_solid.exportStep(f"{cots_step_dir}/pca9685_board.step")
-    pca_solid.exportStl(f"{cots_stl_dir}/pca9685_board.stl")
+    if "--export" in sys.argv:
+        pca_solid.exportStep(f"{cots_step_dir}/pca9685_board.step")
+        pca_solid.exportStl(f"{cots_stl_dir}/pca9685_board.stl")
     App.closeDocument(doc_name)
     print(f"✔ Generated PCA9685 16-Channel Board -> {fcstd_path}")
 
@@ -231,11 +328,12 @@ def build_tca9548a():
     # TCA9548A TSSOP-24 IC Chip (7.8 x 4.4 x 1.1 mm)
     ic = Part.makeBox(7.8, 4.4, 1.1, App.Vector(-3.9, -2.2, 1.6))
 
-    # Dual 12-Pin Headers (30.48 x 2.54 x 8.5 mm along long edges)
-    h_top = Part.makeBox(30.48, 2.54, 8.5, App.Vector(-15.24, 7.5, 1.6))
-    h_bot = Part.makeBox(30.48, 2.54, 8.5, App.Vector(-15.24, -10.04, 1.6))
+    # Dual 12-Pin Headers (Straight pins pointing vertically +Z with discrete square pins and collar base)
+    h_top = make_pin_header_1row(x_c=0.00, y_c=8.77, z_base=1.60, pins=12, orient_x=True)
+    h_bot = make_pin_header_1row(x_c=0.00, y_c=-8.77, z_base=1.60, pins=12, orient_x=True)
 
     tca_solid = pcb.fuse(ic).fuse(h_top).fuse(h_bot)
+    tca_solid = tca_solid.removeSplitter()
 
     obj = doc.addObject("Part::Feature", "TCA9548A_Board")
     obj.Label = "TCA9548A 8-Channel I2C Multiplexer (COTS)"
@@ -244,8 +342,9 @@ def build_tca9548a():
 
     fcstd_path = f"{cots_models_dir}/tca9548a_board.FCStd"
     doc.saveAs(fcstd_path)
-    tca_solid.exportStep(f"{cots_step_dir}/tca9548a_board.step")
-    tca_solid.exportStl(f"{cots_stl_dir}/tca9548a_board.stl")
+    if "--export" in sys.argv:
+        tca_solid.exportStep(f"{cots_step_dir}/tca9548a_board.step")
+        tca_solid.exportStl(f"{cots_stl_dir}/tca9548a_board.stl")
     App.closeDocument(doc_name)
     print(f"✔ Generated TCA9548A 8-Channel Multiplexer -> {fcstd_path}")
 
@@ -277,14 +376,11 @@ def build_vl53l5cx():
     lens1 = Part.makeCylinder(0.55, 0.4, App.Vector(-1.5, 0.0, 2.8), App.Vector(0, 0, 1))
     lens2 = Part.makeCylinder(0.55, 0.4, App.Vector(1.5, 0.0, 2.8), App.Vector(0, 0, 1))
 
-    # 6-Pin 90-Degree Right-Angle I2C Header on back side (-Z_local -> +Z_world in Belly Pan):
-    # Plastic shroud stays within Z_local in [-2.50, 0.00] (Z_world in [-2.75, -0.25 mm], completely below Body_Bottom Z=0),
-    # with horizontal pins extending toward -Y into the Belly Pan wire pass-through slot.
-    hdr_base = Part.makeBox(15.24, 2.54, 2.50, App.Vector(-7.62, -8.50, -2.50))
-    hdr_pins = Part.makeBox(15.24, 5.00, 1.20, App.Vector(-7.62, -13.50, -2.00))
-    header = hdr_base.fuse(hdr_pins)
+    # 6-Pin 90-Degree Right-Angle I2C Header on back side with discrete pins
+    header = make_right_angle_header_1row(x_c=0.00, y_base=-8.50, z_base=-2.50, pins=6, dir_y=-1.0)
 
     tof_solid = pcb.fuse(sensor).fuse(lens1).fuse(lens2).fuse(header)
+    tof_solid = tof_solid.removeSplitter()
 
     obj = doc.addObject("Part::Feature", "VL53L5CX_Board")
     obj.Label = "VL53L5CX 9-Zone ToF Terrain Distance Sensor (COTS)"
@@ -293,8 +389,9 @@ def build_vl53l5cx():
 
     fcstd_path = f"{cots_models_dir}/vl53l5cx_board.FCStd"
     doc.saveAs(fcstd_path)
-    tof_solid.exportStep(f"{cots_step_dir}/vl53l5cx_board.step")
-    tof_solid.exportStl(f"{cots_stl_dir}/vl53l5cx_board.stl")
+    if "--export" in sys.argv:
+        tof_solid.exportStep(f"{cots_step_dir}/vl53l5cx_board.step")
+        tof_solid.exportStl(f"{cots_stl_dir}/vl53l5cx_board.stl")
     App.closeDocument(doc_name)
     print(f"✔ Generated VL53L5CX ToF Sensor -> {fcstd_path}")
 
@@ -328,6 +425,7 @@ def build_battery_lipo_2s():
     jst_xh = Part.makeBox(5.5, 9.8, 6.0, App.Vector(-55.0, 8.0, 4.0))
 
     bat_solid = pack.fuse(collar).fuse(cable_pos).fuse(cable_neg).fuse(xt60).fuse(jst_xh)
+    bat_solid = bat_solid.removeSplitter()
 
     obj = doc.addObject("Part::Feature", "Battery_LiPo_2S")
     obj.Label = "2S 7.4V LiPo Battery Pack (COTS)"
@@ -336,8 +434,9 @@ def build_battery_lipo_2s():
 
     fcstd_path = f"{cots_models_dir}/battery_lipo_2s.FCStd"
     doc.saveAs(fcstd_path)
-    bat_solid.exportStep(f"{cots_step_dir}/battery_lipo_2s.step")
-    bat_solid.exportStl(f"{cots_stl_dir}/battery_lipo_2s.stl")
+    if "--export" in sys.argv:
+        bat_solid.exportStep(f"{cots_step_dir}/battery_lipo_2s.step")
+        bat_solid.exportStl(f"{cots_stl_dir}/battery_lipo_2s.stl")
     App.closeDocument(doc_name)
     print(f"✔ Generated 2S LiPo Battery Pack -> {fcstd_path}")
 
@@ -364,10 +463,11 @@ def build_ads1115():
     # ADS1115 MSOP-10 IC Chip (3.0 x 3.0 x 1.1 mm)
     ic = Part.makeBox(3.0, 3.0, 1.1, App.Vector(-1.5, -1.5, 1.6))
 
-    # 10-Pin Header along bottom edge (25.4 x 2.54 x 8.5 mm)
-    hdr = Part.makeBox(25.4, 2.54, 8.5, App.Vector(-12.7, -7.62, 1.6))
+    # 10-Pin Header along bottom edge with discrete gold square pins and collar base
+    hdr = make_pin_header_1row(x_c=0.00, y_c=-6.35, z_base=1.60, pins=10, orient_x=True)
 
     ads_solid = pcb.fuse(ic).fuse(hdr)
+    ads_solid = ads_solid.removeSplitter()
 
     obj = doc.addObject("Part::Feature", "ADS1115_Board")
     obj.Label = "ADS1115 16-Bit 4-Channel ADC (COTS)"
@@ -376,8 +476,9 @@ def build_ads1115():
 
     fcstd_path = f"{cots_models_dir}/ads1115_board.FCStd"
     doc.saveAs(fcstd_path)
-    ads_solid.exportStep(f"{cots_step_dir}/ads1115_board.step")
-    ads_solid.exportStl(f"{cots_stl_dir}/ads1115_board.stl")
+    if "--export" in sys.argv:
+        ads_solid.exportStep(f"{cots_step_dir}/ads1115_board.step")
+        ads_solid.exportStl(f"{cots_stl_dir}/ads1115_board.stl")
     App.closeDocument(doc_name)
     print(f"✔ Generated ADS1115 16-Bit ADC Breakout -> {fcstd_path}")
 
