@@ -430,6 +430,7 @@ doc_asm.saveAs(fcstd_asm_path)
 
 doc_core = App.openDocument(fcstd_core_path)
 doc_pca = App.openDocument(f"{cots_dir}/pca9685_board.FCStd")
+doc_hub = App.openDocument(f"{models_dir}/sensor_hub_board.FCStd")
 doc_tca = App.openDocument(f"{cots_dir}/tca9548a_board.FCStd")
 doc_bat = App.openDocument(f"{cots_dir}/battery_lipo_2s.FCStd")
 
@@ -461,6 +462,7 @@ def make_link(name, label, src_obj, placement, color=None):
 
 COLOR_CORE = (0.22, 0.24, 0.27)  # Anthracite / Carbon PA-CF monocoque
 COLOR_PCA = (0.04, 0.38, 0.88)   # Signal Blue PCA9685
+COLOR_HUB = (0.12, 0.45, 0.22)   # Dark Forest Green Sensor Hub Carrier Board
 COLOR_TCA = (0.50, 0.15, 0.70)   # Signal Violet TCA9548A
 COLOR_BAT = (0.85, 0.65, 0.10)   # Gold / Yellow 2S LiPo
 
@@ -475,14 +477,18 @@ make_link("Board_PCA9685_Left", "2. PCA9685 Front (Horizontal, Pins +Y Left, Cla
 p_pca_rear = App.Placement(App.Vector(-43.25, 3.00, 28.00), App.Rotation(App.Vector(0, 0, 1), 180.0))
 make_link("Board_PCA9685_Right", "3. PCA9685 Rear (Horizontal, Pins -Y Right, Clamps UP)", doc_pca.PCA9685_Board, p_pca_rear, COLOR_PCA)
 
-# 4. TCA9548A Multiplexer seated on support bosses at (0.0, 0.0, 28.00 mm)
-r_tca = App.Rotation(App.Vector(0, 0, 1), 90.0)
-p_tca = App.Placement(App.Vector(0.0, 0.0, 28.00), r_tca)
-make_link("Board_TCA9548A", "4. TCA9548A I2C Multiplexer (Horizontal, Center)", doc_tca.TCA9548A_Board, p_tca, COLOR_TCA)
+# 4. Sensor Hub & 3.3V/GND Distribution Carrier Board seated on Intermediate Deck bosses at (0.0, 0.0, 28.00 mm)
+p_hub = App.Placement(App.Vector(0.0, 0.0, 28.00), App.Rotation())
+make_link("Board_Sensor_Hub", "4. Sensor Hub & 3.3V/GND Distribution Carrier Board", doc_hub.Sensor_Hub_Board, p_hub, COLOR_HUB)
 
-# 5. 2S LiPo Battery Pack in lower tunnel (Z = 3.75 .. 17.75 mm)
+# 5. TCA9548A Multiplexer seated in Hub Female Sockets (elevated to Z = 33.60 mm)
+r_tca = App.Rotation(App.Vector(0, 0, 1), 90.0)
+p_tca = App.Placement(App.Vector(0.0, 0.0, 33.60), r_tca)
+make_link("Board_TCA9548A", "5. TCA9548A I2C Multiplexer (Seated in Hub Sockets)", doc_tca.TCA9548A_Board, p_tca, COLOR_TCA)
+
+# 6. 2S LiPo Battery Pack in lower tunnel (Z = 3.75 .. 17.75 mm)
 p_bat = App.Placement(App.Vector(0.0, 0.0, 3.75), App.Rotation())
-make_link("Battery_LiPo_2S", "5. 2S 7.4V LiPo Battery Pack (Lower Level Tunnel)", doc_bat.Battery_LiPo_2S, p_bat, COLOR_BAT)
+make_link("Battery_LiPo_2S", "6. 2S 7.4V LiPo Battery Pack (Lower Level Tunnel)", doc_bat.Battery_LiPo_2S, p_bat, COLOR_BAT)
 
 doc_asm.recompute()
 doc_asm.save()

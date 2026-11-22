@@ -59,14 +59,21 @@ Dieses Dokument bündelt den aktuellen Testbench-Stand, Hardware-Befunde, das ve
 ## 3. Offene Aufgaben (Backlog)
 
 ### AP 1: Zentrale `3,3 V / GND`-Verteilerschiene & Chassis-Integration
-- [ ] **Verteilerplatine (`3,3 V / GND`-Schiene) für den Roboter entwerfen & löten:**  
-  * **Hintergrund:** Der reale violette **Multiplexer** stellt auf `CH0–CH7` nur `SDx / SCx` bereit (keine eigenen `3,3 V / GND`-Pins je Kanal), und jeder **Wandler** besitzt nur `1× VDD` / `1× GND`. Im Vollausbau (6× Bein-**Wandler**, **Multiplexer** `VIN + A0`, `2× Controller`-Logik, später IMU / ToF / Stromsensor) werden ca. **10–13 Abgänge** benötigt.
-  * **Umsetzung (Empfehlung):** Kompakte Lochrasterplatine mit gemeinsamer **Rot (`3,3 V`)**- und **Schwarz (`GND`)**-Leiste plus Stützkondensatoren (`100 nF` Keramik + `10 µF`) – idealerweise gleich als Trägerboard für den **Multiplexer** mit **6 verpolsicheren 4-Pin-Steckplätzen (`Rot · Schwarz · Gelb · Kanal-Farbe`)** je Bein.
-  * **Strombudget beachten:** Alle genannten I²C-Logik- und Sensor-Boards liegen zusammen grob bei `~60–100 mA` und können direkt über Pi `Pin 1` (+ optional `Pin 17`) versorgt werden (keine stromhungrigen Verbraucher wie LEDs/Displays auf diese Schiene hängen).
+- [x] **CAD-Konstruktion & Chassis-Integration des Carrier Boards ([`sensor_hub_board.FCStd`](../mechanics/models/custom/v2/parts/chassis/sensor_hub_board.FCStd)):**  
+  * **Status:** Vollständig konstruiert via [`generate_sensor_hub_board.py`](../mechanics/scripts/v2/generate_sensor_hub_board.py) und kollisionsfrei ($0{,}0000\,\text{mm}^3$) in [`chassis_core_assembly.FCStd`](../mechanics/models/custom/v2/chassis_core_assembly.FCStd) eingebunden.
+  * **Architektur:**
+    * $54{,}0 \times 22{,}0 \times 1{,}60\,\text{mm}$ FR4-Trägerplatine, direkt verschraubt auf den beiden M2.5-Domen des Zwischenbodens bei $X = 0{,}0, Y = \pm 13{,}0\,\text{mm}$.
+    * Integrierte Buchsenleisten ($h = 4{,}0\,\text{mm}$) für den TCA9548A Multiplexer (steckbar, Modulhöhe $Z = 33{,}60\,\text{mm}$, $> 9{,}6\,\text{mm}$ Kopffreiheit zur oberen Carbonplatte).
+    * **Zwei getrennte 4-Pin-Beinleisten-Bänke:**
+      * $+Y$-Bank (nach links zeigend): `LR` (CH2 Violett), `LM` (CH1 Grün), `LF` (CH0 Blau) sowie 4-Pin Pi-Haupteingang (`3,3V, GND, SDA, SCL`) und 2-Pin PCA9685 Left Logik.
+      * $-Y$-Bank (nach rechts zeigend): `RR` (CH5 Grau), `RM` (CH4 Weiß), `FR` (CH3 Orange) sowie 4-Pin Sensor-Erweiterung (CH6/7) und 2-Pin PCA9685 Right Logik.
+    * Alle 6 Bein-Steckplätze liegen außerhalb des TCA9548A-Footprints ($|Y| \ge 16{,}2\,\text{mm}$) und sind bei abgenommenem Wartungsdeckel direkt von oben frei zugänglich.
+- [ ] **Physische Verteilerplatine (`3,3 V / GND`-Schiene) auf Lochraster / PCB aufbauen & löten:**  
+  * Gemäß CAD-Layout und Bestückungsplan löten: 2× 12-Pin Buchsenleisten für Multiplexer, 6× 4-Pin verpolsichere Bein-Wannenleisten, Pi-Eingangsheader, PCA9685-Versorgungsheader und Entkoppelkondensatoren (`10 µF` Elko + `100 nF` Keramik).
 - [ ] **`Star-GND`-Konzept sauber umsetzen:**  
   * Hohe `6 V`-Servoströme strikt über die zentrale [`Star_Ground_Bus`](wiring/03_power_distribution.yml)-Schiene direkt zu Batterie / UBECs zurückführen; die `GND`-Schiene des `3,3 V`-Verteilers nur über **genau eine** Referenzverbindung an `Star-GND` koppeln (Schutz vor Erdschleifen / `Ground Bounce`).
-- [ ] **Bauraum- & Stecker-Check im Chassis ([`body_assembly.FCStd`](../mechanics/models/custom/v2/body_assembly.FCStd)):**  
-  * Einbauplatz, Zugentlastung und vertikale Steckerhöhe der `3,3 V / GND`-Verteilerplatine neben dem **Multiplexer** auf dem Electronics Tray prüfen.
+- [x] **Bauraum- & Stecker-Check im Chassis ([`chassis_core_assembly.FCStd`](../mechanics/models/custom/v2/chassis_core_assembly.FCStd)):**  
+  * Einbauplatz auf Level 2 Intermediate Deck ($Z = 28{,}00\,\text{mm}$) verifiziert; pairwise B-Rep Schnittvolumen mit Monocoque-Hülle, beiden PCA9685, 2S LiPo und TCA9548A beträgt exakt **$0{,}0000\,\text{mm}^3$**. Vertikaler Freiraum zu `Body_Top` beträgt $16{,}2\,\text{mm}$ über den Bein-Headern.
 
 ### AP 2: Schaltpläne (`WireViz`) & Dokumentation abgleichen
 - [x] **WireViz-Spezifikationen & READMEs an reale Hardware & Master-Farbschema anpassen:**  

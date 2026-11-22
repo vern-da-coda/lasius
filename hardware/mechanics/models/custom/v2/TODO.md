@@ -239,6 +239,19 @@ Dieser Backlog führt alle offenen Aufgaben, konstruktiven Erweiterungen und Ver
     * $16\,\text{mm}$ Taillierungs-Freigang zu den mittleren Coxa-Servos ML und MR.
   * **Integration:** Eingebunden in [`lasius_assembly.FCStd`](lasius_assembly.FCStd).
 
+- [x] **Zentrale Sensor-Hub & 3,3 V / GND-Verteilerplatine (`sensor_hub_board.FCStd`):**  
+  * **Modell & Generator:** [`sensor_hub_board.FCStd`](parts/chassis/sensor_hub_board.FCStd) generiert via [`generate_sensor_hub_board.py`](../../../scripts/v2/generate_sensor_hub_board.py).
+  * **Status:** Vollständig konstruiert und als Subkomponente in [`chassis_core_assembly.FCStd`](chassis_core_assembly.FCStd) eingebunden.
+  * **Architektur & Bauraum-Integration:**
+    * **Platzierung:** Sitzt auf den beiden Zwischenboden-Domen bei $X = 0{,}0\,\text{mm}, Y = \pm 13{,}0\,\text{mm}, Z = 28{,}00\,\text{mm}$ im $24\,\text{mm}$-Spalt zwischen den beiden horizontalen PCA9685-Controllern.
+    * **Abmessungen:** $54{,}0 \times 22{,}0 \times 1{,}60\,\text{mm}$ FR4-Substrat mit $R = 2{,}0\,\text{mm}$ Eckverrundungen.
+    * **Steckbare TCA9548A-Aufnahme:** Duale 12-Pin Buchsenleisten ($h = 4{,}00\,\text{mm}$) bei $X = \pm 8{,}77\,\text{mm}$, die das TCA9548A Breakout-Modul auf $Z = 33{,}60\,\text{mm}$ anheben.
+    * **6× 4-Pin Bein-Steckplätze (`3,3V · GND · SCx · SDx`):**
+      * $+Y$-Bank (nach links zeigend): `LR` (CH2 Violett), `LM` (CH1 Grün), `LF` (CH0 Blau) sowie Pi-Haupteingangsheader (`3,3V, GND, SDA, SCL`) und 2-Pin PCA9685-Left-Logikversorgungsheader.
+      * $-Y$-Bank (nach rechts zeigend): `RR` (CH5 Grau), `RM` (CH4 Weiß), `FR` (CH3 Orange) sowie 4-Pin Sensor-Erweiterungsheader (CH6/7) und 2-Pin PCA9685-Right-Logikversorgungsheader.
+    * **Ergonomie:** Alle 6 Bein-Anschlüsse liegen außerhalb des TCA9548A-Footprints ($|Y| \ge 16{,}2\,\text{mm}$) mit $16{,}2\,\text{mm}$ Kopffreiheit zu `Body_Top` und sind bei abgenommenem Service-Deckel direkt von oben frei zugänglich.
+    * **Kollisionsfreiheit:** Exakt **$0{,}0000\,\text{mm}^3$** Kollision zu Monocoque, PCA9685, TCA9548A und LiPo-Akku.
+
 - [ ] **Chassis-Core-Monocoque Evolution: Vollständige Bodenabdeckung, flexibler Akkutunnel & Schwenkbereichs-Morphologie:**  
   * **Hintergrund & Motivation:**
     * Die Montageöffnung in der unteren Carbon-Bodenplatte ([`body_bottom.FCStd`](../../custom/v1/parts/body_bottom.FCStd)) misst $160{,}0 \times 50{,}0\,\text{mm}$ ($X \in [-80{,}0, +80{,}0]\,\text{mm}, Y \in [-25{,}0, +25{,}0]\,\text{mm}$). Der bisherige Kern ($X \in [-56{,}0, +54{,}0]\,\text{mm}$) deckt diesen Bereich nur teilweise ab.
