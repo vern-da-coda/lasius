@@ -100,8 +100,8 @@ Dieses Dokument bündelt den aktuellen Testbench-Stand, Hardware-Befunde, das ve
   * **PWM-Zuleitungen zu den PCA9685:** 300 mm Werkskabel für Coxa/Femur/Tibia-nah nutzen; Tibia-fern (`RL, FR, MR`) mit 100 mm Servo-Verlängerung versehen.
 
 ### AP 4: Bench- & Software-Integration (`scripts/bench/` & `lasius-core`)
-- [ ] **[`pot_calibration_wizard.py`](../../scripts/bench/pot_calibration_wizard.py) automatisieren:**  
-  * Option `--adc` ergänzen, um Poti-Spannungen direkt über **Multiplexer + Wandler** automatisch einzulesen statt per Handeingabe vom Multimeter.
+- [x] **[`pot_calibration_wizard.py`](../../scripts/bench/pot_calibration_wizard.py) automatisieren:**  
+  * Option `--adc` ergänzt: Vollautomatische oder interaktive Einlesung über Multiplexer (`CH0–CH7`) + Wandler (`A0–A3`) mit Sicherheits-Hardlimit ($\le 3{,}3\,\text{V}$), konfigurierbarer Mittelwertbildung (`--samples`), `--auto`-Modus und vollwertigem Mock-Modus (`--mock`) für Offline-Tests.
 - [ ] **Diagnose-Skripte sauber auf `bkhexapod` ausrollen & pflegen:**  
   * [`test_electronics.py`](../../scripts/bench/test_electronics.py) und aktualisierten Kalibrier-Wizard nach `~/lasius/scripts/` auf den Pi synchronisieren.
   * Sub-Kanal-Scan in `test_electronics.py` verbessern (bereits auf dem Hauptbus erkannte Adressen wie `0x40` / `0x42` beim Sub-Scan herausfiltern) und Diagnose-Ausgabe ggf. auf 12-/16-Bit-Erkennung anpassen.
