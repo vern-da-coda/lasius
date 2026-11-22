@@ -161,3 +161,6 @@ hardware/mechanics/export/blender/*.mtl
 # FEA solver outputs and meshes are reproducible via scripts/dev/fea_*.py
 hardware/mechanics/export/fea/
 
+# Antigravity CLI local project configuration & permissions
+.agyrc
+
