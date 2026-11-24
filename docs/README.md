@@ -20,6 +20,8 @@ Specifications, architectural decisions, wiring schematics, and development road
   Audio learning script covering physical CAD modeling, PyBullet simulation, kinematics, and software architecture.
 
 ### Hardware & Electronics
+- [**3D-Druckanleitung & Fertigungs-Teileliste (Bambu Lab & DfAM)**](../hardware/mechanics/PRINTING_GUIDE.md):
+  Verbindliche Fertigungs- und Slicing-Richtlinien für Bambu Lab Drucker (X1-Carbon / X-Serie / P1S), Druckbett-Belegungen, Materialempfehlungen (PETG, PETG-CF, TPU 95A) sowie vollständige Stückliste (BOM) aller 3D-Druck-, Zukauf- und Verbindungsteile.
 - [**Femur FEA Structural Analysis & Bionic Topology Optimization**](hardware/femur_topology_optimization_report.md):
   Complete FEM verification report covering the lightweight topology optimization of the Lasius Femur v2 using CalculiX & Gmsh across 3 operating load cases ($-21.9\,\%$ component mass reduction, safety factor $S = 2.72$ under knee-servo stall torque).
 - [**Electronics Testbench Bring-Up Status & Handover**](hardware/testbench_bringup_status.md):

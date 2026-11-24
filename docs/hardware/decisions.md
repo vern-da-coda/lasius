@@ -7,8 +7,8 @@
 
 ---
 
-> **Source:** *GitHub Lasius Project Assistance.pdf* (Concept, Electronics & Mechanics Specification)  
-> **Status:** October 2026
+> **Source:** *GitHub Lasius Project Assistance.pdf* & Iterative Hardware-as-Code Architecture Reviews  
+> **Status:** November 2026
 
 This document consolidates all final architectural decisions from the project specification for hardware upgrades, sensor integration (STEMMA QT / I2C), and 3D printing reconstruction (PETG).
 
@@ -34,9 +34,9 @@ This document consolidates all final architectural decisions from the project sp
 | :--- | :--- | :--- |
 | **Servomotors (18×)** | **Reely NR-645 MG BB** (Standard analog servo, 59 g) | Metal gears, dual ball bearings, **25T spline (Futaba/Savöx compatible)**, dimensions $40.7 \times 20.5 \times 39.5\,\text{mm}$, stall torque ~9.6–11 kg·cm @ 6.0 V, stall current ~1.8–2.5 A per servo. |
 | **PWM Drivers (2×)** | **PCA9685 16-Channel I2C** | Board 1 (Left): **`0x40`**, Board 2 (Right): **`0x42`** (A1 bridged). *Important:* `ALLCALL` (`0x70`) is disabled in driver software to prevent address collisions with the PCA9548 multiplexer. |
-| **Power UBECs (2×)** | **2× 5V/6V High-Current UBECs (10–15 A each)** | **Strict Dual-Rail Separation:** UBEC 1 powers exclusively Board `0x40` (left 9 servos), UBEC 2 powers exclusively Board `0x42` (right 9 servos). |
-| **Logic Power Supply** | **Separate 5V / 3A Buck Converter** | Powers only the Raspberry Pi 4 (prevents brownouts and reboots during servo stall peaks). Common star ground. |
-| **Main Power Inlet** | **Amass XT60BE-M** (Panel-mount male plug with flange) | Securely screwed into chassis rear (strain relief for bench power supply or 2S/3S LiPo battery). |
+| **Power UBECs (2×)** | **2× Hobbywing BEC 10A V2-Car (`HW30603003`, 6.0 V)** | **Strict Dual-Rail Separation (IP67, 10 A cont / 15 A peak, $45 \times 20 \times 16.2\,\text{mm}$):** Mounted on `Body_Top` inside symmetric rear cooling cradles of [`chassis_rpi_mount.FCStd`](../../hardware/mechanics/models/custom/v2/parts/chassis/chassis_rpi_mount.FCStd) at **`X = -79.5, Y = ±21.5, Z = 56.52 mm`** (45° outer chamfers inside `Body_Top`, 3× bottom vent slots, ventilated via 2×4 rear canopy exhaust slots; outputs/ferrites pointing `+X` toward the central deck cutout). **Optional G2 ([`gaster_power_assembly.FCStd`](../../hardware/mechanics/models/custom/v2/gaster_power_assembly.FCStd)):** Outsourced to the 2-DoF Power-Gaster with 14 AWG battery feed and dual 16 AWG returns. |
+| **Logic Power Supply** | **Separate 5V / 3A Buck Converter (`ubec_3a`)** | Mounted symmetrically on the 100 % port-free `+Y` flank of [`chassis_rpi_mount.FCStd`](../../hardware/mechanics/models/custom/v2/parts/chassis/chassis_rpi_mount.FCStd) at **`X = 0.0, Y = +39.5, Z = 56.52 mm`** directly beside the Pi 4 GPIO 5 V header (prevents brownouts/reboots during servo stall peaks; common star ground). |
+| **Power Controls & Protection** | **Internal Hatch XT60 + Upright Top-Pull 25 A Mini-ATM Fuse + 2× Recessed Rear Mini Slide Switches** | **Top-Deck Rear Power Cockpit (`X ∈ [-127.0, -86.0 mm]`):** Clamped rigidly via both rear CFRP M3 spacer screws (`(-90.0, 0.0)` and `(-120.0, 0.0)`). **2× Mini Slide Switches** (`Switch_Logic_Pi` left `+Y` green, `Switch_Servos_Armed` right `-Y` red) sit flush-recessed in the 45° rear bevels (`(-116.0, ±14.5, Z = 59.0 mm)`), protected within the `Body_Top` carbon contour; **1× upright 25 A Mini-ATM fuse tower** (`(-105.0, 0.0, Z_flange = 78.8 mm)`) protrudes cleanly through a `17.0 × 11.2 mm` canopy aperture for tool-free top extraction. Battery XT60 is directly accessible via the extended `116 mm` hinged front-center Battery Hatch (`X = +36.0 mm` LiPo position). **Optional G2:** All controls & UBECs housed inside `gaster_power_assembly.FCStd`. |
 
 ---
 
@@ -91,7 +91,7 @@ To isolate the 6 leg ADC boards (**ADS1115**) and maintain a clean I2C bus hiera
 | **100×** | **100 nF 50V MLCC + 10 kΩ Resistors** | Low-pass filter caps (`4×` per Wandler `A0–A3 → GND`, $f_c \approx 636\,\text{Hz}$) + `10 kΩ` pull-up (`A3 → 3.3V`) |
 | **1×** | **Adafruit VL53L4CD / VL53L5CX ToF Sensor** *(planned)* | Short-range laser distance sensor in front nose (Mux CH7) |
 | **1–2×** | **INA228 / INA260 Power Monitor** *(planned)* | Real-time current/voltage/power telemetry (Mux CH6) |
-| **1×** | **Adafruit 9-DOF Orientation IMU – BNO085** *(planned)* | On-chip sensor fusion (Roll/Pitch/Yaw) on primary I2C bus (`0x4A`) |
+| **1×** | **Adafruit 9-DOF Orientation IMU – BNO085 (PID 4754)** | On-chip sensor fusion (Roll/Pitch/Yaw). CAD-integrated on Front Deck of [`chassis_rpi_mount.FCStd`](../../hardware/mechanics/models/custom/v2/parts/chassis/chassis_rpi_mount.FCStd) (`X = +75.0, Y = 0.0, Z = 58.32 mm`, [`bno085_board.FCStd`](../../hardware/mechanics/models/cots/bno085_board.FCStd), non-magnetic Nylon/Brass M2.5 screws; prefer `i2c-gpio` / UART-RVC / SPI on Pi 4 to avoid BCM2711 `i2c-1` clock-stretching issues) |
 | **Assorted** | **Dupont / JST Wire Harnesses (Master Color Scheme)** | Standardized color coding across `3.3V/GND`, Mux `CH0–CH6`, and `A0–A3` (see [`hardware/electronics/wiring/README.md`](../../hardware/electronics/wiring/README.md)) |
 
 ### 4.2 Hardware, Switches & Fasteners
@@ -136,8 +136,34 @@ To isolate the 6 leg ADC boards (**ADS1115**) and maintain a clean I2C bus hiera
 
 ### 5.5 CAD Directory & Versioning Architecture (*Hardware-as-Code*)
 - **3-Tier Hierarchy (`hardware/mechanics/models/` & `export/`):**
-  1. **Origin (`hardware/` vs. `custom/`):** Immutable COTS/standard components (`hardware/`, including `servo_nr645.FCStd`, bearings, and M4 fasteners) are strictly separated from custom-engineered parts (`custom/`).
-  2. **Evolutionary Generations (`custom/v1/`, `custom/v2/`):** `v1` preserves the reverse-engineered multi-plate/spacer baseline; `v2` encapsulates the monolithic 3D-printed redesign with integrated ADS1115 chambers and internal cable routing.
+  1. **Origin (`cots/` vs. `custom/`):** Immutable COTS/standard components (`cots/`, including `servo_nr645.FCStd`, bearings, and M4 fasteners) are strictly separated from custom-engineered parts (`custom/`).
+  2. **Evolutionary Generations (`custom/v1/`, `custom/v2/`):** `v1` preserves the reverse-engineered multi-plate/spacer baseline (with physical CNC carbon plates `body_bottom.FCStd` & `body_top.FCStd` frozen as hardware invariant); `v2` encapsulates the monolithic 3D-printed redesign with integrated ADS1115 chambers and internal cable routing.
   3. **System Entry Points vs. Components (`v{N}/` vs. `v{N}/parts/`):** Assemblies (`leg_assembly.FCStd`, `body_assembly.FCStd`) reside directly at the root of each generation folder (`custom/v{N}/`), while individual components are encapsulated in `custom/v{N}/parts/`.
 - **Canonical Naming & Cross-Generation Inheritance:** Files use canonical, versionless names (`coxa.FCStd`, `femur.FCStd`, `tibia.FCStd`, `leg_assembly.FCStd`) rather than SemVer filename suffixes to keep FreeCAD `App::Link` references and Git history intact. Components unchanged between generations are linked relatively from the parent generation without file duplication.
+
+---
+
+## 6. Top-Deck Power Architecture, Monolithic Magnet Canopy & Evaluated Upgrade Paths (v2)
+
+### 6.1 Verified Mechanical & Power Baseline (`0.0000 mm³` Collision Across All Assemblies)
+- **Unified Top-Deck Power & Control Platform ([`chassis_rpi_mount.FCStd`](../../hardware/mechanics/models/custom/v2/parts/chassis/chassis_rpi_mount.FCStd)):** Consolidates the centered Raspberry Pi 4 (`(0, 0, Z = 59.80)` with 100 % unobstructed ports), 2× Hobbywing 10A V2-Car UBECs (`(-79.5, ±21.5)`), 1× 5V/3A Pi UBEC (`(0.0, +39.5)`), 2× recessed 45° rear slide switches (`(-116.0, ±14.5)`), the upright top-pull 25 A Mini-ATM fuse (`(-105.0, 0.0, Z_flange = 78.8)`), and the front-deck **Adafruit BNO085 9-DOF IMU** (`(+75.0, 0.0, Z_pcb = 58.32)`, [`bno085_board.FCStd`](../../hardware/mechanics/models/cots/bno085_board.FCStd), 4× non-magnetic M2.5 bosses, `> 5 mm` canopy clearance, maximized EMI distance to all UBECs & magnets) on `Body_Top`, rigidly anchored via 10× M3 screws including both rear CFRP spacer screws `(-90, 0)` & `(-120, 0)`.
+- **Monolithic Single-Piece Magnet Canopy ([`chassis_canopy.FCStd`](../../hardware/mechanics/models/custom/v2/parts/chassis/chassis_canopy.FCStd)):** The redundant separate `chassis_service_cover` was permanently removed; the single-piece canopy integrates 5× 45° `'>>>'` Chevron louvers over the Pi 4 SoC, 2×4 rear exhaust vents over the Hobbywing heatsinks, 2× bottom-open 45° switch arches, and a `17.0 × 11.2 mm` top-pull fuse opening, lifting straight up (`+Z`) tool-free via magnets on the 4 pillars (`±48, ±36`).
+- **Segmented 2-Level Sealed Monocoque Core & Closed Belly Pan ([`chassis_core_lower.FCStd`](../../hardware/mechanics/models/custom/v2/parts/chassis/chassis_core_lower.FCStd), [`chassis_core_upper.FCStd`](../../hardware/mechanics/models/custom/v2/parts/chassis/chassis_core_upper.FCStd), [`chassis_belly_pan.FCStd`](../../hardware/mechanics/models/custom/v2/parts/chassis/chassis_belly_pan.FCStd), [`chassis_battery_hatch.FCStd`](../../hardware/mechanics/models/custom/v2/parts/chassis/chassis_battery_hatch.FCStd)):** Moving all UBECs and controls to `Body_Top` yielded 100 % sealed seamless $G^1$ monocoque waist walls (preserving both Front `X = +85..+135` and Rear `X = -85..-132` dovetails), a dust-sealed skid plate with rear-bridge `VL53L5CX` (`X = -58.5 mm`), and a forward-center 2S LiPo (`X = +36.0 mm`, `116 mm` hinged hatch accepting packs up to `110 mm`) balancing the rear UBECs to `< 1 mm` CoG offset. Horizontally segmented at parametric `Z_SPLIT = 24.00 mm` with triple form-fit alignment and 4× `M3 × 50 mm` metal tie-rod standoffs ([`standoff_m3x50_round.FCStd`](../../hardware/mechanics/models/cots/standoff_m3x50_round.FCStd)) so Level 1 reprints independently and Level 2 prints 100 % support-free.
+- **Separate Optional 2-DoF Power-Gaster ([`gaster_power_assembly.FCStd`](../../hardware/mechanics/models/custom/v2/gaster_power_assembly.FCStd)):** Retained as an independent, zero-collision Option G2 docking module with real NR-645 Pan/Tilt servos and full power-train relocation.
+
+### 6.2 Evaluated Next-Iteration Upgrade Options (Non-Destructive Backlog)
+The following design studies were evaluated without modifying the verified baseline CAD models (tracked in [`v2/TODO.md`](../../hardware/mechanics/models/custom/v2/TODO.md) & [`electronics/TODO.md`](../../hardware/electronics/TODO.md)):
+
+1. **Rear Control Unit & Master-Switch Options (1–3):**
+   - **Option 1 — `3-Stage Master` *(Recommended Low-Complexity)*:** Single `3P3T` mini slide switch (`OFF → LOGIC → ARMED`, mechanically prevents enabling servos before Pi boots; `< 0.5 mA` standby) + `6×6 mm` Pi Safe-Shutdown button (`GPIO3`, protects MicroSD card) + 2× 3 mm status LEDs (Green `5 V` / Red `6 V`) + top-pull `25 A` fuse as true `0.00 mA` galvanic disconnect.
+   - **Option 2 — `30 A High-Side MOSFET Master`:** Compact `24×16 mm` 30 A high-side P-MOSFET / Pololu Power Switch board between UBECs (`< 10 µA` off-current, enables automatic Pi self-power-off after `shutdown`) + Master pushbutton + Pi Shutdown button + red `SERVOS ARM/KILL` DPST slide switch + status LEDs + `25 A` fuse.
+   - **Option 3 — `Rear Telemetry Cockpit with Display`:** Combines Option 1 or 2 with a flush-mounted rear status display behind a canopy window.
+2. **Evaluated Display Modules & Multi-Display Bus Isolation:**
+   - **Candidates:**
+     - `0.91"` I²C OLED (`128×32`, `38×12 mm`, SSD1306, ~3.90 €/pc): Slim rear visor; fixed `0x3C`, straight header pre-soldered, clip pocket required.
+     - `0.96"` I²C OLED (`128×64`, `27.0×27.3 mm`, SSD1306, Mono Blue or fixed Dual-Zone Yellow `y=0..15` / Blue `y=16..63`, ~2.20–2.90 €/pc): Unpopulated header (90° flat solder), 4× M2 holes (`23×23 mm`), `0x3C/0x3D` address jumper. Fits rear slope cleanly if the `25 A` fuse shifts forward into the open `20 mm` UBEC center channel (`X = -76, Y = 0`). Yellow/Blue suits a rear status HUD; monochrome or RGB suits bionic head eyes.
+     - `0.96"` SPI IPS TFT (`80×160`, ST7735, `~30×24 mm`, true 65k RGB): Compact full-color rear bevel option.
+     - `1.54"` SPI IPS TFT (`240×240`, ST7789, `32×44 mm`, 65k RGB, `CS` pin exposed, ~7.50 €/pc): Too large for the narrow rear tip (`X = -102..-128`), but fits the wide empty front Canopy/deck zone (`X = +52..+98`) or a future bionic Head visor.
+   - **Multi-Display Bus Architecture (Zero Real-Time Impact):** Connect all displays exclusively to Raspberry Pi 4's additional dedicated hardware I²C buses (`i2c-3`, `i2c-4`, `i2c-5` via `dtoverlay`) or hardware **SPI0 (`CE0`/`CE1`)** so display frame updates (~20–25 ms on I²C) never block the `50–100 Hz` closed-loop servo/ADC/IMU bus `i2c-1` (`~15–25 mA` per OLED, `~30–50 mA` per IPS TFT).
+
 
