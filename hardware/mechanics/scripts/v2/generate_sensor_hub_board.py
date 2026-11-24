@@ -79,7 +79,7 @@ pcb_solid = pcb_solid.cut(hole1).cut(hole2).removeSplitter()
 
 # 3. Decoupling Capacitors (10 µF electrolytic + 100 nF ceramic)
 cap_elec = Part.makeCylinder(2.0, 5.0, App.Vector(-8.80, 18.0, t_pcb), App.Vector(0, 0, 1))
-cap_mlcc = Part.makeBox(1.0, 2.5, 1.2, App.Vector(8.30, -19.65, t_pcb))
+cap_mlcc = Part.makeBox(1.0, 2.5, 1.2, App.Vector(-9.30, -18.75, t_pcb))  # Relocated adjacent to TCA VIN/GND at (-8.80, -17.50)
 caps_solid = cap_elec.fuse(cap_mlcc).removeSplitter()
 
 # Create Root App::Part Container

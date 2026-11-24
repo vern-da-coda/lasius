@@ -10,8 +10,7 @@ Assembles the complete self-contained torso / base_link structure (without legs)
 5. VL53L5CX 9-Zone ToF distance sensor (cots/vl53l5cx_board.FCStd) at Z = -2.75 mm
 6. Raspberry Pi 4 mounting frame (custom/v2/parts/chassis/chassis_rpi_mount.FCStd)
 7. Raspberry Pi 4 Model B (cots/rpi4_model_b.FCStd) at Z = 59.80 mm
-8. Draped Plexiglas canopy (custom/v2/parts/chassis/chassis_canopy.FCStd)
-9. Removable service cover with '>>>' chevron louvers (custom/v2/parts/chassis/chassis_service_cover.FCStd)
+8. Monolithic draped canopy with integrated '>>>' chevron & rear UBEC louvers (custom/v2/parts/chassis/chassis_canopy.FCStd)
 """
 
 import os
@@ -46,10 +45,16 @@ def build_chassis_assembly():
     doc_belly = App.openDocument(f"{v2_asm_dir}/parts/chassis/chassis_belly_pan.FCStd")
     doc_hatch = App.openDocument(f"{v2_asm_dir}/parts/chassis/chassis_battery_hatch.FCStd")
     doc_rpi_mount = App.openDocument(f"{v2_asm_dir}/parts/chassis/chassis_rpi_mount.FCStd")
-    doc_service_cover = App.openDocument(f"{v2_asm_dir}/parts/chassis/chassis_service_cover.FCStd")
     doc_canopy = App.openDocument(f"{v2_asm_dir}/parts/chassis/chassis_canopy.FCStd")
     doc_tof = App.openDocument(f"{cots_dir}/vl53l5cx_board.FCStd")
     doc_rpi = App.openDocument(f"{cots_dir}/rpi4_model_b.FCStd")
+    doc_ubec = App.openDocument(f"{cots_dir}/ubec_3a.FCStd")
+    doc_ubec_hw = App.openDocument(f"{cots_dir}/ubec_hobbywing_10a.FCStd")
+    doc_sw = App.openDocument(f"{cots_dir}/switch_mini_slide.FCStd")
+    doc_fuse = App.openDocument(f"{cots_dir}/fuse_mini_atm.FCStd")
+    doc_imu = App.openDocument(f"{cots_dir}/bno085_board.FCStd")
+    doc_mag = App.openDocument(f"{cots_dir}/magnet_5x2.FCStd")
+    doc_s_m2 = App.openDocument(f"{cots_dir}/screw_m2_button_head.FCStd")
 
     asm_part = doc.addObject("App::Part", "Chassis_Assembly")
     asm_part.Label = "Lasius Chassis Assembly v2 (CFRP Plates + Monocoque Core + Torso Electronics)"
@@ -88,8 +93,7 @@ def build_chassis_assembly():
     COLOR_CARBON = (0.16, 0.16, 0.18)
     COLOR_BELLY_PAN = (0.26, 0.26, 0.30)
     COLOR_RPI_MOUNT = (0.24, 0.24, 0.28)
-    COLOR_SERVICE_COVER = (0.20, 0.20, 0.23)
-    COLOR_CANOPY = COLOR_SERVICE_COVER
+    COLOR_CANOPY = (0.18, 0.22, 0.28)
     COLOR_PCB_RED = (0.75, 0.15, 0.15)
     COLOR_RPI_GREEN = (0.08, 0.52, 0.24)
 
@@ -137,12 +141,12 @@ def build_chassis_assembly():
         (0.28, 0.30, 0.34),
     )
 
-    # 5. VL53L5CX 9-Zone ToF Distance Sensor (Look-Ahead, X = +58.00 mm)
+    # 5. VL53L5CX 9-Zone ToF Distance Sensor (Fixed Rear Belly Pan Bridge, X = -58.50 mm)
     make_link(
         "Sensor_VL53L5CX_ToF",
-        "5. VL53L5CX 9-Zone ToF Distance Sensor (Fixed Front, COTS)",
+        "5. VL53L5CX 9-Zone ToF Distance Sensor (Fixed Rear Bridge, COTS)",
         doc_tof.VL53L5CX_Board,
-        App.Placement(App.Vector(58.00, 0.0, -2.75), App.Rotation(App.Vector(0, 1, 0), 180.0)),
+        App.Placement(App.Vector(-58.50, 0.0, -2.75), App.Rotation(App.Vector(0, 1, 0), 180.0)),
         None,
     )
 
@@ -164,29 +168,155 @@ def build_chassis_assembly():
         None,
     )
 
-    # 8. Draped Canopy
+    # 7b. 3A-6S UBEC 5V Step-Down Regulator on +Y Port-Free Flank of RPi Mount (X = 0.0, Y = +39.5, Z = 56.52 mm)
+    make_link(
+        "UBEC_3A_Pi",
+        "7b. 3A-6S UBEC 5V Step-Down (Pi Logic Power, +Y Flank, COTS)",
+        doc_ubec.UBEC_3A,
+        App.Placement(App.Vector(0.00, 39.50, 56.52), App.Rotation()),
+        (0.12, 0.58, 0.32),
+    )
+
+    # 7c. Dual Hobbywing BEC 10A V2-Car Servo UBECs (6.0V, 45x20x16.2mm) Symmetrically on Rear Deck of RPi Mount
+    #     X = -79.50, Y = ±21.50, Z = 56.52 mm -> 100% clear of RPi4 MicroSD (-X center), USB/Eth (+X),
+    #     USB-C/HDMI (-Y), GPIO (+Z), all 12 M3 standoffs, and all 6 leg mounting rings!
+    make_link(
+        "UBEC_Hobbywing_Left",
+        "7c. Hobbywing BEC 10A V2-Car Left 6.0V (Rear Deck +Y, HW30603003, COTS)",
+        doc_ubec_hw.UBEC_Hobbywing_10A,
+        App.Placement(App.Vector(-79.50, +21.50, 56.52), App.Rotation()),
+        (0.10, 0.11, 0.14),
+    )
+    make_link(
+        "UBEC_Hobbywing_Right",
+        "7d. Hobbywing BEC 10A V2-Car Right 6.0V (Rear Deck -Y, HW30603003, COTS)",
+        doc_ubec_hw.UBEC_Hobbywing_10A,
+        App.Placement(App.Vector(-79.50, -21.50, 56.52), App.Rotation()),
+        (0.10, 0.11, 0.14),
+    )
+
+    # 7e. Dual Rear-Tail UBEC Mini Slide Switches recessed into Chassis_RPi_Mount 45° rear bevels
+    #     (Operable externally through bottom-open Canopy arches; fixed via (-90, 0) & (-120, 0) M3 screws!)
+    make_link(
+        "Switch_Logic_Pi",
+        "7e. Mini Slide Switch SPST: Pi Logic Power (Rear Tail Left +Y Bevel, COTS)",
+        doc_sw.Switch_Mini_Slide,
+        App.Placement(App.Vector(-116.00, +14.50, 59.00), App.Rotation(App.Vector(0, 0, 1), -45.0)),
+        (0.18, 0.18, 0.22),
+    )
+    make_link(
+        "Switch_Servos_Armed",
+        "7f. Mini Slide Switch DPST: Dual-UBEC Servos Armed (Rear Tail Right -Y Bevel, COTS)",
+        doc_sw.Switch_Mini_Slide,
+        App.Placement(App.Vector(-116.00, -14.50, 59.00), App.Rotation(App.Vector(0, 0, 1), +45.0)),
+        (0.78, 0.18, 0.18),
+    )
+    # 7g. Upright 25A Mini-ATM Blade Fuse centered between both Rear Switches (X = -105.0, Y = 0.0, Z_flange = 78.80 mm)
+    #     local -X (pull cap) -> world +Z (protrudes through Canopy aperture); local +Y (15mm) -> world -X
+    rot_fuse_up = App.Rotation(App.Vector(0, 0, 1), 90.0).multiply(App.Rotation(App.Vector(0, 1, 0), 90.0))
+    make_link(
+        "Fuse_Mini_ATM_25A",
+        "7g. 25A Mini-ATM Blade Fuse & Socket (Rear Center Tower, Tool-Free Top Pull, COTS)",
+        doc_fuse.Fuse_Mini_ATM,
+        App.Placement(App.Vector(-105.00, 0.00, 78.80), rot_fuse_up),
+        (0.90, 0.90, 0.92),
+    )
+
+    # 7h. Adafruit BNO085 9-DOF Orientation IMU (PID 4754) on Front Deck of Chassis_RPi_Mount
+    #     X = +75.00, Y = 0.00, Z = 58.32 mm, rot +90° Z:
+    #     - Short edge (22.7 mm) along X -> X in [+63.65, +86.35 mm], Long edge (25.6 mm) along Y -> Y in [-12.80, +12.80 mm]
+    #     - Primary 6-pin 90° header points rearward (-X) toward RPi 4; dual STEMMA QT sockets face ±Y (+Y toward RPi GPIO)
+    make_link(
+        "Sensor_BNO085_IMU",
+        "7h. Adafruit BNO085 9-DOF Orientation IMU (Front Deck, PID 4754, COTS)",
+        doc_imu.BNO085_Board,
+        App.Placement(App.Vector(75.00, 0.00, 58.32), App.Rotation(App.Vector(0, 0, 1), 90.0)),
+        None,
+    )
+
+    # 7i. 8x Neodymium Disc Magnets Ø5 x 2 mm (4x Pillar Lower at Z=70.00..72.00 + 4x Canopy Upper at Z=72.35..74.35)
+    mag_corners = [
+        ("FL", +48.0, +36.0),
+        ("FR", +48.0, -36.0),
+        ("RL", -48.0, +36.0),
+        ("RR", -48.0, -36.0),
+    ]
+    for tag, mx, my in mag_corners:
+        make_link(
+            f"Magnet_Pillar_{tag}",
+            f"7i. Neodymium Magnet Ø5x2 Pillar {tag} (COTS)",
+            doc_mag.Magnet_5x2,
+            App.Placement(App.Vector(mx, my, 70.00), App.Rotation()),
+            (0.78, 0.80, 0.84),
+        )
+        make_link(
+            f"Magnet_Canopy_{tag}",
+            f"7j. Neodymium Magnet Ø5x2 Canopy {tag} (COTS)",
+            doc_mag.Magnet_5x2,
+            App.Placement(App.Vector(mx, my, 72.35), App.Rotation()),
+            (0.78, 0.80, 0.84),
+        )
+
+    # 8. Monolithic Draped Canopy with Integrated '>>>' Chevron & Rear UBEC Louvers
     make_link(
         "Chassis_Canopy",
-        "8. Draped Canopy with Service Aperture (v2)",
+        "8. Monolithic Draped Canopy with Integrated Louvers (v2)",
         doc_canopy.getObject("Chassis_Canopy"),
         App.Placement(App.Vector(0.0, 0.0, 0.0), App.Rotation()),
         COLOR_CANOPY,
     )
 
-    # 9. Removable Service Cover with '>>>' Chevron Louvers
-    make_link(
-        "Chassis_Service_Cover",
-        "9. Service Cover with '>>>' Chevron Louvers (v2)",
-        doc_service_cover.getObject("Chassis_Service_Cover"),
-        App.Placement(App.Vector(0.0, 0.0, 0.0), App.Rotation()),
-        COLOR_SERVICE_COVER,
-    )
+    # 9. 24x ISO 7380 M2 x 5 mm Servo Horn Screws fastening Body_Top (Z = 55.30 mm) to all 6 Coxa Servo Horns
+    #    4x M2 on Ø16.00 mm BCD around each Coxa pivot ear (head seated at Z = 55.32 mm, clears Canopy @ (0,±83)!)
+    coxa_screws_grp = doc.addObject("App::Part", "Coxa_Horn_Screws")
+    coxa_screws_grp.Label = "9. 24x M2x5 Coxa Servo Horn Screws (ISO 7380, 6x Ø16 mm BCD)"
+    for o in coxa_screws_grp.Origin.OutList:
+        if hasattr(o, "Visibility"):
+            o.Visibility = False
+    coxa_screws_grp.Origin.Visibility = False
+    coxa_screws_grp.Visibility = True
+    asm_part.addObject(coxa_screws_grp)
+
+    coxa_ears = [
+        ("FL", +86.0, +65.0),
+        ("ML",   0.0, +75.0),
+        ("RL", -86.0, +65.0),
+        ("FR", +86.0, -65.0),
+        ("MR",   0.0, -75.0),
+        ("RR", -86.0, -65.0),
+    ]
+    for tag, cx, cy in coxa_ears:
+        for idx, (dx, dy) in enumerate([(8.0, 0.0), (-8.0, 0.0), (0.0, 8.0), (0.0, -8.0)], start=1):
+            make_link(
+                f"Coxa_Horn_M2_{tag}_{idx}",
+                f"Coxa Horn Screw {tag} #{idx} (ISO 7380 M2x5)",
+                doc_s_m2.M2_Linsenkopfschraube,
+                App.Placement(App.Vector(cx + dx, cy + dy, 55.32), App.Rotation()),
+                (0.78, 0.80, 0.84),
+                parent=coxa_screws_grp,
+            )
 
     doc.recompute()
     doc.save()
     bbox = asm_part.Shape.BoundBox
     print(f"✔ Saved Chassis Assembly: {fcstd_path}")
     print(f"  Valid: {asm_part.Shape.isValid()}, BB: X=[{bbox.XMin:.2f}, {bbox.XMax:.2f}], Y=[{bbox.YMin:.2f}, {bbox.YMax:.2f}], Z=[{bbox.ZMin:.2f}, {bbox.ZMax:.2f}]")
+
+    # Collision Check
+    items = [(o.Name, o.Shape) for o in asm_part.Group if hasattr(o, "Shape") and not o.Shape.isNull()]
+    max_coll = 0.0
+    for i in range(len(items)):
+        for j in range(i + 1, len(items)):
+            n1, s1 = items[i]
+            n2, s2 = items[j]
+            if s1.BoundBox.intersect(s2.BoundBox):
+                v = s1.common(s2).Volume
+                if v > 1e-4:
+                    print(f"  ❌ COLLISION {n1} <-> {n2}: {v:.4f} mm^3")
+                    max_coll = max(max_coll, v)
+    if max_coll <= 1e-4:
+        print("  ✅ ZERO COLLISIONS in chassis_assembly.FCStd (0.0000 mm^3)!")
+
     return doc
 
 

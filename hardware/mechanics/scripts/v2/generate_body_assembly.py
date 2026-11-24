@@ -7,7 +7,7 @@ Assembles the complete 18-DOF Hexapod robot from modular L1 subassemblies:
    - Monocoque Central Core Assembly (chassis_core_assembly.FCStd: core + 2x PCA9685 + TCA9548A + 2S LiPo)
    - Belly Pan skid plate + VL53L5CX 9-zone ToF sensor
    - Raspberry Pi 4 mounting plate + Raspberry Pi 4 Model B
-   - Draped Plexiglas canopy + louvered service cover
+   - Monolithic draped canopy with integrated '>>>' chevron & UBEC louvers
 2. Six modular v2 legs:
    - Left side legs (FL, ML, RL): custom/v2/leg_assembly.FCStd
    - Right side legs (FR, MR, RR): custom/v2/leg_right_assembly.FCStd

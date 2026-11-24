@@ -1,44 +1,50 @@
 #!/usr/bin/env python3
 """
-Generate Lasius Hexapod Chassis Belly Pan Frame & Hinged Battery Hatch (custom/v2)
-==================================================================================
-Purpose & Mechanical Architecture:
-  Modular 2-piece protective underbody assembly (3D printed in rugged PETG / PA-CF):
-  1. chassis_belly_pan.FCStd (The Fixed Frame):
-     - Fastened permanently to the 4 main chassis standoffs (X = ±45.0, Y = ±30.0 mm)
-       via M3 DIN 7991 countersunk screws, maintaining 100% structural sandwich prestress
-       of the robot chassis during battery maintenance.
-     - Smooth boat-hull contoured underside with 30-degree approach ramps front and rear.
-     - Rigid front section housing the downward-facing VL53L5CX 9-Zone ToF Terrain Distance
-       Sensor at X = +58.0 mm (Look-Ahead Terrain Perception without sensor cable movement).
-     - Integrated knuckle hinge lugs along +Y side rail and snap-latch catch along -Y side rail.
-  2. chassis_battery_hatch.FCStd (The Swiveling Battery Service Hatch):
-     - Fits form-fittingly into the frame aperture (X in [-71.2, +43.2], Y in [-19.0, +19.0 mm]).
-     - Interlocking knuckle hinge lugs rotating on a 1.75 mm 3D-printer filament axis.
-     - Ergonomic cantilever snap-latch along -Y for completely tool-free, 3-second battery swaps.
-     - 4.6 mm deep internal pocket cradling the battery pack from below.
+Generate Lasius Hexapod Two-Piece Chassis Belly Pan & Hinged Battery Hatch v2
+(hardware/mechanics/models/custom/v2/parts/chassis/chassis_belly_pan.FCStd & chassis_battery_hatch.FCStd)
+=========================================================================================================
+Two-Piece CoG-Balanced Protective Skid-Plate Architecture (All UBECs on Body_Top):
+  1. Chassis_Belly_Pan (Fixed Protective Boat-Hull Skid Plate):
+     - Smooth, completely closed & dust-sealed underside hull (no obsolete UBEC louvers or
+       protruding UBEC cradle ribs!).
+     - Attaches via 4x M3 countersunk screws at (±45.0, ±30.0 mm) directly into Chassis_Core.
+     - Rear fixed ToF bridge (X in [-88.0, -40.5 mm]): mounts downward-facing VL53L5CX
+       9-zone ToF terrain sensor at X = -58.5 mm, Y = 0.0 mm with protective bezel, 4x M2
+       mounting bosses, I2C wire pass-through slot, and dual flanking glide runners.
+  2. Chassis_Battery_Hatch (Front-Center Hinged Battery Service Hatch, X in [-40.0, +76.0 mm]):
+     - Generous 116 mm long front-center battery bay balancing the 2x rear Top-Deck Hobbywing
+       UBECs (72 g at X = -79.5 mm) by placing the 2S LiPo forward at X = +36.0 mm
+       (CoG offset < 1 mm from X = 0!) while also accommodating larger 2S 3000-5000 mAh packs.
+     - Direct tool-free access to both the 2S LiPo and its rearward-exiting XT60 connector
+       (X in [-19.5, 0.0 mm]) for battery swap or bench power supply hookup.
+     - Interlocking 3D-printable 7-knuckle filament hinge (+Y rail, Ø2.1 mm bore for 1.75 mm
+       PETG/nylon axis) + ergonomic cantilever snap-latch along -Y rail (X = +18.0 mm).
 """
 
 import math
 import os
 import sys
+import zipfile
 import FreeCAD as App
 import Part
 
-print("--- Generating Lasius Chassis Belly Pan & Hinged Battery Hatch v2 ---")
+print("--- Generating Two-Piece CoG-Balanced Chassis Belly Pan & Battery Hatch v2 ---")
 
 repo_root = "/home/bjoern/Workspace/Hexapods/lasius"
 models_dir = f"{repo_root}/hardware/mechanics/models/custom/v2/parts/chassis"
+urdf_mesh_dir = f"{repo_root}/hardware/mechanics/export/urdf/meshes"
 export_step_dir = f"{repo_root}/hardware/mechanics/export/step/custom/v2/parts/chassis"
 export_stl_dir = f"{repo_root}/hardware/mechanics/export/stl/custom/v2/parts/chassis"
-urdf_mesh_dir = f"{repo_root}/hardware/mechanics/export/urdf/meshes"
 
-for d in [models_dir, urdf_mesh_dir]:
-    os.makedirs(d, exist_ok=True)
+os.makedirs(models_dir, exist_ok=True)
+os.makedirs(urdf_mesh_dir, exist_ok=True)
+if "--export" in sys.argv:
+    os.makedirs(export_step_dir, exist_ok=True)
+    os.makedirs(export_stl_dir, exist_ok=True)
 
 
 def make_rounded_rect_solid(x_min, x_max, y_min, y_max, r_corner, z_min, z_max):
-    """Constructs a filleted 3D solid prism in the X-Y plane extruded along Z."""
+    """Constructs a filleted 3D solid prism."""
     dx = x_max - x_min
     dy = y_max - y_min
     r_corner = min(r_corner, dx / 2.0 - 0.1, dy / 2.0 - 0.1)
@@ -81,8 +87,13 @@ z_hinge = -7.60
 r_knuckle = 2.20
 r_bore = 1.05  # Ø2.10 mm bore for 1.75 mm filament axis
 
+# Interlocking 7-knuckle hinge layout spanning Front-Center Hatch X in [-40.0, +76.0]:
+FRAME_LUGS = [(-36.0, -20.0), (-4.0, 12.0), (28.0, 44.0), (60.0, 72.0)]
+HATCH_LUGS = [(-19.2, -4.8), (12.8, 27.2), (44.8, 59.2)]  # 0.80 mm axial clearance each side
+
+
 # =============================================================================
-# 1. Build Part 1: Chassis_Belly_Pan (The Fixed Frame)
+# 1. Build Part 1: Chassis_Belly_Pan (The Fixed Protective Skid Plate Frame)
 # =============================================================================
 def build_belly_frame():
     # 1.1 Main Skid Plate Hull (Top Flange: X in [-88, +88], Y in [-34, +34])
@@ -128,8 +139,9 @@ def build_belly_frame():
             csk_cone = Part.makeCone(3.30, 1.70, 1.60, App.Vector(sx, sy, -2.40), App.Vector(0, 0, 1))
             frame_solid = frame_solid.cut(thru_hole).cut(csk_cone)
 
-    # 1.4 Downward-Facing ToF Sensor in Fixed Front Section (X = +58.0 mm, Y = 0.0 mm)
-    x_tof = 58.0
+    # 1.4 Downward-Facing VL53L5CX ToF Sensor in Fixed Rear Bridge (X = -58.5 mm, Y = 0.0 mm)
+    #     Leaves the entire Front-Center bay (X in [-40.0, +76.0]) free for CoG-balanced battery placement!
+    x_tof = -58.5
     aperture_box = make_rounded_rect_solid(x_tof - 5.0, x_tof + 5.0, -4.0, 4.0, 1.5, z_floor - 4.0, z_cavity_floor + 2.0)
     frame_solid = frame_solid.cut(aperture_box)
 
@@ -148,156 +160,169 @@ def build_belly_frame():
     wire_slot = make_rounded_rect_solid(x_tof - 9.0, x_tof + 9.0, -10.0, -5.0, 1.5, z_cavity_floor, z_top + 2.0)
     frame_solid = frame_solid.cut(wire_slot)
 
-    # 1.5 Service Hatch Aperture in Frame Floor (X in [-72.0, +44.0], Y in [-19.5, +19.5])
-    hatch_aperture = make_rounded_rect_solid(-72.0, 44.0, -19.5, 19.5, 5.0, z_floor - 2.0, z_cavity_floor + 0.1)
+    # 1.5 Front-Center Battery Service Hatch Aperture in Frame Floor (X in [-40.0, +76.0], Y in [-19.5, +19.5])
+    hatch_aperture = make_rounded_rect_solid(-40.0, 76.0, -19.5, 19.5, 4.5, z_floor - 2.0, z_cavity_floor + 0.1)
     frame_solid = frame_solid.cut(hatch_aperture)
 
     # Cut clearance pockets in frame for the hatch knuckle lugs:
-    # Hatch lugs sit at [-41.2, -12.8] and [6.8, 25.2], so pocket is [-41.6, -12.4] and [6.4, 25.6] with R = 2.50 mm
-    for x1, x2 in [(-41.6, -12.4), (6.4, 25.6)]:
-        pocket = Part.makeCylinder(2.50, x2 - x1, App.Vector(x1, y_hinge, z_hinge), App.Vector(1, 0, 0))
+    for x1, x2 in HATCH_LUGS:
+        pocket = Part.makeCylinder(2.50, (x2 - x1) + 0.8, App.Vector(x1 - 0.4, y_hinge, z_hinge), App.Vector(1, 0, 0))
         frame_solid = frame_solid.cut(pocket)
 
     # 1.6 Knuckle Hinge Lugs on Frame (+Y Rail at Y = 19.5 mm, Z = -7.6 mm)
-    # 3x lugs: [-60.0, -42.0], [-12.0, +6.0], [+26.0, +38.0]
-    for x1, x2 in [(-60.0, -42.0), (-12.0, 6.0), (26.0, 38.0)]:
+    for x1, x2 in FRAME_LUGS:
         lug = Part.makeCylinder(r_knuckle, x2 - x1, App.Vector(x1, y_hinge, z_hinge), App.Vector(1, 0, 0))
         frame_solid = frame_solid.fuse(lug)
 
-    # Continuous Bore for 1.75 mm Filament Axis
-    bore_frame = Part.makeCylinder(r_bore, 110.0, App.Vector(-65.0, y_hinge, z_hinge), App.Vector(1, 0, 0))
+    # Continuous Bore for 1.75 mm Filament Axis (X in [-38.0, +74.0])
+    bore_frame = Part.makeCylinder(r_bore, 114.0, App.Vector(-38.0, y_hinge, z_hinge), App.Vector(1, 0, 0))
     frame_solid = frame_solid.cut(bore_frame)
 
-    # 1.7 Snap-Latch Catch Groove along -Y Rail (Y in [-22.5, -19.5])
-    catch_groove = Part.makeBox(22.0, 3.2, 3.5, App.Vector(-11.0, -22.5, -9.20))
+    # 1.7 Snap-Latch Catch Groove along -Y Rail (centered at X = +18.0, X in [+7.0, +29.0])
+    catch_groove = Part.makeBox(22.0, 3.2, 3.5, App.Vector(7.0, -22.5, -9.20))
     frame_solid = frame_solid.cut(catch_groove)
 
-    # 1.8 Front & Rear Glide Runners on Fixed Frame
+    # 1.8 Rear Glide Runners on Fixed Frame (flanking ToF bezel at Y = ±16.0 mm)
     for ry in [-16.0, 16.0]:
-        rib_f = make_rounded_rect_solid(46.0, 66.0, ry - 1.5, ry + 1.5, 1.2, z_floor - 1.20, z_floor)
-        rib_r = make_rounded_rect_solid(-76.0, -66.0, ry - 1.5, ry + 1.5, 1.2, z_floor - 1.20, z_floor)
-        frame_solid = frame_solid.fuse(rib_f).fuse(rib_r)
+        rib_r = make_rounded_rect_solid(-68.0, -45.0, ry - 1.5, ry + 1.5, 1.2, z_floor - 1.20, z_floor)
+        frame_solid = frame_solid.fuse(rib_r)
+
+    # 1.9 Four Symmetrical Dust-Tight Desk-Stand Snap-Fit Docking Sockets at (±58.0, ±26.55 mm)
+    #     - Ø8.90 mm boss (R=4.45) stays strictly clear of +Y hinge (Y<=22.0), inside ±34.0 flange (Y<=31.0),
+    #       clear of M3 ears (±45, ±30) by >= 5.9 mm, and clear of VL53L5CX (|Y|<=9.1) by 13.0 mm!
+    #     - Closed dust-tight ceiling (Z = -2.10..-0.02 mm, 2.08 mm solid PETG) & 45° support-free interior!
+    #     - Ø5.30 mm neck -> Ø6.10 mm internal undercut groove locks onto Ø5.96 mm TPU 95A snap sleeves!
+    dock_pts = [(-58.0, -26.55), (-58.0, +26.55), (+58.0, -26.55), (+58.0, +26.55)]
+    for dx, dy in dock_pts:
+        boss = Part.makeCylinder(4.45, z_top - z_floor, App.Vector(dx, dy, z_floor), App.Vector(0, 0, 1))
+        frame_solid = frame_solid.fuse(boss)
+        # Revolved blind snap-fit socket cavity (45° lead-in, Ø5.30 neck, Ø6.10 undercut, 45° roof!)
+        sock_rz = [
+            (0.00, z_floor - 0.50),
+            (3.75, z_floor - 0.50),
+            (3.25, z_floor),
+            (2.65, z_floor + 0.85),   # -9.15 mm
+            (2.65, z_floor + 3.20),   # -6.80 mm (neck top)
+            (3.05, z_floor + 3.70),   # -6.30 mm (45° undercut entry)
+            (3.05, z_floor + 5.80),   # -4.20 mm (undercut pocket top)
+            (0.95, z_floor + 7.90),   # -2.10 mm (45° support-free ceiling, 2.08 mm dust-tight roof!)
+            (0.00, z_floor + 7.90),
+        ]
+        s_pts = [App.Vector(dx + r, dy, z) for r, z in sock_rz]
+        s_pts.append(s_pts[0])
+        sock_cav = Part.Face(Part.makePolygon(s_pts)).revolve(App.Vector(dx, dy, 0.0), App.Vector(0, 0, 1), 360.0)
+        frame_solid = frame_solid.cut(sock_cav)
 
     frame_solid = frame_solid.removeSplitter()
     return frame_solid
 
 
 # =============================================================================
-# 2. Build Part 2: Chassis_Battery_Hatch (The Hinged Service Hatch)
+# 2. Build Part 2: Chassis_Battery_Hatch (Front-Center Hinged Battery Hatch)
 # =============================================================================
 def build_battery_hatch():
-    # 2.1 Base Plate matching aperture with 0.8 mm clearance in X, 0.5 mm in Y
-    hatch_base = make_rounded_rect_solid(-71.2, 43.2, -19.0, 19.0, 4.5, z_floor, z_cavity_floor)
+    # 2.1 Base Plate matching aperture [-40.0, +76.0] with 0.8 mm clearance in X, 0.5 mm in Y
+    hatch_base = make_rounded_rect_solid(-39.2, 75.2, -19.0, 19.0, 4.0, z_floor, z_cavity_floor)
 
-    # 2.2 Deep Internal Battery Cradle Rim (cradles battery from below)
-    hatch_rim = make_rounded_rect_solid(-71.2, 43.2, -19.0, 19.0, 4.5, z_cavity_floor, -3.50)
-    hatch_pocket = make_rounded_rect_solid(-69.7, 41.7, -17.5, 17.5, 3.5, z_cavity_floor, -2.50)
+    # 2.2 Internal Battery Cradle Rim (Z = -7.60 .. -3.50 mm)
+    hatch_rim = make_rounded_rect_solid(-39.2, 75.2, -19.0, 19.0, 4.0, z_cavity_floor, -3.50)
+    hatch_pocket = make_rounded_rect_solid(-37.7, 73.7, -17.5, 17.5, 3.0, z_cavity_floor, -2.50)
     hatch_rim = hatch_rim.cut(hatch_pocket)
     hatch_solid = hatch_base.fuse(hatch_rim)
 
+    # Low transverse LiPo/XT60 divider rib at X = -2.0..-0.4 (cradles 72mm 2S LiPo forward in X in [0..+72],
+    # while leaving X in [-37.7, -2.0] wide open for the rearward-exiting XT60 & balancer leads!)
+    div_rib = Part.makeBox(1.6, 35.0, 3.2, App.Vector(-2.0, -17.5, z_cavity_floor))
+    hatch_solid = hatch_solid.fuse(div_rib)
+
     # Cut clearance pockets in hatch for the frame knuckle lugs:
-    # Frame lugs sit at [-60.0, -42.0], [-12.0, +6.0], [+26.0, +38.0]
-    for x1, x2 in [(-60.5, -41.6), (-12.4, 6.4), (25.6, 38.5)]:
-        hatch_pocket_hinge = Part.makeCylinder(2.50, x2 - x1, App.Vector(x1, y_hinge, z_hinge), App.Vector(1, 0, 0))
+    for x1, x2 in FRAME_LUGS:
+        hatch_pocket_hinge = Part.makeCylinder(2.50, (x2 - x1) + 0.8, App.Vector(x1 - 0.4, y_hinge, z_hinge), App.Vector(1, 0, 0))
         hatch_solid = hatch_solid.cut(hatch_pocket_hinge)
 
     # 2.3 Interlocking Knuckle Hinge Lugs on Hatch (+Y Edge at Y = 19.5 mm, Z = -7.6 mm)
-    # 2x lugs: [-41.2, -12.8] and [+6.8, +25.2] (perfect 0.8 mm clearance to frame lugs)
-    for x1, x2 in [(-41.2, -12.8), (6.8, 25.2)]:
+    for x1, x2 in HATCH_LUGS:
         lug = Part.makeCylinder(r_knuckle, x2 - x1, App.Vector(x1, y_hinge, z_hinge), App.Vector(1, 0, 0))
         hatch_solid = hatch_solid.fuse(lug)
 
     # Bore for 1.75 mm Filament Axis
-    bore_hatch = Part.makeCylinder(r_bore, 110.0, App.Vector(-65.0, y_hinge, z_hinge), App.Vector(1, 0, 0))
+    bore_hatch = Part.makeCylinder(r_bore, 114.0, App.Vector(-38.0, y_hinge, z_hinge), App.Vector(1, 0, 0))
     hatch_solid = hatch_solid.cut(bore_hatch)
 
-    # 2.4 Ergonomic Cantilever Snap-Latch along -Y Edge (X in [-9.0, +9.0])
-    # Arm sits with 0.3 mm clearance inside frame catch groove
-    latch_arm = Part.makeBox(18.0, 2.00, 2.80, App.Vector(-9.0, -21.00, -8.60))
-    latch_hook = Part.makeBox(18.0, 1.00, 1.40, App.Vector(-9.0, -22.00, -7.40))
-    latch_chamfer = Part.Face(
-        Part.makePolygon([
-            App.Vector(-10.0, -22.20, -9.00),
-            App.Vector(10.0, -22.20, -9.00),
-            App.Vector(10.0, -20.80, -7.40),
-            App.Vector(-10.0, -20.80, -7.40),
-            App.Vector(-10.0, -22.20, -9.00),
-        ])
-    ).extrude(App.Vector(0.0, 0.0, 3.0))
-    latch = latch_arm.fuse(latch_hook).cut(latch_chamfer)
-    hatch_solid = hatch_solid.fuse(latch)
+    # 2.4 Ergonomic Cantilever Snap-Latch along -Y Edge (centered at X = +18.0, X in [+9.0, +27.0])
+    latch_beam = Part.makeBox(18.0, 2.2, 2.0, App.Vector(9.0, -20.8, -8.80))
+    latch_lip = Part.makeBox(16.0, 1.4, 1.5, App.Vector(10.0, -21.8, -8.50))
+    pull_tab = make_rounded_rect_solid(12.0, 24.0, -21.0, -18.0, 1.2, z_floor - 1.20, z_floor)
+    hatch_solid = hatch_solid.fuse(latch_beam).fuse(latch_lip).fuse(pull_tab)
 
-    # 2.5 Underside Sled Runners on Hatch (X in [-65, +40], Y = ±14.0 mm)
-    for ry in [-14.0, 14.0]:
-        rib = make_rounded_rect_solid(-65.0, 38.0, ry - 1.5, ry + 1.5, 1.2, z_floor - 1.20, z_floor)
+    # 2.5 Protective Bottom Glide Ribs on Hatch (Y = ±12.0 mm, X in [-32.0, +68.0])
+    for ry in [-12.0, 12.0]:
+        rib = make_rounded_rect_solid(-32.0, 68.0, ry - 1.4, ry + 1.4, 1.2, z_floor - 1.00, z_floor)
         hatch_solid = hatch_solid.fuse(rib)
 
     hatch_solid = hatch_solid.removeSplitter()
     return hatch_solid
 
 
-# =============================================================================
-# 3. Build & Save Both FreeCAD Parts
-# =============================================================================
-fcstd_frame_path = f"{models_dir}/chassis_belly_pan.FCStd"
-fcstd_hatch_path = f"{models_dir}/chassis_battery_hatch.FCStd"
-
-# 1. Frame Part
 frame_solid = build_belly_frame()
-doc_frame_name = "chassis_belly_pan"
-try:
-    App.closeDocument(doc_frame_name)
-except Exception:
-    pass
-doc_frame = App.newDocument(doc_frame_name)
-obj_frame = doc_frame.addObject("Part::Feature", "Chassis_Belly_Pan")
-obj_frame.Label = "Chassis Belly Pan Frame (Fixed Skid Plate + Look-Ahead ToF)"
-obj_frame.Shape = frame_solid
-if hasattr(obj_frame, "ViewObject") and obj_frame.ViewObject:
-    obj_frame.ViewObject.Visibility = True
-    obj_frame.ViewObject.ShapeColor = (0.22, 0.24, 0.27)
-doc_frame.recompute()
-doc_frame.saveAs(fcstd_frame_path)
-# Export visual mesh for Three.js / Web-Dashboard
-obj_frame.Shape.exportStl(f"{urdf_mesh_dir}/chassis_belly_pan.stl")
-if "--export" in sys.argv:
-    os.makedirs(export_step_dir, exist_ok=True)
-    os.makedirs(export_stl_dir, exist_ok=True)
-    obj_frame.Shape.exportStep(f"{export_step_dir}/chassis_belly_pan.step")
-    obj_frame.Shape.exportStl(f"{export_stl_dir}/chassis_belly_pan.stl")
-print(f"✔ Saved Belly Pan Frame -> {fcstd_frame_path} (Valid={frame_solid.isValid()}, Volume={frame_solid.Volume:.1f} mm^3)")
-App.closeDocument(doc_frame_name)
-
-# 2. Hatch Part
 hatch_solid = build_battery_hatch()
-doc_hatch_name = "chassis_battery_hatch"
-try:
-    App.closeDocument(doc_hatch_name)
-except Exception:
-    pass
-doc_hatch = App.newDocument(doc_hatch_name)
-obj_hatch = doc_hatch.addObject("Part::Feature", "Chassis_Battery_Hatch")
-obj_hatch.Label = "Chassis Battery Service Hatch (Swiveling, Filament-Hinge & Snap-Latch)"
-obj_hatch.Shape = hatch_solid
-if hasattr(obj_hatch, "ViewObject") and obj_hatch.ViewObject:
-    obj_hatch.ViewObject.Visibility = True
-    obj_hatch.ViewObject.ShapeColor = (0.30, 0.32, 0.36)
-doc_hatch.recompute()
-doc_hatch.saveAs(fcstd_hatch_path)
-# Export visual mesh for Three.js / Web-Dashboard
-obj_hatch.Shape.exportStl(f"{urdf_mesh_dir}/chassis_battery_hatch.stl")
-if "--export" in sys.argv:
-    obj_hatch.Shape.exportStep(f"{export_step_dir}/chassis_battery_hatch.step")
-    obj_hatch.Shape.exportStl(f"{export_stl_dir}/chassis_battery_hatch.stl")
-print(f"✔ Saved Battery Service Hatch -> {fcstd_hatch_path} (Valid={hatch_solid.isValid()}, Volume={hatch_solid.Volume:.1f} mm^3)")
-App.closeDocument(doc_hatch_name)
 
-# 3. Collision Check Frame <-> Hatch
-coll = frame_solid.common(hatch_solid).Volume
-print(f"  Frame <-> Hatch Assembly Collision Volume: {coll:.4f} mm^3")
-if coll <= 1e-4:
-    print("  ✅ ZERO COLLISIONS between Belly Pan Frame and Battery Hatch!")
-else:
-    print(f"  ❌ COLLISION DETECTED: {coll:.4f} mm^3")
+print(f"Belly Pan Frame Valid: {frame_solid.isValid()}, Vol: {frame_solid.Volume:.1f} mm^3")
+print(f"Battery Hatch Valid:   {hatch_solid.isValid()}, Vol: {hatch_solid.Volume:.1f} mm^3")
 
-os._exit(0)
+coll = frame_solid.common(hatch_solid)
+print(f"Frame <-> Hatch Collision Check: {coll.Volume:.4f} mm^3")
+
+
+def save_part(doc_name, obj_name, label, shape, color, stl_name):
+    try:
+        App.closeDocument(doc_name)
+    except Exception:
+        pass
+    doc = App.newDocument(doc_name)
+    obj = doc.addObject("Part::Feature", obj_name)
+    obj.Label = label
+    obj.Shape = shape
+    obj.Visibility = True
+    if hasattr(obj, "ViewObject") and obj.ViewObject:
+        obj.ViewObject.ShapeColor = color
+    doc.recompute()
+    fcstd_path = f"{models_dir}/{doc_name}.FCStd"
+    doc.saveAs(fcstd_path)
+    shape.exportStl(f"{urdf_mesh_dir}/{stl_name}.stl")
+    if "--export" in sys.argv:
+        shape.exportStep(f"{export_step_dir}/{doc_name}.step")
+        shape.exportStl(f"{export_stl_dir}/{doc_name}.stl")
+    App.closeDocument(doc_name)
+
+    temp_zip = fcstd_path + ".tmp"
+    with zipfile.ZipFile(fcstd_path, "r") as zin:
+        with zipfile.ZipFile(temp_zip, "w", compression=zipfile.ZIP_DEFLATED) as zout:
+            for item in zin.infolist():
+                data = zin.read(item.filename)
+                if item.filename == "GuiDocument.xml":
+                    xml_str = data.decode("utf-8").replace('<Bool value="false"/>', '<Bool value="true"/>')
+                    data = xml_str.encode("utf-8")
+                zout.writestr(item, data)
+    os.replace(temp_zip, fcstd_path)
+    print(f"✔ Saved: {fcstd_path}")
+
+
+save_part(
+    "chassis_belly_pan",
+    "Chassis_Belly_Pan",
+    "Chassis Belly Pan Frame (Closed Skid Plate + Rear ToF Bridge, v2)",
+    frame_solid,
+    (0.18, 0.20, 0.23),
+    "chassis_belly_pan",
+)
+save_part(
+    "chassis_battery_hatch",
+    "Chassis_Battery_Hatch",
+    "Chassis Battery Service Hatch (Front-Center Hinged, CoG-Balanced, v2)",
+    hatch_solid,
+    (0.28, 0.30, 0.34),
+    "chassis_battery_hatch",
+)
+
+sys.exit(0)
