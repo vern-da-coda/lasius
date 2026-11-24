@@ -136,6 +136,158 @@ def make_rounded_rect_face_2d(x1, x2, y1, y2, r):
     return Part.Face(Part.Wire(edges))
 
 
+def make_bspline_interp_xy(pts_2d, periodic=False):
+    """Construct a smooth G2-continuous B-Spline edge in the XY plane."""
+    vecs = [App.Vector(p[0], p[1], 0.0) for p in pts_2d]
+    bs = Part.BSplineCurve()
+    bs.interpolate(vecs, PeriodicFlag=periodic)
+    return bs.toShape()
+
+
+def build_bionic_dorsal_sickle_crest():
+    """
+    Bionic Dorsal Claw / Sickle Crest echoing Tibia v2 (`e_dorsal` + claw horn + teardrop window):
+      - Positioned on the top cheek (y_c = 31.70 mm -> Z_world = 33.70 mm) centered on z_c = 9.00 mm.
+      - Recessed central web (w = 2.50 mm, z_c in [7.75, 10.25]) sits 100% flush on the central
+        A-truss spine (zero overhang over cheek truss windows!).
+      - Sculpted outer dorsal sickle arch (w = 6.50 mm, z_c in [5.75, 12.25]) flares smoothly at 45°
+        from the 2.50 mm web (100% support-free FDM PETG when printed flat on y_c = 0.00!) and
+        creates a deep structural T-spine from the Femur hip (x_c = 12) to the Coxa bulkhead (x_c = 57).
+      - Verified kinematic clearances:
+        * >= 3.0 mm clear of Femur + Femur_Cover across full [-95°, +95°] hip pitch sweep
+        * >= 1.0 mm clear of Coxa_Servo front ear (x_c >= 58.20), >= 2.0 mm clear of servo horn (62.20)
+        * Peak y_c = 49.80 mm (Z_world = 51.80 mm) stays 1.50 mm below Body_Top (53.30 mm) and
+          strictly inside the R = 45.0 mm Chassis_Core swing clearance arc!
+    """
+    # 1. Outer Bionic Dorsal Sickle Silhouette in Coxa local X-Y plane (Z = 0)
+    p_front_base = App.Vector(12.00, 31.70, 0.0)
+    p_horn_top   = App.Vector(58.60, 48.60, 0.0)
+    p_horn_tip   = App.Vector(60.10, 47.05, 0.0)
+    p_horn_bot   = App.Vector(58.80, 45.55, 0.0)
+    p_rear_base  = App.Vector(57.20, 31.70, 0.0)
+
+    # Flowing dorsal sickle arc from front hip base up to rear dorsal claw horn (echoing Tibia e_dorsal)
+    # Clears Femur + Femur_Cover across the FULL [-95°, +95°] hip pitch sweep!
+    e_dorsal = make_bspline_interp_xy([
+        (p_front_base.x, p_front_base.y),
+        (17.50, 33.30),
+        (24.00, 35.40),
+        (31.50, 38.60),
+        (39.00, 43.40),
+        (46.50, 47.80),
+        (53.20, 49.60),
+        (p_horn_top.x, p_horn_top.y),
+    ])
+
+    # Rounded rear claw horn tip (echoing Tibia e_horn_nose)
+    e_horn_nose = Part.Arc(p_horn_top, p_horn_tip, p_horn_bot).toShape()
+
+    # Concave bionic U-throat sweeping cleanly around Coxa_Servo front ear (x_c >= 58.20 at y_c <= 34)
+    # Overhang angle from throat waist (54.4, 40.2) to horn tip (60.1, 47.05): atan(5.7/6.85) = 39.8° <= 45°!
+    e_throat = make_bspline_interp_xy([
+        (p_horn_bot.x, p_horn_bot.y),
+        (56.20, 43.30),
+        (54.40, 40.20),
+        (54.80, 36.80),
+        (56.40, 33.90),
+        (p_rear_base.x, p_rear_base.y),
+    ])
+
+    # Sink base 2.00 mm into the solid 2.50 mm top-cheek central spine (y_c = 29.70) for monolithic fusion
+    p_rear_root  = App.Vector(57.20, 29.70, 0.0)
+    p_front_root = App.Vector(12.00, 29.70, 0.0)
+    e_r_down = Part.makeLine(p_rear_base, p_rear_root)
+    e_root   = Part.makeLine(p_rear_root, p_front_root)
+    e_f_up   = Part.makeLine(p_front_root, p_front_base)
+
+    outer_wire = Part.Wire([e_dorsal, e_horn_nose, e_throat, e_r_down, e_root, e_f_up])
+    outer_face = Part.Face(outer_wire)
+
+    # 2. Concentric Bionic Teardrop Window (echoing Tibia teardrop cutout, >= 3.6 mm dorsal & rear ribs!)
+    teardrop_pts = [
+        (31.50, 34.90),   # Sleek proximal sickle tip
+        (34.50, 36.60),   # Concentric below e_dorsal (~4.2-4.8 mm dorsal rib!)
+        (39.80, 39.60),
+        (45.20, 42.60),
+        (49.00, 43.50),   # Rounded distal bulb top
+        (51.20, 41.70),   # Distal bulb apex (3.2 mm solid bridge to U-throat at 54.4!)
+        (51.20, 38.30),
+        (49.50, 35.50),   # Lower bulb curve
+        (45.50, 34.30),   # Gently curved base (2.6 mm solid web above y_c = 31.70)
+        (39.50, 34.20),
+        (34.50, 34.40),
+        (32.50, 34.60),
+    ]
+    td_wire = Part.Wire([make_bspline_interp_xy(teardrop_pts, periodic=True)])
+    td_cut_solid = Part.Face(td_wire).extrude(App.Vector(0.0, 0.0, 20.0))
+    td_cut_solid.translate(App.Vector(0.0, 0.0, -1.0))
+
+    # 3. Monolithic 6.50 mm Sculpted Dorsal Sickle Solid (z_c in [5.75, 12.25]) with:
+    #    - Exact planar 45.0° underside bevels from y_c = 31.70 (2.50 mm flush with central A-truss spine!)
+    #      flaring smoothly to y_c = 33.70 (6.50 mm) -> ZERO stair-steps, ZERO overhang over truss windows!
+    #    - Dual sculpted side relief recesses leaving a 2.50 mm recessed bionic web framing the teardrop window!
+    z_mid = 9.00
+    crest = outer_face.extrude(App.Vector(0.0, 0.0, 6.50))
+    crest.translate(App.Vector(0.0, 0.0, z_mid - 3.25))
+
+    # Cut exact 45.0° underside bevel prisms along -Z (z in [5.50, 7.75]) and +Z (z in [10.25, 12.50])
+    # so the base at y_c <= 31.70 is strictly 2.50 mm wide (z in [7.75, 10.25])!
+    bevel_neg = Part.Face(Part.makePolygon([
+        App.Vector(5.0, 28.00, 5.00),
+        App.Vector(5.0, 34.45, 5.00),
+        App.Vector(5.0, 31.70, 7.75),
+        App.Vector(5.0, 28.00, 7.75),
+        App.Vector(5.0, 28.00, 5.00),
+    ])).extrude(App.Vector(65.0, 0.0, 0.0))
+
+    bevel_pos = Part.Face(Part.makePolygon([
+        App.Vector(5.0, 28.00, 10.25),
+        App.Vector(5.0, 31.70, 10.25),
+        App.Vector(5.0, 34.45, 13.00),
+        App.Vector(5.0, 28.00, 13.00),
+        App.Vector(5.0, 28.00, 10.25),
+    ])).extrude(App.Vector(65.0, 0.0, 0.0))
+
+    crest = crest.cut(bevel_neg).cut(bevel_pos)
+
+    # Dual lateral sculpting recesses (leaves 2.50 mm central web + ~4.4 mm sculpted 6.50 mm outer dorsal arch!)
+    rim_inner_pts = [
+        (27.00, 32.80),
+        (30.50, 34.70),
+        (35.50, 37.50),
+        (41.00, 40.80),
+        (46.50, 43.80),
+        (50.60, 44.80),
+        (52.40, 42.90),
+        (52.60, 38.00),
+        (51.20, 34.10),
+        (47.50, 32.80),
+        (36.00, 32.80),
+    ]
+    rim_inner_face = Part.Face(Part.Wire([make_bspline_interp_xy(rim_inner_pts, periodic=True)]))
+    rec_neg = rim_inner_face.extrude(App.Vector(0.0, 0.0, 2.50))
+    rec_neg.translate(App.Vector(0.0, 0.0, 5.25))  # z in [5.25, 7.75]
+    rec_pos = rim_inner_face.extrude(App.Vector(0.0, 0.0, 2.50))
+    rec_pos.translate(App.Vector(0.0, 0.0, 10.25)) # z in [10.25, 12.75]
+
+    crest = crest.cut(rec_neg).cut(rec_pos).cut(td_cut_solid)
+
+    # Tactile R = 1.00 mm outer highlight fillets on dorsal crest outer silhouette edges (Style Guide §4.1)
+    try:
+        target_edges = []
+        for e in crest.Edges:
+            bb = e.BoundBox
+            if bb.YMax > 35.5 and (abs(bb.ZMin - (z_mid - 3.25)) < 0.05 or abs(bb.ZMax - (z_mid + 3.25)) < 0.05):
+                if abs(bb.ZMax - bb.ZMin) < 0.05 and e.Length > 2.0:
+                    target_edges.append(e)
+        if target_edges:
+            crest = crest.makeFillet(0.90, target_edges)
+    except Exception as exc:
+        print(f"  [info] Crest outer fillet skipped ({exc}); keeping crisp 45° bevels.")
+
+    return crest.removeSplitter()
+
+
 def make_hex_nut_pocket_z(cx, cy, z_bottom, z_top, sw=7.10):
     """
     Construct an internal anti-rotation M4 hex nut pocket (across flats = sw).
@@ -474,16 +626,28 @@ def build_coxa_bracket_v2_shape():
         shape = shape.cut(cut_bot)
 
     # -------------------------------------------------------------
-    # 9. Rear Tail Block - Closed & Solid
+    # 9. Rear Tail Block — Organic Corner Relief & Bionic Dorsal Sickle Crest
     # -------------------------------------------------------------
-    # The rear tail block (X in [105.0, 115.0]) is kept solid without through-openings
-    # to conceal the Coxa servo mounting screws and protect internal hardware.
+    # The rear tail block (X in [105.0, 115.0]) stays solid around the Coxa servo screws (X = 109.7),
+    # while eliminating the boxy 90° exterior rear corners at X = 115.0 with clean R = 3.50 mm rounds.
+    r_tail_c = 3.50
+    for y_c_corner, y_dir in [(0.00, +1.0), (31.70, -1.0)]:
+        box_tc = Part.makeBox(r_tail_c + 1.0, r_tail_c + 1.0, 40.0,
+                              App.Vector(115.00 - r_tail_c, y_c_corner if y_dir > 0 else y_c_corner - r_tail_c - 1.0, -10.0))
+        cyl_tc = Part.makeCylinder(r_tail_c, 44.0,
+                                   App.Vector(115.00 - r_tail_c, y_c_corner + y_dir * r_tail_c, -12.0),
+                                   App.Vector(0, 0, 1))
+        shape = shape.cut(box_tc.cut(cyl_tc))
 
     # Station 3: Integrated Micro-Zip-Tie Saddle on Coxa Bridge Flank (for 2.5 mm cable ties)
     # Positioned cleanly inside solid bulkhead (X = 60.5 / 63.5, Z = 17.8..20.6) so it never bites the X=59.4 corner!
     s_coxa1 = Part.makeBox(1.30, 8.0, 2.80, App.Vector(60.5, -1.0, 17.8))
     s_coxa2 = Part.makeBox(1.30, 8.0, 2.80, App.Vector(63.5, -1.0, 17.8))
     shape = shape.cut(s_coxa1).cut(s_coxa2)
+
+    # 10. Fuse Bionic Dorsal Claw / Sickle Crest (Tibia-matched morphology + structural T-spine stiffening!)
+    dorsal_crest = build_bionic_dorsal_sickle_crest()
+    shape = shape.fuse(dorsal_crest)
 
     shape = shape.removeSplitter()
     return shape

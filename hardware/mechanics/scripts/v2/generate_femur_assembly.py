@@ -29,16 +29,6 @@ fcstd_path = f"{v2_dir}/femur_assembly.FCStd"
 
 os.makedirs(v2_dir, exist_ok=True)
 
-# Backup existing GuiDocument.xml if present to survive headless console saves
-fallback_gui_xml = None
-if os.path.exists(fcstd_path):
-    try:
-        with zipfile.ZipFile(fcstd_path, "r") as zin:
-            if "GuiDocument.xml" in zin.namelist():
-                fallback_gui_xml = zin.read("GuiDocument.xml")
-    except Exception:
-        pass
-
 try:
     App.closeDocument(doc_name)
 except Exception:
@@ -52,6 +42,8 @@ doc.saveAs(fcstd_path)
 doc_femur = App.openDocument(f"{parts_femur_dir}/femur.FCStd")
 doc_cover = App.openDocument(f"{parts_femur_dir}/femur_cover.FCStd")
 doc_ads = App.openDocument(f"{cots_dir}/ads1115_board.FCStd")
+doc_ins_m2 = App.openDocument(f"{cots_dir}/insert_m2_ruthex.FCStd")
+doc_scr_m2 = App.openDocument(f"{cots_dir}/screw_m2_countersunk.FCStd")
 
 # Main Assembly Container
 asm_part = doc.addObject("App::Part", "Femur_Assembly_v2")
@@ -103,59 +95,89 @@ make_link("ADS1115_Board", "2. Encapsulated Leg ADC (ADS1115 0x48)", doc_ads.ADS
 # 3. Monolithic Service Cover & Canopy (Draped Convex Eisblau 55%)
 make_link("Femur_Cover", "3. Femur Service Cover & Canopy (Monolithic Eisblau 55%)", doc_cover.Femur_Cover, color=COLOR_CANOPY, transparency=55)
 
+# 4. 4x Ruthex M2 Brass Heat-Set Inserts & 4x DIN 7991 M2 x 6 mm Countersunk Cover Screws (COTS)
+COLOR_BRASS = (0.85, 0.70, 0.20)
+COLOR_STEEL = (0.78, 0.80, 0.84)
+Y_mid = 2.50
+cover_screw_coords = [
+    (31.8, Y_mid - 13.8),
+    (31.8, Y_mid + 13.8),
+    (68.2, Y_mid - 13.8),
+    (68.2, Y_mid + 13.8),
+]
+
+grp_ins = doc.addObject("App::Part", "Cover_Inserts")
+grp_ins.Label = "4. 4x Ruthex M2 Brass Heat-Set Inserts (COTS)"
+for o in grp_ins.Origin.OutList:
+    if hasattr(o, "Visibility"):
+        o.Visibility = False
+grp_ins.Origin.Visibility = False
+grp_ins.Visibility = True
+asm_part.addObject(grp_ins)
+
+grp_scr = doc.addObject("App::Part", "Cover_Screws")
+grp_scr.Label = "5. 4x DIN 7991 M2 x 6 mm Countersunk Cover Screws (COTS)"
+for o in grp_scr.Origin.OutList:
+    if hasattr(o, "Visibility"):
+        o.Visibility = False
+grp_scr.Origin.Visibility = False
+grp_scr.Visibility = True
+asm_part.addObject(grp_scr)
+
+for idx, (sx, sy) in enumerate(cover_screw_coords, start=1):
+    make_link(
+        f"Femur_Insert_M2_{idx}",
+        f"Ruthex M2 Insert #{idx} (Brass)",
+        doc_ins_m2.Ruthex_M2_Insert,
+        placement=App.Placement(App.Vector(sx, sy, 8.95), App.Rotation()),
+        color=COLOR_BRASS,
+        parent=grp_ins,
+    )
+    make_link(
+        f"Femur_Screw_M2_{idx}",
+        f"Cover Screw M2x6 #{idx} (DIN 7991)",
+        doc_scr_m2.M2_Senkkopfschraube,
+        placement=App.Placement(App.Vector(sx, sy, 11.83), App.Rotation()),
+        color=COLOR_STEEL,
+        parent=grp_scr,
+    )
+
 doc.recompute()
 doc.save()
 # Assemblies are logical structures, not exported to STEP/STL (never manufactured in one piece)
 print(f"✔ Saved Femur Assembly: {fcstd_path}")
 
-App.closeDocument(doc_femur.Name)
-App.closeDocument(doc_cover.Name)
-App.closeDocument(doc_ads.Name)
-App.closeDocument(doc.Name)
+# Pairwise 3D B-Rep Collision Check
+leaf_items = []
+def _collect(obj, parent_pl=App.Placement()):
+    pl = parent_pl.multiply(obj.Placement)
+    for child in getattr(obj, "Group", []):
+        if child.TypeId == "App::Part":
+            _collect(child, pl)
+        elif hasattr(child, "Shape") and not child.Shape.isNull():
+            sh = child.Shape.copy()
+            sh.Placement = pl.multiply(sh.Placement)
+            leaf_items.append((f"{obj.Name}.{child.Name}", sh))
 
-# -------------------------------------------------------------
-# 2. Patch GuiDocument.xml for full visibility and Plexiglas transparency if present
-# -------------------------------------------------------------
-gui_xml = None
-with zipfile.ZipFile(fcstd_path, "r") as zin:
-    has_gui = "GuiDocument.xml" in zin.namelist()
-    if has_gui:
-        gui_xml = zin.read("GuiDocument.xml").decode("utf-8")
-    elif fallback_gui_xml:
-        gui_xml = fallback_gui_xml.decode("utf-8")
+_collect(asm_part)
+max_coll = 0.0
+for i in range(len(leaf_items)):
+    for j in range(i + 1, len(leaf_items)):
+        n1, s1 = leaf_items[i]
+        n2, s2 = leaf_items[j]
+        if s1.BoundBox.intersect(s2.BoundBox):
+            v = s1.common(s2).Volume
+            if v > 1e-4:
+                print(f"  ❌ COLLISION {n1} <-> {n2}: {v:.4f} mm^3")
+                max_coll = max(max_coll, v)
+if max_coll <= 1e-4:
+    print(f"  ✅ ZERO COLLISIONS across all {len(leaf_items)} components in femur_assembly.FCStd (0.0000 mm^3)!")
 
-if gui_xml:
-    # Ensure all objects visible
-    gui_xml = gui_xml.replace('<Property name="Visibility" type="App::PropertyBool" status="1">\n          <Bool value="false"/>',
-                              '<Property name="Visibility" type="App::PropertyBool" status="1">\n          <Bool value="true"/>')
-    gui_xml = gui_xml.replace('<Property name="Visibility" type="App::PropertyBool">\n          <Bool value="false"/>',
-                              '<Property name="Visibility" type="App::PropertyBool">\n          <Bool value="true"/>')
+for d in [doc_femur, doc_cover, doc_ads, doc_ins_m2, doc_scr_m2, doc]:
+    try:
+        App.closeDocument(d.Name)
+    except Exception:
+        pass
 
-    # Update cover canopy transparency to 55%
-    canopy_view_search = '<ViewProvider name="Femur_Cover"'
-    if canopy_view_search in gui_xml:
-        idx = gui_xml.find(canopy_view_search)
-        end_idx = gui_xml.find("</ViewProvider>", idx)
-        block = gui_xml[idx:end_idx]
-        if '<Property name="Transparency"' in block:
-            block_new = block.replace(
-                '<Property name="Transparency" type="App::PropertyPercent">\n          <Integer value="0"/>',
-                '<Property name="Transparency" type="App::PropertyPercent">\n          <Integer value="55"/>'
-            )
-            gui_xml = gui_xml[:idx] + block_new + gui_xml[end_idx:]
-
-    # Rewrite FCStd archive
-    tmp_fcstd = fcstd_path + ".tmp"
-    with zipfile.ZipFile(fcstd_path, "r") as zin, zipfile.ZipFile(tmp_fcstd, "w", zipfile.ZIP_DEFLATED) as zout:
-        for item in zin.infolist():
-            if item.filename == "GuiDocument.xml":
-                zout.writestr(item, gui_xml.encode("utf-8"))
-            else:
-                zout.writestr(item, zin.read(item.filename))
-        if "GuiDocument.xml" not in zin.namelist():
-            zout.writestr("GuiDocument.xml", gui_xml.encode("utf-8"))
-    os.replace(tmp_fcstd, fcstd_path)
-
-print(f"✔ Saved Femur Assembly -> {fcstd_path}")
 import sys
 sys.exit(0)

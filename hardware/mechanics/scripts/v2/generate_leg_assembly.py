@@ -57,6 +57,9 @@ doc_w = App.openDocument(f"{hw_dir}/washer_m4_shim.FCStd")
 doc_n = App.openDocument(f"{hw_dir}/nut_m4_hex.FCStd")
 doc_n_low = App.openDocument(f"{hw_dir}/nut_m4_din439.FCStd")
 doc_s = App.openDocument(f"{hw_dir}/screw_m4_countersunk.FCStd")
+doc_s_m2 = App.openDocument(f"{hw_dir}/screw_m2_button_head.FCStd")
+doc_s_m2_cs = App.openDocument(f"{hw_dir}/screw_m2_countersunk.FCStd")
+doc_ins_m2 = App.openDocument(f"{hw_dir}/insert_m2_ruthex.FCStd")
 
 # Rotations
 rot_c = App.Rotation(App.Vector(0, 0, 1), 180.0).multiply(App.Rotation(App.Vector(1, 0, 0), 90.0))
@@ -126,6 +129,14 @@ def check_leg_collisions(asm_part, title):
         for j in range(i + 1, len(leaf_items)):
             n1, s1 = leaf_items[i]
             n2, s2 = leaf_items[j]
+            # Skip internal 25T spline press-fit overlap between COTS Servo_Body and Servo_Horn
+            base1, leaf1 = n1.rsplit(".", 1)
+            base2, leaf2 = n2.rsplit(".", 1)
+            if base1 == base2 and (
+                {leaf1, leaf2} == {"Femur_Servo_Body", "Femur_Servo_Horn"}
+                or {leaf1, leaf2} == {"Knee_Servo_Body", "Knee_Servo_Horn"}
+            ):
+                continue
             if s1.BoundBox.intersect(s2.BoundBox):
                 v = s1.common(s2).Volume
                 if v > 1e-4:
@@ -140,15 +151,6 @@ def check_leg_collisions(asm_part, title):
 # 1. Generate Left Leg Assembly: custom/v2/leg_assembly.FCStd
 # =============================================================================
 fcstd_left = f"{v2_asm_dir}/leg_assembly.FCStd"
-
-fallback_gui_xml_l = None
-if os.path.exists(fcstd_left):
-    try:
-        with zipfile.ZipFile(fcstd_left, "r") as zin:
-            if "GuiDocument.xml" in zin.namelist():
-                fallback_gui_xml_l = zin.read("GuiDocument.xml")
-    except Exception:
-        pass
 
 try:
     App.closeDocument("leg_assembly")
@@ -203,7 +205,9 @@ make_link(doc_l, asm_l, "Coxa_Servo", "2. Coxa Servo (Torcster NR-645)", doc_ser
 
 local_f_servo = App.Placement(App.Vector(18.20, 15.25, 27.30), App.Rotation())
 p_f_servo_l = p_coxa_l.multiply(local_f_servo)
-make_link(doc_l, asm_l, "Femur_Servo", "3. Femur Servo (Torcster NR-645)", doc_servo.Servo_Complete, p_f_servo_l, (0.28, 0.30, 0.36))
+p_f_horn_l = p_f_servo_l.multiply(App.Placement(App.Vector(0, 0, 0), App.Rotation(App.Vector(0, 0, 1), -alpha_deg)))
+make_link(doc_l, asm_l, "Femur_Servo_Body", "3a. Femur Servo Body (Torcster NR-645)", doc_servo.Servo_Body, p_f_servo_l, (0.28, 0.30, 0.36))
+make_link(doc_l, asm_l, "Femur_Servo_Horn", "3b. Femur Servo Horn (D25 BCD16, aligned to Femur)", doc_servo.Servo_Horn, p_f_horn_l, (0.75, 0.76, 0.78))
 
 # 3. Hardware (Fasteners & Bearings)
 # A. Chassis Pivot Bearing Set (Vertical axis at X=0.00, Y=+2.50 along -Z):
@@ -229,15 +233,29 @@ make_link(doc_l, asm_l, "Knee_Bearing", "Knee Ball Bearing (D8 H3)",          do
 make_link(doc_l, asm_l, "Knee_Nut",     "Knee M4 Low-Profile Nut (DIN 439)",  doc_n_low.M4_Mutter_DIN439, App.Placement(App.Vector(kx, -20.20, kz), rot_knee_nut_l))
 make_link(doc_l, asm_l, "Knee_Screw",   "Knee M4 Countersunk Screw",          doc_s.M4_Senkkopfschraube,  App.Placement(App.Vector(kx, -28.00, kz), rot_negy_posz))
 
+# D. 8x M2 x 5 mm Servo Horn Screws (ISO 7380) fastening Femur Front Jaw to Hip & Knee Servo Horns (Ø16 mm BCD)
+#    In Femur local coords: counterbore seat at Y = +31.50 mm, shank enters along -Y into horn (Y = 29.30..26.80).
+#    RotX(-90°) maps screw local +Z (head) -> +Y_femur, local -Z (shank) -> -Y_femur!
+COLOR_STEEL = (0.78, 0.80, 0.84)
+rot_m2_fem_l = App.Rotation(App.Vector(1, 0, 0), -90.0)
+for grp_name, grp_lbl, px_fem, prefix in [
+    ("Hip_Horn_Screws",  "Hip Servo Horn Screws (4x M2x5 ISO 7380)",  0.00,   "Hip_Horn_M2"),
+    ("Knee_Horn_Screws", "Knee Servo Horn Screws (4x M2x5 ISO 7380)", 100.00, "Knee_Horn_M2"),
+]:
+    grp = doc_l.addObject("App::Part", grp_name)
+    grp.Label = grp_lbl
+    for o in grp.Origin.OutList:
+        if hasattr(o, "Visibility"):
+            o.Visibility = False
+    grp.Origin.Visibility = False
+    grp.Visibility = True
+    asm_l.addObject(grp)
+    for idx, (dx, dz) in enumerate([(8.0, 0.0), (-8.0, 0.0), (0.0, 8.0), (0.0, -8.0)], start=1):
+        p_scr = p_femur_l.multiply(App.Placement(App.Vector(px_fem + dx, 31.52, dz), rot_m2_fem_l))
+        make_link(doc_l, grp, f"{prefix}_{idx}", f"{prefix}_{idx} (ISO 7380 M2x5)", doc_s_m2.M2_Linsenkopfschraube, p_scr, COLOR_STEEL)
+
 doc_l.recompute()
 doc_l.save()
-
-if fallback_gui_xml_l:
-    try:
-        with zipfile.ZipFile(fcstd_left, "a") as zout:
-            zout.writestr("GuiDocument.xml", fallback_gui_xml_l)
-    except Exception:
-        pass
 
 # Assemblies are logical structures, not exported to STEP/STL (never manufactured in one piece)
 print(f"✔ Saved Left Leg Assembly: {fcstd_left}")
@@ -248,15 +266,6 @@ check_leg_collisions(asm_l, "leg_assembly.FCStd (Left)")
 #    (Mirrored Custom 3D-Printed Parts + Unmirrored Real COTS Parts!)
 # =============================================================================
 fcstd_right = f"{v2_asm_dir}/leg_right_assembly.FCStd"
-
-fallback_gui_xml_r = None
-if os.path.exists(fcstd_right):
-    try:
-        with zipfile.ZipFile(fcstd_right, "r") as zin:
-            if "GuiDocument.xml" in zin.namelist():
-                fallback_gui_xml_r = zin.read("GuiDocument.xml")
-    except Exception:
-        pass
 
 try:
     App.closeDocument("leg_right_assembly")
@@ -330,6 +339,29 @@ make_link(
     scale=App.Vector(1.0, -1.0, 1.0),
 )
 
+# 4x Unmirrored Ruthex M2 Brass Inserts & 4x DIN 7991 M2x6 Cover Screws on Right Femur (Y mirrored -> Y_mid = -2.50!)
+grp_f_ins_r = doc_r.addObject("App::Part", "Femur_Cover_Inserts")
+grp_f_ins_r.Label = "4. 4x Ruthex M2 Brass Heat-Set Inserts Right (Unmirrored COTS)"
+for o in grp_f_ins_r.Origin.OutList:
+    if hasattr(o, "Visibility"):
+        o.Visibility = False
+grp_f_ins_r.Origin.Visibility = False
+grp_f_ins_r.Visibility = True
+femur_part_r.addObject(grp_f_ins_r)
+
+grp_f_scr_r = doc_r.addObject("App::Part", "Femur_Cover_Screws")
+grp_f_scr_r.Label = "5. 4x DIN 7991 M2 x 6 mm Cover Screws Right (Unmirrored COTS)"
+for o in grp_f_scr_r.Origin.OutList:
+    if hasattr(o, "Visibility"):
+        o.Visibility = False
+grp_f_scr_r.Origin.Visibility = False
+grp_f_scr_r.Visibility = True
+femur_part_r.addObject(grp_f_scr_r)
+
+for idx, (sx, sy) in enumerate([(31.8, +11.3), (31.8, -16.3), (68.2, +11.3), (68.2, -16.3)], start=1):
+    make_link(doc_r, grp_f_ins_r, f"Femur_Insert_M2_{idx}", f"Ruthex M2 Insert #{idx} Right (Brass)", doc_ins_m2.Ruthex_M2_Insert, App.Placement(App.Vector(sx, sy, 8.95), App.Rotation()), (0.85, 0.70, 0.20))
+    make_link(doc_r, grp_f_scr_r, f"Femur_Screw_M2_{idx}", f"Cover Screw M2x6 #{idx} Right (DIN 7991)", doc_s_m2_cs.M2_Senkkopfschraube, App.Placement(App.Vector(sx, sy, 11.83), App.Rotation()), COLOR_STEEL)
+
 # 3. Tibia Subassembly Right (Mirrored Tibia_Body, Tibia_Cover, Tibia_Rocker, Tibia_Shoe; Unmirrored Knee_Servo, Microswitch, Spring)
 tibia_part_r = doc_r.addObject("App::Part", "Tibia_Assembly")
 tibia_part_r.Label = "7. Tibia Subassembly v2 Right (Mirrored Monocoque + Unmirrored COTS)"
@@ -355,14 +387,24 @@ make_link(
     scale=App.Vector(1.0, 1.0, -1.0),
 )
 p_k_servo_r = App.Placement(App.Vector(18.20, 15.25, 9.30), App.Rotation())
+p_k_horn_r = p_k_servo_r.multiply(App.Placement(App.Vector(0, 0, 0), App.Rotation(App.Vector(0, 0, 1), theta_deg)))
 make_link(
     doc_r,
     tibia_part_r,
-    "Knee_Servo",
-    "2. Knee Servo (Unmirrored Torcster NR-645 COTS)",
-    doc_servo.Servo_Complete,
+    "Knee_Servo_Body",
+    "2a. Knee Servo Body (Unmirrored Torcster NR-645 COTS)",
+    doc_servo.Servo_Body,
     p_k_servo_r,
     (0.12, 0.12, 0.12),
+)
+make_link(
+    doc_r,
+    tibia_part_r,
+    "Knee_Servo_Horn",
+    "2b. Knee Servo Horn (D25 BCD16, aligned to Femur)",
+    doc_servo.Servo_Horn,
+    p_k_horn_r,
+    (0.75, 0.76, 0.78),
 )
 
 # Foot Contact Sensor Subsystem (Right Mirrored Kinematics across Z=0 — Option 2c-V2)
@@ -433,22 +475,29 @@ if hasattr(pin_obj_r, "ViewObject") and pin_obj_r.ViewObject:
     except Exception:
         pass
 
-# 8. 2x M2x5 DIN 7991 Flush Countersunk Retaining Screws Right (+ 2x Bayonet Tabs)
-screws_r = []
-for bx, by in gt.COVER_SCREW_PTS:
-    cone = Part.makeCone(2.00, 1.00, 1.00, App.Vector(bx, by, -gt.COVER_Z_MAX))
-    shank = Part.makeCylinder(1.00, 4.20, App.Vector(bx, by, -gt.COVER_Z_MAX + 1.00))
-    screws_r.append(cone.fuse(shank))
+# 8. 2x Ruthex M2 Brass Heat-Set Inserts + 2x DIN 7991 M2 x 6 mm Countersunk Cover Screws Right (Unmirrored COTS!)
+grp_t_ins_r = doc_r.addObject("App::Part", "Tibia_Cover_Inserts")
+grp_t_ins_r.Label = "8a. 2x Ruthex M2 Brass Heat-Set Inserts Right (Unmirrored COTS)"
+for o in grp_t_ins_r.Origin.OutList:
+    if hasattr(o, "Visibility"):
+        o.Visibility = False
+grp_t_ins_r.Origin.Visibility = False
+grp_t_ins_r.Visibility = True
+tibia_part_r.addObject(grp_t_ins_r)
 
-screw_m2_r = doc_r.addObject("Part::Feature", "Cover_Retaining_Screw_M2")
-screw_m2_r.Label = "8. 2x M2x5 Flush Countersunk Retaining Screws (DIN 7991) Right"
-screw_m2_r.Shape = Part.Compound(screws_r)
-tibia_part_r.addObject(screw_m2_r)
-if hasattr(screw_m2_r, "ViewObject") and screw_m2_r.ViewObject:
-    try:
-        screw_m2_r.ViewObject.ShapeColor = (0.80, 0.80, 0.82)
-    except Exception:
-        pass
+grp_t_scr_r = doc_r.addObject("App::Part", "Tibia_Cover_Screws")
+grp_t_scr_r.Label = "8b. 2x DIN 7991 M2 x 6 mm Flush Countersunk Cover Screws Right (Unmirrored COTS)"
+for o in grp_t_scr_r.Origin.OutList:
+    if hasattr(o, "Visibility"):
+        o.Visibility = False
+grp_t_scr_r.Origin.Visibility = False
+grp_t_scr_r.Visibility = True
+tibia_part_r.addObject(grp_t_scr_r)
+
+rot_flip_z = App.Rotation(App.Vector(1, 0, 0), 180.0)
+for idx, (bx, by) in enumerate(gt.COVER_SCREW_PTS, start=1):
+    make_link(doc_r, grp_t_ins_r, f"Cover_Insert_M2_{idx}", f"Ruthex M2 Insert #{idx} Right (Brass)", doc_ins_m2.Ruthex_M2_Insert, App.Placement(App.Vector(bx, by, -12.15), rot_flip_z), (0.85, 0.70, 0.20))
+    make_link(doc_r, grp_t_scr_r, f"Cover_Screw_M2_{idx}", f"Cover Screw M2x6 #{idx} Right (DIN 7991)", doc_s_m2_cs.M2_Senkkopfschraube, App.Placement(App.Vector(bx, by, -(gt.COVER_Z_MAX - 0.02)), rot_flip_z), COLOR_STEEL)
 
 # 4. Actuators in Coxa (Unmirrored Real COTS Servos!)
 p_c_servo_r = App.Placement(App.Vector(0.00, -2.50, 27.50), App.Rotation(App.Vector(0, 0, 1), 180.0))
@@ -456,7 +505,9 @@ make_link(doc_r, asm_r, "Coxa_Servo", "2. Coxa Servo (Unmirrored Torcster NR-645
 
 rot_f_servo_r = App.Rotation(App.Vector(0, 0, 1), 180.0).multiply(App.Rotation(App.Vector(1, 0, 0), -90.0))
 p_f_servo_r = App.Placement(App.Vector(56.50, -20.80, 0.00), rot_f_servo_r)
-make_link(doc_r, asm_r, "Femur_Servo", "3. Femur Servo (Unmirrored Torcster NR-645)", doc_servo.Servo_Complete, p_f_servo_r, (0.28, 0.30, 0.36))
+p_f_horn_r = p_f_servo_r.multiply(App.Placement(App.Vector(0, 0, 0), App.Rotation(App.Vector(0, 0, 1), alpha_deg)))
+make_link(doc_r, asm_r, "Femur_Servo_Body", "3a. Femur Servo Body (Unmirrored Torcster NR-645)", doc_servo.Servo_Body, p_f_servo_r, (0.28, 0.30, 0.36))
+make_link(doc_r, asm_r, "Femur_Servo_Horn", "3b. Femur Servo Horn (D25 BCD16, aligned to Femur)", doc_servo.Servo_Horn, p_f_horn_r, (0.75, 0.76, 0.78))
 
 # 5. Joint Hardware (All Unmirrored Real COTS Fasteners & Bearings!)
 make_link(doc_r, asm_r, "Chassis_Washer",  "Chassis Shim Washer (s0.3)",          doc_w.Passscheibe_M4,       App.Placement(App.Vector(0, -2.50, -14.95), rot_down_posz))
@@ -475,15 +526,27 @@ make_link(doc_r, asm_r, "Knee_Bearing", "Knee Ball Bearing (D8 H3)",          do
 make_link(doc_r, asm_r, "Knee_Nut",     "Knee M4 Low-Profile Nut (DIN 439)",  doc_n_low.M4_Mutter_DIN439, App.Placement(App.Vector(kx, 20.20, kz), rot_knee_nut_r))
 make_link(doc_r, asm_r, "Knee_Screw",   "Knee M4 Countersunk Screw",          doc_s.M4_Senkkopfschraube,  App.Placement(App.Vector(kx, 28.00, kz), rot_negy_negz))
 
+# 6. 8x M2 x 5 mm Servo Horn Screws (ISO 7380) fastening Mirrored Right Femur Front Jaw (Y = -31.52 mm) to Hip & Knee Horns
+#    RotX(+90°) maps screw local +Z (head) -> -Y_femur, local -Z (shank) -> +Y_femur (into horn at Y = -29.30..-26.80)!
+rot_m2_fem_r = App.Rotation(App.Vector(1, 0, 0), 90.0)
+for grp_name, grp_lbl, px_fem, prefix in [
+    ("Hip_Horn_Screws",  "Hip Servo Horn Screws Right (4x M2x5 ISO 7380)",  0.00,   "Hip_Horn_M2"),
+    ("Knee_Horn_Screws", "Knee Servo Horn Screws Right (4x M2x5 ISO 7380)", 100.00, "Knee_Horn_M2"),
+]:
+    grp = doc_r.addObject("App::Part", grp_name)
+    grp.Label = grp_lbl
+    for o in grp.Origin.OutList:
+        if hasattr(o, "Visibility"):
+            o.Visibility = False
+    grp.Origin.Visibility = False
+    grp.Visibility = True
+    asm_r.addObject(grp)
+    for idx, (dx, dz) in enumerate([(8.0, 0.0), (-8.0, 0.0), (0.0, 8.0), (0.0, -8.0)], start=1):
+        p_scr = p_femur_l.multiply(App.Placement(App.Vector(px_fem + dx, -31.52, dz), rot_m2_fem_r))
+        make_link(doc_r, grp, f"{prefix}_{idx}", f"{prefix}_{idx} (ISO 7380 M2x5)", doc_s_m2.M2_Linsenkopfschraube, p_scr, COLOR_STEEL)
+
 doc_r.recompute()
 doc_r.save()
-
-if fallback_gui_xml_r:
-    try:
-        with zipfile.ZipFile(fcstd_right, "a") as zout:
-            zout.writestr("GuiDocument.xml", fallback_gui_xml_r)
-    except Exception:
-        pass
 
 # Assemblies are logical structures, not exported to STEP/STL (never manufactured in one piece)
 print(f"✔ Saved Right Leg Assembly: {fcstd_right}")

@@ -483,10 +483,12 @@ def build_femur_shapes():
         c_tip = Part.makeCone(1.075, 0.72, 0.40, App.Vector(px_pin, py_pin, z_pcb_bot + 2.20))
         base_solid = base_solid.fuse(c_pin).fuse(c_tip)
 
-    # Drill 4x M2 pilot holes (Ø1.8 mm, depth 8.2 mm) in housing rim:
+    # Drill 4x blind Ruthex M2 heat-set insert pockets (Ø3.20 x 4.30 mm) + Ø2.10 mm screw tip clearance bore
+    # Matches PRINTING_GUIDE.md (24x Ruthex M2 for Femur covers) & tibia.FCStd!
     for sx, sy in screw_coords:
-        m2_hole = Part.makeCylinder(0.90, 9.0, App.Vector(sx, sy, lid_z_floor - 8.2))
-        base_solid = base_solid.cut(m2_hole)
+        m2_ruthex = Part.makeCylinder(1.60, 4.40, App.Vector(sx, sy, lid_z_floor - 4.30))
+        m2_clear = Part.makeCylinder(1.05, 5.60, App.Vector(sx, sy, lid_z_floor - 5.50))
+        base_solid = base_solid.cut(m2_ruthex).cut(m2_clear)
 
     # =========================================================================
     # 8. Integrated Cable Channels ("Kabelkanäle")

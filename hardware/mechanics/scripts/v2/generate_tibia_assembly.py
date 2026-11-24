@@ -107,6 +107,8 @@ doc_asm.saveAs(fcstd_asm_path)
 
 doc_servo = App.openDocument(f"{cots_dir}/servo_nr645.FCStd")
 doc_tarsus_asm = App.openDocument(f"{v2_dir}/tarsus_assembly.FCStd")
+doc_ins_m2 = App.openDocument(f"{cots_dir}/insert_m2_ruthex.FCStd")
+doc_scr_m2 = App.openDocument(f"{cots_dir}/screw_m2_countersunk.FCStd")
 
 asm_part = doc_asm.addObject("App::Part", "Tibia_Assembly")
 asm_part.Label = "Lasius Tibia v2 Subsystem Assembly (Option 2c-V2 Bionic NC Foot Sensor)"
@@ -117,12 +119,12 @@ asm_part.Origin.Visibility = False
 asm_part.Visibility = True
 
 
-def make_link(name, label, target_obj, placement, color=None):
+def make_link(name, label, target_obj, placement, color=None, parent=asm_part):
     lnk = doc_asm.addObject("App::Link", name)
     lnk.setLink(target_obj)
     lnk.Label = label
     lnk.Placement = placement
-    asm_part.addObject(lnk)
+    parent.addObject(lnk)
     lnk.Visibility = True
     if hasattr(lnk, "ViewObject") and lnk.ViewObject is not None:
         try:
@@ -140,9 +142,11 @@ def make_link(name, label, target_obj, placement, color=None):
 # 1. Monolithic Bionic Tibia Body
 make_link("Tibia_Body", "1. Tibia v2 Bionic Monocoque (Option 2c-V2, PETG)", obj_mono, App.Placement(), COLOR_CFRP)
 
-# 2. Knee Servo (Torcster NR-645)
+# 2. Knee Servo (Torcster NR-645) — Body fixed in Tibia cage + Horn clocked -80° to align BCD16 holes with Femur!
 p_servo = App.Placement(App.Vector(gt.KNEE_X, gt.KNEE_Y, -9.30), App.Rotation(App.Vector(1, 0, 0), 180.0))
-make_link("Knee_Servo", "2. Knee Servo (Torcster NR-645 COTS)", doc_servo.Servo_Complete, p_servo, COLOR_SERVO)
+p_servo_horn = p_servo.multiply(App.Placement(App.Vector(0, 0, 0), App.Rotation(App.Vector(0, 0, 1), -80.0)))
+make_link("Knee_Servo_Body", "2a. Knee Servo Body (Torcster NR-645 COTS)", doc_servo.Servo_Body, p_servo, COLOR_SERVO)
+make_link("Knee_Servo_Horn", "2b. Knee Servo Horn (D25 BCD16, aligned to Femur)", doc_servo.Servo_Horn, p_servo_horn, (0.75, 0.76, 0.78))
 
 # 3. Tarsus Subsystem Assembly (Origin at Pivot Axis -> direct clean translation!)
 p_tarsus = App.Placement(App.Vector(gt.TARSUS_PIV_X, gt.TARSUS_PIV_Y, gt.Z_MID), App.Rotation())
@@ -171,22 +175,42 @@ if hasattr(pin_obj, "ViewObject") and pin_obj.ViewObject:
     except Exception:
         pass
 
-# 8. 2x M2x5 DIN 7991 Flush Countersunk Retaining Screws (+ 2x Bayonet Tabs)
-screws = []
-for bx, by in gt.COVER_SCREW_PTS:
-    cone = Part.makeCone(1.00, 2.00, 1.00, App.Vector(bx, by, gt.COVER_Z_MAX - 1.00))
-    shank = Part.makeCylinder(1.00, 4.20, App.Vector(bx, by, gt.COVER_Z_MAX - 5.20))
-    screws.append(cone.fuse(shank))
+# 8. 2x Ruthex M2 Brass Heat-Set Inserts + 2x DIN 7991 M2 x 6 mm Flush Countersunk Screws (COTS App::Link)
+grp_ins = doc_asm.addObject("App::Part", "Cover_Inserts")
+grp_ins.Label = "8a. 2x Ruthex M2 Brass Heat-Set Inserts (COTS)"
+for o in grp_ins.Origin.OutList:
+    if hasattr(o, "Visibility"):
+        o.Visibility = False
+grp_ins.Origin.Visibility = False
+grp_ins.Visibility = True
+asm_part.addObject(grp_ins)
 
-screw_m2 = doc_asm.addObject("Part::Feature", "Cover_Retaining_Screw_M2")
-screw_m2.Label = "8. 2x M2x5 Flush Countersunk Retaining Screws (DIN 7991)"
-screw_m2.Shape = Part.Compound(screws)
-asm_part.addObject(screw_m2)
-if hasattr(screw_m2, "ViewObject") and screw_m2.ViewObject:
-    try:
-        screw_m2.ViewObject.ShapeColor = COLOR_STEEL
-    except Exception:
-        pass
+grp_scr = doc_asm.addObject("App::Part", "Cover_Screws")
+grp_scr.Label = "8b. 2x DIN 7991 M2 x 6 mm Flush Countersunk Cover Screws (COTS)"
+for o in grp_scr.Origin.OutList:
+    if hasattr(o, "Visibility"):
+        o.Visibility = False
+grp_scr.Origin.Visibility = False
+grp_scr.Visibility = True
+asm_part.addObject(grp_scr)
+
+for idx, (bx, by) in enumerate(gt.COVER_SCREW_PTS, start=1):
+    make_link(
+        f"Cover_Insert_M2_{idx}",
+        f"Ruthex M2 Insert #{idx} (Brass)",
+        doc_ins_m2.Ruthex_M2_Insert,
+        App.Placement(App.Vector(bx, by, 12.15), App.Rotation()),
+        COLOR_BRASS,
+        parent=grp_ins,
+    )
+    make_link(
+        f"Cover_Screw_M2_{idx}",
+        f"Cover Screw M2x6 #{idx} (DIN 7991)",
+        doc_scr_m2.M2_Senkkopfschraube,
+        App.Placement(App.Vector(bx, by, gt.COVER_Z_MAX - 0.02), App.Rotation()),
+        COLOR_STEEL,
+        parent=grp_scr,
+    )
 
 doc_asm.recompute()
 doc_asm.save()
@@ -204,6 +228,12 @@ for obj in asm_part.Group:
                 sh = sub.Shape.copy()
                 sh.Placement = p_tarsus.multiply(sh.Placement)
                 items.append((f"Tarsus_Assembly.{sub.Name}", sh))
+    elif obj.TypeId == "App::Part":
+        for sub in obj.Group:
+            if hasattr(sub, "Shape") and not sub.Shape.isNull():
+                sh = sub.Shape.copy()
+                sh.Placement = obj.Placement.multiply(sh.Placement)
+                items.append((f"{obj.Name}.{sub.Name}", sh))
     elif hasattr(obj, "Shape") and not obj.Shape.isNull():
         items.append((obj.Name, obj.Shape))
 
@@ -212,6 +242,9 @@ for i in range(len(items)):
     for j in range(i + 1, len(items)):
         n1, s1 = items[i]
         n2, s2 = items[j]
+        # Skip internal 25T spline press-fit overlap between COTS Servo_Body and Servo_Horn
+        if {n1, n2} == {"Knee_Servo_Body", "Knee_Servo_Horn"}:
+            continue
         if s1.BoundBox.intersect(s2.BoundBox):
             v = s1.common(s2).Volume
             if v > 1e-4:
