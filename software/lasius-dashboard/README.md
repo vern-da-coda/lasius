@@ -51,7 +51,7 @@ When the dashboard is accessed without an active Raspberry Pi robot connection (
 ## Views & Viewport System
 
 - **Interactive 3D WebGL Digital Twin:**
-  - Full-mesh 3D representation synchronized 1:1 with the 29 canonical FreeCAD v2 Binary STL meshes: dual carbon-fiber sandwich plates, monocoque central core, belly pan, translucent Plexiglas canopy & service cover, 45° A-truss Coxa & Femur cages, and Krallen-Sichel Tibia blades with unified-color 3D-Exoskeleton Tarsus and compact Kufe shoes.
+  - Full-mesh 3D representation synchronized 1:1 with the canonical FreeCAD v2 Binary STL meshes: dual carbon-fiber sandwich plates, monocoque central core, belly pan & battery hatch, monolithic louvered canopy, 45° A-truss Coxa & Femur cages, and Krallen-Sichel Tibia blades with unified-color 3D-Exoskeleton Tarsus and compact Kufe shoes.
   - Consistent PBR metal-roughness materials (`#343848`) with forward-facing orientation chevron (`#38bdf8`).
   - Full OrbitControls navigation (Left-drag rotate, Right-drag pan, Wheel zoom).
 - **Multi-View 2D Orthographic Projections:**

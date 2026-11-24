@@ -17,6 +17,7 @@ assembly_files = [
     os.path.join(models_dir, "custom/v2/electronics_tray_assembly.FCStd"),
     os.path.join(models_dir, "custom/v2/head_assembly.FCStd"),
     os.path.join(models_dir, "custom/v2/gaster_assembly.FCStd"),
+    os.path.join(models_dir, "custom/v2/gaster_power_assembly.FCStd"),
     os.path.join(models_dir, "custom/v2/femur_assembly.FCStd"),
     os.path.join(models_dir, "custom/v2/tarsus_assembly.FCStd"),
     os.path.join(models_dir, "custom/v2/tibia_assembly.FCStd"),
@@ -24,6 +25,8 @@ assembly_files = [
     os.path.join(models_dir, "custom/v2/leg_right_assembly.FCStd"),
     os.path.join(models_dir, "custom/v2/body_assembly.FCStd"),
     os.path.join(models_dir, "custom/v2/lasius_assembly.FCStd"),
+    os.path.join(models_dir, "custom/v2/desk_stand_assembly.FCStd"),
+    os.path.join(models_dir, "custom/v2/desk_stand_docked_assembly.FCStd"),
 ]
 
 total_links = 0

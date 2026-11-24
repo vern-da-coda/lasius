@@ -15,7 +15,7 @@ entire physical joint workspace of Lasius v2:
      tested at 3 Femur elevations (alpha = -30°, +28° ant stance, +50° high lift)
      -> Checks Coxa + Coxa_Servo + Femur_Servo + Femur + Femur_Cover + Tibia
         against Body_Bottom, Body_Top, Chassis_Core, Chassis_Belly_Pan, Chassis_Canopy,
-        Chassis_RPi_Mount, Chassis_Service_Cover.
+        Chassis_RPi_Mount, Chassis_Canopy.
   4. Adjacent Leg-to-Leg Collision Sweep (FL <-> ML and ML <-> RL)
      -> Counter-yawing neighboring legs towards each other across gamma in [0°, 60°]
         in neutral v2 ant stance (alpha = +27.8°, theta = +84.0°).
@@ -194,11 +194,11 @@ def main():
     chassis_grp = [
         ("Body_Bottom", load_shape(f"{V1_PARTS}/body_bottom.FCStd", "BodyBottom")),
         ("Body_Top", load_shape(f"{V1_PARTS}/body_top.FCStd", "BodyTop")),
-        ("Chassis_Core", load_shape(f"{V2_PARTS}/chassis/chassis_core.FCStd")),
+        ("Chassis_Core_Lower", load_shape(f"{V2_PARTS}/chassis/chassis_core_lower.FCStd", "Chassis_Core_Lower")),
+        ("Chassis_Core_Upper", load_shape(f"{V2_PARTS}/chassis/chassis_core_upper.FCStd", "Chassis_Core_Upper")),
         ("Chassis_Belly_Pan", load_shape(f"{V2_PARTS}/chassis/chassis_belly_pan.FCStd", "Chassis_Belly_Pan")),
         ("Chassis_RPi_Mount", load_shape(f"{V2_PARTS}/chassis/chassis_rpi_mount.FCStd", "Chassis_RPi_Mount")),
         ("Chassis_Canopy", load_shape(f"{V2_PARTS}/chassis/chassis_canopy.FCStd", "Chassis_Canopy")),
-        ("Chassis_Service_Cover", load_shape(f"{V2_PARTS}/chassis/chassis_service_cover.FCStd", "Chassis_Service_Cover")),
     ]
     chassis_grp[1][1].Placement = App.Placement(App.Vector(0, 0, 53.30), App.Rotation())
 
@@ -351,5 +351,6 @@ def main():
     print(f"\n=== WORKSPACE COLLISION SWEEP COMPLETED IN {time.time() - t_start:.1f}s ===")
 
 
-if __name__ == "__main__":
+if __name__ in ("__main__", "check_workspace_collisions"):
     main()
+    os._exit(0)

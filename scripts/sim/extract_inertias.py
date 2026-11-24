@@ -176,11 +176,12 @@ def main():
     part_specs = [
         ("body_bottom",           "custom/v1/parts/body_bottom.FCStd",               "BodyBottom",            DENSITY_CARBON),
         ("body_top",              "custom/v1/parts/body_top.FCStd",                  "BodyTop",               DENSITY_CARBON),
-        ("chassis_core",          "custom/v2/parts/chassis/chassis_core.FCStd",      "Chassis_Core",          DENSITY_PETG),
+        ("chassis_core_lower",    "custom/v2/parts/chassis/chassis_core_lower.FCStd","Chassis_Core_Lower",    DENSITY_PETG),
+        ("chassis_core_upper",    "custom/v2/parts/chassis/chassis_core_upper.FCStd","Chassis_Core_Upper",    DENSITY_PETG),
         ("chassis_belly_pan",     "custom/v2/parts/chassis/chassis_belly_pan.FCStd", "Chassis_Belly_Pan",     DENSITY_PETG),
+        ("chassis_battery_hatch", "custom/v2/parts/chassis/chassis_battery_hatch.FCStd", "Chassis_Battery_Hatch", DENSITY_PETG),
         ("chassis_rpi_mount",     "custom/v2/parts/chassis/chassis_rpi_mount.FCStd", "Chassis_RPi_Mount",     DENSITY_PETG),
         ("chassis_canopy",        "custom/v2/parts/chassis/chassis_canopy.FCStd",    "Chassis_Canopy",        DENSITY_PMMA),
-        ("chassis_service_cover", "custom/v2/parts/chassis/chassis_service_cover.FCStd", "Chassis_Service_Cover", DENSITY_PETG),
         ("coxa",                  "custom/v2/parts/coxa/coxa.FCStd",                 "Coxa",                  DENSITY_PETG),
         ("femur_body",            "custom/v2/parts/femur/femur.FCStd",               "Femur_Body",            DENSITY_PETG),
         ("femur_cover",           "custom/v2/parts/femur/femur_cover.FCStd",         "Femur_Cover",           DENSITY_PETG),
@@ -191,6 +192,7 @@ def main():
         ("servo_nr645",           "cots/servo_nr645.FCStd",                          "Servo_Complete",        None),
         ("rpi4_model_b",          "cots/rpi4_model_b.FCStd",                         "Raspberry_Pi_4",        None),
         ("vl53l5cx_board",        "cots/vl53l5cx_board.FCStd",                       "VL53L5CX_Board",        None),
+        ("bno085_board",          "cots/bno085_board.FCStd",                         "BNO085_Board",          None),
     ]
 
     shapes = {}
@@ -199,13 +201,20 @@ def main():
         sh = load_shape(rel_path, obj_name)
         shapes[key] = sh
         if density is None:
-            fixed_mass = SERVO_MASS_G if key == "servo_nr645" else (RPI4_MASS_G if key == "rpi4_model_b" else 3.0)
+            fixed_mass = (
+                SERVO_MASS_G if key == "servo_nr645"
+                else (RPI4_MASS_G if key == "rpi4_model_b" else (2.5 if key == "bno085_board" else 3.0))
+            )
             d_eff = fixed_mass / max(sh.Volume, 1e-6)
             data = analyze_shape(sh, d_eff)
         else:
             data = analyze_shape(sh, density)
         results[key] = data
         print(f"  [{key:22s}] Mass: {data['mass_g']:6.2f} g | CoM (mm): [{data['com_mm'][0]:6.2f}, {data['com_mm'][1]:6.2f}, {data['com_mm'][2]:6.2f}]")
+
+    # Synthesize combined chassis_core compound for URDF/Dashboard visual & inertia compatibility
+    shapes["chassis_core"] = Part.makeCompound([shapes["chassis_core_lower"], shapes["chassis_core_upper"]])
+    results["chassis_core"] = analyze_shape(shapes["chassis_core"], DENSITY_PETG)
 
     # 2. Export PyBullet Binary STLs baked in exact URDF link-local frames (meters, outward normals!)
     print("\n--- Exporting PyBullet Binary STL Meshes (Link-Local Meters, Positive Winding) ---")
@@ -216,11 +225,12 @@ def main():
     export_binary_stl(shapes["body_top"],              App.Placement(App.Vector(0, 0, 53.30), App.Rotation()).toMatrix(), f"{URDF_MESH_DIR}/body_top.stl", 0.25)
     export_binary_stl(shapes["chassis_core"],          I, f"{URDF_MESH_DIR}/chassis_core.stl", 0.25)
     export_binary_stl(shapes["chassis_belly_pan"],     I, f"{URDF_MESH_DIR}/chassis_belly_pan.stl", 0.25)
+    export_binary_stl(shapes["chassis_battery_hatch"], I, f"{URDF_MESH_DIR}/chassis_battery_hatch.stl", 0.25)
     export_binary_stl(shapes["chassis_rpi_mount"],     I, f"{URDF_MESH_DIR}/chassis_rpi_mount.stl", 0.25)
     export_binary_stl(shapes["chassis_canopy"],        I, f"{URDF_MESH_DIR}/chassis_canopy.stl", 0.25)
-    export_binary_stl(shapes["chassis_service_cover"], I, f"{URDF_MESH_DIR}/chassis_service_cover.stl", 0.25)
     export_binary_stl(shapes["rpi4_model_b"],          App.Placement(App.Vector(0, 0, 59.80), App.Rotation()).toMatrix(), f"{URDF_MESH_DIR}/rpi4_model_b.stl", 0.30)
-    export_binary_stl(shapes["vl53l5cx_board"],        App.Placement(App.Vector(0, 0, -2.75), App.Rotation(App.Vector(0, 1, 0), 180.0)).toMatrix(), f"{URDF_MESH_DIR}/vl53l5cx_board.stl", 0.30)
+    export_binary_stl(shapes["vl53l5cx_board"],        App.Placement(App.Vector(-58.50, 0, -2.75), App.Rotation(App.Vector(0, 1, 0), 180.0)).toMatrix(), f"{URDF_MESH_DIR}/vl53l5cx_board.stl", 0.30)
+    export_binary_stl(shapes["bno085_board"],          App.Placement(App.Vector(75.00, 0, 58.32), App.Rotation(App.Vector(0, 0, 1), 90.0)).toMatrix(), f"{URDF_MESH_DIR}/bno085_board.stl", 0.30)
 
     # B. Coxa Link meshes (origin = Coxa Pivot Axis in body_assembly!)
     #    In body_assembly: leg_assembly is shifted by Y_shift = -2.50 (Left) / +2.50 (Right)

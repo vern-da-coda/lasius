@@ -451,7 +451,6 @@ export class LasiusGraphicsEngine {
       { key: 'chassis_battery_hatch', file: 'chassis_battery_hatch.stl', matrix: matBody },
       { key: 'chassis_rpi_mount', file: 'chassis_rpi_mount.stl', matrix: matBody },
       { key: 'chassis_canopy', file: 'chassis_canopy.stl', matrix: matBody },
-      { key: 'chassis_service_cover', file: 'chassis_service_cover.stl', matrix: matBody },
       { key: 'rpi4_model_b', file: 'rpi4_model_b.stl', matrix: matBody },
       { key: 'vl53l5cx_board', file: 'vl53l5cx_board.stl', matrix: matBody },
       // Coxa v2 (Left & Right)
@@ -609,7 +608,6 @@ export class LasiusGraphicsEngine {
       { key: 'chassis_rpi_mount', mat: this.chassisMat },
       { key: 'rpi4_model_b', mat: this.pcbGreenMat },
       { key: 'vl53l5cx_board', mat: this.pcbRedMat },
-      { key: 'chassis_service_cover', mat: this.coverNeutralMat },
       { key: 'chassis_canopy', mat: this.canopyMat, renderOrder: 10 }
     ];
     for (const part of chassisParts) {

@@ -4,7 +4,7 @@
  * Synchronized with FreeCAD v2 Hardware-as-Code models (`body_assembly.FCStd` / `leg_assembly.FCStd`):
  * - Inherited Carbon Fiber Chassis Plates: `body_bottom.FCStd` / `body_top.FCStd` (2.0 mm CFRP, Z = 0..2 & 53.3..55.3 mm)
  * - v2 Bionic Monocoque Chassis Core: `chassis_core.FCStd` (replaces v1 standoff pillars, spans 51.3 mm gap)
- * - v2 Belly Pan & Draped Canopy + Service Cover: `chassis_belly_pan.FCStd`, `chassis_canopy.FCStd`, `chassis_service_cover.FCStd`
+ * - v2 Belly Pan & Monolithic Draped Canopy: `chassis_belly_pan.FCStd`, `chassis_battery_hatch.FCStd`, `chassis_canopy.FCStd`
  * - v2 Bionic Twin-Cage Coxa: `coxa.FCStd` (unified 45° A-truss cheeks, 2.50 mm central spine, R_FRONT = 4.50 mm)
  * - v2 Bionic Monocoque Femur & Cover: `femur.FCStd` + `femur_cover.FCStd` (100.0 mm pitch, 45° A-truss box girder waist)
  * - v2 Bionic Tibia + 3D-Exoskeleton Tarsus & Kufe Shoe: `tibia.FCStd` + `tibia_cover.FCStd` + `tarsus.FCStd` + `tarsus_shoe.FCStd`

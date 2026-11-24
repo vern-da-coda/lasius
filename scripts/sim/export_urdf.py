@@ -99,6 +99,7 @@ def build_urdf():
         ("servo_matte",      "0.14 0.15 0.18 1.0"),
         ("pcb_green",        "0.08 0.52 0.24 1.0"),
         ("pcb_red",          "0.75 0.15 0.15 1.0"),
+        ("pcb_black",        "0.09 0.10 0.13 1.0"),
     ]
     for mat_name, rgba in materials:
         mat_elem = ET.SubElement(robot, "material", name=mat_name)
@@ -113,8 +114,8 @@ def build_urdf():
         inertias[k]["mass_g"]
         for k in [
             "body_bottom", "body_top", "chassis_core", "chassis_belly_pan",
-            "chassis_rpi_mount", "chassis_canopy", "chassis_service_cover",
-            "rpi4_model_b", "vl53l5cx_board",
+            "chassis_battery_hatch", "chassis_rpi_mount", "chassis_canopy",
+            "rpi4_model_b", "vl53l5cx_board", "bno085_board",
         ]
     )
     # Add 2S LiPo (165g) + 2x PCA9685 + TCA9548A + UBECs + fasteners (95g)
@@ -130,11 +131,12 @@ def build_urdf():
     create_mesh_visual(base_link, "body_top.stl",              "carbon_dark")
     create_mesh_visual(base_link, "chassis_core.stl",          "petg_anthracite")
     create_mesh_visual(base_link, "chassis_belly_pan.stl",     "petg_graphite")
+    create_mesh_visual(base_link, "chassis_battery_hatch.stl", "petg_graphite")
     create_mesh_visual(base_link, "chassis_rpi_mount.stl",     "petg_anthracite")
     create_mesh_visual(base_link, "chassis_canopy.stl",        "canopy_iceblue")
-    create_mesh_visual(base_link, "chassis_service_cover.stl", "petg_graphite")
     create_mesh_visual(base_link, "rpi4_model_b.stl",          "pcb_green")
     create_mesh_visual(base_link, "vl53l5cx_board.stl",        "pcb_red")
+    create_mesh_visual(base_link, "bno085_board.stl",          "pcb_black")
 
     # Compact chassis collision volume (strictly inside leg mount radius to avoid false self-collision!)
     create_collision_box(
