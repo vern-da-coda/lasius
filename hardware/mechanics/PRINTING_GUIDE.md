@@ -54,7 +54,7 @@ Alle Teile sind parametrisch in FreeCAD konstruiert und für FDM-Drucker mit $25
 | **Servohorn** | Linsenkopfschrauben (Innensechskant) | **ISO 7380 M2 × 5 mm** (A2 Edelstahl, $H = 1{,}15\,\text{mm}$) | **72×** | Befestigung aller 18× 25T-Metall-Servohörner ($\varnothing 16\,\text{mm}$ Lochkreis): 24× Coxa-Hörner auf `Body_Top` (flacher Kopf hält $\ge 0{,}57\,\text{mm}$ Abstand zum Canopy) + 48× Hüft-/Knie-Hörner im `Femur` (versenkt in $\varnothing 4{,}3 \times 1{,}5\,\text{mm}$ Taschen) |
 | **Chassis** | Senkkopfschrauben | **DIN 7991 M3 × 8 mm / 12 mm** | **16×** | Verschraubung Belly Pan & Canopy an Chassis Core |
 | **Tarsus-Feder** | Zylindrische Druckfeder | $\varnothing_{\text{a}} = 3{,}5\,\text{mm}, d = 0{,}5\,\text{mm}, L_0 = 10\dots 12\,\text{mm}$ | **6×** | Rückstellfeder für 3D-Exoskelett-Tarsus |
-| **Tarsus-Pivot** | Zylinderstift / Achse | **$\varnothing 3{,}0 \times 8{,}8\,\text{mm}$** Edelstahl | **6×** | Drehachse des Tarsus in der Tibia |
+| **Tarsus-Pivot** | Zylinderstift / Achse (COTS) | [**`dowel_pin_3x12.FCStd`**](models/cots/dowel_pin_3x12.FCStd) — **DIN 7 / ISO 2338 $\varnothing 3{,}0 \times 12{,}0\,\text{mm}$** (A2 Edelstahl, beidseitig angefast) | **6×** | Drehachse des Tarsus im Tibia-Gabelkopf (wartungsfreie Gleitlagerung) |
 | **Canopy-Magnete** | Neodym-Scheibenmagnet | **$\varnothing 5{,}0 \times 2{,}0\,\text{mm}$** (N52) | **8×** | 4× in `chassis_rpi_mount`-Pfeilern + 4× in `chassis_canopy`-Zentrierbechern (`±48, ±36 mm`, geringes Streufeld zum BNO085) |
 | **IMU-Befestigung** | Nylon- / Messing-Schrauben | **M2.5 × 5 mm** (nichtmagnetisch!) | **4×** | Befestigung des Adafruit BNO085 auf dem Front-Deck von `chassis_rpi_mount` |
 

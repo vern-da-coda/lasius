@@ -102,6 +102,7 @@ To isolate the 6 leg ADC boards (**ADS1115**) and maintain a clean I2C bus hiera
 - **Fastener Assortment (A2 Stainless Steel, Hex Socket DIN 912):**
   - **M2 × 8 mm / 10 mm / 12 mm** (for STEMMA QT breakouts, Omron D2F-L, and servo horns).
   - **M3 × 8 mm / 12 mm / 16 mm / 20 mm** + nylon lock nuts DIN 985 (for C-brackets, clamshell Tibia, and standoffs).
+- **6× Zylinderstifte Ø3 × 12 mm (A2 Edelstahl, DIN 7 / ISO 2338 / COTS `dowel_pin_3x12.FCStd`):** Gelenkdrehachsen für die Tarsus-Wippe im Tibia-Gabelkopf (beidseitig angefast, trockenlaufende Gleitlagerung im PETG).
 - **Filament:** **PETG (Black & signal accent color)** — mandatory replacement for brittle PLA for all structural leg joints (layer adhesion and high impact toughness under bending).
 
 ---
