@@ -12,16 +12,12 @@ permissions:
 
 concurrency:
   group: "pages"
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
-  deploy-pages:
-    name: Build & Deploy Static 3D Twin
+  build:
+    name: Build Static 3D Twin
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7
@@ -49,6 +45,17 @@ jobs:
         with:
           path: software/lasius-dashboard/dist
 
+  deploy:
+    name: Deploy to GitHub Pages
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    permissions:
+      pages: write
+      id-token: write
+    steps:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v5
