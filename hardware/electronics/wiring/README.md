@@ -24,10 +24,10 @@ This directory contains the complete electrical wiring and harness specification
 | **Omron D2F-L** | 6× | Tactile microswitches in foot tips wired directly to `A3` (Orange) & `GND` (Black) of each leg Wandler (active-low to `GND`). |
 | **10 kΩ Resistor** | 6× | Pull-up resistors soldered between `A3` and `VDD` (`3.3V`) on each Wandler header to prevent floating inputs when foot switches are open. |
 | **100 nF MLCC** | 24× | 0.1 µF 50V monolithic multi-layer ceramic capacitors as low-pass noise filters ($f_c \approx 636\,\text{Hz}$) soldered directly between `A0–A3` and `GND`. |
-| **Amass XT60BE-M** | 1× | Rear chassis power inlet for bench power supply (`6.0V` during bring-up) or 2S/3S LiPo battery. |
-| **Inline Blade Fuse** | 1× | 25A automotive blade fuse immediately downstream of the positive power inlet for short-circuit protection. |
-| **Master Power Switch** | 1× | High-current SPST rocker/toggle switch rated for $\ge 20\,\text{A}$ continuous DC load. |
-| **High-Current UBECs** | 2× | 6.0V (10A–15A) step-down regulators (or direct 6V bench supply rails) feeding `V+` on `Controller Left (0x40)` and `Controller Right (0x42)`. |
+| **Internal Battery / Bench XT60** | 1× | Accessible directly inside the hinged rear Battery Hatch (doubles as bench supply connection; eliminates redundant external rear inlet and preserves rear Gaster dovetail). |
+| **Mini-ATM Fuse Socket** | 1× | 25A Mini Automotive Blade Fuse (`ATM`, $11 \times 16 \times 3.8\,\text{mm}$) in Rear-Right inter-leg waist bay (`X = -32.5, Z = 46.5 mm`, or G2 Power-Gaster left flank). |
+| **Dual Mini Slide Switches** | 2× | Panel-mount mini slide switches ($19 \times 6.5\,\text{mm}$ flange, 15 mm M2 pitch) in Front-Left/Right waist bays (`X = +32.5, Z = 46.5 mm`, or G2 Power-Gaster right flank): `Switch_Logic_Pi` (SPST 5A) & `Switch_Servos_Armed` (DPST driving both Hobbywing internal MOSFET `SW` ports). |
+| **Hobbywing BEC 10A V2-Car** | 2× | `HW30603003` (`6.0V`, 10A cont / 15A peak, IP67, $45 \times 20 \times 16.2\,\text{mm}$) in ventilated Front Cooling Bay (Concept A) or separate 2-DoF Power-Gaster (G2) feeding `Controller Left (0x40)` and `Controller Right (0x42)`. |
 | **Step-Down Converter** | 1× | 5.1V 4.0A DC/DC buck converter dedicated to the Raspberry Pi 4 logic supply. |
 | **Planned Expansion** | — | **Adafruit BNO085** 9-DOF IMU (`0x4A` primary bus), **INA228 / INA260** power monitor (`Multiplexer CH6`, Brown/Yellow), **VL53L4CD / VL53L5CX** ToF sensor (`Multiplexer CH7`), and front head servos (Camera Pan/Tilt + Mandibles). |
 
@@ -83,9 +83,9 @@ Standardized wire color allocation across all WireViz harnesses and bench wiring
 ### Plan 3: `03_power_distribution.yml`
 * **Purpose:** Power distribution rails, inline fuse protection, dual `6.0V` servo rails, centralized `Star_Ground_Bus`, and the `3.3V` logic rail tap.
 * **Branches:**
-  * Bench Supply / 2S–3S LiPo (`XT60BE-M`) $\rightarrow$ `25A` Inline Blade Fuse $\rightarrow$ `20A` Master Power Switch
-  * Dual High-Current UBECs (`6.0V 10A–15A` each, or direct 6V bench supply) $\rightarrow$ `Controller_Left_Power (0x40)` and `Controller_Right_Power (0x42)` servo power terminals
-  * Step-Down Converter (`5.1V 4.0A`) $\rightarrow$ Raspberry Pi 4 logic supply; Pi Pin 1/17 (`3.3V`) feeds `Dist_3V3_GND_Rail`
+  * Internal Hatch-Accessible `XT60` (2S LiPo or Bench Supply) $\rightarrow$ `25A Mini-ATM` Fuse (`Rear-Right Waist` / `G2 Gaster`) $\rightarrow$ Central Fused `V+` Bus
+  * Dual **Hobbywing BEC 10A V2-Car (`HW30603003`, `6.0V 10A/15A`)** (Concept A: Front Cooling Bay; Option G2: 2-DoF Power-Gaster with 14 AWG feed & dual 16 AWG returns) $\rightarrow$ `Controller_Left_Power (0x40)` and `Controller_Right_Power (0x42)`, enabled synchronously via **DPST Mini Slide Switch (`Switch_Servos_Armed`)**
+  * **SPST Mini Slide Switch (`Switch_Logic_Pi`)** $\rightarrow$ Step-Down Converter (`5.1V 3A–4A`, `ubec_3a`) $\rightarrow$ Raspberry Pi 4 logic supply; Pi Pin 1/17 (`3.3V`) feeds `Dist_3V3_GND_Rail`
   * Central Star-Ground Busbar (`Star_Ground_Bus`) carries high-current battery/UBEC returns and connects to `Dist_3V3_GND_Rail` via **exactly one** reference link (`LOGIC_REF_GND`) to eliminate ground loops and ground bounce.
 
 <p align="center">

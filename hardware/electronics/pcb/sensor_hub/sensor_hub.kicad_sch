@@ -7,12 +7,12 @@
   (title_block
     (title "Lasius Sensor Hub & 3.3V / GND Distribution Carrier Board")
     (date "2026-11-22")
-    (rev "v2.0")
+    (rev "v2.1")
     (company "Lasius Bionic Robotics")
     (comment 1 "Central I2C Multi-Drop & Power Hub for 6 Leg ADCs, 2 PCA9685 & Raspberry Pi")
     (comment 2 "Hardwired TCA9548A Addr 0x71 (A0->3.3V, A1/A2->GND) - Zero Conflict with ALLCALL 0x70")
   )
-  (text "Lasius Sensor Hub & Distribution Architecture\n\n1. Main I2C Bus from Raspberry Pi (3.3V, GND, SCL_MAIN, SDA_MAIN)\n2. TCA9548A / PW548A 8-Channel Multiplexer (Address 0x71)\n3. 6x Dedicated 4-Pin Leg Headers (3.3V, GND, SCx, SDx) with 1:1 straight pinout\n4. 2x 2-Pin Logic Feeds for PCA9685 Left and Right controllers\n5. 1x 4-Pin AUX Port for Channel 6 (INA228) and Channel 7 (VL53L4CD ToF)"
+  (text "Lasius Sensor Hub & Distribution Architecture\n\n1. Main I2C Bus from Raspberry Pi (3.3V, GND, SCL_MAIN, SDA_MAIN)\n2. TCA9548A / PW548A 8-Channel Multiplexer (Address 0x71)\n3. 6x Dedicated 4-Pin Leg Headers (3.3V, GND, SCx, SDx) with harmonized Pin 1 inward orientation\n4. 2x 2-Pin Logic Feeds for PCA9685 Left and Right controllers\n5. 1x 4-Pin AUX Port for Channel 6 (INA228) and Channel 7 (VL53L4CD ToF)"
     (exclude_from_sim no)
     (at 25.4 35.0 0)
     (effects

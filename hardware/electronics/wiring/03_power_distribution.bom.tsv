@@ -1,19 +1,21 @@
 Id	Description	Qty	Unit	Designators
-1	Cable, 1 x 14 AWG	0.23	m	Fuse_to_Switch, Inlet_to_Fuse, Inlet_to_StarGND, Switch_to_PosBus
-2	Cable, 1 x 24 AWG	0.12	m	Logic_StarGND_Ref
-3	Cable, 1 x 26 AWG	0.12	m	Pi_3V3_Logic_Tap
-4	Cable, 2 x 16 AWG	0.4	m	Servo_Rail_Left, Servo_Rail_Right, Supply_UBEC_Left, Supply_UBEC_Right
-5	Cable, 2 x 18 AWG	0.08	m	Supply_Pi_Buck
+1	Cable, 1 x 14 AWG	0.29	m	Fuse_to_PosBus, Inlet_to_Fuse, Inlet_to_StarGND
+2	Cable, 1 x 18 AWG	0.32	m	Pi_Sw_Feed, Supply_Pi_Buck_GND, Supply_Pi_Buck_Pos
+3	Cable, 1 x 24 AWG	0.12	m	Logic_StarGND_Ref
+4	Cable, 1 x 26 AWG	0.12	m	Pi_3V3_Logic_Tap
+5	Cable, 2 x 16 AWG	0.36	m	Servo_Rail_Left, Servo_Rail_Right, Supply_UBEC_Left, Supply_UBEC_Right
 6	Cable, 2 x 20 AWG	0.1	m	Pi_5V_Rail
-7	Connector, Amass XT60BE-M Chassis Inlet, Bench Supply (6V-12V) or 2S/3S LiPo, 2 pins, YE	1		Power_Inlet_XT60
-8	Connector, Automotive Blade Fuse Holder, 25A Fast-Acting Fuse, 2 pins, OG	1		Inline_Fuse
-9	Connector, Central 3.3V / GND Distribution Rail, Perfboard Busbar (100nF + 10uF Decoupling), 2 pins, RD	1		Dist_3V3_GND_Rail
-10	Connector, Central Star-GND Busbar, Common Reference Point, 5 pins, BK	1		Star_Ground_Bus
-11	Connector, Controller Left Screw Terminal (PCA9685 0x40), V+ Servo Power Input, 2 pins, BU	1		Controller_Left_Power
-12	Connector, Controller Right Screw Terminal (PCA9685 0x42), V+ Servo Power Input, 2 pins, BU	1		Controller_Right_Power
-13	Connector, High-Current SPST Rocker Switch, 20A DC Continuous Rating, 2 pins, RD	1		Main_Switch
-14	Connector, High-Current UBEC Left (6.0V), 10A-15A Step-Down (or Direct Bench 6V), 4 pins, BU	1		UBEC_Left
-15	Connector, High-Current UBEC Right (6.0V), 10A-15A Step-Down (or Direct Bench 6V), 4 pins, BU	1		UBEC_Right
-16	Connector, Logic Buck Converter (5.1V 4.0A), Dedicated Raspberry Pi Regulator, 4 pins, GN	1		StepDown_Pi
-17	Connector, Raspberry Pi 4 Power Input + 3.3V Feed, 5V Header/USB-C In to Pin 1/17 3.3V Out, 3 pins, GN	1		RaspberryPi_Power
-18	Connector, Switched V+ Distribution Bus, High-Current Splice / Terminal, 4 pins, RD	1		Pos_Distribution
+7	Cable, 2 x 26 AWG	0.32	m	UBEC_SW_Ctrl_Left, UBEC_SW_Ctrl_Right
+8	Connector, Central 3.3V / GND Distribution Rail, Sensor Hub Carrier PCB (100nF + 10uF Decoupling), 2 pins, RD	1		Dist_3V3_GND_Rail
+9	Connector, Central Star-GND Busbar, Common Reference Point (Center Bay / Gaster G2), 5 pins, BK	1		Star_Ground_Bus
+10	Connector, Controller Left Screw Terminal (PCA9685 0x40), V+ Servo Power Input, 2 pins, BU	1		Controller_Left_Power
+11	Connector, Controller Right Screw Terminal (PCA9685 0x42), V+ Servo Power Input, 2 pins, BU	1		Controller_Right_Power
+12	Connector, Fused V+ Distribution Bus, High-Current Splice / Terminal (Center Bay / Gaster G2), 4 pins, RD	1		Pos_Distribution
+13	Connector, Hobbywing BEC 10A V2-Car Left (6.0V), HW30603003 (10A Cont / 15A Peak, IP67), 6 pins, BU	1		UBEC_Left
+14	Connector, Hobbywing BEC 10A V2-Car Right (6.0V), HW30603003 (10A Cont / 15A Peak, IP67), 6 pins, BU	1		UBEC_Right
+15	Connector, Internal Battery / Bench XT60 Connector, 2S/3S LiPo or Bench Supply (6V-12V), 2 pins, YE	1		Power_Inlet_XT60
+16	Connector, Logic Buck Converter (5.1V 3A-4A), Dedicated Raspberry Pi Regulator (ubec_3a), 4 pins, GN	1		StepDown_Pi
+17	Connector, Mini Slide Switch DPST (2-Pole), Servos Armed / Kill Switch (MOSFET SW), 4 pins, RD	1		Switch_Servos_Armed
+18	Connector, Mini Slide Switch SPST (5A), Logic / Raspberry Pi Power Switch, 2 pins, GN	1		Switch_Logic_Pi
+19	Connector, Panel-Mount Mini-ATM Fuse Socket, 25A Mini Automotive Blade Fuse (ATM), 2 pins, WH	1		Fuse_Mini_ATM
+20	Connector, Raspberry Pi 4 Power Input + 3.3V Feed, 5V Header/USB-C In to Pin 1/17 3.3V Out, 3 pins, GN	1		RaspberryPi_Power

@@ -1,42 +1,37 @@
 # Lasius Hexapod - Power Distribution & Star Ground Architecture
-# Bench Supply / 2S-3S LiPo (XT60BE-M), 25A Blade Fuse, Main Switch, Dual 6V Servo Rails, 5.1V Pi Logic & Central 3.3V Rail
+# Concept A (Symmetric Monocoque: Internal Hatch-Accessible XT60 + Inter-Leg Waist Switches/Fuse + Front Dual 6V UBECs)
+# Optional G2 Expansion (gaster_power_assembly.FCStd): 14AWG Battery Feed -> 2-DoF Power-Gaster -> Dual 16AWG 6V Returns
 
 options:
   fontname: "DejaVu Sans"
 
 connectors:
   Power_Inlet_XT60:
-    type: Amass XT60BE-M Chassis Inlet
-    subtype: Bench Supply (6V-12V) or 2S/3S LiPo
+    type: Internal Battery / Bench XT60 Connector
+    subtype: 2S/3S LiPo or Bench Supply (6V-12V)
     pincount: 2
     pinlabels: [BAT+, BAT-]
     color: YE
-    notes: "Panel-mount rear power inlet (bench supply used during bring-up)"
+    notes: "Directly accessible inside rear Battery Hatch (no redundant external rear inlet; preserves rear Gaster dovetail)"
 
-  Inline_Fuse:
-    type: Automotive Blade Fuse Holder
-    subtype: 25A Fast-Acting Fuse
+  Fuse_Mini_ATM:
+    type: Panel-Mount Mini-ATM Fuse Socket
+    subtype: 25A Mini Automotive Blade Fuse (ATM)
     pincount: 2
     pinlabels: [IN, OUT]
-    color: OG
-
-  Main_Switch:
-    type: High-Current SPST Rocker Switch
-    subtype: "20A DC Continuous Rating"
-    pincount: 2
-    pinlabels: [IN, OUT]
-    color: RD
+    color: WH
+    notes: "Body_Top Rear Center Fuse Tower between switches (X=-105.0, Y=0, Z=78.8 mm, top-pull through Canopy) | G2: Power-Gaster Left Flank"
 
   Pos_Distribution:
-    type: Switched V+ Distribution Bus
-    subtype: High-Current Splice / Terminal
+    type: Fused V+ Distribution Bus
+    subtype: High-Current Splice / Terminal (Center Bay / Gaster G2)
     pincount: 4
-    pinlabels: [SW_IN+, FEED_UBEC_L+, FEED_UBEC_R+, FEED_PI_BUCK+]
+    pinlabels: [FUSED_IN+, FEED_UBEC_L+, FEED_UBEC_R+, FEED_PI_SW+]
     color: RD
 
   Star_Ground_Bus:
     type: Central Star-GND Busbar
-    subtype: Common Reference Point
+    subtype: Common Reference Point (Center Bay / Gaster G2)
     pincount: 5
     pinlabels:
       - BAT_GND
@@ -47,28 +42,45 @@ connectors:
     color: BK
     notes: "Prevents ground bounce between high-current servo loads and ADC telemetry; 3.3V rail ties here via 1 single link"
 
-  UBEC_Left:
-    type: High-Current UBEC Left (6.0V)
-    subtype: 10A-15A Step-Down (or Direct Bench 6V)
+  Switch_Logic_Pi:
+    type: Mini Slide Switch SPST (5A)
+    subtype: Logic / Raspberry Pi Power Switch
+    pincount: 2
+    pinlabels: [IN, OUT]
+    color: GN
+    notes: "Body_Top Rear Switch Tail Left Bevel (X=-116.0, Y=+14.5, Z=59.0 mm) | G2: Power-Gaster Right Flank; switches ~1.5-2.2A Pi Buck"
+
+  Switch_Servos_Armed:
+    type: Mini Slide Switch DPST (2-Pole)
+    subtype: Servos Armed / Kill Switch (MOSFET SW)
     pincount: 4
-    pinlabels: [VIN+, GND_IN, VOUT_6V, GND_OUT]
+    pinlabels: [SW_L1, SW_L2, SW_R1, SW_R2]
+    color: RD
+    notes: "Body_Top Rear Switch Tail Right Bevel (X=-116.0, Y=-14.5, Z=59.0 mm) | G2: Power-Gaster Right Flank; switches both Hobbywing SW ports (mA logic)"
+
+  UBEC_Left:
+    type: Hobbywing BEC 10A V2-Car Left (6.0V)
+    subtype: HW30603003 (10A Cont / 15A Peak, IP67)
+    pincount: 6
+    pinlabels: [VIN+, GND_IN, SW1, SW2, VOUT_6V, GND_OUT]
     color: BU
-    notes: "Dedicated rail for Left 9 servos + front aux"
+    notes: "Body_Top Mounting Plate Rear-Left (X=-79.5, Y=+21.5 mm) | G2: Power-Gaster Left; 6.0V rail for Left 9 servos"
 
   UBEC_Right:
-    type: High-Current UBEC Right (6.0V)
-    subtype: 10A-15A Step-Down (or Direct Bench 6V)
-    pincount: 4
-    pinlabels: [VIN+, GND_IN, VOUT_6V, GND_OUT]
+    type: Hobbywing BEC 10A V2-Car Right (6.0V)
+    subtype: HW30603003 (10A Cont / 15A Peak, IP67)
+    pincount: 6
+    pinlabels: [VIN+, GND_IN, SW1, SW2, VOUT_6V, GND_OUT]
     color: BU
-    notes: "Dedicated rail for Right 9 servos + front aux"
+    notes: "Body_Top Mounting Plate Rear-Right (X=-79.5, Y=-21.5 mm) | G2: Power-Gaster Right; 6.0V rail for Right 9 servos"
 
   StepDown_Pi:
-    type: Logic Buck Converter (5.1V 4.0A)
-    subtype: Dedicated Raspberry Pi Regulator
+    type: Logic Buck Converter (5.1V 3A-4A)
+    subtype: Dedicated Raspberry Pi Regulator (ubec_3a)
     pincount: 4
     pinlabels: [VIN+, GND_IN, VOUT_5V1, GND_OUT]
     color: GN
+    notes: "Body_Top Mounting Plate +Y Port-Free Flank (X=0.0, Y=+39.5 mm) beside RPi4 5V GPIO"
 
   Controller_Left_Power:
     type: Controller Left Screw Terminal (PCA9685 0x40)
@@ -94,7 +106,7 @@ connectors:
 
   Dist_3V3_GND_Rail:
     type: Central 3.3V / GND Distribution Rail
-    subtype: Perfboard Busbar (100nF + 10uF Decoupling)
+    subtype: Sensor Hub Carrier PCB (100nF + 10uF Decoupling)
     pincount: 2
     pinlabels: [3V3_LOGIC_RAIL, GND_LOGIC_RAIL]
     color: RD
@@ -107,51 +119,69 @@ cables:
     colors: [RD]
     wirecount: 1
 
-  Fuse_to_Switch:
+  Fuse_to_PosBus:
     gauge: 14 AWG
-    length: 0.05
-    colors: [RD]
-    wirecount: 1
-
-  Switch_to_PosBus:
-    gauge: 14 AWG
-    length: 0.05
+    length: 0.12
     colors: [RD]
     wirecount: 1
 
   Inlet_to_StarGND:
     gauge: 14 AWG
-    length: 0.08
+    length: 0.12
     colors: [BK]
     wirecount: 1
 
   Supply_UBEC_Left:
     gauge: 16 AWG
-    length: 0.08
+    length: 0.06
     colors: [RD, BK]
     wirecount: 2
 
   Supply_UBEC_Right:
     gauge: 16 AWG
-    length: 0.08
+    length: 0.06
     colors: [RD, BK]
     wirecount: 2
 
-  Supply_Pi_Buck:
-    gauge: 18 AWG
-    length: 0.08
+  UBEC_SW_Ctrl_Left:
+    gauge: 26 AWG
+    length: 0.16
     colors: [RD, BK]
     wirecount: 2
+
+  UBEC_SW_Ctrl_Right:
+    gauge: 26 AWG
+    length: 0.16
+    colors: [RD, BK]
+    wirecount: 2
+
+  Pi_Sw_Feed:
+    gauge: 18 AWG
+    length: 0.12
+    colors: [RD]
+    wirecount: 1
+
+  Supply_Pi_Buck_Pos:
+    gauge: 18 AWG
+    length: 0.08
+    colors: [RD]
+    wirecount: 1
+
+  Supply_Pi_Buck_GND:
+    gauge: 18 AWG
+    length: 0.12
+    colors: [BK]
+    wirecount: 1
 
   Servo_Rail_Left:
     gauge: 16 AWG
-    length: 0.12
+    length: 0.10
     colors: [RD, BK]
     wirecount: 2
 
   Servo_Rail_Right:
     gauge: 16 AWG
-    length: 0.12
+    length: 0.14
     colors: [RD, BK]
     wirecount: 2
 
@@ -174,27 +204,23 @@ cables:
     wirecount: 1
 
 connections:
-  # Main Positive Path: XT60 Inlet -> 25A Fuse -> Master Switch -> V+ Distribution
+  # Main Positive Path: XT60E-M -> 25A Mini-ATM Fuse -> Fused V+ Distribution Bus (Center Bay)
   -
     - Power_Inlet_XT60: [BAT+]
     - Inlet_to_Fuse: [1]
-    - Inline_Fuse: [IN]
+    - Fuse_Mini_ATM: [IN]
   -
-    - Inline_Fuse: [OUT]
-    - Fuse_to_Switch: [1]
-    - Main_Switch: [IN]
-  -
-    - Main_Switch: [OUT]
-    - Switch_to_PosBus: [1]
-    - Pos_Distribution: [SW_IN+]
+    - Fuse_Mini_ATM: [OUT]
+    - Fuse_to_PosBus: [1]
+    - Pos_Distribution: [FUSED_IN+]
 
-  # Main Ground Path: XT60 Inlet -> Central Star Ground Busbar
+  # Main Ground Path: XT60E-M -> Central Star Ground Busbar
   -
     - Power_Inlet_XT60: [BAT-]
     - Inlet_to_StarGND: [1]
     - Star_Ground_Bus: [BAT_GND]
 
-  # Regulator Inputs from V+ Bus and Star Ground
+  # Dual Hobbywing BEC 10A V2-Car High-Current Feeds (Direct Fused Bus, Switched Internally via MOSFET SW)
   -
     - Pos_Distribution: [FEED_UBEC_L+]
     - Supply_UBEC_Left: [1]
@@ -203,7 +229,6 @@ connections:
     - Star_Ground_Bus: [UBEC_L_GND]
     - Supply_UBEC_Left: [2]
     - UBEC_Left: [GND_IN]
-
   -
     - Pos_Distribution: [FEED_UBEC_R+]
     - Supply_UBEC_Right: [1]
@@ -213,13 +238,28 @@ connections:
     - Supply_UBEC_Right: [2]
     - UBEC_Right: [GND_IN]
 
+  # Dual-Pole Mini Slide Switch (Servos Armed / Kill) -> Hobbywing Internal Electronic MOSFET Enable Ports
   -
-    - Pos_Distribution: [FEED_PI_BUCK+]
-    - Supply_Pi_Buck: [1]
+    - Switch_Servos_Armed: [SW_L1, SW_L2]
+    - UBEC_SW_Ctrl_Left: [1, 2]
+    - UBEC_Left: [SW1, SW2]
+  -
+    - Switch_Servos_Armed: [SW_R1, SW_R2]
+    - UBEC_SW_Ctrl_Right: [1, 2]
+    - UBEC_Right: [SW1, SW2]
+
+  # Logic Mini Slide Switch (Pi Power) -> Raspberry Pi 5.1V Buck Converter
+  -
+    - Pos_Distribution: [FEED_PI_SW+]
+    - Pi_Sw_Feed: [1]
+    - Switch_Logic_Pi: [IN]
+  -
+    - Switch_Logic_Pi: [OUT]
+    - Supply_Pi_Buck_Pos: [1]
     - StepDown_Pi: [VIN+]
   -
     - Star_Ground_Bus: [PI_BUCK_GND]
-    - Supply_Pi_Buck: [2]
+    - Supply_Pi_Buck_GND: [1]
     - StepDown_Pi: [GND_IN]
 
   # Regulated Outputs to Controller Left (0x40), Controller Right (0x42), Raspberry Pi 4, and 3.3V Logic Rail

@@ -7,7 +7,7 @@
 
 ---
 
-Dieses Dokument definiert die exakten **Leitungslängen, Kabelbaum-Strukturen, Steckerbelegungen und Werkstatt-Anleitungen** für den Bau und die Serien-Konfektionierung der 18-DOF-Elektronik von **Hexapod:Lasius**. Alle Längenmaße basieren auf den realen 3D-B-Rep-Modellen der Generation v2 (`body_assembly.FCStd`, `leg_assembly.FCStd`, `chassis_core.FCStd`).
+Dieses Dokument definiert die exakten **Leitungslängen, Kabelbaum-Strukturen, Steckerbelegungen und Werkstatt-Anleitungen** für den Bau und die Serien-Konfektionierung der 18-DOF-Elektronik von **Hexapod:Lasius**. Alle Längenmaße basieren auf den realen 3D-B-Rep-Modellen der Generation v2 (`body_assembly.FCStd`, `leg_assembly.FCStd`, `chassis_core_assembly.FCStd`).
 
 ---
 

@@ -37,7 +37,7 @@ Modular wiring harness per leg following the Master Color Scheme (`A0` Coxa **Wh
 
 ## 3. Power Distribution & Star Ground Scheme
 
-Dual-rail power distribution from the XT60BE-M inlet (bench supply or 2S/3S LiPo) through a 25A inline blade fuse and master switch to dual `6.0V` high-current UBECs for left/right **Controller** servo rails, a `5.1V 4A` buck converter for Raspberry Pi 4 logic, a central `3.3V / GND` distribution rail fed from Pi `Pin 1/17`, and a centralized star ground busbar (`Star_Ground_Bus`, coupled to the `3.3V` rail via one single reference wire):
+Dual-rail power distribution from the hatch-accessible `2S LiPo / Bench XT60` connector (no redundant external rear inlet; rear Gaster dovetail preserved) through an external-access `25A Mini-ATM` blade fuse (`Rear-Right Waist` in Concept A, or `Power-Gaster Left Flank` in separate model G2) to dual `6.0V` **Hobbywing BEC 10A V2-Car (`HW30603003`)** UBECs feeding left/right **Controller** servo rails, switched electronically via a compact **2-pole Mini Slide Switch (`Servos Armed`)**. A separate **SPST Mini Slide Switch (`Pi Logic`)** feeds the `5.1V 3A–4A` buck converter for Raspberry Pi 4 logic, a central `3.3V / GND` Sensor Hub rail fed from Pi `Pin 1/17`, and a centralized star ground busbar (`Star_Ground_Bus`, coupled to the `3.3V` rail via one single reference wire):
 
 <p align="center">
   <img src="../../hardware/electronics/wiring/03_power_distribution.svg" alt="Power Distribution Rails" width="850">
