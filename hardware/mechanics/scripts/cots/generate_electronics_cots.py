@@ -28,6 +28,16 @@ Generates high-fidelity commercial off-the-shelf (COTS) CAD models in `models/co
      - 28.0 x 17.0 x 1.6 mm blue PCB with 2x M2.5 mounting holes.
      - ADS1115 MSOP-10 IC chip.
      - 10-pin header referenced via App::Link to `header_pin_1x10.FCStd`.
+  7. Adafruit BNO085 9-DOF Orientation IMU Fusion Breakout (`bno085_board.FCStd`, PID 4754):
+     - 25.6 x 22.7 x 1.6 mm matte-black PCB with 4x M2.5 mounting holes (20.32 x 17.78 mm pitch).
+     - Hillcrest/CEVA BNO085 LGA-28 IC, 32.768 kHz SMD crystal, and dual opposing STEMMA QT JST-SH sockets.
+     - 6-pin 90° right-angle header referenced via App::Link to `header_pin_1x6_ra.FCStd`.
+  8. Neodymium Disc Magnet Ø5 x 2 mm (`magnet_5x2.FCStd`):
+     - Ø5.00 x 2.00 mm brushed nickel-silver N52 disc magnet (0.20 mm top/bottom bevels) for tool-free
+       self-centering Canopy attachment on the 4 pillars (±48, ±36 mm).
+  9. ISO 7380 M2 x 5 mm Button-Head Socket Screw (`screw_m2_button_head.FCStd`):
+     - Stainless A2 low-profile domed button head (Ø3.50 x 1.15 mm, 1.3 mm hex socket) + Ø1.92 x 5.00 mm
+       shank extending along -Z for all 18 servo horns (72x total: 24x Coxa on Body_Top + 48x Hip/Knee on Femur).
 
 Standards:
   - Header Sockets & Collars: Always black thermoplastic (0.12, 0.12, 0.12)
@@ -54,7 +64,9 @@ COLOR_PCB_GREEN = (0.12, 0.45, 0.22)   # RPi 4 FR4
 COLOR_PCB_BLUE  = (0.04, 0.38, 0.88)   # Adafruit Blue (PCA9685, ADS1115)
 COLOR_PCB_PURPLE= (0.50, 0.15, 0.70)   # SparkFun / Adafruit Purple (TCA9548A)
 COLOR_PCB_RED   = (0.85, 0.15, 0.15)   # SparkFun Red (VL53L5CX)
+COLOR_PCB_BLACK = (0.09, 0.10, 0.13)   # Adafruit Matte Black (BNO085 STEMMA QT)
 COLOR_IC_BLACK  = (0.15, 0.15, 0.15)   # Epoxy IC packaging
+COLOR_JST_WHITE = (0.90, 0.88, 0.82)   # JST-SH STEMMA QT connector housing
 COLOR_METAL     = (0.75, 0.75, 0.78)   # USB / Ethernet metal shielding
 COLOR_USB3_BLUE = (0.05, 0.35, 0.85)   # USB 3.0 insert
 COLOR_TERM_BLUE = (0.10, 0.40, 0.80)   # Screw terminal block
@@ -368,7 +380,7 @@ def build_vl53l5cx():
 
 
 # =============================================================================
-# 5. 2S 7.4V LiPo Battery Pack
+# 5. 2S 7.4V LiPo Battery Pack (Ovonic 2200mAh 35C: 72.0 x 33.0 x 18.0 mm)
 # =============================================================================
 def build_battery_lipo_2s():
     doc_name = "battery_lipo_2s"
@@ -380,12 +392,14 @@ def build_battery_lipo_2s():
     fcstd_path = f"{cots_models_dir}/battery_lipo_2s.FCStd"
     doc.saveAs(fcstd_path)
 
-    pack = make_rounded_rect_solid(-44.0, 44.0, -17.5, 17.5, 3.5, 0.0, 14.0)
-    collar = Part.makeBox(4.0, 12.0, 7.0, App.Vector(-48.0, -6.0, 3.5))
-    cable_pos = Part.makeCylinder(1.75, 20.0, App.Vector(-48.0, 3.0, 7.0), App.Vector(-1, 0, 0))
-    cable_neg = Part.makeCylinder(1.75, 20.0, App.Vector(-48.0, -3.0, 7.0), App.Vector(-1, 0, 0))
-    xt60 = Part.makeBox(15.5, 16.0, 8.0, App.Vector(-83.5, -8.0, 3.0))
-    jst_xh = Part.makeBox(5.5, 9.8, 6.0, App.Vector(-55.0, 8.0, 4.0))
+    # Ovonic 2S 2200mAh: 72.0 x 33.0 x 18.0 mm Softcase
+    pack = make_rounded_rect_solid(-36.0, 36.0, -16.5, 16.5, 3.5, 0.0, 18.0)
+    collar = Part.makeBox(4.0, 12.0, 8.0, App.Vector(-40.0, -6.0, 5.0))
+    # Flexible silicone leads folded compactly into central distribution bay (X in [-54.0, -36.0])
+    cable_pos = Part.makeCylinder(1.75, 8.0, App.Vector(-40.0, -2.0, 9.0), App.Vector(-1, -0.4, 0))
+    cable_neg = Part.makeCylinder(1.75, 8.0, App.Vector(-40.0, -6.0, 9.0), App.Vector(-1, -0.4, 0))
+    xt60 = Part.makeBox(15.5, 16.0, 8.0, App.Vector(-55.5, -16.0, 5.0))
+    jst_xh = Part.makeBox(5.5, 9.8, 6.0, App.Vector(-45.5, 5.0, 6.0))
 
     bat_solid = pack.fuse(collar).fuse(cable_pos).fuse(cable_neg).fuse(xt60).fuse(jst_xh).removeSplitter()
 
@@ -399,6 +413,232 @@ def build_battery_lipo_2s():
     doc.save()
     App.closeDocument(doc_name)
     print(f"✔ Generated 2S LiPo Battery Pack -> {fcstd_path}")
+
+
+# =============================================================================
+# 5b. 3A-6S UBEC Step-Down Voltage Regulator (34.0 x 17.08 x 6.35 mm, Jumper 10 mm)
+# =============================================================================
+def build_ubec_3a():
+    doc_name = "ubec_3a"
+    try:
+        App.closeDocument(doc_name)
+    except Exception:
+        pass
+    doc = App.newDocument(doc_name)
+    fcstd_path = f"{cots_models_dir}/ubec_3a.FCStd"
+    doc.saveAs(fcstd_path)
+
+    # 1. Main PCB Substrate: 34.0 x 17.08 x 1.60 mm
+    pcb = make_rounded_rect_solid(-17.0, 17.0, -8.54, 8.54, 1.2, 0.0, 1.6)
+
+    # 2. Onboard Power Inductor & Capacitors (height up to 6.35 mm)
+    inductor = Part.makeCylinder(4.2, 4.75, App.Vector(-4.0, 0.0, 1.6), App.Vector(0, 0, 1))
+    cap1 = Part.makeCylinder(2.8, 4.75, App.Vector(5.5, -3.5, 1.6), App.Vector(0, 0, 1))
+
+    # 3. 3-Pin Jumper Header + Blue Shunt at +X end (height 10.0 mm)
+    jumper_block = Part.makeBox(4.5, 7.5, 8.4, App.Vector(11.5, -3.75, 1.6))
+
+    # 4. Input Leads (-X side, 1.2 mm silicone, length 12 mm)
+    w_in1 = Part.makeCylinder(0.8, 12.0, App.Vector(-17.0, 3.0, 0.8), App.Vector(-1, 0, 0))
+    w_in2 = Part.makeCylinder(0.8, 12.0, App.Vector(-17.0, -3.0, 0.8), App.Vector(-1, 0, 0))
+
+    # 5. Output Leads (+X side, 1.0 mm silicone, length 6 mm inside power bay)
+    w_out1 = Part.makeCylinder(0.7, 6.0, App.Vector(17.0, 5.0, 0.8), App.Vector(1, 0, 0))
+    w_out2 = Part.makeCylinder(0.7, 6.0, App.Vector(17.0, -5.0, 0.8), App.Vector(1, 0, 0))
+
+    ubec_solid = pcb.fuse(inductor).fuse(cap1).fuse(jumper_block).fuse(w_in1).fuse(w_in2).fuse(w_out1).fuse(w_out2).removeSplitter()
+
+    obj = doc.addObject("Part::Feature", "UBEC_3A")
+    obj.Label = "3A-6S UBEC 5V/6V Step-Down (COTS)"
+    obj.Shape = ubec_solid
+    if hasattr(obj, "ViewObject") and obj.ViewObject:
+        obj.ViewObject.ShapeColor = (0.12, 0.58, 0.32)  # Green PCB
+
+    doc.recompute()
+    doc.save()
+    App.closeDocument(doc_name)
+    print(f"✔ Generated 3A UBEC -> {fcstd_path}")
+
+
+# =============================================================================
+# 5c. Amass XT60E-M Panel Mount Connector (27.0 x 16.0 x 12.0 mm, 20.5 mm M2.5 pitch)
+# =============================================================================
+def build_xt60e_m():
+    doc_name = "xt60e_m"
+    try:
+        App.closeDocument(doc_name)
+    except Exception:
+        pass
+    doc = App.newDocument(doc_name)
+    fcstd_path = f"{cots_models_dir}/xt60e_m.FCStd"
+    doc.saveAs(fcstd_path)
+
+    # 1. Main Flange: 27.0 mm wide (Y), 16.0 mm high (Z), 2.5 mm thick (X)
+    flange = make_rounded_rect_solid(-1.25, 1.25, -13.5, 13.5, 2.5, -8.0, 8.0)
+    for hy in [-10.25, 10.25]:
+        hole = Part.makeCylinder(1.35, 10.0, App.Vector(0.0, hy, -5.0), App.Vector(1, 0, 0))
+        flange = flange.cut(hole)
+
+    # 2. Main Body entering panel: 16.0 mm wide (Y), 8.5 mm high (Z), 9.5 mm deep (+X)
+    body = make_rounded_rect_solid(1.25, 10.75, -8.0, 8.0, 2.0, -4.25, 4.25)
+
+    # 3. Outer shroud on -X side (depth 5.5 mm)
+    shroud = make_rounded_rect_solid(-6.75, -1.25, -7.75, 7.75, 2.0, -4.0, 4.0)
+    cavity = make_rounded_rect_solid(-7.00, -1.00, -6.50, 6.50, 1.5, -3.25, 3.25)
+    shroud = shroud.cut(cavity)
+
+    # 4. Gold male contact pins inside cavity (diameter 3.5 mm)
+    pin1 = Part.makeCylinder(1.75, 4.5, App.Vector(-6.0, 3.6, 0.0), App.Vector(1, 0, 0))
+    pin2 = Part.makeCylinder(1.75, 4.5, App.Vector(-6.0, -3.6, 0.0), App.Vector(1, 0, 0))
+
+    # 5. Rear solder pigtail leads (+X side, 12AWG silicone, length 20 mm)
+    w_pos = Part.makeCylinder(1.75, 20.0, App.Vector(10.75, 3.6, 0.0), App.Vector(1, 0, 0))
+    w_neg = Part.makeCylinder(1.75, 20.0, App.Vector(10.75, -3.6, 0.0), App.Vector(1, 0, 0))
+
+    xt60_solid = flange.fuse(body).fuse(shroud).fuse(pin1).fuse(pin2).fuse(w_pos).fuse(w_neg).removeSplitter()
+
+    obj = doc.addObject("Part::Feature", "Inlet_XT60E_M")
+    obj.Label = "Amass XT60E-M Panel Mount Connector (COTS)"
+    obj.Shape = xt60_solid
+    if hasattr(obj, "ViewObject") and obj.ViewObject:
+        obj.ViewObject.ShapeColor = (0.95, 0.80, 0.15)  # Amass Yellow
+
+    doc.recompute()
+    doc.save()
+    App.closeDocument(doc_name)
+    print(f"✔ Generated Amass XT60E-M Connector -> {fcstd_path}")
+
+
+# =============================================================================
+# 5d. Hobbywing BEC 10A V2-Car UBEC (HW30603003: 45.0 x 20.0 x 16.2 mm, IP67)
+# =============================================================================
+def build_ubec_hobbywing_10a():
+    doc_name = "ubec_hobbywing_10a"
+    try:
+        App.closeDocument(doc_name)
+    except Exception:
+        pass
+    doc = App.newDocument(doc_name)
+    fcstd_path = f"{cots_models_dir}/ubec_hobbywing_10a.FCStd"
+    doc.saveAs(fcstd_path)
+
+    # 1. CNC Anodized Aluminum Heatsink Casing: 45.0 x 20.0 x 16.2 mm (centered X/Y, Z in [0, 16.2])
+    casing = make_rounded_rect_solid(-22.5, 22.5, -10.0, 10.0, 1.8, 0.0, 16.2)
+
+    # 2. Input Silicone Leads (-X side, 16AWG, 7.0 mm straight exit) & 2-pin SW socket boss
+    w_in_p = Part.makeCylinder(1.05, 7.0, App.Vector(-22.5, 3.5, 7.0), App.Vector(-1, 0, 0))
+    w_in_n = Part.makeCylinder(1.05, 7.0, App.Vector(-22.5, -3.5, 7.0), App.Vector(-1, 0, 0))
+    sw_plug = Part.makeBox(4.5, 5.5, 4.0, App.Vector(-27.0, -2.75, 10.5))
+
+    # 3. Output Silicone Leads (+X side, 18AWG, 5.0 mm exit) + Green Toroidal Ferrite Ring (OD 11.0, ID 6.0, H 4.5 mm)
+    w_out_p = Part.makeCylinder(0.90, 5.5, App.Vector(22.5, 2.5, 8.1), App.Vector(1, 0, 0))
+    w_out_n = Part.makeCylinder(0.90, 5.5, App.Vector(22.5, -2.5, 8.1), App.Vector(1, 0, 0))
+    ferrite_out = Part.makeCylinder(5.5, 4.8, App.Vector(29.0, 0.0, 5.7), App.Vector(0, 0, 1))
+    ferrite_in = Part.makeCylinder(2.8, 6.0, App.Vector(29.0, 0.0, 5.1), App.Vector(0, 0, 1))
+    ferrite = ferrite_out.cut(ferrite_in)
+
+    ubec_solid = (
+        casing.fuse(w_in_p).fuse(w_in_n).fuse(sw_plug)
+        .fuse(w_out_p).fuse(w_out_n).fuse(ferrite)
+        .removeSplitter()
+    )
+
+    obj = doc.addObject("Part::Feature", "UBEC_Hobbywing_10A")
+    obj.Label = "Hobbywing BEC 10A V2-Car UBEC 6.0V (HW30603003, COTS)"
+    obj.Shape = ubec_solid
+    if hasattr(obj, "ViewObject") and obj.ViewObject:
+        obj.ViewObject.ShapeColor = (0.10, 0.11, 0.14)  # Matte Black Anodized Aluminum
+
+    doc.recompute()
+    doc.save()
+    App.closeDocument(doc_name)
+    print(f"✔ Generated Hobbywing BEC 10A V2-Car UBEC -> {fcstd_path}")
+
+
+# =============================================================================
+# 5e. 25A Mini Automotive Blade Fuse (ATM: 10.9 x 3.8 x 16.3 mm) in Panel Socket
+#     Panel convention: X = 0.00 outer wall surface, -X = exterior, +X = interior
+# =============================================================================
+def build_fuse_mini_atm():
+    doc_name = "fuse_mini_atm"
+    try:
+        App.closeDocument(doc_name)
+    except Exception:
+        pass
+    doc = App.newDocument(doc_name)
+    fcstd_path = f"{cots_models_dir}/fuse_mini_atm.FCStd"
+    doc.saveAs(fcstd_path)
+
+    # Outer bezel flange (15.0 x 8.0 mm, sits 0.02 mm outside wall)
+    flange = make_rounded_rect_solid(-1.82, -0.02, -7.5, 7.5, 1.2, -4.0, 4.0)
+    # 25A Mini-ATM blade fuse head protruding slightly outward for tool-free pull
+    fuse_cap = make_rounded_rect_solid(-4.00, -1.82, -5.45, 5.45, 0.8, -1.9, 1.9)
+    # Socket body entering panel (+X)
+    body = make_rounded_rect_solid(-0.02, 13.50, -6.2, 6.2, 1.0, -3.2, 3.2)
+    # Dual rear 4.8 mm quick-disconnect tabs
+    tab1 = Part.makeBox(4.5, 4.8, 0.8, App.Vector(13.50, 0.8, -0.4))
+    tab2 = Part.makeBox(4.5, 4.8, 0.8, App.Vector(13.50, -5.6, -0.4))
+
+    fuse_solid = flange.fuse(fuse_cap).fuse(body).fuse(tab1).fuse(tab2).removeSplitter()
+
+    obj = doc.addObject("Part::Feature", "Fuse_Mini_ATM")
+    obj.Label = "25A Mini Automotive Blade Fuse ATM + Panel Socket (COTS)"
+    obj.Shape = fuse_solid
+    if hasattr(obj, "ViewObject") and obj.ViewObject:
+        obj.ViewObject.ShapeColor = (0.90, 0.90, 0.92)  # 25A Clear/White ATM standard color
+
+    doc.recompute()
+    doc.save()
+    App.closeDocument(doc_name)
+    print(f"✔ Generated 25A Mini-ATM Fuse & Panel Socket -> {fcstd_path}")
+
+
+# =============================================================================
+# 5f. Panel-Mount Mini Slide Switch (19.0 x 6.5 mm flange, 15.0 mm M2 pitch)
+#     Covers SPST (Pi Logic) & DPST (Dual Hobbywing SW) in identical footprint.
+#     Panel convention: X = 0.00 outer wall surface, -X = exterior, +X = interior
+# =============================================================================
+def build_switch_mini_slide():
+    doc_name = "switch_mini_slide"
+    try:
+        App.closeDocument(doc_name)
+    except Exception:
+        pass
+    doc = App.newDocument(doc_name)
+    fcstd_path = f"{cots_models_dir}/switch_mini_slide.FCStd"
+    doc.saveAs(fcstd_path)
+
+    # Outer mounting flange with 2x M2 screw holes at Y = ±7.50 mm
+    flange = make_rounded_rect_solid(-1.22, -0.02, -9.5, 9.5, 1.2, -3.25, 3.25)
+    for hy in [-7.5, 7.5]:
+        hole = Part.makeCylinder(1.10, 4.0, App.Vector(-2.0, hy, 0.0), App.Vector(1, 0, 0))
+        flange = flange.cut(hole)
+
+    # Slider actuator knob protruding outward (-X)
+    knob = Part.makeBox(3.0, 4.0, 3.0, App.Vector(-4.22, -2.0, -1.5))
+
+    # Switch housing entering panel (+X)
+    body = Part.makeBox(7.52, 11.5, 5.8, App.Vector(-0.02, -5.75, -2.9))
+
+    # Solder pins exiting rear (+X)
+    pins = None
+    for py in [-3.5, 0.0, 3.5]:
+        for pz in [-1.2, 1.2]:
+            p = Part.makeBox(3.5, 0.6, 0.6, App.Vector(7.50, py - 0.3, pz - 0.3))
+            pins = p if pins is None else pins.fuse(p)
+
+    sw_solid = flange.fuse(knob).fuse(body).fuse(pins).removeSplitter()
+
+    obj = doc.addObject("Part::Feature", "Switch_Mini_Slide")
+    obj.Label = "Mini Panel-Mount Slide Switch (SPST / DPST, COTS)"
+    obj.Shape = sw_solid
+    if hasattr(obj, "ViewObject") and obj.ViewObject:
+        obj.ViewObject.ShapeColor = (0.18, 0.18, 0.20)  # Dark technical black
+
+    doc.recompute()
+    doc.save()
+    App.closeDocument(doc_name)
+    print(f"✔ Generated Panel-Mount Mini Slide Switch -> {fcstd_path}")
 
 
 # =============================================================================
@@ -455,13 +695,477 @@ def build_ads1115():
     print(f"✔ Generated ADS1115 16-Bit ADC Breakout -> {fcstd_path}")
 
 
-# Execute all builds
-build_rpi4()
-build_pca9685()
-build_tca9548a()
-build_vl53l5cx()
-build_battery_lipo_2s()
-build_ads1115()
+# =============================================================================
+# 7. Adafruit BNO085 9-DOF Orientation IMU Fusion Breakout (PID 4754)
+# =============================================================================
+def build_bno085():
+    doc_name = "bno085_board"
+    try:
+        App.closeDocument(doc_name)
+    except Exception:
+        pass
+    doc = App.newDocument(doc_name)
+    fcstd_path = f"{cots_models_dir}/bno085_board.FCStd"
+    doc.saveAs(fcstd_path)
+
+    # 1. PCB Substrate (25.6 x 22.7 x 1.6 mm, matte black, R = 2.5 mm corners)
+    #    4x M2.5 mounting holes at official Adafruit 0.8" x 0.7" (20.32 x 17.78 mm) pitch:
+    #    X = ±10.16 mm, Y = ±8.89 mm (Ø2.50 mm bores).
+    pcb = make_rounded_rect_solid(-12.80, 12.80, -11.35, 11.35, 2.50, 0.0, 1.60)
+    for hx in [-10.16, 10.16]:
+        for hy in [-8.89, 8.89]:
+            hole = Part.makeCylinder(1.25, 5.0, App.Vector(hx, hy, -1.0), App.Vector(0, 0, 1))
+            pcb = pcb.cut(hole)
+    # Unpopulated secondary 6-pin header through-holes on -Y edge (2.54 mm pitch, Ø1.0 mm)
+    for i in range(6):
+        px = (-2.5 + i) * 2.54
+        pad_hole = Part.makeCylinder(0.50, 5.0, App.Vector(px, -8.89, -1.0), App.Vector(0, 0, 1))
+        pcb = pcb.cut(pad_hole)
+    pcb = pcb.removeSplitter()
+
+    # 2. Onboard Hillcrest/CEVA BNO085 28-Pin LGA IC (5.2 x 3.8 x 1.0 mm) + 32.768 kHz Crystal + LDO
+    ic_bno = Part.makeBox(5.20, 3.80, 1.00, App.Vector(-2.60, -1.90, 1.60))
+    xtal = Part.makeBox(3.20, 1.50, 0.80, App.Vector(-1.60, 3.00, 1.60))
+    ldo = Part.makeBox(2.90, 1.60, 1.10, App.Vector(-6.20, -4.50, 1.60))
+    ic_solid = ic_bno.fuse(xtal).fuse(ldo).removeSplitter()
+
+    # 3. Dual Opposing 4-Pin JST-SH 1.0 mm STEMMA QT / Qwiic Sockets on ±X edges
+    #    Each housing: 4.30 mm deep (X) x 6.00 mm wide (Y) x 2.95 mm high (Z = 1.60..4.55 mm -> 4.55 mm total)
+    jst_l = Part.makeBox(4.30, 6.00, 2.95, App.Vector(-12.80, -3.00, 1.60))
+    jst_l_cav = Part.makeBox(3.20, 4.60, 1.90, App.Vector(-13.00, -2.30, 2.15))
+    jst_l = jst_l.cut(jst_l_cav)
+
+    jst_r = Part.makeBox(4.30, 6.00, 2.95, App.Vector(8.50, -3.00, 1.60))
+    jst_r_cav = Part.makeBox(3.20, 4.60, 1.90, App.Vector(9.80, -2.30, 2.15))
+    jst_r = jst_r.cut(jst_r_cav)
+    jst_solid = jst_l.fuse(jst_r).removeSplitter()
+
+    part = doc.addObject("App::Part", "BNO085_Board")
+    part.Label = "Adafruit BNO085 9-DOF Orientation IMU (PID 4754, COTS)"
+
+    obj_pcb = doc.addObject("Part::Feature", "BNO085_PCB")
+    obj_pcb.Label = "BNO085 PCB Substrate (Matte Black)"
+    obj_pcb.Shape = pcb
+    if hasattr(obj_pcb, "ViewObject") and obj_pcb.ViewObject:
+        obj_pcb.ViewObject.ShapeColor = COLOR_PCB_BLACK
+    part.addObject(obj_pcb)
+
+    obj_ic = doc.addObject("Part::Feature", "BNO085_IC")
+    obj_ic.Label = "BNO085 28-Pin LGA IMU & Crystal"
+    obj_ic.Shape = ic_solid
+    if hasattr(obj_ic, "ViewObject") and obj_ic.ViewObject:
+        obj_ic.ViewObject.ShapeColor = COLOR_IC_BLACK
+    part.addObject(obj_ic)
+
+    obj_jst = doc.addObject("Part::Feature", "STEMMA_QT_Sockets")
+    obj_jst.Label = "Dual 4-Pin JST-SH STEMMA QT Connectors"
+    obj_jst.Shape = jst_solid
+    if hasattr(obj_jst, "ViewObject") and obj_jst.ViewObject:
+        obj_jst.ViewObject.ShapeColor = COLOR_JST_WHITE
+    part.addObject(obj_jst)
+
+    # 4. 6-Pin 90° Right-Angle Header on Primary Signal Row (Y = +8.89 mm, pins extending +Y)
+    #    via App::Link to `header_pin_1x6_ra.FCStd` (Z = 1.60 mm -> pins at Z = 2.85 mm, solder tails down to Z = -1.40 mm)
+    doc_ra = App.openDocument(f"{cots_models_dir}/header_pin_1x6_ra.FCStd")
+    lnk_hdr = doc.addObject("App::Link", "Header_6Pin_RA")
+    lnk_hdr.Label = "6-Pin Primary Signal Header (90° Right-Angle, COTS)"
+    lnk_hdr.setLink(doc_ra.Header)
+    lnk_hdr.Placement = App.Placement(App.Vector(0.00, 8.89, 1.60), App.Rotation())
+    part.addObject(lnk_hdr)
+
+    doc.recompute()
+    doc.save()
+    App.closeDocument(doc_ra.Name)
+    App.closeDocument(doc_name)
+    print(f"✔ Generated Adafruit BNO085 9-DOF IMU Breakout -> {fcstd_path}")
+
+
+# =============================================================================
+# 8. Neodymium Disc Magnet Ø5.0 x 2.0 mm (Canopy Magnetic Lock, COTS)
+# =============================================================================
+def build_magnet_5x2():
+    doc_name = "magnet_5x2"
+    try:
+        App.closeDocument(doc_name)
+    except Exception:
+        pass
+    doc = App.newDocument(doc_name)
+    fcstd_path = f"{cots_models_dir}/magnet_5x2.FCStd"
+
+    # Ø5.00 x 2.00 mm cylinder centered in XY, Z in [0.00, 2.00 mm], with 0.15 mm edge chamfers
+    c_bot = Part.makeCone(2.35, 2.50, 0.15, App.Vector(0.0, 0.0, 0.00), App.Vector(0, 0, 1))
+    c_mid = Part.makeCylinder(2.50, 1.70, App.Vector(0.0, 0.0, 0.15), App.Vector(0, 0, 1))
+    c_top = Part.makeCone(2.50, 2.35, 0.15, App.Vector(0.0, 0.0, 1.85), App.Vector(0, 0, 1))
+    mag_solid = c_bot.fuse(c_mid).fuse(c_top).removeSplitter()
+
+    obj = doc.addObject("Part::Feature", "Magnet_5x2")
+    obj.Label = "Neodymium Disc Magnet Ø5 x 2 mm (COTS)"
+    obj.Shape = mag_solid
+    if hasattr(obj, "ViewObject") and obj.ViewObject:
+        obj.ViewObject.ShapeColor = (0.78, 0.80, 0.84)  # Brushed nickel plating
+
+    doc.recompute()
+    doc.saveAs(fcstd_path)
+    App.closeDocument(doc_name)
+    print(f"✔ Generated Neodymium Disc Magnet Ø5x2 mm -> {fcstd_path}")
+
+
+# =============================================================================
+# 9. ISO 7380 M2 x 5 mm Button-Head Hex Socket Screw (Servo Horn Fastener, COTS)
+#    Origin (0, 0, 0) at flat bearing underside of head:
+#    - Domed button head extends +Z: Z in [0.00, +1.15 mm], Ø3.50 mm (clears Canopy @ (0,±83) & flush in Femur cbore!)
+#    - Threaded shank extends -Z: Z in [-5.00, 0.00 mm], Ø1.92 mm (0.04 mm radial CAD clearance in Ø2.00 bores)
+# =============================================================================
+def build_screw_m2_button_head():
+    doc_name = "screw_m2_button_head"
+    try:
+        App.closeDocument(doc_name)
+    except Exception:
+        pass
+    doc = App.newDocument(doc_name)
+    fcstd_path = f"{cots_models_dir}/screw_m2_button_head.FCStd"
+
+    # 1. Domed button head (Z in [0.00, 1.15 mm], outer Ø3.50 mm -> R = 1.75 mm)
+    #    Revolved analytical profile: flat bearing face (0..1.75), 0.22 mm cylindrical rim, spherical dome to (0, 1.15)
+    r_head = 1.75
+    h_rim = 0.22
+    h_head = 1.15
+    # Circular arc through (r_head, h_rim) and (0, h_head) with horizontal tangent at apex (0, h_head)
+    dz_dome = h_head - h_rim
+    r_dome = (r_head ** 2 + dz_dome ** 2) / (2.0 * dz_dome)
+    zc_dome = h_head - r_dome
+    ang_end = math.asin(r_head / r_dome)
+    p_mid_dome = App.Vector(r_dome * math.sin(0.5 * ang_end), 0.0, zc_dome + r_dome * math.cos(0.5 * ang_end))
+
+    p0 = App.Vector(0.0, 0.0, 0.0)
+    p1 = App.Vector(r_head, 0.0, 0.0)
+    p2 = App.Vector(r_head, 0.0, h_rim)
+    p3 = App.Vector(0.0, 0.0, h_head)
+    prof_wire = Part.Wire([
+        Part.makeLine(p0, p1),
+        Part.makeLine(p1, p2),
+        Part.Arc(p2, p_mid_dome, p3).toShape(),
+        Part.makeLine(p3, p0),
+    ])
+    head = Part.Face(prof_wire).revolve(App.Vector(0, 0, 0), App.Vector(0, 0, 1), 360.0)
+
+    # 2. 1.3 mm Hex Socket Recess in head top (Z in [0.55, 1.40 mm])
+    sw_hex = 1.30
+    r_hex = sw_hex / math.sqrt(3.0)
+    hex_pts = [
+        App.Vector(r_hex * math.cos(math.radians(60.0 * i)), r_hex * math.sin(math.radians(60.0 * i)), 0.55)
+        for i in range(6)
+    ]
+    hex_pts.append(hex_pts[0])
+    hex_cut = Part.Face(Part.makePolygon(hex_pts)).extrude(App.Vector(0, 0, 1.0))
+    head = head.cut(hex_cut)
+
+    # 3. Shank (Ø1.92 mm, Z in [-5.00, 0.00 mm] with 0.18 mm tip chamfer)
+    shank_main = Part.makeCylinder(0.96, 4.82, App.Vector(0.0, 0.0, -4.82), App.Vector(0, 0, 1))
+    shank_tip = Part.makeCone(0.78, 0.96, 0.18, App.Vector(0.0, 0.0, -5.00), App.Vector(0, 0, 1))
+    screw_solid = head.fuse(shank_main).fuse(shank_tip).removeSplitter()
+
+    obj = doc.addObject("Part::Feature", "M2_Linsenkopfschraube")
+    obj.Label = "ISO 7380 M2 x 5 mm Button-Head Screw (A2 Stainless, COTS)"
+    obj.Shape = screw_solid
+    if hasattr(obj, "ViewObject") and obj.ViewObject:
+        obj.ViewObject.ShapeColor = (0.78, 0.80, 0.84)  # A2 Stainless steel
+
+    doc.recompute()
+    doc.saveAs(fcstd_path)
+    App.closeDocument(doc_name)
+    print(f"✔ Generated ISO 7380 M2 x 5 mm Button-Head Screw -> {fcstd_path}")
+
+
+# =============================================================================
+# 10. DIN 7991 M2 x 6 mm Countersunk Hex Socket Screw (Tibia & Femur Covers, COTS)
+#     Origin (0, 0, 0) at flat top of countersunk head; shank extends along -Z to Z = -6.00 mm.
+#     - Head Ø3.90 mm (R = 1.95 mm), 90° countersunk cone, SW 1.30 mm hex socket (depth 0.95 mm)
+#     - Shank Ø1.92 mm (R = 0.96 mm -> 0.04 mm clearance in Ø2.00 mm Ruthex M2 insert)
+# =============================================================================
+def build_screw_m2_countersunk():
+    doc_name = "screw_m2_countersunk"
+    try:
+        App.closeDocument(doc_name)
+    except Exception:
+        pass
+    doc = App.newDocument(doc_name)
+    fcstd_path = f"{cots_models_dir}/screw_m2_countersunk.FCStd"
+
+    # 1. Countersunk head: 0.05 mm top micro-rim + 90° cone from R=1.95 down to R=0.96 (dz = 0.99 mm)
+    rim = Part.makeCylinder(1.95, 0.05, App.Vector(0.0, 0.0, -0.05), App.Vector(0, 0, 1))
+    cone = Part.makeCone(0.96, 1.95, 0.99, App.Vector(0.0, 0.0, -1.04), App.Vector(0, 0, 1))
+    shank = Part.makeCylinder(0.96, 4.78, App.Vector(0.0, 0.0, -5.82), App.Vector(0, 0, 1))
+    tip = Part.makeCone(0.78, 0.96, 0.18, App.Vector(0.0, 0.0, -6.00), App.Vector(0, 0, 1))
+    screw_solid = rim.fuse(cone).fuse(shank).fuse(tip)
+
+    # 2. SW 1.30 mm Hex Socket Recess (Z in [-0.95, +0.10]) + 0.14 mm top entry chamfer
+    sw_hex = 1.30
+    r_hex = sw_hex / math.sqrt(3.0)
+    hex_pts = [
+        App.Vector(r_hex * math.cos(math.radians(60.0 * i)), r_hex * math.sin(math.radians(60.0 * i)), -0.95)
+        for i in range(6)
+    ]
+    hex_pts.append(hex_pts[0])
+    hex_cut = Part.Face(Part.makePolygon(hex_pts)).extrude(App.Vector(0, 0, 1.10))
+    hex_lead = Part.makeCone(r_hex, r_hex + 0.14, 0.14, App.Vector(0.0, 0.0, -0.14), App.Vector(0, 0, 1))
+    screw_solid = screw_solid.cut(hex_cut).cut(hex_lead).removeSplitter()
+
+    obj = doc.addObject("Part::Feature", "M2_Senkkopfschraube")
+    obj.Label = "DIN 7991 M2 x 6 mm Countersunk Screw (A2 Stainless, COTS)"
+    obj.Shape = screw_solid
+    if hasattr(obj, "ViewObject") and obj.ViewObject:
+        obj.ViewObject.ShapeColor = (0.78, 0.80, 0.84)
+
+    doc.recompute()
+    doc.saveAs(fcstd_path)
+    App.closeDocument(doc_name)
+    print(f"✔ Generated DIN 7991 M2 x 6 mm Countersunk Screw -> {fcstd_path}")
+
+
+# =============================================================================
+# 11. Ruthex M2 x 4.0 mm Heat-Set Brass Threaded Insert (Tibia & Femur Covers, COTS)
+#     Origin (0, 0, 0) at top face; insert body extends along -Z to Z = -4.00 mm.
+#     - CAD installed OD = Ø3.16 mm (R = 1.58 mm -> 0.02 mm radial clearance in Ø3.20 mm bore)
+#     - Dual knurl bands + center waist groove + lower pilot shoulder + Ø2.00 mm through bore
+# =============================================================================
+def build_insert_m2_ruthex():
+    doc_name = "insert_m2_ruthex"
+    try:
+        App.closeDocument(doc_name)
+    except Exception:
+        pass
+    doc = App.newDocument(doc_name)
+    fcstd_path = f"{cots_models_dir}/insert_m2_ruthex.FCStd"
+
+    prof_rz = [
+        (1.12,  0.00),
+        (1.45,  0.00),
+        (1.58, -0.15),
+        (1.58, -1.45),
+        (1.40, -1.55),
+        (1.40, -1.95),
+        (1.58, -2.05),
+        (1.58, -3.20),
+        (1.44, -3.25),
+        (1.44, -3.85),
+        (1.30, -4.00),
+        (1.00, -4.00),
+        (1.00, -0.12),
+    ]
+    pts = [App.Vector(r, 0.0, z) for r, z in prof_rz]
+    pts.append(pts[0])
+    ins_solid = Part.Face(Part.makePolygon(pts)).revolve(App.Vector(0, 0, 0), App.Vector(0, 0, 1), 360.0).removeSplitter()
+
+    obj = doc.addObject("Part::Feature", "Ruthex_M2_Insert")
+    obj.Label = "Ruthex M2 x 4.0 mm Heat-Set Threaded Insert (Brass, COTS)"
+    obj.Shape = ins_solid
+    if hasattr(obj, "ViewObject") and obj.ViewObject:
+        obj.ViewObject.ShapeColor = (0.85, 0.70, 0.20)  # Brass
+
+    doc.recompute()
+    doc.saveAs(fcstd_path)
+    App.closeDocument(doc_name)
+    print(f"✔ Generated Ruthex M2 x 4.0 mm Brass Insert -> {fcstd_path}")
+
+
+# =============================================================================
+# 12. DIN 7991 M4 x 20 mm Countersunk Hex Socket Screw (Desk Stand Flanges, COTS)
+#     Origin (0, 0, 0) at flat head top; extends along -Z to Z = -20.00 mm.
+#     - Head Ø7.90 mm (R = 3.95 mm), 90° cone, SW 2.50 mm hex socket
+#     - Shank Ø3.20 mm minor CAD clearance (0.0000 mm^3 collision inside M4 nuts & Ø4.2 bores)
+# =============================================================================
+def build_screw_m4x20_countersunk():
+    doc_name = "screw_m4x20_countersunk"
+    try:
+        App.closeDocument(doc_name)
+    except Exception:
+        pass
+    doc = App.newDocument(doc_name)
+    fcstd_path = f"{cots_models_dir}/screw_m4x20_countersunk.FCStd"
+
+    rim = Part.makeCylinder(3.95, 0.15, App.Vector(0.0, 0.0, -0.15), App.Vector(0, 0, 1))
+    cone = Part.makeCone(1.60, 3.95, 2.35, App.Vector(0.0, 0.0, -2.50), App.Vector(0, 0, 1))
+    shank = Part.makeCylinder(1.60, 17.15, App.Vector(0.0, 0.0, -19.65), App.Vector(0, 0, 1))
+    tip = Part.makeCone(1.25, 1.60, 0.35, App.Vector(0.0, 0.0, -20.00), App.Vector(0, 0, 1))
+    solid = rim.fuse(cone).fuse(shank).fuse(tip)
+
+    sw_hex = 2.50
+    r_hex = sw_hex / math.sqrt(3.0)
+    hex_pts = [
+        App.Vector(r_hex * math.cos(math.radians(60.0 * i)), r_hex * math.sin(math.radians(60.0 * i)), -1.80)
+        for i in range(6)
+    ]
+    hex_pts.append(hex_pts[0])
+    hex_cut = Part.Face(Part.makePolygon(hex_pts)).extrude(App.Vector(0, 0, 1.95))
+    solid = solid.cut(hex_cut).removeSplitter()
+
+    obj = doc.addObject("Part::Feature", "M4x20_Senkkopfschraube")
+    obj.Label = "DIN 7991 M4 x 20 mm Countersunk Screw (A2 Stainless, COTS)"
+    obj.Shape = solid
+    if hasattr(obj, "ViewObject") and obj.ViewObject:
+        obj.ViewObject.ShapeColor = (0.78, 0.80, 0.84)
+
+    doc.recompute()
+    doc.saveAs(fcstd_path)
+    App.closeDocument(doc_name)
+    print(f"✔ Generated DIN 7991 M4 x 20 mm Countersunk Screw -> {fcstd_path}")
+
+
+# =============================================================================
+# 13. DIN 933 M8 x 40 mm Hex Bolt & DIN 934 M8 Hex Nut (Desk Clamp Spindle, COTS)
+#     - Bolt origin (0, 0, 0) at under-head bearing face:
+#       * Hex head SW 13.0 mm extends -Z: Z in [-5.30, 0.00]
+#       * Threaded shank Ø7.84 mm extends +Z: Z in [0.00, +40.00]
+#     - Nut origin (0, 0, 0) at bottom face:
+#       * Hex body SW 13.0 mm extends +Z: Z in [0.00, +6.50], Ø8.00 mm bore
+# =============================================================================
+def build_bolt_m8x40_hex():
+    doc_name = "bolt_m8x40_hex"
+    try:
+        App.closeDocument(doc_name)
+    except Exception:
+        pass
+    doc = App.newDocument(doc_name)
+    fcstd_path = f"{cots_models_dir}/bolt_m8x40_hex.FCStd"
+
+    r_hex = 13.0 / math.sqrt(3.0)
+    pts = [
+        App.Vector(r_hex * math.cos(math.radians(60.0 * i)), r_hex * math.sin(math.radians(60.0 * i)), -5.30)
+        for i in range(6)
+    ]
+    pts.append(pts[0])
+    head = Part.Face(Part.makePolygon(pts)).extrude(App.Vector(0, 0, 5.30))
+    shank = Part.makeCylinder(3.92, 39.20, App.Vector(0.0, 0.0, 0.0), App.Vector(0, 0, 1))
+    tip = Part.makeCone(3.92, 3.20, 0.80, App.Vector(0.0, 0.0, 39.20), App.Vector(0, 0, 1))
+    solid = head.fuse(shank).fuse(tip).removeSplitter()
+
+    obj = doc.addObject("Part::Feature", "M8x40_Sechskantschraube")
+    obj.Label = "DIN 933 M8 x 40 mm Hex Bolt (A2 Stainless, COTS)"
+    obj.Shape = solid
+    if hasattr(obj, "ViewObject") and obj.ViewObject:
+        obj.ViewObject.ShapeColor = (0.76, 0.78, 0.82)
+
+    doc.recompute()
+    doc.saveAs(fcstd_path)
+    App.closeDocument(doc_name)
+    print(f"✔ Generated DIN 933 M8 x 40 mm Hex Bolt -> {fcstd_path}")
+
+
+def build_nut_m8_hex():
+    doc_name = "nut_m8_hex"
+    try:
+        App.closeDocument(doc_name)
+    except Exception:
+        pass
+    doc = App.newDocument(doc_name)
+    fcstd_path = f"{cots_models_dir}/nut_m8_hex.FCStd"
+
+    r_hex = 13.0 / math.sqrt(3.0)
+    pts = [
+        App.Vector(r_hex * math.cos(math.radians(60.0 * i)), r_hex * math.sin(math.radians(60.0 * i)), 0.0)
+        for i in range(6)
+    ]
+    pts.append(pts[0])
+    nut = Part.Face(Part.makePolygon(pts)).extrude(App.Vector(0, 0, 6.50))
+    bore = Part.makeCylinder(4.00, 8.0, App.Vector(0.0, 0.0, -0.5), App.Vector(0, 0, 1))
+    solid = nut.cut(bore).removeSplitter()
+
+    obj = doc.addObject("Part::Feature", "M8_Mutter_DIN934")
+    obj.Label = "DIN 934 M8 Hex Nut (A2 Stainless, COTS)"
+    obj.Shape = solid
+    if hasattr(obj, "ViewObject") and obj.ViewObject:
+        obj.ViewObject.ShapeColor = (0.76, 0.78, 0.82)
+
+    doc.recompute()
+    doc.saveAs(fcstd_path)
+    App.closeDocument(doc_name)
+    print(f"✔ Generated DIN 934 M8 Hex Nut -> {fcstd_path}")
+
+
+# =============================================================================
+# 14. M3 x 50 mm Round Aluminum/Brass Female-Female Standoff Sleeve (Chassis Core Tie-Rods, COTS)
+#     Origin (0, 0, 0) at bottom face; extends +Z to Z = 50.00 mm.
+#     - Outer Ø4.96 mm CAD (R = 2.48 mm, nominal Ø5.0 mm sleeve inside Ø5.25 mm PETG bore)
+#     - Inner Ø2.50 mm M3 tap bore (R = 1.25 mm), 0.30 mm 45° end chamfers
+#     - Placed 4x at (±45.0, ±30.0, Z = 2.65 mm) spanning the 51.30 mm Core gap between
+#       Body_Bottom (Z = 2.00) and Body_Top (Z = 53.30) with 0.65 mm compression preload margin!
+# =============================================================================
+def build_standoff_m3x50_round():
+    doc_name = "standoff_m3x50_round"
+    try:
+        App.closeDocument(doc_name)
+    except Exception:
+        pass
+    doc = App.newDocument(doc_name)
+    fcstd_path = f"{cots_models_dir}/standoff_m3x50_round.FCStd"
+
+    r_out = 2.48
+    r_in = 1.25
+    ch = 0.30
+    length = 50.00
+    prof_rz = [
+        (r_in + 0.15, 0.00),
+        (r_out - ch,  0.00),
+        (r_out,       ch),
+        (r_out,       length - ch),
+        (r_out - ch,  length),
+        (r_in + 0.15, length),
+        (r_in,        length - 0.15),
+        (r_in,        0.15),
+    ]
+    pts = [App.Vector(r, 0.0, z) for r, z in prof_rz]
+    pts.append(pts[0])
+    solid = (
+        Part.Face(Part.makePolygon(pts))
+        .revolve(App.Vector(0, 0, 0), App.Vector(0, 0, 1), 360.0)
+        .removeSplitter()
+    )
+
+    obj = doc.addObject("Part::Feature", "Standoff_M3x50_Round")
+    obj.Label = "M3 x 50 mm Round Threaded Standoff Sleeve Ø5 mm (Aluminum/Brass, COTS)"
+    obj.Shape = solid
+    if hasattr(obj, "ViewObject") and obj.ViewObject:
+        obj.ViewObject.ShapeColor = (0.76, 0.78, 0.82)  # Anodized Aluminum / Stainless
+
+    doc.recompute()
+    doc.saveAs(fcstd_path)
+    App.closeDocument(doc_name)
+    print(f"✔ Generated M3 x 50 mm Round Threaded Standoff Sleeve -> {fcstd_path}")
+
+
+# Execute selected or all builds
+BUILDERS = {
+    "rpi4": build_rpi4,
+    "pca9685": build_pca9685,
+    "tca9548a": build_tca9548a,
+    "vl53l5cx": build_vl53l5cx,
+    "battery_lipo_2s": build_battery_lipo_2s,
+    "ubec_3a": build_ubec_3a,
+    "xt60e_m": build_xt60e_m,
+    "ubec_hobbywing_10a": build_ubec_hobbywing_10a,
+    "fuse_mini_atm": build_fuse_mini_atm,
+    "switch_mini_slide": build_switch_mini_slide,
+    "ads1115": build_ads1115,
+    "bno085": build_bno085,
+    "magnet_5x2": build_magnet_5x2,
+    "screw_m2_button_head": build_screw_m2_button_head,
+    "screw_m2_countersunk": build_screw_m2_countersunk,
+    "insert_m2_ruthex": build_insert_m2_ruthex,
+    "screw_m4x20_countersunk": build_screw_m4x20_countersunk,
+    "bolt_m8x40_hex": build_bolt_m8x40_hex,
+    "nut_m8_hex": build_nut_m8_hex,
+    "standoff_m3x50_round": build_standoff_m3x50_round,
+}
+
+env_only = [k.strip() for k in os.environ.get("ONLY_COTS", "").split(",") if k.strip()]
+only_targets = env_only or [a.split("=", 1)[1] for a in sys.argv[1:] if a.startswith("--only=")]
+if only_targets:
+    for key in only_targets:
+        BUILDERS[key]()
+else:
+    for fn in BUILDERS.values():
+        fn()
 
 print("=== All Electronics & Power COTS Models Generated with References Successfully ===")
 sys.exit(0)
