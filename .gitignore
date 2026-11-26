@@ -52,7 +52,7 @@ data/calibration_backups/*.json
 
 # RL models & TensorBoard training logs
 data/rl_logs/
-data/rl_models/*.zip
+data/rl_models/*
 !data/rl_models/.gitkeep
 
 # Node / Frontend

@@ -1,11 +1,29 @@
 """
-Lasius Simulation & Reinforcement Learning Package (`lasius.core.sim`).
+Lasius Simulation & Reinforcement Learning Subpackage (`lasius.core.sim`).
+
+Provides:
+- `LasiusGymEnv`: Sim-to-Real Gymnasium environment wrapping PyBullet (`body_assembly` URDF)
+- `ServoActuatorModel` & `ActuatorConfig`: Reely NR-645 MG BB servo dynamics & soft limits
+- `TerrainGenerator` & `TerrainType`: Procedural flat/rough/slopes/steps/mixed terrain engine
 """
 
 try:
+    from .actuator import ActuatorConfig, ServoActuatorModel, build_joint_limits_rad
     from .gym_env import LasiusGymEnv
+    from .terrain import TerrainGenerator, TerrainType
 except ImportError:
-    # Optional dependency: gymnasium / pybullet might not be present on physical robot Pi
-    pass
+    ActuatorConfig = None
+    ServoActuatorModel = None
+    build_joint_limits_rad = None
+    LasiusGymEnv = None
+    TerrainGenerator = None
+    TerrainType = None
 
-__all__ = ["LasiusGymEnv"]
+__all__ = [
+    "ActuatorConfig",
+    "LasiusGymEnv",
+    "ServoActuatorModel",
+    "TerrainGenerator",
+    "TerrainType",
+    "build_joint_limits_rad",
+]

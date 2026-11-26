@@ -14,6 +14,7 @@ import os
 import struct
 import sys
 import FreeCAD as App
+import MeshPart
 import Part
 
 REPO_ROOT = "/home/bjoern/Workspace/Hexapods/lasius"
@@ -105,13 +106,21 @@ def make_scale_matrix(sx, sy, sz):
     return m
 
 
-def export_binary_stl(shape, matrix_mm, out_path, deflection=0.18):
+def export_binary_stl(shape, matrix_mm, out_path, deflection=0.35, angular_deflection=0.50):
     """
-    Tessellate a FreeCAD TopoShape, transform by `matrix_mm` (in mm), scale to meters (x 0.001),
-    automatically flip triangle winding if det(matrix_mm) < 0 (mirrored right parts!),
-    recompute outward unit normals, and write a clean PyBullet-compatible Binary STL.
+    Tessellate a FreeCAD TopoShape via `MeshPart.meshFromShape` (bypassing stale fine
+    cached display meshes so total instanced triangles stay well below PyBullet's
+    128 MB OpenGL GLInstancingRenderer vertex buffer limit!), transform by `matrix_mm`
+    (in mm), scale to meters (x 0.001), flip triangle winding if det(matrix_mm) < 0
+    (mirrored right parts!), recompute outward unit normals, and write a clean Binary STL.
     """
-    verts, tris = shape.tessellate(deflection)
+    mesh = MeshPart.meshFromShape(
+        Shape=shape,
+        LinearDeflection=max(float(deflection), 0.30),
+        AngularDeflection=float(angular_deflection),
+        Relative=False,
+    )
+    verts, tris = mesh.Topology
     det = matrix_mm.determinant()
     flip = det < 0.0
 
