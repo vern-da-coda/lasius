@@ -168,13 +168,23 @@ def build_monolithic_canopy():
         canopy_solid = canopy_solid.cut(arch)
 
     # -------------------------------------------------------------------------
-    # 5d. Central Rear 25A Mini-ATM Fuse Pass-Through Aperture (X in [-113.5, -96.5], Y in [-5.6, +5.6]):
-    #     0.80 mm uniform clearance around the upright fuse tower & bezel flange so the 25A blade
-    #     fuse protrudes cleanly for tool-free pulling AND the magnetic canopy lifts straight UP!
+    # 5d. Shifted Central 25A Mini-ATM Fuse Pass-Through Aperture (X in [-84.5, -67.5], Y in [-5.6, +5.6]):
+    #     Centered cleanly on the flat Canopy roof between both Hobbywing 10A UBEC vent banks (0.80 mm
+    #     uniform slip clearance around the upright fuse tower -> lifts 100% straight UP (+Z)!).
     # -------------------------------------------------------------------------
-    w_fuse_cut = make_filleted_wire(-113.50, -96.50, -5.60, 5.60, 2.00, 68.0)
-    fuse_aperture = Part.Face(w_fuse_cut).extrude(App.Vector(0.0, 0.0, 20.0))
+    w_fuse_cut = make_filleted_wire(-84.50, -67.50, -5.60, 5.60, 2.00, 70.0)
+    fuse_aperture = Part.Face(w_fuse_cut).extrude(App.Vector(0.0, 0.0, 18.0))
     canopy_solid = canopy_solid.cut(fuse_aperture)
+
+    # -------------------------------------------------------------------------
+    # 5d2. Rear Slope 0.96" OLED Telemetry HUD Viewport Window (X in [-119.2, -98.2], Y in [-14.0, +14.0]):
+    #      Vertical (+Z) extruded viewport framing the tilted 0.96" SSD1306 Dual-Zone OLED mounted on
+    #      Chassis_RPi_Mount (-106.5, 0.0, Z_pcb = 70.85, tilt -27°). Keeps zero wires on Canopy and
+    #      preserves 100% straight vertical (+Z) magnetic canopy lift-off without snagging!
+    # -------------------------------------------------------------------------
+    w_oled_win = make_filleted_wire(-119.20, -98.20, -14.00, 14.00, 1.40, 62.0)
+    oled_viewport = Part.Face(w_oled_win).extrude(App.Vector(0.0, 0.0, 24.0))
+    canopy_solid = canopy_solid.cut(oled_viewport)
 
     # -------------------------------------------------------------------------
     # 5e. 4x Internal Self-Centering Magnetic Bosses & Cup Skirts at (±48.0, ±36.0 mm):

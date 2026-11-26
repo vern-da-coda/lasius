@@ -10,7 +10,9 @@ import struct
 import pytest
 
 from lasius.core.hardware import (
+    HUDTelemetrySnapshot,
     SimulatedIMUDriver,
+    SimulatedOLEDHUD,
     SimulatedPowerMonitor,
     SimulatedToFSensor,
     parse_bno085_rvc_frame,
@@ -94,6 +96,28 @@ class TestSensorHAL:
         gait = WalknetGait()
         boost = gait.set_belly_tof_distance_m(r_tof.min_distance_m)
         assert boost > 0.0
+
+    def test_rear_oled_hud_bus_isolation_and_dual_zone_format(self):
+        # Must refuse real-time servo/ADC bus i2c-1
+        with pytest.raises(ValueError, match="i2c-1"):
+            SimulatedOLEDHUD(bus_num=1)
+
+        hud = SimulatedOLEDHUD(bus_num=3, address=0x3C)
+        lines = hud.render(
+            HUDTelemetrySnapshot(
+                battery_v=7.8,
+                current_a=3.4,
+                gait_mode="walknet",
+                servos_armed=True,
+                ip_address="192.168.0.42",
+                cpu_temp_c=51.2,
+            )
+        )
+        assert len(lines) == 5
+        assert all(len(line) <= 21 for line in lines)
+        assert "7.8V" in lines[0] and "[ARM]" in lines[0]
+        assert "WALKNET" in lines[1]
+        assert hud.render_count == 1
 
 
 class TestBenchDiagnosticsScript:

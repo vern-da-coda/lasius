@@ -1134,6 +1134,149 @@ def build_standoff_m3x50_round():
     print(f"✔ Generated M3 x 50 mm Round Threaded Standoff Sleeve -> {fcstd_path}")
 
 
+# =============================================================================
+# 15. 0.96" I2C OLED Display 128x64 SSD1306 (Dual-Zone Yellow/Blue, Rear Telemetry HUD, COTS)
+#     Local Frame: Origin at PCB center bottom (Z = 0.00 mm); +Z = display face normal;
+#     +X = top of display (4-pin rear header edge, 27.3 mm tall), Y = width (27.0 mm wide).
+#     4x Ø2.2 mm M2 mounting holes on standard 23.0 x 23.0 mm pitch (±11.50, ±11.50 mm).
+# =============================================================================
+def build_oled_096_i2c():
+    doc_name = "oled_096_i2c"
+    try:
+        App.closeDocument(doc_name)
+    except Exception:
+        pass
+    doc = App.newDocument(doc_name)
+    fcstd_path = f"{cots_models_dir}/oled_096_i2c.FCStd"
+    doc.saveAs(fcstd_path)
+
+    # 1. PCB Substrate (27.30 x 27.00 x 1.20 mm, R = 1.8 mm corners, 4x M2 holes at ±11.5 mm)
+    pcb = make_rounded_rect_solid(-13.65, 13.65, -13.50, 13.50, 1.80, 0.00, 1.20)
+    for hx in (-11.50, 11.50):
+        for hy in (-11.50, 11.50):
+            pcb = pcb.cut(Part.makeCylinder(1.10, 4.0, App.Vector(hx, hy, -1.0), App.Vector(0, 0, 1)))
+    pcb = pcb.removeSplitter()
+
+    # 2. Black OLED Glass Panel (19.20 mm tall along X [-10.80..+8.40], 26.70 mm wide along Y, Z = 1.20..2.70 mm)
+    glass = make_rounded_rect_solid(-10.80, 8.40, -13.35, 13.35, 0.60, 1.20, 2.70).removeSplitter()
+
+    # 3. Dual-Zone Active Display Emissive Bands (Yellow top y=0..15 + Ice-Blue main y=16..63)
+    band_yellow = Part.makeBox(2.80, 21.80, 0.06, App.Vector(4.40, -10.90, 2.70))
+    band_blue = Part.makeBox(10.20, 21.80, 0.06, App.Vector(-6.60, -10.90, 2.70))
+
+    # 4. Rear-Side 4-Pin Low-Profile Right-Angle Header Block (Z in [-2.60, 0.00], X in [+9.6, +12.4])
+    hdr_blk = Part.makeBox(2.60, 10.20, 2.50, App.Vector(9.80, -5.10, -2.50))
+    pins = None
+    for i in range(4):
+        py = (-1.5 + i) * 2.54
+        p = Part.makeBox(3.80, 0.64, 0.64, App.Vector(12.20, py - 0.32, -1.57))
+        pins = p if pins is None else pins.fuse(p)
+    hdr_pins = pins.removeSplitter()
+
+    part = doc.addObject("App::Part", "OLED_096_I2C")
+    part.Label = "0.96\" I2C OLED Display 128x64 SSD1306 Dual-Zone (COTS)"
+
+    def add_feat(name, label, shape, color):
+        f = doc.addObject("Part::Feature", name)
+        f.Label = label
+        f.Shape = shape
+        if hasattr(f, "ViewObject") and f.ViewObject:
+            f.ViewObject.ShapeColor = color
+        part.addObject(f)
+        return f
+
+    add_feat("OLED_PCB", "0.96\" OLED PCB (27.3 x 27.0 mm, Blue)", pcb, COLOR_PCB_BLUE)
+    add_feat("OLED_Glass", "OLED Glass Panel (19.2 x 26.7 mm)", glass, (0.05, 0.06, 0.08))
+    add_feat("OLED_Zone_Yellow", "Active OLED Zone Yellow (y=0..15)", band_yellow, (0.96, 0.80, 0.10))
+    add_feat("OLED_Zone_Blue", "Active OLED Zone Ice-Blue (y=16..63)", band_blue, (0.14, 0.72, 0.98))
+    add_feat("OLED_Header_Body", "4-Pin Rear Header Shroud", hdr_blk, (0.12, 0.12, 0.12))
+    add_feat("OLED_Header_Pins", "4-Pin I2C Pins (VCC/GND/SCL/SDA)", hdr_pins, (0.85, 0.70, 0.20))
+
+    doc.recompute()
+    doc.save()
+    App.closeDocument(doc_name)
+    print(f"✔ Generated 0.96\" I2C OLED Display -> {fcstd_path}")
+
+
+# =============================================================================
+# 16. 6x6 mm Tactile Pushbutton Switch (Pi Safe-Shutdown GPIO3, COTS)
+#     Panel convention: X = 0.00 outer bezel surface, -X = exterior plunger, +X = interior body/pins
+# =============================================================================
+def build_button_tactile_6x6():
+    doc_name = "button_tactile_6x6"
+    try:
+        App.closeDocument(doc_name)
+    except Exception:
+        pass
+    doc = App.newDocument(doc_name)
+    fcstd_path = f"{cots_models_dir}/button_tactile_6x6.FCStd"
+    doc.saveAs(fcstd_path)
+
+    body = make_rounded_rect_solid(0.40, 4.20, -3.00, 3.00, 0.40, -3.00, 3.00)
+    plunger = Part.makeCylinder(1.75, 2.80, App.Vector(-2.20, 0.0, 0.0), App.Vector(1, 0, 0))
+    pins = None
+    for py in (-2.25, 2.25):
+        for pz in (-2.25, 2.25):
+            p = Part.makeBox(3.00, 0.65, 0.40, App.Vector(4.20, py - 0.325, pz - 0.20))
+            pins = p if pins is None else pins.fuse(p)
+
+    part = doc.addObject("App::Part", "Button_Tactile_6x6")
+    part.Label = "6x6 mm Tactile Pushbutton Switch (Pi Safe-Shutdown GPIO3, COTS)"
+
+    for name, label, sh, col in [
+        ("Button_Body", "6x6 mm Switch Housing", body, (0.20, 0.22, 0.25)),
+        ("Button_Plunger", "Tactile Actuator Plunger", plunger, (0.85, 0.48, 0.10)),
+        ("Button_Pins", "4x Solder Leads", pins.removeSplitter(), (0.82, 0.84, 0.86)),
+    ]:
+        f = doc.addObject("Part::Feature", name)
+        f.Label = label
+        f.Shape = sh
+        if hasattr(f, "ViewObject") and f.ViewObject:
+            f.ViewObject.ShapeColor = col
+        part.addObject(f)
+
+    doc.recompute()
+    doc.save()
+    App.closeDocument(doc_name)
+    print(f"✔ Generated 6x6 mm Tactile Pushbutton -> {fcstd_path}")
+
+
+# =============================================================================
+# 17. Ø3 mm T1 Status LED (5V Pi Logic Green / 6V Servos Armed Red, COTS)
+#     Panel convention: X = 0.00 outer bezel surface, -X = domed lens, +X = flange & leads
+# =============================================================================
+def build_led_3mm():
+    doc_name = "led_3mm"
+    try:
+        App.closeDocument(doc_name)
+    except Exception:
+        pass
+    doc = App.newDocument(doc_name)
+    fcstd_path = f"{cots_models_dir}/led_3mm.FCStd"
+    doc.saveAs(fcstd_path)
+
+    # Lens cylinder (X in [-1.0, +2.0], Ø2.95 mm) + front hemisphere dome (center X = -1.0, R = 1.475 -> X_min = -2.475)
+    cyl = Part.makeCylinder(1.475, 3.00, App.Vector(-1.00, 0.0, 0.0), App.Vector(1, 0, 0))
+    dome = Part.makeSphere(1.475, App.Vector(-1.00, 0.0, 0.0))
+    flange = Part.makeCylinder(1.90, 1.00, App.Vector(2.00, 0.0, 0.0), App.Vector(1, 0, 0))
+    lens = cyl.fuse(dome).fuse(flange).removeSplitter()
+
+    lead1 = Part.makeBox(4.50, 0.50, 0.50, App.Vector(3.00, -1.27 - 0.25, -0.25))
+    lead2 = Part.makeBox(4.50, 0.50, 0.50, App.Vector(3.00, +1.27 - 0.25, -0.25))
+    led_solid = lens.fuse(lead1).fuse(lead2).removeSplitter()
+
+    obj = doc.addObject("Part::Feature", "LED_3mm")
+    obj.Label = "Ø3 mm T1 Status LED (COTS)"
+    obj.Shape = led_solid
+    if hasattr(obj, "ViewObject") and obj.ViewObject:
+        obj.ViewObject.ShapeColor = (0.12, 0.85, 0.30)
+
+    doc.recompute()
+    doc.save()
+    App.closeDocument(doc_name)
+    print(f"✔ Generated Ø3 mm T1 Status LED -> {fcstd_path}")
+
+
 # Execute selected or all builds
 BUILDERS = {
     "rpi4": build_rpi4,
@@ -1156,6 +1299,9 @@ BUILDERS = {
     "bolt_m8x40_hex": build_bolt_m8x40_hex,
     "nut_m8_hex": build_nut_m8_hex,
     "standoff_m3x50_round": build_standoff_m3x50_round,
+    "oled_096_i2c": build_oled_096_i2c,
+    "button_tactile_6x6": build_button_tactile_6x6,
+    "led_3mm": build_led_3mm,
 }
 
 env_only = [k.strip() for k in os.environ.get("ONLY_COTS", "").split(",") if k.strip()]

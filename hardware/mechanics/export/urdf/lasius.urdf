@@ -39,7 +39,7 @@
   <link name="base_link">
     <inertial>
       <origin xyz="0.000000 0.000000 0.032000" rpy="0 0 0"/>
-      <mass value="0.720732"/>
+      <mass value="0.722331"/>
       <inertia ixx="4.20000000e-03" iyy="8.50000000e-03" izz="1.15000000e-02" ixy="0.00000000e+00" ixz="0.00000000e+00" iyz="0.00000000e+00"/>
     </inertial>
     <visual>

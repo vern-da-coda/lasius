@@ -52,6 +52,9 @@ def build_chassis_assembly():
     doc_ubec_hw = App.openDocument(f"{cots_dir}/ubec_hobbywing_10a.FCStd")
     doc_sw = App.openDocument(f"{cots_dir}/switch_mini_slide.FCStd")
     doc_fuse = App.openDocument(f"{cots_dir}/fuse_mini_atm.FCStd")
+    doc_oled = App.openDocument(f"{cots_dir}/oled_096_i2c.FCStd")
+    doc_btn = App.openDocument(f"{cots_dir}/button_tactile_6x6.FCStd")
+    doc_led = App.openDocument(f"{cots_dir}/led_3mm.FCStd")
     doc_imu = App.openDocument(f"{cots_dir}/bno085_board.FCStd")
     doc_mag = App.openDocument(f"{cots_dir}/magnet_5x2.FCStd")
     doc_s_m2 = App.openDocument(f"{cots_dir}/screw_m2_button_head.FCStd")
@@ -195,31 +198,56 @@ def build_chassis_assembly():
         (0.10, 0.11, 0.14),
     )
 
-    # 7e. Dual Rear-Tail UBEC Mini Slide Switches recessed into Chassis_RPi_Mount 45° rear bevels
-    #     (Operable externally through bottom-open Canopy arches; fixed via (-90, 0) & (-120, 0) M3 screws!)
+    # 7e. Rear Telemetry Cockpit (Option 3) Controls on Chassis_RPi_Mount 45° rear bevels & rear slope:
+    #     - Left (+Y) 45° bevel: 3P3T Master Slide Switch (OFF -> LOGIC -> ARMED)
+    #     - Right (-Y) 45° bevel: 6x6 mm Pi Safe-Shutdown Button (GPIO3) + 2x Ø3 mm Status LEDs (Green 5V / Red 6V)
+    #     - Center rear slope (-106.5, 0.0, Z = 71.20, tilt -27°): 0.96" I2C OLED Dual-Zone HUD (i2c-3 isolated bus)
+    #     - Center UBEC corridor (-76.0, 0.0, Z_flange = 80.20): Upright 25A Mini-ATM Top-Pull Blade Fuse
     make_link(
-        "Switch_Logic_Pi",
-        "7e. Mini Slide Switch SPST: Pi Logic Power (Rear Tail Left +Y Bevel, COTS)",
+        "Switch_Master_3P3T",
+        "7e. 3P3T Master Slide Switch: OFF -> LOGIC -> ARMED (Rear Left +Y Bevel, COTS)",
         doc_sw.Switch_Mini_Slide,
         App.Placement(App.Vector(-116.00, +14.50, 59.00), App.Rotation(App.Vector(0, 0, 1), -45.0)),
-        (0.18, 0.18, 0.22),
-    )
-    make_link(
-        "Switch_Servos_Armed",
-        "7f. Mini Slide Switch DPST: Dual-UBEC Servos Armed (Rear Tail Right -Y Bevel, COTS)",
-        doc_sw.Switch_Mini_Slide,
-        App.Placement(App.Vector(-116.00, -14.50, 59.00), App.Rotation(App.Vector(0, 0, 1), +45.0)),
         (0.78, 0.18, 0.18),
     )
-    # 7g. Upright 25A Mini-ATM Blade Fuse centered between both Rear Switches (X = -105.0, Y = 0.0, Z_flange = 78.80 mm)
-    #     local -X (pull cap) -> world +Z (protrudes through Canopy aperture); local +Y (15mm) -> world -X
+    p_bevel_r = App.Placement(App.Vector(-116.00, -14.50, 59.00), App.Rotation(App.Vector(0, 0, 1), +45.0))
+    make_link(
+        "Button_Safe_Shutdown",
+        "7f. 6x6 mm Pi Safe-Shutdown Tactile Button (GPIO3, Rear Right -Y Bevel, COTS)",
+        doc_btn.Button_Tactile_6x6,
+        p_bevel_r,
+        None,
+    )
+    make_link(
+        "LED_Status_5V_Green",
+        "7f2. Ø3 mm Status LED Green: 5V Pi Logic Ready (Rear Right -Y Bevel, COTS)",
+        doc_led.LED_3mm,
+        p_bevel_r.multiply(App.Placement(App.Vector(0.0, -6.80, 0.0), App.Rotation())),
+        (0.12, 0.85, 0.30),
+    )
+    make_link(
+        "LED_Status_6V_Red",
+        "7f3. Ø3 mm Status LED Red: 6V Servos Armed (Rear Right -Y Bevel, COTS)",
+        doc_led.LED_3mm,
+        p_bevel_r.multiply(App.Placement(App.Vector(0.0, +6.80, 0.0), App.Rotation())),
+        (0.92, 0.16, 0.14),
+    )
+    # 7g. Upright 25A Mini-ATM Blade Fuse shifted into open UBEC center corridor (X = -76.0, Y = 0.0, Z_flange = 80.20 mm)
     rot_fuse_up = App.Rotation(App.Vector(0, 0, 1), 90.0).multiply(App.Rotation(App.Vector(0, 1, 0), 90.0))
     make_link(
         "Fuse_Mini_ATM_25A",
-        "7g. 25A Mini-ATM Blade Fuse & Socket (Rear Center Tower, Tool-Free Top Pull, COTS)",
+        "7g. 25A Mini-ATM Blade Fuse & Socket (UBEC Corridor Tower, Tool-Free Top Pull, COTS)",
         doc_fuse.Fuse_Mini_ATM,
-        App.Placement(App.Vector(-105.00, 0.00, 78.80), rot_fuse_up),
+        App.Placement(App.Vector(-76.00, 0.00, 80.20), rot_fuse_up),
         (0.90, 0.90, 0.92),
+    )
+    # 7g2. 0.96" I2C OLED Telemetry HUD (128x64 SSD1306 Dual-Zone Yellow/Blue) on angled rear-slope cradle
+    make_link(
+        "Display_OLED_096_HUD",
+        "7g2. 0.96\" I2C OLED Telemetry HUD 128x64 Dual-Zone (Rear Slope -27°, i2c-3, COTS)",
+        doc_oled.OLED_096_I2C,
+        App.Placement(App.Vector(-106.50, 0.00, 70.85), App.Rotation(App.Vector(0, 1, 0), -27.0)),
+        None,
     )
 
     # 7h. Adafruit BNO085 9-DOF Orientation IMU (PID 4754) on Front Deck of Chassis_RPi_Mount

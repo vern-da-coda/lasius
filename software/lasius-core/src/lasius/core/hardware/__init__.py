@@ -50,6 +50,13 @@ from .sensors import (
     ToFSensorProtocol,
     SimulatedToFSensor,
 )
+from .hud import (
+    HUDTelemetrySnapshot,
+    HUDDisplayProtocol,
+    SimulatedOLEDHUD,
+    SSD1306I2CHUD,
+    format_dual_zone_hud_lines,
+)
 
 __all__ = [
     "PWMDriverProtocol",
@@ -74,6 +81,11 @@ __all__ = [
     "ToFReading",
     "ToFSensorProtocol",
     "SimulatedToFSensor",
+    "HUDTelemetrySnapshot",
+    "HUDDisplayProtocol",
+    "SimulatedOLEDHUD",
+    "SSD1306I2CHUD",
+    "format_dual_zone_hud_lines",
     "_MODE1",
     "_MODE2",
     "_PRESCALE",
