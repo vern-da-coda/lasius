@@ -75,39 +75,50 @@ ADS_CONFIG_CQUE_NONE = 0x0003   # Disable comparator
 class MockI2CBus:
     """Simulates I2C bus behavior for development laptops without physical GPIOs."""
 
-    def __init__(self, bus_num: int = 1):
+    def __init__(self, bus_num: int = 1, simulate_12bit_v280: bool = True):
         self.bus_num = bus_num
-        self.mux_channel = 0
-        self.mock_voltages = {0: 1.65, 1: 0.82, 2: 2.45, 3: 0.0}
+        self.mux_mask = 0x00
+        self.selected_adc_ch = 0
+        self.simulate_12bit_v280 = simulate_12bit_v280
+        self.mock_voltages = {0: 1.56, 1: 1.48, 2: 1.62, 3: 3.30}
 
     def write_quick(self, addr: int):
         valid_addrs = {DEFAULT_MUX_ADDR, PCA9685_BOARD1_ADDR, PCA9685_BOARD2_ADDR}
         if addr in valid_addrs:
             return
-        if addr == DEFAULT_ADC_ADDR and self.mux_channel in (0, 1, 2, 3, 4, 5):
+        # Simulate 6x ADS1115 (0x48) behind MUX CH0..CH5 (bitmask 0x01..0x20)
+        if addr == DEFAULT_ADC_ADDR and (self.mux_mask & 0x3F) != 0:
             return
         raise OSError("Simulated I2C NACK")
 
     def write_byte(self, addr: int, val: int):
         if addr == DEFAULT_MUX_ADDR:
-            self.mux_channel = val
+            self.mux_mask = int(val) & 0xFF
             return
         raise OSError("Simulated I2C NACK")
 
     def write_i2c_block_data(self, addr: int, reg: int, data: list):
+        if addr == DEFAULT_ADC_ADDR and reg == ADS_REG_CONFIG and len(data) >= 2:
+            cfg = (data[0] << 8) | data[1]
+            mux_bits = (cfg >> 12) & 0x07
+            if 4 <= mux_bits <= 7:
+                self.selected_adc_ch = mux_bits - 4
+            return
         if addr in (DEFAULT_MUX_ADDR, DEFAULT_ADC_ADDR):
             return
         raise OSError("Simulated I2C NACK")
 
     def read_i2c_block_data(self, addr: int, reg: int, length: int) -> list:
         if addr == DEFAULT_ADC_ADDR and reg == ADS_REG_CONVERSION:
-            v = self.mock_voltages.get(0, 1.65)
-            # Add subtle jitter
-            raw = int((v / 4.096) * 32767)
+            v = self.mock_voltages.get(self.selected_adc_ch, 1.56)
+            raw = int(round(v / 0.000125))
             raw = max(0, min(32767, raw))
+            if self.simulate_12bit_v280:
+                # V280 batch left-justifies 12-bit samples (lower 4 bits always 0 -> 16 counts = 2.0 mV)
+                raw = raw & 0xFFF0
             return [(raw >> 8) & 0xFF, raw & 0xFF]
         if addr == DEFAULT_ADC_ADDR and reg == ADS_REG_CONFIG:
-            return [0x85, 0x83] # Conversion complete
+            return [0x85, 0x83]  # Conversion complete
         return [0] * length
 
     def close(self):
@@ -201,13 +212,58 @@ def read_ads1115_channel(bus, adc_addr: int = DEFAULT_ADC_ADDR, channel: int = 0
     return raw, volts
 
 
-def run_full_scan(bus, mux_addr: int = DEFAULT_MUX_ADDR, adc_addr: int = DEFAULT_ADC_ADDR):
+def detect_adc_resolution_bits(
+    bus,
+    adc_addr: int = DEFAULT_ADC_ADDR,
+    samples_per_ch: int = 2,
+) -> Tuple[int, float]:
+    """
+    Probes A0..A3 to distinguish genuine 16-bit ADS1115 chips (0.125 mV/LSB)
+    from left-justified 12-bit V280 batches (lower 4 bits always zero: 2.0 mV/step).
+
+    Returns:
+        `(effective_bits, step_mv)` -> `(12, 2.0)` or `(16, 0.125)`.
+    """
+    low_nibble_nonzero = False
+    for ch in range(4):
+        for _ in range(samples_per_ch):
+            raw, _ = read_ads1115_channel(bus, adc_addr, ch)
+            if (raw & 0x000F) != 0:
+                low_nibble_nonzero = True
+                break
+        if low_nibble_nonzero:
+            break
+    return (16, 0.125) if low_nibble_nonzero else (12, 2.0)
+
+
+def filter_subbus_addresses(
+    scanned: List[int],
+    primary_addrs: List[int],
+    include_primary: bool = False,
+) -> List[int]:
+    """
+    Removes addresses already visible on the primary I2C bus (e.g., PCA9685 0x40/0x42,
+    TCA9548A 0x71) so sub-channel scans report only isolated downstream child devices.
+    """
+    if include_primary:
+        return list(scanned)
+    primary_set = set(primary_addrs)
+    return [addr for addr in scanned if addr not in primary_set]
+
+
+def run_full_scan(
+    bus,
+    mux_addr: int = DEFAULT_MUX_ADDR,
+    adc_addr: int = DEFAULT_ADC_ADDR,
+    show_primary: bool = False,
+):
     """Executes a complete scan of the primary bus and all multiplexer sub-busses."""
     print("\n" + "=" * 65)
     print("🔍 Lasius Hexapod - I2C Topologie & Hardware-Scan")
     print("=" * 65)
 
-    # 1. Primary Bus Scan
+    # 1. Primary Bus Scan (with all MUX channels disabled if MUX is present)
+    set_tca9548a_channel(bus, mux_addr, None)
     primary = scan_bus_addresses(bus)
     print(f"Haupt-Bus (I2C1): {len(primary)} Gerät(e) erkannt")
     for a in primary:
@@ -217,6 +273,7 @@ def run_full_scan(bus, mux_addr: int = DEFAULT_MUX_ADDR, adc_addr: int = DEFAULT
         elif a == 0x71: desc = "✔ TCA9548A Multiplexer (A0 geschlossen, konfliktfrei!)"
         elif a == 0x70: desc = "⚠️  TCA9548A auf 0x70 (ACHTUNG: Konflikt mit PCA9685 ALLCALL!)"
         elif a == 0x48: desc = "✔ ADS1115 ADC (Direkt am Hauptbus)"
+        elif a == 0x4A: desc = "✔ BNO085 9-DOF IMU (Hinweis: bevorzugt UART-RVC/i2c-gpio)"
         print(f"  • Adresse 0x{a:02X} : {desc}")
 
     # 2. Check Multiplexer
@@ -237,21 +294,34 @@ def run_full_scan(bus, mux_addr: int = DEFAULT_MUX_ADDR, adc_addr: int = DEFAULT
         print("  ⚠️  WARNUNG: Multiplexer läuft auf Basisadresse 0x70.")
         print("      Schließe die Lötbrücke A0, um Konflikte mit dem PCA9685 All-Call zu vermeiden!")
 
-    # 3. Sub-Bus Scanning (CH0 - CH7)
-    print("\nScanne Multiplexer-Sub-Kanäle (CH0 bis CH7)...")
+    # 3. Sub-Bus Scanning (CH0 - CH7) with primary-bus address filtering
+    filter_note = "ungefiltert" if show_primary else f"Hauptbus {[f'0x{a:02X}' for a in primary]} gefiltert"
+    print(f"\nScanne Multiplexer-Sub-Kanäle (CH0 bis CH7, {filter_note})...")
     sub_devices = {}
+    resolutions = {}
     for ch in range(8):
         set_tca9548a_channel(bus, active_mux, ch)
-        devs = [a for a in scan_bus_addresses(bus) if a != active_mux]
+        raw_devs = scan_bus_addresses(bus)
+        devs = filter_subbus_addresses(raw_devs, primary, include_primary=show_primary)
         sub_devices[ch] = devs
-        dev_str = ", ".join(f"0x{d:02X}" for d in devs) if devs else "(keine Geräte)"
-        
+
+        res_tag = ""
+        if adc_addr in devs:
+            try:
+                bits, step_mv = detect_adc_resolution_bits(bus, adc_addr)
+                resolutions[ch] = (bits, step_mv)
+                res_tag = f"  [{bits}-Bit / {step_mv:g} mV]"
+            except Exception:
+                pass
+
+        dev_str = ", ".join(f"0x{d:02X}" for d in devs) if devs else "(keine Sub-Geräte)"
+
         # Identify expected devices per Lasius wiring topology
         leg_names = {0: "Left Front", 1: "Left Middle", 2: "Left Rear", 3: "Right Front", 4: "Right Middle", 5: "Right Rear"}
-        role = f"Leg {leg_names.get(ch)} ADC" if ch in leg_names else ("INA228 Power Monitor" if ch == 6 else "VL53L4CD ToF Sensor")
-        
-        status_icon = "✔" if adc_addr in devs else "•"
-        print(f"  {status_icon} CH{ch} ({role:22s}): {dev_str}")
+        role = f"Leg {leg_names.get(ch)} ADC" if ch in leg_names else ("INA228/260 Power" if ch == 6 else "VL53L5CX ToF")
+
+        status_icon = "✔" if (adc_addr in devs or (ch >= 6 and len(devs) > 0)) else "•"
+        print(f"  {status_icon} CH{ch} ({role:22s}): {dev_str}{res_tag}")
 
     # Disable all sub-channels
     set_tca9548a_channel(bus, active_mux, None)
@@ -260,6 +330,13 @@ def run_full_scan(bus, mux_addr: int = DEFAULT_MUX_ADDR, adc_addr: int = DEFAULT
     print("Zusammenfassung:")
     adc_count = sum(1 for ch in range(6) if adc_addr in sub_devices.get(ch, []))
     print(f"• Erkannte Leg-ADCs (ADS1115 auf 0x48): {adc_count} von 6")
+    if resolutions:
+        v280_chs = [f"CH{ch}" for ch, (b, _) in resolutions.items() if b == 12]
+        ti16_chs = [f"CH{ch}" for ch, (b, _) in resolutions.items() if b == 16]
+        if v280_chs:
+            print(f"• 12-Bit V280-Charge (2,0 mV / ~0,26°): {', '.join(v280_chs)}")
+        if ti16_chs:
+            print(f"• Echte 16-Bit ADS1115 (0,125 mV):      {', '.join(ti16_chs)}")
     print("=" * 65 + "\n")
     return True
 
@@ -349,9 +426,10 @@ def run_step_guide(bus, step: int, mux_addr: int = DEFAULT_MUX_ADDR):
         set_tca9548a_channel(bus, mux_addr, 0)
         try:
             raw, volts = read_ads1115_channel(bus, DEFAULT_ADC_ADDR, 0)
+            bits, step_mv = detect_adc_resolution_bits(bus, DEFAULT_ADC_ADDR)
             print(f"✔ ERFOLG: ADS1115 A0 erfolgreich gelesen:")
             print(f"  • Spannung: {volts:.4f} V")
-            print(f"  • 16-Bit Raw Counts: {raw} (0 bis 32767)")
+            print(f"  • Raw Counts: {raw} (0 bis 32767) | Erkannte Auflösung: {bits}-Bit ({step_mv:g} mV/Schritt)")
             print("\n  Tipp: Schließe ein Potentiometer oder einen Spannungsteiler an A0 an")
             print("  und starte: python3 scripts/bench/test_electronics.py --channel 0 --read-analog 0")
         except Exception as e:
@@ -365,6 +443,7 @@ def run_step_guide(bus, step: int, mux_addr: int = DEFAULT_MUX_ADDR):
 def main():
     parser = argparse.ArgumentParser(description="Lasius Hexapod - Electronics Testbench Diagnostic Utility")
     parser.add_argument("--scan", action="store_true", help="Führt einen vollständigen Scan des Hauptbusses und aller Sub-Kanäle aus")
+    parser.add_argument("--show-primary", action="store_true", help="Blendet Hauptbus-Adressen (z. B. 0x40/0x42) im Sub-Kanal-Scan nicht aus")
     parser.add_argument("--step", type=int, choices=range(1, 7), help="Führt die Prüfung für einen spezifischen Schritt (1-6) aus")
     parser.add_argument("--mux-addr", type=lambda x: int(x, 0), default=DEFAULT_MUX_ADDR, help="I2C-Adresse des TCA9548A (Standard: 0x71)")
     parser.add_argument("--adc-addr", type=lambda x: int(x, 0), default=DEFAULT_ADC_ADDR, help="I2C-Adresse des ADS1115 (Standard: 0x48)")
@@ -383,7 +462,7 @@ def main():
             run_step_guide(bus, args.step, args.mux_addr)
         else:
             # Default to full diagnostic scan
-            run_full_scan(bus, args.mux_addr, args.adc_addr)
+            run_full_scan(bus, args.mux_addr, args.adc_addr, show_primary=args.show_primary)
     finally:
         bus.close()
 

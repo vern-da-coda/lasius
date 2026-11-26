@@ -36,6 +36,20 @@ from .adc import (
     PRE_PULSE_INVALID_VOLTAGE_V,
 )
 from .servo import Servo
+from .sensors import (
+    IMUReading,
+    IMUDriverProtocol,
+    BNO085UARTRVCDriver,
+    SimulatedIMUDriver,
+    rpy_deg_to_projected_gravity,
+    parse_bno085_rvc_frame,
+    PowerReading,
+    PowerMonitorProtocol,
+    SimulatedPowerMonitor,
+    ToFReading,
+    ToFSensorProtocol,
+    SimulatedToFSensor,
+)
 
 __all__ = [
     "PWMDriverProtocol",
@@ -48,6 +62,18 @@ __all__ = [
     "DEFAULT_ADC_ADDRESS",
     "PRE_PULSE_INVALID_VOLTAGE_V",
     "Servo",
+    "IMUReading",
+    "IMUDriverProtocol",
+    "BNO085UARTRVCDriver",
+    "SimulatedIMUDriver",
+    "rpy_deg_to_projected_gravity",
+    "parse_bno085_rvc_frame",
+    "PowerReading",
+    "PowerMonitorProtocol",
+    "SimulatedPowerMonitor",
+    "ToFReading",
+    "ToFSensorProtocol",
+    "SimulatedToFSensor",
     "_MODE1",
     "_MODE2",
     "_PRESCALE",

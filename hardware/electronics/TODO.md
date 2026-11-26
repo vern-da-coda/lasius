@@ -90,8 +90,8 @@ Dieses Dokument bündelt den aktuellen Testbench-Stand, Hardware-Befunde, das ve
   * [`02_single_leg_feedback_harness.yml`](wiring/02_single_leg_feedback_harness.yml): Analoge Adernfarben (`A0/A1/A2 = Weiß` [Poti-Leitung aus den Servos immer Weiß], `A3 = Orange/Schwarz`), Split-Uplink sowie reale `V280`-Pinreihenfolge (`SCL` vor `SDA`) und `ADDR → GND` eingepflegt.
   * [`03_power_distribution.yml`](wiring/03_power_distribution.yml) & [`04_pca9685_servo_distribution.yml`](wiring/04_pca9685_servo_distribution.yml) (`Dist_3V3_GND_Rail` inkl. Einzelreferenz an `Star_Ground_Bus`, einheitliche Platinen-Benennung **Controller / Multiplexer / Wandler**) sowie [`wiring/README.md`](wiring/README.md), [`hardware/README.md`](../README.md) und [`README.md`](../../README.md) aktualisiert.
 - [x] **WireViz-Diagramme (`.svg`, `.png`, `.html`, `.bom.tsv`) neu gebaut** (`cd hardware/electronics/wiring && uv run wireviz ...`).
-- [ ] **Detail-Dokumentation in `docs/` nachziehen:**  
-  * [`docs/hardware/wiring_plan.md`](../../docs/hardware/wiring_plan.md) & [`docs/hardware/testbench_bringup_status.md`](../../docs/hardware/testbench_bringup_status.md) auf den aktuellen Testbench-Stand (Stufe 1–3 abgeschlossen, `V280`, `3,3 V / GND`-Verteilerschiene) aktualisieren.
+- [x] **Detail-Dokumentation in `docs/` nachziehen:**  
+  * [`docs/hardware/wiring_plan.md`](../../docs/hardware/wiring_plan.md) & [`docs/hardware/testbench_bringup_status.md`](../../docs/hardware/testbench_bringup_status.md) auf den aktuellen Testbench- & v2-Stand (Stufe 1–3 abgeschlossen, `V280`, `3,3 V / GND`-Verteilerschiene, Top-Deck Triple-UBEC, Front-Deck BNO085 & 2-DoF Parallel-Kopf) aktualisiert.
 - [x] **Kanal-Mapping `LR` zwischen Doku & Software vereinheitlichen:**  
   * [`config.yaml`](../../software/lasius-core/src/lasius/core/config.yaml) (`left_rear_*` jetzt symmetrisch auf `CH8–10`, identisch zu `right_rear_*` & [`04_pca9685_servo_distribution.yml`](wiring/04_pca9685_servo_distribution.yml)) inklusive Regressionstest `test_servo_channel_symmetry()` in [`test_config.py`](../../software/lasius-core/tests/test_config.py) vereinheitlicht.
 
@@ -118,11 +118,12 @@ Dieses Dokument bündelt den aktuellen Testbench-Stand, Hardware-Befunde, das ve
 ### AP 4: Bench- & Software-Integration (`scripts/bench/` & `lasius-core`)
 - [x] **[`pot_calibration_wizard.py`](../../scripts/bench/pot_calibration_wizard.py) automatisieren:**  
   * Option `--adc` ergänzt: Vollautomatische oder interaktive Einlesung über Multiplexer (`CH0–CH7`) + Wandler (`A0–A3`) mit Sicherheits-Hardlimit ($\le 3{,}3\,\text{V}$), konfigurierbarer Mittelwertbildung (`--samples`), `--auto`-Modus und vollwertigem Mock-Modus (`--mock`) für Offline-Tests.
-- [ ] **Diagnose-Skripte sauber auf `bkhexapod` ausrollen & pflegen:**  
-  * [`test_electronics.py`](../../scripts/bench/test_electronics.py) und aktualisierten Kalibrier-Wizard nach `~/lasius/scripts/` auf den Pi synchronisieren.
-  * Sub-Kanal-Scan in `test_electronics.py` verbessern (bereits auf dem Hauptbus erkannte Adressen wie `0x40` / `0x42` beim Sub-Scan herausfiltern) und Diagnose-Ausgabe ggf. auf 12-/16-Bit-Erkennung anpassen.
-- [ ] **Closed-Loop-Telemetrie in `lasius-core` implementieren:**  
-  * Treiberklasse für **Multiplexer + Wandler** in den HAL integrieren und Gelenkwinkel-Kalibrierungen (`slope`, `intercept`) pro Servo laden.
+- [x] **Sub-Kanal-Scan & 12-/16-Bit-Erkennung in [`test_electronics.py`](../../scripts/bench/test_electronics.py) implementiert:**  
+  * Filtert Hauptbus-Adressen (`0x40`, `0x42`, `0x71`) im Sub-Scan automatisch aus (optional abschaltbar via `--show-primary`) und erkennt automatisch linksbündige 12-Bit-`V280`-Chargen (`2,0 mV / ~0,26°`) vs. echte 16-Bit-ADS1115 (`0,125 mV`).
+- [ ] **Diagnose-Skripte auf `bkhexapod` ausrollen (`deploy_pi.sh`):**  
+  * [`test_electronics.py`](../../scripts/bench/test_electronics.py) und [`pot_calibration_wizard.py`](../../scripts/bench/pot_calibration_wizard.py) nach `~/lasius/scripts/` auf den physischen Pi synchronisieren.
+- [x] **Closed-Loop-Telemetrie & Sensor-HAL in `lasius-core` implementiert:**  
+  * [`RealADS1115MuxDriver`](../../software/lasius-core/src/lasius/core/hardware/adc.py) + Pro-Servo-Kalibrierung (`pot_v_zero`, `pot_v_slope`) sowie Sensor-HAL-Schnittstellen & Parser ([`sensors.py`](../../software/lasius-core/src/lasius/core/hardware/sensors.py): `BNO085UARTRVCDriver`, `INA260`/`PowerMonitorProtocol`, `VL53L5CX`/`ToFSensorProtocol` + Mock-Treiber & Unit-Tests) integriert.
 
 ### AP 5: Geplante Sensor- & Leistungserweiterungen
 - [ ] **9-DOF IMU (`Adafruit BNO085`, PID 4754)** anschließen & testen:
