@@ -2,7 +2,7 @@
 """
 Generate Lasius Hexapod Robot Master Assembly v2 (custom/v2/lasius_assembly.FCStd)
 =================================================================================
-Top-level entry point (L0) for the complete 25-DoF Lasius Hexapod Robot.
+Top-level entry point (L0) for the complete 22-DoF Lasius Hexapod Robot.
 Assembles:
   1. Body & Legs Assembly (custom/v2/body_assembly.FCStd)
      - CFRP Chassis plates (body_bottom & body_top)
@@ -11,10 +11,10 @@ Assembles:
      - Raspberry Pi 4 elevated deck & mount
      - Draped Plexiglas canopy & service cover
      - Six modular 3-DoF legs (monolithic femur + encapsulated ADS1115 & monolithic tibia)
-  2. Head & Mandibles Assembly (custom/v2/head_assembly.FCStd)
-     - Front standoff mount (clamped between chassis plates at X = 128, Y = ±12)
-     - 3-DoF SES neck gimbal (Pan, Tilt, Roll)
-     - 2-DoF Mandibles (Left & Right pincer servos)
+  2. Parallel 2-DoF Bionic Sensor Head Assembly (custom/v2/head_assembly.FCStd)
+     - Front dovetail & M3 standoff carrier (X = 85.7..134.5, Z = 2.02..53.28)
+     - 2x stationary MG90S servos + M2 ball-link pushrods + true-center spherical Cardan joint
+     - Lightweight bionic carapace housing RPi Camera Module 3, Front VL53L5CX ToF & twin eye pods
   3. Rear Petiolus & Gaster Assembly (custom/v2/gaster_assembly.FCStd)
      - Rear standoff mount (clamped between chassis plates at X = -90, -120)
      - 2-DoF SES petiolus gimbal (Pan & Tilt servos)
@@ -78,7 +78,7 @@ doc_gaster = App.openDocument(f"{v2_asm_dir}/gaster_assembly.FCStd")
 
 # Main Assembly Container
 asm_part = doc.addObject("App::Part", "Lasius_Assembly_v2")
-asm_part.Label = "Lasius Hexapod Master Assembly (v2, 25-DoF)"
+asm_part.Label = "Lasius Hexapod Master Assembly (v2, 22-DoF)"
 asm_part.Visibility = True
 for o in asm_part.Origin.OutList:
     if hasattr(o, "Visibility"):
@@ -104,10 +104,10 @@ body_obj = getattr(doc_body, "Body_Assembly_v2", getattr(doc_body, "Body_Assembl
 p_body = App.Placement(App.Vector(0.0, 0.0, 0.0), App.Rotation())
 make_link("Body_Assembly", "1. Body & Legs Assembly (v2, 18-DoF)", body_obj, p_body)
 
-# 2. Head & Mandibles Subsystem (L1)
+# 2. Parallel 2-DoF Bionic Sensor Head Subsystem (L1)
 head_obj = getattr(doc_head, "Head_Assembly", None)
 p_head = App.Placement(App.Vector(0.0, 0.0, 0.0), App.Rotation())
-make_link("Head_Assembly", "2. Head & Mandibles Assembly (v2, 5-DoF)", head_obj, p_head)
+make_link("Head_Assembly", "2. Parallel 2-DoF Bionic Sensor Head Assembly (v2)", head_obj, p_head)
 
 # 3. Rear Petiolus & Gaster Subsystem (L1)
 gaster_obj = getattr(doc_gaster, "Gaster_Assembly", None)

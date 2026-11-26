@@ -5,6 +5,8 @@ Generate COTS Models for Lasius Head Assembly (FreeCAD 1.1+)
 Components:
   1. TowerPro MG90S Micro Servo (cots/servo_mg90s.FCStd)
   2. Raspberry Pi Camera Module 3 (cots/rpi_camera_v3.FCStd)
+  3. MG90S Single-Arm Servo Horn R=15 mm (cots/servo_mg90s_horn.FCStd)
+  4. M2 RC Ball-Link Pushrod L=43.81 mm (cots/pushrod_m2_ball_link.FCStd)
 """
 
 import math
@@ -101,7 +103,98 @@ def build_rpi_camera_v3():
     print(f"✔ Generated RPi Camera Module 3 -> {fcstd_path}")
 
 
-if __name__ == "__main__":
+# -----------------------------------------------------------------------------
+# 3. MG90S Single-Arm Servo Horn (R_HORN = 15.0 mm along +X, hub base at Z = 0)
+# -----------------------------------------------------------------------------
+def build_mg90s_horn():
+    doc_name = "servo_mg90s_horn"
+    try:
+        App.closeDocument(doc_name)
+    except Exception:
+        pass
+    doc = App.newDocument(doc_name)
+    fcstd_path = f"{cots_dir}/servo_mg90s_horn.FCStd"
+
+    # Spline hub: OD 7.2 mm (R=3.6), Z in [0.0, 4.3], bottom spline bore R=2.45 depth 3.85 (clear of 2.40 spline!)
+    hub = Part.makeCylinder(3.60, 4.30, App.Vector(0, 0, 0), App.Vector(0, 0, 1))
+    spline_bore = Part.makeCylinder(2.45, 3.95, App.Vector(0, 0, -0.10), App.Vector(0, 0, 1))
+    screw_bore = Part.makeCylinder(1.05, 5.50, App.Vector(0, 0, -0.50), App.Vector(0, 0, 1))
+
+    # Tapered lever arm extending along +X from X=0 to X=15.0 mm (Z in [1.80, 3.60])
+    r0, r1, L = 3.20, 2.00, 15.00
+    # Tangent trapezoid + end circles
+    ang = math.asin((r0 - r1) / L)
+    p0 = App.Vector(r0 * math.sin(ang), r0 * math.cos(ang), 1.80)
+    p1 = App.Vector(L + r1 * math.sin(ang), r1 * math.cos(ang), 1.80)
+    p2 = App.Vector(L + r1 * math.sin(ang), -r1 * math.cos(ang), 1.80)
+    p3 = App.Vector(r0 * math.sin(ang), -r0 * math.cos(ang), 1.80)
+    poly = Part.Face(Part.makePolygon([p0, p1, p2, p3, p0])).extrude(App.Vector(0, 0, 1.80))
+    tip = Part.makeCylinder(r1, 1.80, App.Vector(L, 0, 1.80), App.Vector(0, 0, 1))
+
+    horn = hub.fuse(poly).fuse(tip).cut(spline_bore).cut(screw_bore)
+    for hx in [9.0, 11.0, 13.0, 15.0]:
+        hb = Part.makeCylinder(0.85, 4.00, App.Vector(hx, 0, 0.50), App.Vector(0, 0, 1))
+        horn = horn.cut(hb)
+
+    horn = horn.removeSplitter()
+
+    obj = doc.addObject("Part::Feature", "Servo_MG90S_Horn")
+    obj.Label = "MG90S Single-Arm Servo Horn R=15 mm (COTS)"
+    obj.Shape = horn
+    doc.recompute()
+    doc.saveAs(fcstd_path)
+    App.closeDocument(doc_name)
+    print(f"✔ Generated MG90S Servo Horn -> {fcstd_path}")
+
+
+# -----------------------------------------------------------------------------
+# 4. M2 RC Ball-Link Pushrod (Ball centers at (0,0,0) and (L_ROD,0,0), eye axis Y)
+# -----------------------------------------------------------------------------
+def build_pushrod_m2_ball_link(l_rod=40.9850):
+    doc_name = "pushrod_m2_ball_link"
+    try:
+        App.closeDocument(doc_name)
+    except Exception:
+        pass
+    doc = App.newDocument(doc_name)
+    fcstd_path = f"{cots_dir}/pushrod_m2_ball_link.FCStd"
+
+    # Central M2 stainless threaded pushrod shaft (Ø2.0 mm, X in [6.0, l_rod - 6.0])
+    shaft = Part.makeCylinder(1.00, l_rod - 12.0, App.Vector(6.00, 0, 0), App.Vector(1, 0, 0))
+
+    # Left & Right Nylon Ball-Link Eye Cups (Ball centers at X=0 and X=l_rod, eye axis along Y)
+    # Compact RC Heli M2 ball link: Eye OD = 4.6 mm (R=2.30), thickness Y in [-1.50, +1.50],
+    # neck collar Ø3.4 mm tapering into M2 rod from X = 2.0 .. 7.0 mm.
+    solids = [shaft]
+    for cx, dir_x in [(0.0, +1.0), (l_rod, -1.0)]:
+        eye = Part.makeCylinder(2.30, 3.00, App.Vector(cx, -1.50, 0), App.Vector(0, 1, 0))
+        neck = Part.makeCylinder(1.70, 5.00, App.Vector(cx + dir_x * 2.00, 0, 0), App.Vector(dir_x, 0, 0))
+        # Brass swivel ball inside eye (Ø3.6 mm sphere clipped to Y in [-1.60, +1.60])
+        ball = Part.makeSphere(1.80, App.Vector(cx, 0, 0))
+        ball_clip = Part.makeBox(6.0, 3.20, 6.0, App.Vector(cx - 3.0, -1.60, -3.0))
+        ball = ball.common(ball_clip)
+        bore = Part.makeCylinder(1.02, 6.00, App.Vector(cx, -3.00, 0), App.Vector(0, 1, 0))
+        cup = eye.fuse(neck).fuse(ball).cut(bore)
+        solids.append(cup)
+
+    pushrod = solids[0]
+    for s in solids[1:]:
+        pushrod = pushrod.fuse(s)
+    pushrod = pushrod.removeSplitter()
+
+    obj = doc.addObject("Part::Feature", "Pushrod_M2_Ball_Link")
+    obj.Label = f"M2 RC Ball-Link Pushrod L={l_rod:.2f} mm (COTS)"
+    obj.Shape = pushrod
+    doc.recompute()
+    doc.saveAs(fcstd_path)
+    App.closeDocument(doc_name)
+    print(f"✔ Generated M2 Ball-Link Pushrod (L={l_rod:.4f} mm) -> {fcstd_path}")
+
+
+if __name__ in ("__main__", "generate_head_cots"):
     build_mg90s()
     build_rpi_camera_v3()
-    sys.exit(0)
+    build_mg90s_horn()
+    build_pushrod_m2_ball_link()
+    if __name__ == "__main__":
+        sys.exit(0)

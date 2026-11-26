@@ -102,7 +102,8 @@ To isolate the 6 leg ADC boards (**ADS1115**) and maintain a clean I2C bus hiera
 - **Fastener Assortment (A2 Stainless Steel, Hex Socket DIN 912):**
   - **M2 × 8 mm / 10 mm / 12 mm** (for STEMMA QT breakouts, Omron D2F-L, and servo horns).
   - **M3 × 8 mm / 12 mm / 16 mm / 20 mm** + nylon lock nuts DIN 985 (for C-brackets, clamshell Tibia, and standoffs).
-- **6× Zylinderstifte Ø3 × 12 mm (A2 Edelstahl, DIN 7 / ISO 2338 / COTS `dowel_pin_3x12.FCStd`):** Gelenkdrehachsen für die Tarsus-Wippe im Tibia-Gabelkopf (beidseitig angefast, trockenlaufende Gleitlagerung im PETG).
+- **7× Zylinderstifte Ø3 × 12 mm (A2 Edelstahl, DIN 7 / ISO 2338 / COTS `dowel_pin_3x12.FCStd`):** 6× Gelenkdrehachsen für die Tarsus-Wippe im Tibia-Gabelkopf + **1× zentrale Yaw-Achse im Kopf-Kreuzgelenk (`head_cardan.FCStd`)**.
+- **2× TowerPro MG90S Micro-Servos (`servo_mg90s.FCStd`) + 2× M2 RC-Kugelkopf-Schubstangen (`pushrod_m2_ball_link.FCStd`, $L \approx 41\,\text{mm}$):** Stationärer paralleler 2-DoF-Kopfantrieb (Pan & Tilt $\pm 35^\circ$, 0 bewegte Servos; an freien PCA9685-Kanälen) mit **Raspberry Pi Camera Module 3** (`rpi_camera_v3.FCStd`) und **VL53L5CX Front-ToF** (`vl53l5cx_board.FCStd`).
 - **Filament:** **PETG (Black & signal accent color)** — mandatory replacement for brittle PLA for all structural leg joints (layer adhesion and high impact toughness under bending).
 
 ---

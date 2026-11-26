@@ -36,6 +36,10 @@ Alle Teile sind parametrisch in FreeCAD konstruiert und für FDM-Drucker mit $25
 | **Chassis** | [**`chassis_battery_hatch.FCStd`**](models/custom/v2/parts/chassis/chassis_battery_hatch.FCStd) | 1 | **PETG** | Graphitschwarz | Flach auf Druckbett. Werkzeuglose Akkuverriegelung. |
 | **Chassis** | [**`chassis_rpi_mount.FCStd`**](models/custom/v2/parts/chassis/chassis_rpi_mount.FCStd) | 1 | **PETG** | Technisches Blau / Schwarz | Flach auf untere Trägerplatte. |
 | **Chassis** | [**`chassis_canopy.FCStd`**](models/custom/v2/parts/chassis/chassis_canopy.FCStd) | 1 | **PETG Transluzent** / PMMA | Eisblau-Transluzent / Anthrazit | Einteiliges Magnet-Canopy mit integrierten RPi-Chevrons, UBEC-Abluftschlitzen & offenen Heck-Schalterbögen; diagonal auf $256 \times 256\,\text{mm}$ Druckbett platzieren. |
+| **Kopf (2-DoF)** | [**`head_mount.FCStd`**](models/custom/v2/parts/head/head_mount.FCStd) | 1 | **PETG** | Anthrazit / Slate Grey | Aufrecht auf $Z = 2{,}02\,\text{mm}$-Bodenfläche; Front-Schwalbenschwanz, 2× M3-Spacer-Pfeiler, 2× stationäre MG90S-Buchten & Kardan-Gabel. |
+| **Kopf (2-DoF)** | [**`head_cardan.FCStd`**](models/custom/v2/parts/head/head_cardan.FCStd) | 1 | **PETG** | Technisches Blau | Flach auf $Z = -3{,}30\,\text{mm}$-Fläche — **100 % stützfrei**; zentrale $\varnothing 3{,}15\,\text{mm}$-Gierbohrung + 2× Ruthex M2 Nick-Taschen. |
+| **Kopf (2-DoF)** | [**`head_platform.FCStd`**](models/custom/v2/parts/head/head_platform.FCStd) | 1 | **PETG** | Anthrazit / Slate Grey | Flach auf Rückwand; trägt RPi Camera v3, VL53L5CX Front-ToF, Pitch-Gabel & 2× Pushrod-Anlenk-Hörner (~16 g). |
+| **Kopf (2-DoF)** | [**`head_cover.FCStd`**](models/custom/v2/parts/head/head_cover.FCStd) | 1 | **PETG** | Graphitschwarz | Aufrecht auf Rückkante ($X = 10\,\text{mm}$); bionischer Visier-Panzer mit Kamera-/ToF-Blenden, Facettenaugen-Pods & $45^\circ$-Chevrons (~16 g). |
 
 ---
 
@@ -47,14 +51,16 @@ Alle Teile sind parametrisch in FreeCAD konstruiert und für FDM-Drucker mit $25
 | **Gegenlager** | Flache Sechskantmutter | **DIN 439 M4** ($SW = 7{,}1\,\text{mm}, H = 2{,}2\,\text{mm}$) | **18×** | Festsitz in Sechskanttaschen der Coxa- & Tibia-Gegenlager |
 | **Gelenkachsen** | Senkkopfschrauben | **DIN 7991 M4 × 20 mm** (A2 Edelstahl) | **18×** | Drehachsen für Chassis-Lager, Hüft- und Kniegelenk |
 | **Passscheiben** | Distanzscheiben | **DIN 988 $\varnothing 8 \times \varnothing 4 \times 0{,}5\,\text{mm}$** | **18×** | Freilauf zwischen Kugellager-Innenring und Gelenkgabel |
-| **Gewindeeinsätze** | Ruthex Heat-Set Inserts | **Ruthex M2** ($L = 4{,}0\,\text{mm}, \varnothing_{\text{Bohr}} = 3{,}2\,\text{mm}$) | **36×** | 24× Femur-Deckel (4/Bein), 12× Tibia-Deckel (2/Bein) |
-| **Gewindeeinsätze** | Ruthex Heat-Set Inserts | **Ruthex M2.5** ($L = 5{,}7\,\text{mm}, \varnothing_{\text{Bohr}} = 4{,}0\,\text{mm}$) | **10×** | 2× Sensor-Hub Carrier Board, 4× RPi-Mount, 4× Servos |
+| **Gewindeeinsätze** | Ruthex Heat-Set Inserts | **Ruthex M2** ($L = 4{,}0\,\text{mm}, \varnothing_{\text{Bohr}} = 3{,}2\,\text{mm}$) | **40×** | 24× Femur-Deckel (4/Bein), 12× Tibia-/Tarsus-Deckel (2/Bein), **4× Parallel-Kopf** (2× `head_cardan` + 2× `head_platform`) |
+| **Gewindeeinsätze** | Ruthex Heat-Set Inserts | **Ruthex M3** ($L = 5{,}7\,\text{mm}, \varnothing_{\text{Bohr}} = 4{,}0\,\text{mm}$) | **4×** | 2× oben + 2× unten in den Front-M3-Pfeilern von `head_mount.FCStd` `(128, ±12 mm)` *(optional +4× für `gaster_power_assembly.FCStd`)* |
 | **Kern-Zuganker** | Rund-Distanzhülse / Gewindemuffe | **M3 × 50 mm** ($\varnothing 5{,}0\,\text{mm}$ Alu / Messing, Innengewinde) | **4×** | Durchgehende Zuganker in den 4 `Chassis_Core`-Eckpfeilern `(±45, ±30 mm)` (`standoff_m3x50_round.FCStd`); ersetzt 8× Ruthex M3 & spannt `Lower` + `Upper` spielfrei zwischen `Body_Bottom` & `Body_Top` |
-| **Deckelschrauben** | Senkkopfschrauben (Innensechskant) | **DIN 7991 M2 × 6 mm** (A2 Edelstahl, SW 1,3) | **36×** | Einheitliche Befestigung für alle 12 Service-Deckel in Ruthex M2 Einsätzen (`24× femur_cover` + `12× tibia_cover`) |
-| **Servohorn** | Linsenkopfschrauben (Innensechskant) | **ISO 7380 M2 × 5 mm** (A2 Edelstahl, $H = 1{,}15\,\text{mm}$) | **72×** | Befestigung aller 18× 25T-Metall-Servohörner ($\varnothing 16\,\text{mm}$ Lochkreis): 24× Coxa-Hörner auf `Body_Top` (flacher Kopf hält $\ge 0{,}57\,\text{mm}$ Abstand zum Canopy) + 48× Hüft-/Knie-Hörner im `Femur` (versenkt in $\varnothing 4{,}3 \times 1{,}5\,\text{mm}$ Taschen) |
-| **Chassis** | Senkkopfschrauben | **DIN 7991 M3 × 8 mm / 12 mm** | **16×** | Verschraubung Belly Pan & Canopy an Chassis Core |
-| **Tarsus-Feder** | Zylindrische Druckfeder | $\varnothing_{\text{a}} = 3{,}5\,\text{mm}, d = 0{,}5\,\text{mm}, L_0 = 10\dots 12\,\text{mm}$ | **6×** | Rückstellfeder für 3D-Exoskelett-Tarsus |
-| **Tarsus-Pivot** | Zylinderstift / Achse (COTS) | [**`dowel_pin_3x12.FCStd`**](models/cots/dowel_pin_3x12.FCStd) — **DIN 7 / ISO 2338 $\varnothing 3{,}0 \times 12{,}0\,\text{mm}$** (A2 Edelstahl, beidseitig angefast) | **6×** | Drehachse des Tarsus im Tibia-Gabelkopf (wartungsfreie Gleitlagerung) |
+| **Deckelschrauben** | Senkkopfschrauben (Innensechskant) | **DIN 7991 M2 × 6 mm** (A2 Edelstahl, SW 1,3) | **40×** | 24× `femur_cover`, 12× `tibia_cover`, **2× `head_cardan` Pitch-Achsen** + **2× `head_cover`** |
+| **Servohorn** | Linsenkopfschrauben (Innensechskant) | **ISO 7380 M2 × 5 mm** (A2 Edelstahl, $H = 1{,}15\,\text{mm}$) | **76×** | 72× für alle 18× Bein-Servohörner + **4× Befestigung der 2× MG90S Kopf-Servos** in `head_mount.FCStd` |
+| **Platinen-Schrauben** | Zylinder-/Linsenkopfschrauben | **M2.5 × 5 mm** (direkt selbstschneidend in $\varnothing 2{,}05\text{--}2{,}10\,\text{mm}$ PETG-Pilotlöcher) | **14×** | 4× Raspberry Pi 4 (`chassis_rpi_mount`), 8× 2× PCA9685 + 2× Sensor-Hub PCB (`chassis_core_upper`) — **keine Ruthex-M2.5-Hülsen nötig** |
+| **Chassis** | Senkkopfschrauben | **DIN 7991 M3 × 8 mm / 12 mm** | **16×** | Verschraubung Belly Pan & Canopy/RPi-Mount an Chassis Core & `head_mount` |
+| **Tarsus-Feder** | Zylindrische Druckfeder (Edelstahl) | [**`compression_spring_4x12.FCStd`**](models/cots/compression_spring_4x12.FCStd) — **$\varnothing_{\text{a}} = 4{,}5\,\text{mm}$ ($\varnothing_{\text{i}} \approx 3{,}3\,\text{mm}$), $d \approx 0{,}5\text{--}0{,}6\,\text{mm}$, $L_0 = 12\,\text{mm}$** | **6×** | Druckfeder für 3D-Exoskelett-Tarsus (geführt auf $\varnothing 2{,}90\,\text{mm}$ Zentrierdorn, Einbaulänge `11,30 mm`, $> 1{,}85\,\text{N}$ Rückstellkraft) |
+| **Tarsus- & Kopf-Pivot** | Zylinderstift / Achse (COTS) | [**`dowel_pin_3x12.FCStd`**](models/cots/dowel_pin_3x12.FCStd) — **DIN 7 / ISO 2338 $\varnothing 3{,}0 \times 12{,}0\,\text{mm}$** (A2 Edelstahl, beidseitig angefast) | **7×** | 6× Drehachse des Tarsus im Tibia-Gabelkopf + **1× zentrale Yaw-Achse im Kopf-Kreuzgelenk** (`head_cardan.FCStd`) |
+| **Kopf-Koppelstangen** | M2 RC-Kugelkopf-Schubstange (COTS) | [**`pushrod_m2_ball_link.FCStd`**](models/cots/pushrod_m2_ball_link.FCStd) — **M2 Gewindestange + Kugelpfannen ($L \approx 41{,}0\,\text{mm}$ einstellbar)** | **2×** | Spielfreie parallele 2-DoF-Anlenkung zwischen den stationären MG90S-Hörnern (`R = 15 mm`) und `head_platform.FCStd` |
 | **Canopy-Magnete** | Neodym-Scheibenmagnet | **$\varnothing 5{,}0 \times 2{,}0\,\text{mm}$** (N52) | **8×** | 4× in `chassis_rpi_mount`-Pfeilern + 4× in `chassis_canopy`-Zentrierbechern (`±48, ±36 mm`, geringes Streufeld zum BNO085) |
 | **IMU-Befestigung** | Nylon- / Messing-Schrauben | **M2.5 × 5 mm** (nichtmagnetisch!) | **4×** | Befestigung des Adafruit BNO085 auf dem Front-Deck von `chassis_rpi_mount` |
 
@@ -64,7 +70,8 @@ Alle Teile sind parametrisch in FreeCAD konstruiert und für FDM-Drucker mit $25
 
 | Komponente | Typ / Modell | Stk. | Bemerkung |
 | :--- | :--- | :---: | :--- |
-| **Servo-Aktuatoren** | **Torcster / Reely NR-645 MG BB** | **18×** | Metallgetriebe, kugelgelagert; 150 mm weiße Poti-Litze herausgeführt |
+| **Servo-Aktuatoren (Beine)** | **Torcster / Reely NR-645 MG BB** | **18×** | Metallgetriebe, kugelgelagert; 150 mm weiße Poti-Litze herausgeführt |
+| **Servo-Aktuatoren (Kopf)** | **TowerPro MG90S** (`servo_mg90s.FCStd`, 13 g Metallgetriebe) | **2×** | Stationär im `head_mount.FCStd` für parallelen 2-DoF-Sensorkopf (an freien PCA9685-Kanälen) |
 | **Bein-Wandler** | **ADS1115 (V280)** Breakout | **6×** | 16-Bit I²C ADC Modul im Femur (`SCL` vor `SDA`, Adresse `0x48`) |
 | **Filterkondensatoren** | **100 nF MLCC Keramikkondensator** (50V, Code 104) | **24×** | Je 4× pro Wandler direkt an Stiftleiste gelötet (A0..A3 nach GND) |
 | **Pull-Up-Widerstand** | **10 kΩ** Metallschicht 0,25W | **6×** | Je 1× pro Wandler zwischen A3 und VDD (Fußschalter) |
@@ -73,7 +80,8 @@ Alle Teile sind parametrisch in FreeCAD konstruiert und für FDM-Drucker mit $25
 | **PWM-Servotreiber** | **PCA9685** 16-Kanal I²C Breakout | **2×** | Daisy-Chain: Links `0x40`, Rechts `0x42` |
 | **I²C-Multiplexer** | **TCA9548A / PW548A** (violett) | **1×** | Adresse `0x71` (`A0 → 3,3V`), trennt alle 6 Bein-Wandler |
 | **Zentralplatine** | [**Sensor-Hub Carrier PCB**](../electronics/pcb/sensor_hub/README.md) | **1×** | Maßgeschneidertes KiCad-Board ($54 \times 22\,\text{mm}$) auf Zwischenboden |
-| **Bodensensor** | **VL53L5CX** Time-of-Flight Distanzsensor | **1×** | 9-Zonen Laser-Terrain-Scanner in der geschlossenen Heck-Brücke der Belly Pan ($X = -58{,}5\,\text{mm}$) |
+| **ToF-Sensoren (Boden + Kopf)** | **VL53L5CX** Time-of-Flight Distanzsensor | **2×** | 1× abwärts gerichtet in `chassis_belly_pan.FCStd` ($X = -58{,}5\,\text{mm}$) + **1× vorwärts gerichtet im Sensorkopf** (`head_platform.FCStd`) |
+| **Kopf-Kamera** | **Raspberry Pi Camera Module 3** (`rpi_camera_v3.FCStd`) | **1×** | Sony IMX708 Autofokus-Kamera im oberen Visier des 2-DoF Parallel-Kopfes (CSI-Flachband durch geschützten Hals-Kanal) |
 | **Lagesensor (IMU)** | **Adafruit BNO085** 9-DOF IMU (PID 4754) | **1×** | Front-Deck von `chassis_rpi_mount.FCStd` ($X = +75{,}0, Y = 0{,}0, Z = 58{,}32\,\text{mm}$); nichtmagnetische M2.5-Schrauben |
 | **Spannungsversorgung** | **2× Hobbywing BEC 10A V2-Car (`HW30603003`, 6,0 V)** + 5,1 V Pi-Buck (`ubec_3a`) | **2× + 1×** | Alle 3 UBECs thermisch isoliert auf `Body_Top` / `chassis_rpi_mount.FCStd` (2× Hobbywing Heck-Deck `X = -79,5, Y = ±21,5`, `ubec_3a` portfreie `+Y`-Flanke `X = 0, Y = +39,5`) oder alternativ im 2-DoF Power-Gaster (`gaster_power_assembly.FCStd`, Option G2) |
 | **Bedienfeld & Schutz** | **Interner Akku-XT60** + **25 A Mini-ATM Sicherung** + **2× Mini-Schiebeschalter** | **1× / 1× / 2×** | Komplettes Heck-Bedienfeld auf `chassis_rpi_mount.FCStd` (`2×` Schalter in 45°-Fasen bei `X = -116, Y = ±14,5`, `25 A` Sicherung mittig dazwischen bei `X = -105, Y = 0` durch Canopy-Öffnung ziehbar; über Heck-Spacer verschraubt) + XT60 unter Akkuklappe; Option G2: Power-Gaster-Flanken |
@@ -184,7 +192,7 @@ Modularer Klemm-Entwicklungsständer (`H = 235 mm` Bauchhöhe über der Tischpla
 ## 4. Nachbearbeitung & Werkstatt-Montage
 
 ### 4.1 Einschmelzen der Ruthex Heat-Set Gewindeeinsätze
-1. **Werkzeug:** Lötkolben mit spezieller planer Einschmelzspitze für M2 / M2.5 / M3 (z. B. Ruthex Lötspitzenset).
+1. **Werkzeug:** Lötkolben mit spezieller planer Einschmelzspitze für M2 / M3 (z. B. Ruthex Lötspitzenset).
 2. **Temperatur:** Lötkolben auf **$220\text{--}230\,^\circ\text{C}$** für PETG ($260\,^\circ\text{C}$ für PA-CF) einstellen.
 3. **Durchführung:**
    * Gewindeeinsatz senkrecht in die gedruckte $8^\circ$-Einführschräge einsetzen.

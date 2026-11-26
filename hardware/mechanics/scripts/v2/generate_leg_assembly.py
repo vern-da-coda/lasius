@@ -60,6 +60,7 @@ doc_s = App.openDocument(f"{hw_dir}/screw_m4_countersunk.FCStd")
 doc_s_m2 = App.openDocument(f"{hw_dir}/screw_m2_button_head.FCStd")
 doc_s_m2_cs = App.openDocument(f"{hw_dir}/screw_m2_countersunk.FCStd")
 doc_ins_m2 = App.openDocument(f"{hw_dir}/insert_m2_ruthex.FCStd")
+doc_dowel = App.openDocument(f"{hw_dir}/dowel_pin_3x12.FCStd")
 
 # Rotations
 rot_c = App.Rotation(App.Vector(0, 0, 1), 180.0).multiply(App.Rotation(App.Vector(1, 0, 0), 90.0))
@@ -464,16 +465,15 @@ make_link(
     scale=App.Vector(1.0, 1.0, -1.0),
 )
 
-# 7. Encapsulated Ø3x8.8 mm Hardened Stainless Dowel Pin (ISO 2338) Right
-pin_obj_r = doc_r.addObject("Part::Feature", "Pivot_Pin_Assembly")
-pin_obj_r.Label = "7. Encapsulated Ø3x8.8 mm Hardened Dowel Pin (ISO 2338) Right"
-pin_obj_r.Shape = Part.makeCylinder(1.50, 8.80, App.Vector(gt.TARSUS_PIV_X, gt.TARSUS_PIV_Y, -13.42), App.Vector(0, 0, 1))
-tibia_part_r.addObject(pin_obj_r)
-if hasattr(pin_obj_r, "ViewObject") and pin_obj_r.ViewObject:
-    try:
-        pin_obj_r.ViewObject.ShapeColor = (0.85, 0.70, 0.20)
-    except Exception:
-        pass
+# 7. Encapsulated Ø3x12 mm Hardened Stainless Dowel Pin (DIN 7 / ISO 2338, COTS App::Link) Right
+make_link(
+    doc_r,
+    tibia_part_r,
+    "Pivot_Pin_Dowel",
+    "Zylinderstift_3x12",
+    doc_dowel.Dowel_Pin_3x12,
+    App.Placement(App.Vector(gt.TARSUS_PIV_X, gt.TARSUS_PIV_Y, -9.02), App.Rotation()),
+)
 
 # 8. 2x Ruthex M2 Brass Heat-Set Inserts + 2x DIN 7991 M2 x 6 mm Countersunk Cover Screws Right (Unmirrored COTS!)
 grp_t_ins_r = doc_r.addObject("App::Part", "Tibia_Cover_Inserts")

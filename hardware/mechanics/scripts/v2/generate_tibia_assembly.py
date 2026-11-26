@@ -109,6 +109,7 @@ doc_servo = App.openDocument(f"{cots_dir}/servo_nr645.FCStd")
 doc_tarsus_asm = App.openDocument(f"{v2_dir}/tarsus_assembly.FCStd")
 doc_ins_m2 = App.openDocument(f"{cots_dir}/insert_m2_ruthex.FCStd")
 doc_scr_m2 = App.openDocument(f"{cots_dir}/screw_m2_countersunk.FCStd")
+doc_dowel = App.openDocument(f"{cots_dir}/dowel_pin_3x12.FCStd")
 
 asm_part = doc_asm.addObject("App::Part", "Tibia_Assembly")
 asm_part.Label = "Lasius Tibia v2 Subsystem Assembly (Option 2c-V2 Bionic NC Foot Sensor)"
@@ -163,17 +164,13 @@ make_link("Compression_Spring", "5. Stainless Preload Spring (Da=4.5, L=12 mm, r
 # 6. Removable Form-Fit Service Cover
 make_link("Tibia_Cover", "6. Removable Service Cover (Cheek B Form-Fit, PETG)", obj_cover, App.Placement(), COLOR_COVER)
 
-# 7. Encapsulated Ø3x8.8 mm Hardened Stainless Dowel Pin (ISO 2338, Z in [4.62, 13.42])
-pin_obj = doc_asm.addObject("Part::Feature", "Pivot_Pin_Assembly")
-pin_obj.Label = "7. Encapsulated Ø3x8.8 mm Hardened Dowel Pin (ISO 2338)"
-pin_shaft = Part.makeCylinder(1.50, 8.80, App.Vector(gt.TARSUS_PIV_X, gt.TARSUS_PIV_Y, 4.62), App.Vector(0, 0, 1))
-pin_obj.Shape = pin_shaft
-asm_part.addObject(pin_obj)
-if hasattr(pin_obj, "ViewObject") and pin_obj.ViewObject:
-    try:
-        pin_obj.ViewObject.ShapeColor = COLOR_BRASS
-    except Exception:
-        pass
+# 7. Encapsulated Ø3x12 mm Hardened Stainless Dowel Pin (DIN 7 / ISO 2338, COTS App::Link)
+make_link(
+    "Pivot_Pin_Dowel",
+    "Zylinderstift_3x12",
+    doc_dowel.Dowel_Pin_3x12,
+    App.Placement(App.Vector(gt.TARSUS_PIV_X, gt.TARSUS_PIV_Y, 9.02), App.Rotation()),
+)
 
 # 8. 2x Ruthex M2 Brass Heat-Set Inserts + 2x DIN 7991 M2 x 6 mm Flush Countersunk Screws (COTS App::Link)
 grp_ins = doc_asm.addObject("App::Part", "Cover_Inserts")
