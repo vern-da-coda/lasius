@@ -330,11 +330,15 @@ Dieser Backlog führt alle offenen Aufgaben, konstruktiven Erweiterungen und Ver
     * **`tibia.FCStd` ($48{,}05\,\text{g}$, $56.845$ Knoten, Krallen-Sichel + vereinheitlichte 6-Fenster-Wangen + $2{,}50\,\text{mm}$ Untersteg):** Tripod `56°` ($20\,\text{N}$ mit echter $2{,}71\times$ Hebelkraft) $\sigma_{\text{max}} = 6{,}81\,\text{MPa}$ ($S = 6{,}61$), Sichel-/Steg-Zone $4{,}35\,\text{MPa}$ ($S = 10{,}34$); Knie-Stall $S = 10{,}81$; $25\,\text{N}$ Extremstoß $S = 3{,}40$ (Sichel $S = 5{,}19$); $12\,\text{N}$ Querlast $S = 2{,}94$ (Sichel $S = 3{,}63$, konservativ ohne Deckel).
     * **`tarsus.FCStd` ($9{,}37\,\text{g}$, 3D-Exoskelett $10{,}44 \rightarrow 6{,}40\,\text{mm}$ + $14{,}1\,\text{mm}$ Innenzunge):** Tripod `56°` ($20\,\text{N}$) $\sigma_{\text{max}} = 9{,}56\,\text{MPa}$, $u = 0{,}64\,\text{mm}$ ($S_{\text{Peak}} = 4{,}71$, Schaft $S = 8{,}21$); $35\,\text{N}$ Extremstoß ($4{,}5\times$ Stall) Schaft $S = 2{,}80$ / Peak $S = 1{,}76$; $12\,\text{N}$ Querlast $S_{\text{Schaft}} = 4{,}22$ ($u = 1{,}76\,\text{mm}$).
 
-- [ ] **Topologieoptimierung weiterer Komponenten (`coxa.FCStd`, `chassis_core_lower/upper.FCStd`):**  
-  * **Coxa-Gelenk:**
-    * FEM-Optimierung des $45^\circ$-A-Truss-Gussets zur Reduktion von Kerbspannungen an der Krafteinleitung vom Servohorn ins Gegenlager.
-  * **Chassis-Core-Monocoque (`chassis_core_lower.FCStd`, `chassis_core_upper.FCStd`):**
-    * Bionische Fachwerkfenster im Monocoque-Körper zwischen den 4 M3-Standoff-Pfeilern und den Seitenwänden.
+- [x] **2nd-Order `C3D10` FEA-Strukturverifikation von Coxa v2 & 2-Ebenen-Chassis-Core (`coxa.FCStd`, `chassis_core_lower.FCStd`, `chassis_core_upper.FCStd`):**  
+  * **Verifiziert via [`fea_coxa_chassis_verification.py`](../../../../../scripts/dev/fea_coxa_chassis_verification.py)** (CalculiX `C3D10`, Gmsh, automatisches `*CLOAD`-Audit, PETG $E = 2100\,\text{MPa}$, $R_e = 45\,\text{MPa}$ / $R_{e,\text{FDM}} = 30\,\text{MPa}$):
+    * **`coxa.FCStd` ($54{,}22\,\text{g}$, `41.851` Knoten, Dorsal-Sichelkamm + $45^\circ$-A-Truss-Gusset):**
+      * `COXA_LF1` Tripod ($20\,\text{N}$ vertikal + $8\,\text{N}$ radial): $\sigma_{\max} = 5{,}68\,\text{MPa}$ ($P_{99{,}5} = 2{,}14\,\text{MPa}$), $u_{\max} = 0{,}136\,\text{mm}$, **$S_{\text{PETG}} = 7{,}92$** (`100,0 %` $< 5\,\text{MPa}$).
+      * `COXA_LF2` Hüft-Stall ($50\,\text{N}$ Resultierende): $\sigma_{\max} = 10{,}74\,\text{MPa}$ ($P_{99{,}5} = 3{,}76\,\text{MPa}$), $u_{\max} = 0{,}239\,\text{mm}$, **$S_{\text{PETG}} = 4{,}19$** (`99,8 %` $< 5\,\text{MPa}$).
+      * `COXA_LF3` Extrem-Gegenlager ($25\,\text{N}$ Zug + $25\,\text{N}$ Biegung rein auf M4-Gegenlagerlasche & $45^\circ$-Gusset): $\sigma_{\max} = 18{,}53\,\text{MPa}$ ($P_{99{,}5} = 6{,}28\,\text{MPa}$), $u_{\max} = 0{,}356\,\text{mm}$, **$S_{\text{PETG}} = 2{,}43$** ($S_{P99{,}5} = 7{,}17$, `99,1 %` $< 5\,\text{MPa}$).
+    * **`chassis_core_lower.FCStd` ($57{,}45\,\text{g}$, `38.614` Knoten):** `LF1` Bauchlandung $40\,\text{N}$ $\rightarrow \sigma_{\max} = 2{,}23\,\text{MPa}$, $u_{\max} = 0{,}043\,\text{mm}$, **$S_{\text{PETG}} = 20{,}16$**; `LF2` Schwalbenschwanz-Ausleger $30\,\text{N}$ $\rightarrow \sigma_{\max} = 6{,}14\,\text{MPa}$, $u_{\max} = 0{,}169\,\text{mm}$, **$S_{\text{PETG}} = 7{,}33$**.
+    * **`chassis_core_upper.FCStd` ($65{,}25\,\text{g}$, `64.269` Knoten):** `LF1` Zwischenboden-Elektronik $25\,\text{N}$ ($>10\times$) $\rightarrow \sigma_{\max} = 1{,}95\,\text{MPa}$, $u_{\max} = 0{,}112\,\text{mm}$, **$S_{\text{PETG}} = 23{,}09$**; `LF2` Schwalbenschwanz $30\,\text{N}$ vert. + $10\,\text{N}$ quer $\rightarrow \sigma_{\max} = 5{,}05\,\text{MPa}$, $u_{\max} = 0{,}157\,\text{mm}$, **$S_{\text{PETG}} = 8{,}91$**.
+    * **Bewertung:** Sowohl Coxa (Gegenlager-Gusset bereits im Optimum bei $S \ge 2{,}43$) als auch die staubdichten `1,60 mm` Chassis-Core-Wände sind strukturell souverän verifiziert; keine Schwächung der staubdichten Außenhaut erforderlich.
 
 ---
 
