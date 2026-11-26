@@ -578,7 +578,7 @@ class SimHttpServer:
                 pass
 
 
-def run_pybullet(gui=False, steps=240, walk=False, enable_ws=False, ws_port=8765, dashboard=True, http_port=8000):
+def run_pybullet(gui=False, steps=240, walk=False, enable_ws=False, ws_port=8765, dashboard=True, http_port=8000, gait_engine="omni"):
     try:
         import pybullet as p
         import pybullet_data
@@ -588,6 +588,7 @@ def run_pybullet(gui=False, steps=240, walk=False, enable_ws=False, ws_port=8765
 
     try:
         from lasius.core.motion.gait import OmniGait, GaitType, LegIdentifier
+        from lasius.core.motion.walknet import LegSensoryFeedback, WalknetGait
         from lasius.core.motion.kinematics import calculate_leg_ik
     except ImportError as e:
         print(f"❌ Error importing lasius-core motion modules: {e}")
@@ -644,16 +645,26 @@ def run_pybullet(gui=False, steps=240, walk=False, enable_ws=False, ws_port=8765
 
     print(f"Found {len(joint_indices)} revolute joints: {list(joint_indices.keys())}")
 
-    # Set up OmniGait engine (50 Hz gait update rate)
+    # Set up Gait engine (50 Hz update rate: OmniGait or decentralized WalknetGait)
     init_walk_y = 1.0 if walk else 0.0
-    gait = OmniGait(
-        gait_type=GaitType.TRIPOD,
-        walk_y=init_walk_y,
-        step_length=40.0,
-        step_height=28.0,
-        gait_speed=1.0,
-        harmonic_stance=False,
-    )
+    if gait_engine == "walknet":
+        gait = WalknetGait(
+            walk_y=init_walk_y,
+            step_length=40.0,
+            step_height=28.0,
+            gait_speed=1.0,
+            use_foot_switches=True,
+        )
+        print("🐜 Gait Engine: Decentralized Walknet (Cruse Rules 1–4 + Elevator & Searching Reflexes)")
+    else:
+        gait = OmniGait(
+            gait_type=GaitType.TRIPOD,
+            walk_y=init_walk_y,
+            step_length=40.0,
+            step_height=28.0,
+            gait_speed=1.0,
+            harmonic_stance=False,
+        )
 
     leg_map = {
         LegIdentifier.LEFT_FRONT: "left_front",
@@ -663,6 +674,32 @@ def run_pybullet(gui=False, steps=240, walk=False, enable_ws=False, ws_port=8765
         LegIdentifier.RIGHT_MIDDLE: "right_middle",
         LegIdentifier.RIGHT_REAR: "right_rear",
     }
+    foot_link_map = {}
+    short_to_leg = {
+        "lf": LegIdentifier.LEFT_FRONT,
+        "lm": LegIdentifier.LEFT_MIDDLE,
+        "lr": LegIdentifier.LEFT_REAR,
+        "rf": LegIdentifier.RIGHT_FRONT,
+        "rm": LegIdentifier.RIGHT_MIDDLE,
+        "rr": LegIdentifier.RIGHT_REAR,
+    }
+    for i in range(num_joints):
+        link_name = p.getJointInfo(robot_id, i)[12].decode("utf-8")
+        if link_name.startswith("link_") and link_name.endswith("_foot"):
+            short = link_name.split("_")[1]
+            if short in short_to_leg:
+                foot_link_map[i] = short_to_leg[short]
+
+    def _feed_walknet_contacts():
+        if not hasattr(gait, "update_feedback"):
+            return
+        contacts = {lid: False for lid in LegIdentifier}
+        for cp in p.getContactPoints(bodyA=robot_id, bodyB=plane_id):
+            if cp[3] in foot_link_map and cp[9] > 0.4:
+                contacts[foot_link_map[cp[3]]] = True
+        gait.update_feedback({
+            lid: LegSensoryFeedback(foot_contact=contacts[lid]) for lid in LegIdentifier
+        })
 
     # Initialize robot in neutral standing stance
     coords_dict = gait.tick()
@@ -769,6 +806,7 @@ def run_pybullet(gui=False, steps=240, walk=False, enable_ws=False, ws_port=8765
                         print("⚙️ Gangart: Wave Gait (statuarisch, 1 Bein gleichzeitig)")
 
                 # 3. Compute next foot coordinates via Gait engine
+                _feed_walknet_contacts()
                 coords_dict = gait.tick()
                 angles_dict = {}
                 for leg_id, (x, y, z) in coords_dict.items():
@@ -823,7 +861,7 @@ def run_pybullet(gui=False, steps=240, walk=False, enable_ws=False, ws_port=8765
                                 "connected": True,
                                 "is_paused": ws_server.is_paused,
                                 "locomotion_active": bool(gait.walk_x or gait.walk_y or gait.turn_z),
-                                "gait_type": gait.gait_type.value,
+                                "gait_type": gait.gait_type.value if hasattr(gait, "gait_type") else "walknet",
                                 "gait_speed": gait.gait_speed,
                                 "step_height": gait.step_height,
                                 "step_length": gait.step_length,
@@ -873,6 +911,7 @@ def run_pybullet(gui=False, steps=240, walk=False, enable_ws=False, ws_port=8765
                 if target_gait_str in [g.value for g in GaitType]:
                     gait.gait_type = GaitType(target_gait_str)
 
+            _feed_walknet_contacts()
             coords_dict = gait.tick()
             angles_dict = {}
             for leg_id, (x, y, z) in coords_dict.items():
@@ -924,7 +963,7 @@ def run_pybullet(gui=False, steps=240, walk=False, enable_ws=False, ws_port=8765
                             "connected": True,
                             "is_paused": ws_server.is_paused,
                             "locomotion_active": bool(gait.walk_x or gait.walk_y or gait.turn_z),
-                            "gait_type": gait.gait_type.value,
+                            "gait_type": gait.gait_type.value if hasattr(gait, "gait_type") else "walknet",
                             "gait_speed": gait.gait_speed,
                             "step_height": gait.step_height,
                             "step_length": gait.step_length,
@@ -990,6 +1029,7 @@ def main():
     parser.add_argument("--no-dashboard", dest="dashboard", action="store_false", help="Disable HTTP web dashboard server")
     parser.add_argument("--http-port", type=int, default=8000, help="HTTP port for Dashboard (default: 8000)")
     parser.add_argument("--steps", type=int, default=240, help="Number of simulation steps")
+    parser.add_argument("--gait-engine", choices=["omni", "walknet"], default="omni", help="Gait engine (omni or decentralized walknet)")
     parser.add_argument("--engine", choices=["pybullet", "mujoco"], default="pybullet", help="Physics engine")
     args = parser.parse_args()
 
@@ -1006,7 +1046,8 @@ def main():
             enable_ws=enable_ws,
             ws_port=args.ws_port,
             dashboard=args.dashboard,
-            http_port=args.http_port
+            http_port=args.http_port,
+            gait_engine=args.gait_engine,
         )
 
 

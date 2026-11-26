@@ -32,6 +32,7 @@ from stable_baselines3 import PPO
 from stable_baselines3.common.vec_env import DummyVecEnv, VecNormalize
 
 from lasius.core.sim.gym_env import LasiusGymEnv
+from lasius.core.sim.policy import AdaptiveGateConfig, ResidualPolicyRunner
 
 
 def find_vecnormalize_path(model_path: Path) -> Optional[Path]:
@@ -60,7 +61,7 @@ def load_training_meta(model_path: Path) -> Dict[str, Any]:
 
 
 def run_episode(
-    model: Optional[PPO],
+    model: Optional[Any],
     vecnorm_path: Optional[Path],
     action_mode: str,
     terrain: str,
@@ -76,6 +77,8 @@ def run_episode(
     verbose: bool = True,
 ) -> Dict[str, Any]:
     """Executes one evaluation episode and returns structured telemetry metrics."""
+    is_numpy_runner = isinstance(model, ResidualPolicyRunner)
+
     def _make():
         return LasiusGymEnv(
             render_mode=None if headless else "human",
@@ -91,7 +94,7 @@ def run_episode(
         )
 
     venv = DummyVecEnv([_make])
-    if model is not None and vecnorm_path is not None:
+    if model is not None and not is_numpy_runner and vecnorm_path is not None:
         venv = VecNormalize.load(str(vecnorm_path), venv)
         venv.training = False
         venv.norm_reward = False
@@ -101,7 +104,10 @@ def run_episode(
     obs = venv.reset()
     # Re-apply deterministic reset with requested seed so Baseline and PPO see identical terrain
     raw_obs, _ = venv.envs[0].reset(seed=seed)
-    if isinstance(venv, VecNormalize):
+    if is_numpy_runner:
+        model.reset()
+        obs = raw_obs[None, :]
+    elif isinstance(venv, VecNormalize):
         obs = venv.normalize_obs(raw_obs[None, :])
     else:
         obs = raw_obs[None, :]
@@ -119,7 +125,10 @@ def run_episode(
 
     try:
         for step in range(1, max_steps + 1):
-            if model is not None:
+            if is_numpy_runner:
+                act = model.predict_action(obs[0], normalize=True)
+                action = act[None, :]
+            elif model is not None:
                 action, _ = model.predict(obs, deterministic=True)
             else:
                 action = np.zeros((1, 18), dtype=np.float32)
@@ -292,11 +301,12 @@ def main() -> None:
     parser.add_argument("--pushes", action="store_true", help="Enable lateral push perturbations during evaluation")
     parser.add_argument("--ideal-servos", action="store_true", help="Disable realistic NR-645 servo lag/torque model")
     parser.add_argument("--use-tof-grid", action="store_true", help="Include 3x3 belly ToF grid (+9 obs dims)")
+    parser.add_argument("--adaptive-gate", action="store_true", help="Enable IMU tilt/rate adaptive residual gate (damps flat-ground jitter)")
     parser.add_argument("--headless", action="store_true", help="Run without PyBullet 3D GUI")
     parser.add_argument("--seed", type=int, default=42)
     args = parser.parse_args()
 
-    model: Optional[PPO] = None
+    model: Optional[Any] = None
     vecnorm_path: Optional[Path] = None
     meta: Dict[str, Any] = {}
 
@@ -322,7 +332,18 @@ def main() -> None:
             print(f"📦 Lade PPO-Modell: {model_path}")
             if vecnorm_path:
                 print(f"📊 Lade VecNormalize: {vecnorm_path}")
-            model = PPO.load(str(model_path))
+            if model_path.suffix.lower() == ".npz" or args.adaptive_gate:
+                gate_cfg = AdaptiveGateConfig(enabled=bool(args.adaptive_gate))
+                model = ResidualPolicyRunner.load(
+                    model_path,
+                    vecnorm_path=vecnorm_path,
+                    gate_config=gate_cfg,
+                )
+                meta = {**meta, **model.metadata}
+                if args.adaptive_gate:
+                    print("🎛️  Adaptive Terrain Gate aktiviert (flache Boden-Dämpfung + volle Hang/Stufen-Kompensation)")
+            else:
+                model = PPO.load(str(model_path))
 
     action_mode = args.action_mode or meta.get("action_mode", "residual")
     realistic_servos = (not args.ideal_servos) if args.ideal_servos else bool(meta.get("realistic_servos", True))

@@ -53,29 +53,29 @@ Im Fokus steht die **biomimetische Übertragung von Insekten-Steuerungsprinzipie
 ## 3. Software-Backlog: Biomimetische Architektur-Module
 
 ### AP 1: Dezentrale Ganglien-Architektur & Cruse-Kopplungsregeln (Walknet-Ansatz)
-- [ ] **Semi-autonome Bein-Controller (`LegController` / Ganglion-Klasse):**  
+- [x] **Semi-autonome Bein-Controller (`LegGanglion` / `WalknetGait` in [`walknet.py`](lasius-core/src/lasius/core/motion/walknet.py)):**  
   * Kapselung jedes Beins in eine eigene Zustandsmaschine mit lokalen Phasen:
     * `STANCE` (Stützphase / Kraftübertragung auf den Boden)
     * `SWING` (Schwingphase / Vorholen des Beins)
     * `SEARCH` (Suchbewegung nach festem Bodenkontakt)
     * `RECOVERY` (Ausweich-/Hebereflex bei Kollision)
-- [ ] **Lokale Koordinationsregeln (Cruse-Regeln 1–6):**  
-  * *Regel 1 (Inhibierung):* Ein Bein beginnt die Schwingphase erst, wenn das davor liegende Bein sicheren Bodenkontakt hat.
-  * *Regel 2 (Erleichterung):* Setzt ein vorderes Bein auf, regt dies das nachfolgende Bein zum Abheben an (metachrone Welle / Wave Gait bei langsamer Gangart).
-  * *Regel 3 (Positionstransfer):* Der Aufsetzpunkt eines Vorderbeins dient dem Folgebein als sicherer Ziel-Trittpunkt.
-  * *Regel 4 (Lastverteilung):* Höhere Gegenkraft an einem Stützbein verzögert das Abheben anderer Beine (automatische Stabilitätsreserve).
+- [x] **Lokale Koordinationsregeln (Cruse-Regeln 1–4) & Support-Polygon-Invariante:**  
+  * *Regel 1 (Inhibierung):* Ipsilaterales Nachbarbein inhibiert Abheben solange Vorgänger nicht trägt (`min_stance_legs >= 3`).
+  * *Regel 2 (Erleichterung):* Aufsetzen des vorderen Nachbarn verschiebt die PEP-Schwelle nach vorn (emergente metachrone Welle / Ripple / Tripod je nach Geschwindigkeit).
+  * *Regel 3 (Positionstransfer):* Folgebein blendet den AEP-Zielpunkt anteilig auf den realen Aufsetzpunkt des Vorderbeins.
+  * *Regel 4 (Lastverteilung):* Hohe Last (`load_estimate`) an benachbarten Stützbeinen verzögert das Abheben.
 
 ---
 
 ### AP 2: Lokale sensorische Reflexschleifen (Closed-Loop Telemetrie)
-- [ ] **Elevator-Reflex (Hindernis-Ausweichreflex in der Schwingphase):**  
-  * *Trigger:* Unerwarteter Widerstand an Tibia oder Femur während `SWING` (Erkennung über Schleppfehler zwischen Soll-PWM und ADC-Potentiometerwert am ADS1115).
-  * *Reaktion:* Sofortiger lokaler Abbruch der Vorwärtsbewegung, Anheben des Kniegelenks (Femur hoch) um $15\text{--}25\,\text{mm}$ und erneutes Vorschwingen über das Hindernis hinweg.
-- [ ] **Searching Reflex (Bodensuch-Reflex in der Landephase):**  
-  * *Trigger:* Erreichen der Soll-Touchdown-Position ohne geschlossenen Fuß-Mikroschalter (oder ohne sprunghaften Kraftanstieg).
-  * *Reaktion:* Verlängerung der Landephase nach unten ($Z$-Richtung) mit verringerter Geschwindigkeit, bis fester Kontakt gemeldet wird oder der maximale mechanische Hub erreicht ist.
-- [ ] **Stance-Load Balancing (Aktive Lastanpassung):**  
-  * Drehmoment-Unterstützung an unebenen Kanten basierend auf Rückmeldung der analogen Servopotentiometer.
+- [x] **Elevator-Reflex (Hindernis-Ausweichreflex in der Schwingphase — [`walknet.py`](lasius-core/src/lasius/core/motion/walknet.py)):**  
+  * *Trigger:* `is_stalled` oder Schleppfehler `|tracking_error_deg| >= 8,0°` während `SWING`.
+  * *Reaktion:* Sofortiger Wechsel in `RECOVERY`, kurzes Zurückziehen und Anheben um `+22 mm` über das Hindernis.
+- [x] **Searching Reflex (Bodensuch-Reflex in der Landephase — [`walknet.py`](lasius-core/src/lasius/core/motion/walknet.py)):**  
+  * *Trigger:* Erreichen des Schwing-Endes ohne geschlossenen Fuß-Mikroschalter (`use_foot_switches=True`).
+  * *Reaktion:* Sondierung in `-Z` (`65 mm/s` bis `max_search_z_mm = -122 mm`) bis Bodenkontakt erkannt und als lokales `stance_z` übernommen wird.
+- [x] **Stance-Load Compliance (Aktive Lastanpassung):**  
+  * Automatische Z-Nachgiebigkeit unter hoher Stützlast + sanfte Rückführung Richtung Nominalhöhe; in [`Hexapod.tick()`](lasius-core/src/lasius/core/robot.py) automatisch an die geschlossene Telemetrie gekoppelt.
 
 ---
 
@@ -87,14 +87,14 @@ Im Fokus steht die **biomimetische Übertragung von Insekten-Steuerungsprinzipie
     * `CROUCH_SCAN(terrain)`
     * `REST_LOW_POWER()`
   * Alle Details (Kinematik, Fußkoordinaten, Bodenanpassung, Reflexe) werden vollständig von den darunterliegenden Schichten absorbiert.
-- [ ] **Terrain-Adaptive Fahrwerkhöhe:**  
-  * Automatische Koppelung des 9-Feld ToF-Bodensensors (Unterboden-Matrix) mit der Soll-Bodenfreiheit (`ground_clearance`): Erkennt der Bauchsensor ein Hindernis unter dem Rumpf, hebt die Ganglien-Ebene das Chassis automatisch an, ohne dass der Pilot eingreifen muss.
+- [x] **Terrain-Adaptive Fahrwerkhöhe (`set_belly_tof_distance_m()` in [`walknet.py`](lasius-core/src/lasius/core/motion/walknet.py) + [`SimulatedToFSensor`](lasius-core/src/lasius/core/hardware/sensors.py)):**  
+  * Automatische Anhebung der Rumpf-Bodenfreiheit bei Hindernissen unterhalb des Bauch-ToF-Schwellwerts (`0,085 m`, bis `+30 mm` Boost) ohne Eingriff des Piloten.
 
 ---
 
 ### AP 4: Simulations- & Verifikationsumgebung
-- [ ] **MuJoCo / PyBullet Rigid-Body-Physikmodell:**  
-  * Physikalischer Test der dezentralen Cruse-Regeln und Reflexe in einer unebenen 3D-Simulationsumgebung (Hindernisse, Treppenstufen, Schotter), bevor der Code auf dem physikalischen Roboter aktiviert wird.
+- [x] **PyBullet Rigid-Body-Physikmodell, Walknet-Sim & Pure-NumPy Sim-to-Real RL-Deployment:**  
+  * Prozedurale unebene Terrains (`terrain.py`: rough/slopes/steps/mixed), realistische NR-645 Servodynamik (`actuator.py`), Walknet-Option in [`run_simulation.py`](../scripts/sim/run_simulation.py) (`--gait-engine walknet`) und leichtgewichtige Pure-NumPy-Inferenz ([`policy.py`](lasius-core/src/lasius/core/sim/policy.py), [`export_policy.py`](../scripts/sim/export_policy.py)) mit Adaptive Terrain Gate (`Δ = +6,2` über 7 Szenarien vs. analytischer Baseline).
 
 ---
 

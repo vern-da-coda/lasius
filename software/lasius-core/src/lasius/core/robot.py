@@ -45,6 +45,7 @@ from lasius.core.motion import (
     GaitProtocol,
     TripodGait,
     OmniGait,
+    LegSensoryFeedback,
 )
 from lasius.core.control import OrderDispatcher
 from lasius.core.server import VisualizerServer
@@ -268,6 +269,30 @@ class Hexapod:
                 "wave_hello",
             ):
                 return
+        if hasattr(self.gait_engine, "update_feedback"):
+            stall_ref = max(1.0, float(self.config.telemetry.stall_error_deg))
+            fb: Dict[LegIdentifier, LegSensoryFeedback] = {}
+            with self._telemetry_lock:
+                for leg_id in LegIdentifier:
+                    leg = self.legs.get(leg_id.value)
+                    if leg is None:
+                        continue
+                    errs = [
+                        abs(j.servo.tracking_error)
+                        for j in (leg.coxa, leg.femur, leg.tibia)
+                        if j.servo.actual_valid and j.servo.tracking_error is not None
+                    ]
+                    max_err = max(errs) if errs else 0.0
+                    stalled = any(j.servo.is_stalled for j in (leg.coxa, leg.femur, leg.tibia))
+                    fb[leg_id] = LegSensoryFeedback(
+                        foot_contact=bool(leg.foot_contact),
+                        tracking_error_deg=max_err,
+                        is_stalled=stalled,
+                        load_estimate=min(1.0, max_err / stall_ref),
+                        actual_tip=leg.get_actual_tip_position(),
+                    )
+            self.gait_engine.update_feedback(fb)
+
         leg_positions = self.gait_engine.tick()
 
         for leg_id, coords in leg_positions.items():

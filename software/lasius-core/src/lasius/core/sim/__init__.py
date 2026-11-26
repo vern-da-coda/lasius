@@ -7,6 +7,8 @@ Provides:
 - `TerrainGenerator` & `TerrainType`: Procedural flat/rough/slopes/steps/mixed terrain engine
 """
 
+from .policy import AdaptiveGateConfig, ResidualPolicyRunner, build_proprioceptive_observation
+
 try:
     from .actuator import ActuatorConfig, ServoActuatorModel, build_joint_limits_rad
     from .gym_env import LasiusGymEnv
@@ -21,9 +23,12 @@ except ImportError:
 
 __all__ = [
     "ActuatorConfig",
+    "AdaptiveGateConfig",
     "LasiusGymEnv",
+    "ResidualPolicyRunner",
     "ServoActuatorModel",
     "TerrainGenerator",
     "TerrainType",
     "build_joint_limits_rad",
+    "build_proprioceptive_observation",
 ]
