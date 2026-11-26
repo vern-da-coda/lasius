@@ -228,8 +228,8 @@ class ResidualPolicyRunner:
         Extracts deterministic actor MLP weights & VecNormalize stats directly from
         a Stable-Baselines3 PPO `.zip` checkpoint into a pure-NumPy runner.
         """
-        import pickle
         from stable_baselines3 import PPO
+        from stable_baselines3.common.vec_env import VecNormalize
         import torch.nn as nn
 
         model_path = Path(model_path)
@@ -263,7 +263,7 @@ class ResidualPolicyRunner:
         obs_epsilon = 1e-8
         clip_obs = 10.0
 
-        # Auto-discover matching VecNormalize pickle if omitted
+        # Auto-discover matching VecNormalize stats if omitted
         if vecnorm_path is None:
             for cand in [
                 model_path.parent / "best_vecnormalize.pkl" if model_path.name == "best_model.zip" else None,
@@ -276,8 +276,13 @@ class ResidualPolicyRunner:
                     break
 
         if vecnorm_path is not None and Path(vecnorm_path).is_file():
-            with open(vecnorm_path, "rb") as f:
-                vn = pickle.load(f)
+            class _MinimalVecEnvStub:
+                num_envs = 1
+                observation_space = model.observation_space
+                action_space = model.action_space
+                render_mode = None
+
+            vn = VecNormalize.load(str(vecnorm_path), _MinimalVecEnvStub())
             if getattr(vn, "obs_rms", None) is not None:
                 obs_mean = np.asarray(vn.obs_rms.mean, dtype=np.float32)
                 obs_var = np.asarray(vn.obs_rms.var, dtype=np.float32)

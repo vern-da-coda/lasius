@@ -7,7 +7,12 @@ Provides:
 - `TerrainGenerator` & `TerrainType`: Procedural flat/rough/slopes/steps/mixed terrain engine
 """
 
-from .policy import AdaptiveGateConfig, ResidualPolicyRunner, build_proprioceptive_observation
+try:
+    from .policy import AdaptiveGateConfig, ResidualPolicyRunner, build_proprioceptive_observation
+except ImportError:
+    AdaptiveGateConfig = None
+    ResidualPolicyRunner = None
+    build_proprioceptive_observation = None
 
 try:
     from .actuator import ActuatorConfig, ServoActuatorModel, build_joint_limits_rad

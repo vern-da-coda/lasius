@@ -5,17 +5,25 @@ Unit Tests for Pure-NumPy Sim-to-Real Residual RL Policy Runner (`test_policy.py
 import math
 from pathlib import Path
 
-import numpy as np
 import pytest
 
-from lasius.core.sim.policy import (
-    AdaptiveGateConfig,
-    ResidualPolicyRunner,
-    build_proprioceptive_observation,
-)
+try:
+    import numpy as np
+    from lasius.core.sim.policy import (
+        AdaptiveGateConfig,
+        ResidualPolicyRunner,
+        build_proprioceptive_observation,
+    )
+    NUMPY_AVAILABLE = True
+except ImportError:
+    np = None
+    AdaptiveGateConfig = None
+    ResidualPolicyRunner = None
+    build_proprioceptive_observation = None
+    NUMPY_AVAILABLE = False
 
 
-def _make_dummy_runner(gate_config=None) -> ResidualPolicyRunner:
+def _make_dummy_runner(gate_config=None):
     rng = np.random.default_rng(123)
     w0 = rng.normal(0.0, 0.1, size=(71, 32)).astype(np.float32)
     b0 = np.zeros(32, dtype=np.float32)
@@ -34,6 +42,7 @@ def _make_dummy_runner(gate_config=None) -> ResidualPolicyRunner:
     )
 
 
+@pytest.mark.skipif(not NUMPY_AVAILABLE, reason="numpy not installed")
 class TestResidualPolicyRunner:
     def test_npz_roundtrip_bit_exact(self, tmp_path: Path):
         runner = _make_dummy_runner()
